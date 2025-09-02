@@ -328,6 +328,10 @@ export function Settings() {
 		onSuccess: ({ action, data }) => {
 			if (action === "enable" && data) {
 				const enableData = data as TwoFactorEnableSuccessData;
+				console.log("🔍 [DEBUG] Backup codes received from API:", enableData.backupCodes);
+				console.log("🔍 [DEBUG] Backup codes length:", enableData.backupCodes?.length);
+				console.log("🔍 [DEBUG] First code format:", enableData.backupCodes?.[0]);
+				console.log("🔍 [DEBUG] First code length:", enableData.backupCodes?.[0]?.length);
 				dispatch({ type: "SET_2FA_SETUP_DATA", totpURI: enableData.totpURI, backupCodes: enableData.backupCodes });
 				dispatch({ type: "SHOW_TOTP_VERIFICATION" });
 				toast.success("Scan QR, save codes, then enter verification code below.");
@@ -419,7 +423,11 @@ export function Settings() {
 	const handleCopyBackupCodes = useCallback(() => {
 		if (!state.twoFactor.backupCodes) return;
 		
+		console.log("🔍 [DEBUG] Codes to copy:", state.twoFactor.backupCodes);
 		const codesText = state.twoFactor.backupCodes.join('\n');
+		console.log("🔍 [DEBUG] Final text for clipboard:", JSON.stringify(codesText));
+		console.log("🔍 [DEBUG] Final text length:", codesText.length);
+		
 		navigator.clipboard.writeText(codesText).then(() => {
 			toast.success("Backup codes copied to clipboard!");
 		}).catch(() => {

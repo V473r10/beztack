@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { authClient } from "@/lib/auth-client";
 import { Loader2, Shield, Key } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -38,29 +38,50 @@ const TwoFactor = () => {
 	const [verificationMethod, setVerificationMethod] = useState<"totp" | "backup">("totp");
 	const navigate = useNavigate();
 
+	// Debug 2FA session on component mount
+	useEffect(() => {
+		console.log("🔍 [DEBUG] TwoFactor component mounted");
+		console.log("🔍 [DEBUG] Current cookies:", document.cookie);
+		console.log("🔍 [DEBUG] Current localStorage:", Object.keys(localStorage));
+		console.log("🔍 [DEBUG] Current sessionStorage:", Object.keys(sessionStorage));
+		
+		// Try to get current session
+		authClient.getSession().then((session) => {
+			console.log("🔍 [DEBUG] Current session:", session);
+		}).catch((err) => {
+			console.log("🔍 [DEBUG] Session error:", err);
+		});
+	}, []);
+
 	const handleTotpSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
+		
+		console.log("🔍 [DEBUG] TOTP verification starting");
+		console.log("🔍 [DEBUG] TOTP code:", totpCode);
+		console.log("🔍 [DEBUG] Current cookies before TOTP:", document.cookie);
+		
 		setIsLoading(true);
 		try {
 			await authClient.twoFactor.verifyTotp(
 				{ code: totpCode },
 				{
 					async onSuccess() {
+						console.log("✅ [DEBUG] TOTP verification succeeded!");
 						toast.success("Signed in successfully with 2FA!");
 						navigate("/");
 					},
 					async onError(res) {
+						console.log("❌ [DEBUG] TOTP verification error:", res);
 						const errorDetail = extractAuthErrorMessage(res);
 						toast.error(errorDetail);
-						console.error("TOTP verification failed:", res);
 					},
 				},
 			);
 		} catch (err: unknown) {
+			console.log("❌ [DEBUG] TOTP verification exception:", err);
 			const errorDetail = extractAuthErrorMessage(err as object);
 			toast.error(errorDetail);
-			console.error("TOTP verification failed:", err);
 		} finally {
 			setIsLoading(false);
 		}
@@ -69,42 +90,93 @@ const TwoFactor = () => {
 	const handleBackupCodeSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
-		if (backupCode.length !== 10) return;
+		
+		console.log("🔍 [DEBUG] Backup code input value:", backupCode);
+		console.log("🔍 [DEBUG] Backup code length:", backupCode.length);
+		
+		console.log("🔍 [DEBUG] Backup code to verify:", backupCode);
+		
+		if (backupCode.length !== 11 || !isValidBackupCode(backupCode)) {
+			toast.error(`Please enter a valid backup code format (XXXXX-XXXXX). Current: ${backupCode.length} chars`);
+			return;
+		}
 		
 		setIsLoading(true);
+		
+		// Try both formats: with dash and without dash
+		const formats = [
+			backupCode, // With dash: "OS12B-52OL2"
+			backupCode.replace('-', ''), // Without dash: "OS12B52OL2"
+		];
+		
+		console.log("🔍 [DEBUG] Trying formats:", formats);
+		console.log("🔍 [DEBUG] Format 1 bytes:", Array.from(formats[0]).map(c => c.charCodeAt(0)));
+		console.log("🔍 [DEBUG] Format 2 bytes:", Array.from(formats[1]).map(c => c.charCodeAt(0)));
+		
+		// Try first format
 		try {
+			console.log("🔍 [DEBUG] Attempt 1 - Sending to API:", { code: formats[0] });
 			await authClient.twoFactor.verifyBackupCode(
-				{ code: backupCode },
+				{ code: formats[0] },
 				{
 					async onSuccess() {
+						console.log("✅ [DEBUG] Backup code verification succeeded with format:", formats[0]);
 						toast.success("Signed in successfully with backup code!");
 						navigate("/");
+						return;
 					},
 					async onError(res) {
-						const errorDetail = extractAuthErrorMessage(res);
-						toast.error(errorDetail);
-						console.error("Backup code verification failed:", res);
+						console.log("❌ [DEBUG] Format 1 failed, trying format 2...");
+						// Try second format
+						trySecondFormat();
 					},
 				},
 			);
 		} catch (err: unknown) {
-			const errorDetail = extractAuthErrorMessage(err as object);
-			toast.error(errorDetail);
-			console.error("Backup code verification failed:", err);
-		} finally {
-			setIsLoading(false);
+			console.log("❌ [DEBUG] Format 1 exception, trying format 2...");
+			trySecondFormat();
+		}
+		
+		async function trySecondFormat() {
+			try {
+				console.log("🔍 [DEBUG] Attempt 2 - Sending to API:", { code: formats[1] });
+				await authClient.twoFactor.verifyBackupCode(
+					{ code: formats[1] },
+					{
+						async onSuccess() {
+							console.log("✅ [DEBUG] Backup code verification succeeded with format:", formats[1]);
+							toast.success("Signed in successfully with backup code!");
+							navigate("/");
+						},
+						async onError(res) {
+							console.log("❌ [DEBUG] Both formats failed. Error:", res);
+							const errorDetail = extractAuthErrorMessage(res);
+							toast.error(`Verification failed with both formats: ${errorDetail}`);
+							setIsLoading(false);
+						},
+					},
+				);
+			} catch (err: unknown) {
+				console.log("❌ [DEBUG] Both formats failed. Exception:", err);
+				const errorDetail = extractAuthErrorMessage(err as object);
+				toast.error(`Verification failed: ${errorDetail}`);
+				setIsLoading(false);
+			}
 		}
 	};
 
 	const isValidBackupCode = (value: string) => {
-		// Validate format: 10 alphanumeric characters
-		const backupCodeRegex = /^[A-Za-z0-9]{10}$/;
-		return backupCodeRegex.test(value);
+		// Primary format: 5 characters, dash, 5 characters (total 11)
+		const primaryFormat = /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/;
+		return primaryFormat.test(value);
 	};
 
 	const handleBackupCodeChange = (value: string) => {
-		// Only allow alphanumeric characters, max 10
-		const formattedValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 10);
+		console.log("🔍 [DEBUG] Raw input change:", JSON.stringify(value));
+		
+		// Allow alphanumeric and dash, max 11 characters (PRESERVE ORIGINAL CASE!)
+		const formattedValue = value.replace(/[^A-Za-z0-9-]/g, '').slice(0, 11);
+		console.log("🔍 [DEBUG] Formatted value (preserving case):", JSON.stringify(formattedValue));
 		setBackupCode(formattedValue);
 	};
 
@@ -180,7 +252,7 @@ const TwoFactor = () => {
 					</div>
 					<form className="space-y-4" onSubmit={handleBackupCodeSubmit}>
 						<InputOTP
-							maxLength={10}
+							maxLength={11}
 							value={backupCode}
 							onChange={handleBackupCodeChange}
 							disabled={isLoading}
@@ -197,11 +269,11 @@ const TwoFactor = () => {
 								<span className="text-muted-foreground">-</span>
 							</InputOTPSeparator>
 							<InputOTPGroup className="w-full flex justify-center">
-								<InputOTPSlot index={5} />
 								<InputOTPSlot index={6} />
 								<InputOTPSlot index={7} />
 								<InputOTPSlot index={8} />
 								<InputOTPSlot index={9} />
+								<InputOTPSlot index={10} />
 							</InputOTPGroup>
 						</InputOTP>
 						<Button

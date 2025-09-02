@@ -11,8 +11,14 @@ export const auth = betterAuth({
     requireEmailVerification: false,
   },
   socialProviders: {},
-  trustedOrigins: ["http://localhost:5173", "https://vitro.vercel.app"],
+  trustedOrigins: ["http://localhost:5173", "http://localhost:5174", "https://vitro.vercel.app"],
   plugins: [
-    twoFactor()
+    twoFactor({
+      issuer: "Vitro App",
+      backupCodes: {
+        amount: 10,
+        length: 10,
+      },
+    })
   ]
 });
