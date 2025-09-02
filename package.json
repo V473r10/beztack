@@ -2,7 +2,13 @@
   "name": "@vitro/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "build": "nx build",
+    "start": "nx start",
+    "dev": "nx dev",
+    "lint": "nx lint",
+    "test": "nx test"
+  },
   "private": true,
   "dependencies": {},
   "devDependencies": {
