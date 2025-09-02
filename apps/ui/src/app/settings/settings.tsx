@@ -109,7 +109,8 @@ export function Settings() {
 		queryFn: async () => {
 			if (!user?.id) return null;
 			const response = await fetch(
-				`http://localhost:3000/auth/viewBackupCodes?userId=${user.id}`,
+				`${import.meta.env.VITE_API_URL}/api/auth/backup-codes`,
+				{credentials: 'include'}
 			);
 			if (!response.ok) {
 				throw new Error("Failed to fetch backup codes");

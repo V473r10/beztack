@@ -1,8 +1,13 @@
 import { defineNitroConfig } from "nitropack/config"
+import { resolve } from "path"
 
 // https://nitro.build/config
 export default defineNitroConfig({
   compatibilityDate: "latest",
   srcDir: "server",
-  imports: false
+  imports: false,
+  alias: {
+    "@": resolve(__dirname, "."),
+    "server": resolve(__dirname, "server")
+  }
 });
