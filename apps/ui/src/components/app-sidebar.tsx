@@ -13,7 +13,9 @@ import {
 	IconReport,
 	IconSearch,
 	IconSettings,
+	IconShield,
 	IconUsers,
+	IconUsersCog,
 } from "@tabler/icons-react";
 import type * as React from "react";
 
@@ -31,7 +33,7 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
-import { useTranslation } from "react-i18next";
+import { useIsAdmin } from "@/lib/admin-utils";
 import { Link } from "react-router";
 
 const data = {
@@ -133,6 +135,23 @@ const data = {
 			icon: IconSearch,
 		},
 	],
+	navAdmin: [
+		{
+			title: "Admin Panel",
+			url: "admin",
+			icon: IconShield,
+		},
+		{
+			title: "User Management",
+			url: "admin/users",
+			icon: IconUsersCog,
+		},
+		{
+			title: "Admin Analytics",
+			url: "admin/analytics",
+			icon: IconChartBar,
+		},
+	],
 	documents: [
 		{
 			name: "sidebar.documents.dataLibrary",
@@ -153,7 +172,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-	const { t } = useTranslation();
+	const isAdmin = useIsAdmin();
+	
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>
 			<SidebarHeader>
@@ -174,6 +194,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarContent>
 				<NavMain items={data.navMain} />
 				<NavDocuments items={data.documents} />
+				{isAdmin && <NavSecondary items={data.navAdmin} title="Administration" />}
 				<NavSecondary items={data.navSecondary} className="mt-auto" />
 			</SidebarContent>
 			<SidebarFooter>

@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db/db";
 import { schema } from "@/db/schema";
-import { twoFactor } from "better-auth/plugins";
+import { twoFactor, admin } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema: schema }),
@@ -14,11 +14,8 @@ export const auth = betterAuth({
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174", "https://vitro.vercel.app"],
   plugins: [
     twoFactor({
-      issuer: "Vitro App",
-      backupCodes: {
-        amount: 10,
-        length: 10,
-      },
-    })
+      issuer: "Vitro", 
+    }),
+    admin()
   ]
 });

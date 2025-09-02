@@ -2,6 +2,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { Toaster } from "sonner";
 import { AI } from "./app/ai/ai.tsx";
+import AdminDashboard from "./app/admin/admin.tsx";
+import AdminAnalytics from "./app/admin/analytics.tsx";
+import { AdminLayout } from "./app/admin/components/admin-layout.tsx";
+import UsersPage from "./app/admin/users.tsx";
 import AuthLayout from "./app/auth/auth-layout.tsx";
 import SignIn from "./app/auth/sign-in/sign-in.tsx";
 import TwoFactor from "./app/auth/sign-in/two-factor/two-factor.tsx";
@@ -9,6 +13,7 @@ import SignUp from "./app/auth/sign-up/sign-up.tsx";
 import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
 import Settings from "./app/settings/settings.tsx";
+import { AdminRoute } from "./components/admin-route.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
 import { ProtectedRoute } from "./components/protected-route.tsx";
 import { PublicRoute } from "./components/public-route.tsx";
@@ -62,6 +67,18 @@ function App() {
 							}
 						>
 							<Route path="settings" element={<Settings />} />
+						</Route>
+						<Route
+							path="admin"
+							element={
+								<AdminRoute>
+									<AdminLayout />
+								</AdminRoute>
+							}
+						>
+							<Route index element={<AdminDashboard />} />
+							<Route path="users" element={<UsersPage />} />
+							<Route path="analytics" element={<AdminAnalytics />} />
 						</Route>
 						<Route
 							path="auth"

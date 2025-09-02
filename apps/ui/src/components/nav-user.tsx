@@ -5,7 +5,6 @@ import {
 	IconLogout,
 	IconNotification,
 	IconRoute,
-	IconUserCircle,
 } from "@tabler/icons-react";
 
 import { useTour } from "@/components/tour";
@@ -30,7 +29,6 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";

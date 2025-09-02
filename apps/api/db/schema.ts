@@ -8,7 +8,12 @@ export const user = pgTable("user", {
  image: text('image'),
  createdAt: timestamp('created_at').$defaultFn(() => new Date).notNull(),
  updatedAt: timestamp('updated_at').$defaultFn(() => new Date).notNull(),
- twoFactorEnabled: boolean('two_factor_enabled')
+ twoFactorEnabled: boolean('two_factor_enabled'),
+ // Admin plugin fields
+ role: text('role').$defaultFn(() => 'user'),
+ banned: boolean('banned').$defaultFn(() => false),
+ banReason: text('ban_reason'),
+ banExpires: timestamp('ban_expires')
 				});
 
 export const session = pgTable("session", {
@@ -19,7 +24,9 @@ export const session = pgTable("session", {
  updatedAt: timestamp('updated_at').notNull(),
  ipAddress: text('ip_address'),
  userAgent: text('user_agent'),
- userId: text('user_id').notNull().references(()=> user.id, { onDelete: 'cascade' })
+ userId: text('user_id').notNull().references(()=> user.id, { onDelete: 'cascade' }),
+ // Admin plugin field
+ impersonatedBy: text('impersonated_by')
 				});
 
 export const account = pgTable("account", {
