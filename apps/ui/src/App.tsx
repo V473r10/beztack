@@ -72,7 +72,7 @@ function App() {
 							path="admin"
 							element={
 								<AdminRoute>
-									<AdminLayout />
+									<MainLayout />
 								</AdminRoute>
 							}
 						>

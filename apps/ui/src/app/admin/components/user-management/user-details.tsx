@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 import { formatDate, formatRelativeTime, getUserRoles, getUserStatus } from "@/lib/admin-utils";
-import type { AdminUser, AdminSession } from "@/lib/admin-types";
+import type { AdminUser } from "@/lib/admin-types";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
 	IconUser, 
@@ -19,9 +19,10 @@ import { toast } from "sonner";
 interface UserDetailsProps {
 	user: AdminUser;
 	onEdit: () => void;
+	onRefresh?: () => void;
 }
 
-export function UserDetails({ user, onEdit }: UserDetailsProps) {
+export function UserDetails({ user, onEdit, onRefresh }: UserDetailsProps) {
 	const status = getUserStatus(user);
 	const roles = getUserRoles(user);
 
@@ -42,8 +43,8 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
 	// Revoke session mutation
 	const revokeSessionMutation = useMutation({
 		mutationFn: async (sessionId: string) => {
-			const response = await authClient.admin.revokeSession({
-				sessionId,
+			const response = await authClient.admin.revokeUserSession({
+				sessionToken: sessionId,
 			});
 			if (!response.data) {
 				throw new Error("Failed to revoke session");
@@ -187,16 +188,16 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
 							onClick={() => revokeAllSessionsMutation.mutate()}
 							variant="destructive"
 							size="sm"
-							disabled={!sessions?.length || revokeAllSessionsMutation.isPending}
+							disabled={!sessions?.sessions?.length || revokeAllSessionsMutation.isPending}
 						>
 							Revoke All
 						</Button>
 					</div>
 				</CardHeader>
 				<CardContent>
-					{sessions?.length ? (
+					{sessions?.sessions?.length ? (
 						<div className="space-y-3">
-							{sessions.map((session: AdminSession) => (
+							{sessions.sessions.map((session) => (
 								<div 
 									key={session.id} 
 									className="flex items-center justify-between p-3 border rounded-lg"

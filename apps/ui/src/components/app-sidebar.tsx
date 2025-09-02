@@ -15,7 +15,7 @@ import {
 	IconSettings,
 	IconShield,
 	IconUsers,
-	IconUsersCog,
+	IconUserCog,
 } from "@tabler/icons-react";
 import type * as React from "react";
 
@@ -144,7 +144,7 @@ const data = {
 		{
 			title: "User Management",
 			url: "admin/users",
-			icon: IconUsersCog,
+			icon: IconUserCog,
 		},
 		{
 			title: "Admin Analytics",

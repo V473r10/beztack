@@ -44,7 +44,7 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ["admin", "users", query],
 		queryFn: async () => {
-			const response = await authClient.admin.listUsers(query);
+			const response = await authClient.admin.listUsers({ query });
 			if (!response.data) {
 				throw new Error("Failed to fetch users");
 			}
@@ -220,8 +220,8 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
 					{data && (
 						<div className="mt-4 text-sm text-muted-foreground">
 							Showing{" "}
-							{Math.min((query.offset || 0) + 1, data.total)} -{" "}
-							{Math.min((query.offset || 0) + (query.limit || 50), data.total)}{" "}
+							{Math.min(Number(query.offset || 0) + 1, data.total)} -{" "}
+							{Math.min(Number(query.offset || 0) + Number(query.limit || 50), data.total)}{" "}
 							of {data.total} users
 						</div>
 					)}

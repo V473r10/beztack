@@ -14,7 +14,9 @@ interface AdminStats {
 async function fetchAdminStats(): Promise<AdminStats> {
 	// This will be replaced with actual authClient.admin calls
 	const response = await authClient.admin.listUsers({
-		limit: 1000, // Get all users for stats
+		query: {
+			limit: 1000, // Get all users for stats
+		}
 	});
 	
 	if (!response.data) {

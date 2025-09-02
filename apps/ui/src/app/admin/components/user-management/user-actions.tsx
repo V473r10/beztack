@@ -21,7 +21,7 @@ import { authClient } from "@/lib/auth-client";
 import type { AdminUser } from "@/lib/admin-types";
 import { useMutation } from "@tanstack/react-query";
 import { 
-	IconMoreVertical, 
+	IconDots, 
 	IconEdit, 
 	IconUserX, 
 	IconUserCheck, 
@@ -130,7 +130,7 @@ export function UserActions({ user, onEdit, onRefresh }: UserActionsProps) {
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" className="h-8 w-8 p-0" disabled={isLoading}>
 						<span className="sr-only">Open menu</span>
-						<IconMoreVertical className="h-4 w-4" />
+						<IconDots className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">

@@ -25,9 +25,9 @@ export interface AdminSession {
 export interface CreateUserData {
 	email: string;
 	password: string;
-	name?: string;
-	role?: string | string[];
-	data?: Record<string, unknown>;
+	name: string;
+	role?: "user" | "admin" | ("user" | "admin")[];
+	data?: Record<string, any>;
 }
 
 export interface ListUsersQuery {

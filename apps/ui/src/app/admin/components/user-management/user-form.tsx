@@ -36,10 +36,10 @@ import { z } from "zod";
 
 const userFormSchema = z.object({
 	email: z.string().email("Please enter a valid email address"),
-	name: z.string().optional(),
+	name: z.string().min(1, "Name is required"),
 	password: z.string().min(8, "Password must be at least 8 characters").optional(),
-	role: z.string().default("user"),
-	emailVerified: z.boolean().default(false),
+	role: z.string(),
+	emailVerified: z.boolean(),
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
@@ -58,7 +58,7 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
 		resolver: zodResolver(userFormSchema),
 		defaultValues: {
 			email: user?.email || "",
-			name: user?.name || "",
+			name: user?.name || user?.email?.split('@')[0] || "",
 			password: "",
 			role: user?.role || "user",
 			emailVerified: user?.emailVerified || false,
@@ -113,7 +113,7 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
 			
 			const response = await authClient.admin.updateUser({
 				userId: user.id,
-				...data,
+				data: data,
 			});
 			if (!response.data) {
 				throw new Error("Failed to update user");
@@ -142,11 +142,11 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
 			updateUserMutation.mutate(updates);
 		} else {
 			// For creating, send all required fields
-			const createData: CreateUserData = {
+			const createData = {
 				email: data.email,
 				password: data.password!,
-				name: data.name,
-				role: data.role,
+				name: data.name || data.email.split('@')[0],
+				role: data.role as "user" | "admin",
 			};
 			
 			createUserMutation.mutate(createData);
