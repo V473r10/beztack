@@ -39,15 +39,10 @@ export function SignInForm() {
 					},
 					{
 						async onSuccess(context) {
-							console.log("🔍 [DEBUG] Sign-in success context:", context);
-							console.log("🔍 [DEBUG] Cookies after sign-in:", document.cookie);
-							
 							if (context.data.twoFactorRedirect) {
-								console.log("🔍 [DEBUG] 2FA redirect detected, navigating to two-factor page");
 								toast.success("Two-factor authentication required!");
 								navigate("/auth/sign-in/two-factor");
 							} else {
-								console.log("🔍 [DEBUG] Normal sign-in, navigating to home");
 								toast.success("Signed in successfully!");
 								navigate("/");
 							}
