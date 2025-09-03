@@ -2,6 +2,12 @@
   "files": [],
   "references": [
     {
+      "path": "../../packages/ocr"
+    },
+    {
+      "path": "../../packages/ai"
+    },
+    {
       "path": "./tsconfig.app.json"
     },
     {

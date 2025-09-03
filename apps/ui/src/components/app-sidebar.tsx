@@ -138,17 +138,17 @@ const data = {
 	navAdmin: [
 		{
 			title: "Admin Panel",
-			url: "admin",
+			url: "/admin",
 			icon: IconShield,
 		},
 		{
 			title: "User Management",
-			url: "admin/users",
+			url: "/admin/users",
 			icon: IconUserCog,
 		},
 		{
 			title: "Admin Analytics",
-			url: "admin/analytics",
+			url: "/admin/analytics",
 			icon: IconChartBar,
 		},
 	],

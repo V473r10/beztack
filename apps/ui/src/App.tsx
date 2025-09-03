@@ -17,6 +17,7 @@ import { AdminRoute } from "./components/admin-route.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
 import { ProtectedRoute } from "./components/protected-route.tsx";
 import { PublicRoute } from "./components/public-route.tsx";
+import { ThemeProvider } from "./contexts/theme-context.tsx";
 
 function makeQueryClient() {
 	return new QueryClient({
@@ -47,6 +48,7 @@ function App() {
 	const queryClient = getQueryClient();
 	return (
 		<>
+		<ThemeProvider>
 			<QueryClientProvider client={queryClient}>
 				<BrowserRouter>
 					<Routes>
@@ -101,6 +103,7 @@ function App() {
 				</BrowserRouter>
 				<Toaster />
 			</QueryClientProvider>
+			</ThemeProvider>
 		</>
 	);
 }

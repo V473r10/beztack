@@ -1,3 +1,4 @@
+import { ThemeSelector } from "@/components/theme-selector";
 import { type TourStep, useTour } from "@/components/tour";
 import { Button } from "@/components/ui/button";
 import {
@@ -462,6 +463,8 @@ export function Settings() {
 	return (
 		<div className="space-y-6 p-4 md:p-8">
 			<h1 className="text-2xl font-semibold">{t("account.settings.title")}</h1>
+
+			<ThemeSelector />
 
 			<Card>
 				<CardHeader>
