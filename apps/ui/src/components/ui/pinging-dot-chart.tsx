@@ -90,33 +90,18 @@ export function PingingDotChart({
 }
 
 const CustomizedDot = (props: any) => {
-  const { cx, cy, stroke, index } = props;
+  const { cx, cy, stroke } = props;
 
   return (
     <g>
-      {/* Pulsing background circle */}
+      {/* Background circle */}
       <circle 
         cx={cx} 
         cy={cy} 
-        r={8} 
+        r={6} 
         fill={stroke} 
         opacity={0.2}
-      >
-        <animate
-          attributeName="r"
-          values="8;16;8"
-          dur="2s"
-          repeatCount="indefinite"
-          begin={`${index * 0.2}s`}
-        />
-        <animate
-          attributeName="opacity"
-          values="0.2;0.05;0.2"
-          dur="2s"
-          repeatCount="indefinite"
-          begin={`${index * 0.2}s`}
-        />
-      </circle>
+      />
       
       {/* Main dot */}
       <circle 
@@ -127,32 +112,6 @@ const CustomizedDot = (props: any) => {
         stroke="hsl(var(--background))"
         strokeWidth={2}
       />
-      
-      {/* Ping ring */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={4}
-        stroke={stroke}
-        fill="none"
-        strokeWidth={2}
-        opacity={0.6}
-      >
-        <animate
-          attributeName="r"
-          values="4;12;4"
-          dur="1.5s"
-          repeatCount="indefinite"
-          begin={`${index * 0.3}s`}
-        />
-        <animate
-          attributeName="opacity"
-          values="0.6;0;0.6"
-          dur="1.5s"
-          repeatCount="indefinite"
-          begin={`${index * 0.3}s`}
-        />
-      </circle>
     </g>
   );
 };
@@ -162,23 +121,22 @@ const ActiveDot = (props: any) => {
 
   return (
     <g>
-      {/* Glowing effect */}
+      {/* Active dot background */}
       <circle 
         cx={cx} 
         cy={cy} 
         r={8} 
         fill={stroke} 
         opacity={0.3}
-        filter="url(#glow)"
       />
       {/* Main active dot */}
       <circle 
         cx={cx} 
         cy={cy} 
-        r={6} 
+        r={5} 
         fill={stroke}
         stroke="hsl(var(--background))"
-        strokeWidth={3}
+        strokeWidth={2}
       />
     </g>
   );

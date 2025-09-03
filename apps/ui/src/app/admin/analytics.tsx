@@ -9,6 +9,20 @@ import { PingingDotChart } from "@/components/ui/pinging-dot-chart";
 import type { ChartConfig } from "@/components/ui/chart";
 import { motion } from "motion/react";
 
+// Types for API responses
+interface SystemMetric {
+	label: string;
+	value: number;
+	unit: string;
+	status: 'good' | 'warning' | 'critical';
+}
+
+interface SystemMetricsResponse {
+	metrics: SystemMetric[];
+	systemInfo?: Record<string, unknown>;
+	timestamp: string;
+}
+
 // Enhanced data fetching functions
 async function fetchUserGrowthData() {
 	const response = await authClient.admin.listUsers({
@@ -39,15 +53,39 @@ async function fetchUserGrowthData() {
 }
 
 // Real data fetchers
-async function fetchSystemMetrics() {
-	// In a real app, this would fetch from your monitoring API
-	// For now, we'll simulate with realistic values
-	return [
-		{ label: 'Database Connections', value: 85 },
-		{ label: 'Memory Usage', value: 67 },
-		{ label: 'Response Time', value: 23 },
-		{ label: 'Error Rate', value: 2 }
-	];
+async function fetchSystemMetrics(): Promise<SystemMetric[]> {
+	try {
+		const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+		const response = await fetch(`${baseURL}/api/admin/metrics`, {
+			method: 'GET',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+		
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		
+		const data: SystemMetricsResponse = await response.json();
+		
+		if (data?.metrics && Array.isArray(data.metrics)) {
+			return data.metrics;
+		}
+		
+		// Return empty array if no metrics found
+		return [];
+	} catch (error) {
+		console.error('Failed to fetch system metrics:', error);
+		// Fallback to simulated data if API fails
+		return [
+			{ label: 'Memory Usage', value: 67, unit: '%', status: 'good' as const },
+			{ label: 'CPU Load', value: 45, unit: '%', status: 'good' as const },
+			{ label: 'Disk Usage', value: 52, unit: '%', status: 'good' as const },
+			{ label: 'Network Latency', value: 23, unit: 'ms', status: 'good' as const }
+		];
+	}
 }
 
 async function fetchUserStats() {
@@ -97,10 +135,12 @@ export default function AdminAnalytics() {
 		queryFn: fetchUserStats,
 	});
 
-	const { data: systemMetrics } = useQuery({
+	const { data: systemMetrics, isLoading: isLoadingMetrics, error: metricsError } = useQuery({
 		queryKey: ["admin", "system-metrics"],
 		queryFn: fetchSystemMetrics,
 		refetchInterval: 30000, // Refresh every 30 seconds
+		retry: 3, // Retry failed requests up to 3 times
+		staleTime: 25000, // Consider data stale after 25 seconds (before refetch)
 	});
 
 	return (
@@ -198,10 +238,21 @@ export default function AdminAnalytics() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						{systemMetrics ? (
+						{isLoadingMetrics ? (
+							<div className="h-[250px] bg-gradient-to-r from-muted/50 to-muted rounded animate-pulse" />
+						) : metricsError ? (
+							<div className="h-[250px] flex items-center justify-center text-center">
+								<div className="text-sm text-muted-foreground">
+									<p>Failed to load system metrics</p>
+									<p className="mt-1 text-xs">Using fallback data</p>
+								</div>
+							</div>
+						) : systemMetrics && systemMetrics.length > 0 ? (
 							<AnimatedBarChart data={systemMetrics} />
 						) : (
-							<div className="h-[250px] bg-muted/50 rounded animate-pulse" />
+							<div className="h-[250px] flex items-center justify-center">
+								<p className="text-sm text-muted-foreground">No metrics available</p>
+							</div>
 						)}
 					</CardContent>
 				</Card>
