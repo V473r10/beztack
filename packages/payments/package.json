@@ -1,0 +1,43 @@
+{
+  "name": "@vitro/payments",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.ts",
+  "module": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "types": "./index.ts"
+    },
+    "./server": {
+      "import": "./src/server/index.ts",
+      "types": "./src/server/index.ts"
+    },
+    "./client": {
+      "import": "./src/client/index.ts",
+      "types": "./src/client/index.ts"
+    },
+    "./types": {
+      "import": "./src/types/index.ts",
+      "types": "./src/types/index.ts"
+    },
+    "./constants": {
+      "import": "./src/constants/index.ts",
+      "types": "./src/constants/index.ts"
+    }
+  },
+  "dependencies": {
+    "@polar-sh/sdk": "^0.34.15",
+    "@polar-sh/better-auth": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^18"
+  },
+  "peerDependencies": {
+    "typescript": "^5",
+    "better-auth": "^1",
+    "zod": "^3",
+    "react": "^18 || ^19"
+  }
+}

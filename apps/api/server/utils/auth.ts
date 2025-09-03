@@ -3,6 +3,20 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db/db";
 import { schema } from "@/db/schema";
 import { twoFactor, admin, organization } from "better-auth/plugins";
+import { setupPolarForBetterAuth } from "@buncn/payments/server";
+
+// Setup Polar configuration conditionally
+function getPolarPlugin() {
+  try {
+    const polarConfig = setupPolarForBetterAuth();
+    return polarConfig ? polarConfig.plugin : null;
+  } catch (error) {
+    console.warn('Polar configuration not available:', error.message);
+    return null;
+  }
+}
+
+const polarPlugin = getPolarPlugin();
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema: schema }),
@@ -44,6 +58,8 @@ export const auth = betterAuth({
         maximumTeams: 50, // Allow up to 50 teams per organization
         allowRemovingAllTeams: false // Prevent removing the last team
       }
-    })
+    }),
+    // Integrate Polar plugin if available
+    ...(polarPlugin ? [polarPlugin] : [])
   ]
 });

@@ -17,6 +17,8 @@ import {
 	IconUsers,
 	IconUserCog,
 	IconBuilding,
+	IconCreditCard,
+	IconCrown,
 } from "@tabler/icons-react";
 import type * as React from "react";
 
@@ -124,6 +126,16 @@ const data = {
 			title: "Organizations",
 			url: "organizations",
 			icon: IconBuilding,
+		},
+		{
+			title: "Billing",
+			url: "billing",
+			icon: IconCreditCard,
+		},
+		{
+			title: "Pricing",
+			url: "pricing",
+			icon: IconCrown,
 		},
 		{
 			title: "sidebar.secondary.settings",

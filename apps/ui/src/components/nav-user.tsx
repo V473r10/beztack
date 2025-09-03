@@ -32,6 +32,8 @@ import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { useMembership } from "@/contexts/membership-context";
+import { MembershipBadge } from "@/components/payments/membership-badge";
 
 export function NavUser({
 	user,
@@ -45,6 +47,7 @@ export function NavUser({
 	const { t, i18n } = useTranslation();
 	const { isMobile } = useSidebar();
 	const { startTour } = useTour();
+	const { currentTier } = useMembership();
 
 	const navigate = useNavigate();
 
@@ -83,6 +86,9 @@ export function NavUser({
 								<span className="text-muted-foreground truncate text-xs">
 									{user.email}
 								</span>
+								<div className="mt-1">
+									<MembershipBadge tier={currentTier} size="sm" />
+								</div>
 							</div>
 							<IconDotsVertical className="ml-auto size-4" />
 						</SidebarMenuButton>
@@ -104,12 +110,15 @@ export function NavUser({
 									<span className="text-muted-foreground truncate text-xs">
 										{user.email}
 									</span>
+									<div className="mt-1">
+										<MembershipBadge tier={currentTier} size="sm" />
+									</div>
 								</div>
 							</div>
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
-							<DropdownMenuItem>
+							<DropdownMenuItem onClick={() => navigate("/billing")}>
 								<IconCreditCard />
 								{t("sidebar.userMenu.billing")}
 							</DropdownMenuItem>
