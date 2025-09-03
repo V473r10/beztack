@@ -89,32 +89,40 @@ export function PingingDotChart({
   );
 }
 
-const CustomizedDot = (props: any) => {
+const CustomizedDot = (props: React.SVGProps<SVGCircleElement>) => {
   const { cx, cy, stroke } = props;
 
   return (
     <g>
-      {/* Background circle */}
-      <circle 
-        cx={cx} 
-        cy={cy} 
-        r={6} 
-        fill={stroke} 
-        opacity={0.2}
-      />
-      
       {/* Main dot */}
-      <circle 
-        cx={cx} 
-        cy={cy} 
-        r={4} 
-        fill={stroke}
-        stroke="hsl(var(--background))"
-        strokeWidth={2}
-      />
+      <circle cx={cx} cy={cy} r={3} fill={stroke} />
+      {/* Ping animation circles */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={3}
+        stroke={stroke}
+        fill="none"
+        strokeWidth="1"
+        opacity="0.8"
+      >
+        <animate
+          attributeName="r"
+          values="3;10"
+          dur="1s"
+          repeatCount="indefinite"
+        />
+        <animate
+          attributeName="opacity"
+          values="0.8;0"
+          dur="1s"
+          repeatCount="indefinite"
+        />
+      </circle>
     </g>
   );
 };
+
 
 const ActiveDot = (props: any) => {
   const { cx, cy, stroke } = props;

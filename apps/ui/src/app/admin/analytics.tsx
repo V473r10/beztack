@@ -145,16 +145,12 @@ export default function AdminAnalytics() {
 
 	return (
 		<div className="flex flex-col gap-8 p-6">
-			<motion.div
-				initial={{ opacity: 0, y: -20 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ duration: 0.5 }}
-			>
+			<div>
 				<AdminHeader
 					title="Analytics Dashboard"
 					description="Monitor system performance and user metrics"
 				/>
-			</motion.div>
+			</div>
 
 			{/* User Stats Cards */}
 			{userStats && (
@@ -215,13 +211,11 @@ export default function AdminAnalytics() {
 								className="aspect-auto h-[300px] w-full"
 							/>
 						) : (
-							<motion.p 
+							<p 
 								className="text-sm text-muted-foreground text-center h-[300px] flex items-center justify-center"
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
 							>
 								No growth data available
-							</motion.p>
+							</p>
 						)}
 					</CardContent>
 				</Card>

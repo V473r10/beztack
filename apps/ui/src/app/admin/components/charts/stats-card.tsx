@@ -26,11 +26,7 @@ export function StatsCard({
   className 
 }: StatsCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.02 }}
+    <div
       className={cn("", className)}
     >
       <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300">
@@ -42,14 +38,12 @@ export function StatsCard({
           </div>
         </CardHeader>
         <CardContent className="relative z-10">
-          <motion.div 
+          <div 
             className="text-2xl font-bold"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, delay: delay + 0.2 }}
+            
           >
             {value}
-          </motion.div>
+          </div>
           {description && (
             <p className="text-xs text-muted-foreground mt-1">
               {description}
@@ -72,6 +66,6 @@ export function StatsCard({
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }
