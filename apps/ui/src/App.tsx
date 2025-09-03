@@ -4,7 +4,7 @@ import { Toaster } from "sonner";
 import { AI } from "./app/ai/ai.tsx";
 import AdminDashboard from "./app/admin/admin.tsx";
 import AdminAnalytics from "./app/admin/analytics.tsx";
-import { AdminLayout } from "./app/admin/components/admin-layout.tsx";
+// import { AdminLayout } from "./app/admin/components/admin-layout.tsx";
 import UsersPage from "./app/admin/users.tsx";
 import AuthLayout from "./app/auth/auth-layout.tsx";
 import SignIn from "./app/auth/sign-in/sign-in.tsx";
@@ -12,6 +12,7 @@ import TwoFactor from "./app/auth/sign-in/two-factor/two-factor.tsx";
 import SignUp from "./app/auth/sign-up/sign-up.tsx";
 import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
+import OrganizationsPage from "./app/organizations/organizations.tsx";
 import Settings from "./app/settings/settings.tsx";
 import { AdminRoute } from "./components/admin-route.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
@@ -69,6 +70,15 @@ function App() {
 							}
 						>
 							<Route path="settings" element={<Settings />} />
+						</Route>
+						<Route
+							element={
+								<ProtectedRoute>
+									<MainLayout />
+								</ProtectedRoute>
+							}
+						>
+							<Route path="organizations" element={<OrganizationsPage />} />
 						</Route>
 						<Route
 							path="admin"

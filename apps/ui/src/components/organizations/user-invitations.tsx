@@ -1,0 +1,274 @@
+// import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { 
+  useUserInvitations, 
+  useAcceptInvitation,
+  useRejectInvitation,
+} from "@/hooks/use-organizations";
+import { ROLE_LABELS, type OrganizationInvitation, type OrganizationRole } from "@/lib/organization-types";
+import { Check, X, Mail, Building2, Crown, Shield, User, Clock } from "lucide-react";
+import { useState } from "react";
+
+interface UserInvitationsProps {
+  className?: string;
+}
+
+// Simple date formatting utility
+const formatDate = (date: Date | string) => {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric", 
+    year: "numeric"
+  });
+};
+
+const formatRelativeTime = (date: Date | string) => {
+  const now = new Date();
+  const targetDate = new Date(date);
+  const diffInHours = Math.floor((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+  
+  if (diffInHours < 1) return "Expires soon";
+  if (diffInHours < 24) return `Expires in ${diffInHours} hour${diffInHours === 1 ? '' : 's'}`;
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) return `Expires in ${diffInDays} day${diffInDays === 1 ? '' : 's'}`;
+  
+  return `Expires ${formatDate(date)}`;
+};
+
+export function UserInvitations({ className }: UserInvitationsProps) {
+  const [invitationToAccept, setInvitationToAccept] = useState<OrganizationInvitation | null>(null);
+  const [invitationToReject, setInvitationToReject] = useState<OrganizationInvitation | null>(null);
+  
+  const { data: invitations = [], isLoading } = useUserInvitations();
+  const acceptInvitation = useAcceptInvitation();
+  const rejectInvitation = useRejectInvitation();
+
+  const pendingInvitations = invitations.filter(inv => {
+    const isExpired = new Date(inv.expiresAt) < new Date();
+    return inv.status === 'pending' && !isExpired;
+  });
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "owner":
+        return <Crown className="h-4 w-4 text-yellow-500" />;
+      case "admin":
+        return <Shield className="h-4 w-4 text-blue-500" />;
+      default:
+        return <User className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const handleAcceptInvitation = (invitation: OrganizationInvitation) => {
+    setInvitationToAccept(invitation);
+  };
+
+  const handleRejectInvitation = (invitation: OrganizationInvitation) => {
+    setInvitationToReject(invitation);
+  };
+
+  const confirmAcceptInvitation = async () => {
+    if (!invitationToAccept) return;
+    
+    try {
+      await acceptInvitation.mutateAsync(invitationToAccept.id);
+      setInvitationToAccept(null);
+    } catch (error) {
+      // Error handling is done in the mutation
+    }
+  };
+
+  const confirmRejectInvitation = async () => {
+    if (!invitationToReject) return;
+    
+    try {
+      await rejectInvitation.mutateAsync(invitationToReject.id);
+      setInvitationToReject(null);
+    } catch (error) {
+      // Error handling is done in the mutation
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Skeleton className="h-5 w-5" />
+            <Skeleton className="h-6 w-48" />
+          </div>
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between p-4 border rounded">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <div className="flex space-x-2">
+                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-9 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (pendingInvitations.length === 0) {
+    return (
+      <Card className={className}>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <Mail className="h-12 w-12 text-muted-foreground mb-4" />
+          <CardTitle className="text-lg mb-2">No Pending Invitations</CardTitle>
+          <CardDescription className="text-center">
+            You don't have any pending organization invitations at the moment.
+          </CardDescription>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Mail className="h-5 w-5" />
+            <span>Organization Invitations ({pendingInvitations.length})</span>
+          </CardTitle>
+          <CardDescription>
+            You have been invited to join these organizations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {pendingInvitations.map((invitation) => (
+              <div key={invitation.id} className="flex items-center justify-between p-6 border rounded-lg">
+                <div className="flex items-start space-x-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
+                    {invitation.organization?.logo ? (
+                      <img
+                        src={invitation.organization.logo}
+                        alt={invitation.organization.name || "Organization"}
+                        className="h-12 w-12 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <Building2 className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        {invitation.organization?.name || "Organization"}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        You've been invited to join as{" "}
+                        <span className="inline-flex items-center space-x-1">
+                          {getRoleIcon(invitation.role)}
+                          <span className="font-medium">
+                            {ROLE_LABELS[invitation.role as OrganizationRole] || invitation.role}
+                          </span>
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{formatRelativeTime(invitation.expiresAt)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleRejectInvitation(invitation)}
+                    disabled={acceptInvitation.isPending || rejectInvitation.isPending}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Decline
+                  </Button>
+                  <Button
+                    onClick={() => handleAcceptInvitation(invitation)}
+                    disabled={acceptInvitation.isPending || rejectInvitation.isPending}
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Accept
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Accept Invitation Confirmation Dialog */}
+      <AlertDialog open={!!invitationToAccept} onOpenChange={(open) => !open && setInvitationToAccept(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Accept Invitation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to join "{invitationToAccept?.organization?.name}" as{" "}
+              {ROLE_LABELS[invitationToAccept?.role as OrganizationRole]}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmAcceptInvitation}
+              disabled={acceptInvitation.isPending}
+            >
+              Accept Invitation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Invitation Confirmation Dialog */}
+      <AlertDialog open={!!invitationToReject} onOpenChange={(open) => !open && setInvitationToReject(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Decline Invitation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to decline the invitation to join "{invitationToReject?.organization?.name}"?
+              You can ask to be invited again later if you change your mind.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep invitation</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRejectInvitation}
+              disabled={rejectInvitation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Decline Invitation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}

@@ -26,7 +26,10 @@ export const session = pgTable("session", {
  userAgent: text('user_agent'),
  userId: text('user_id').notNull().references(()=> user.id, { onDelete: 'cascade' }),
  // Admin plugin field
- impersonatedBy: text('impersonated_by')
+ impersonatedBy: text('impersonated_by'),
+ // Organization plugin fields
+ activeOrganizationId: text('active_organization_id'),
+ activeTeamId: text('active_team_id')
 				});
 
 export const account = pgTable("account", {
@@ -61,10 +64,60 @@ export const twoFactor = pgTable("two_factor", {
  userId: text('user_id').notNull().references(()=> user.id, { onDelete: 'cascade' })
 				});
 
+// Organization plugin tables
+export const organization = pgTable("organization", {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  logo: text('logo'),
+  metadata: text('metadata'),
+  createdAt: timestamp('created_at').$defaultFn(() => new Date()).notNull()
+});
+
+export const member = pgTable("member", {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  role: text('role').notNull(),
+  createdAt: timestamp('created_at').$defaultFn(() => new Date()).notNull()
+});
+
+export const invitation = pgTable("invitation", {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(),
+  inviterId: text('inviter_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  role: text('role').notNull(),
+  status: text('status').notNull().$defaultFn(() => 'pending'),
+  expiresAt: timestamp('expires_at').notNull(),
+  teamId: text('team_id').references(() => team.id, { onDelete: 'cascade' }), // Optional, for team invitations
+  createdAt: timestamp('created_at').$defaultFn(() => new Date()).notNull()
+});
+
+export const team = pgTable("team", {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').$defaultFn(() => new Date()).notNull(),
+  updatedAt: timestamp('updated_at').$defaultFn(() => new Date()).notNull()
+});
+
+export const teamMember = pgTable("team_member", {
+  id: text('id').primaryKey(),
+  teamId: text('team_id').notNull().references(() => team.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').$defaultFn(() => new Date()).notNull()
+});
+
 export const schema = {
   user,
   session,
   account,
   verification,
-  twoFactor
+  twoFactor,
+  organization,
+  member,
+  invitation,
+  team,
+  teamMember
 };

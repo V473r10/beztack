@@ -16,6 +16,7 @@ import {
 	IconShield,
 	IconUsers,
 	IconUserCog,
+	IconBuilding,
 } from "@tabler/icons-react";
 import type * as React from "react";
 
@@ -23,6 +24,7 @@ import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
+import { OrganizationSwitcher } from "@/components/organizations";
 import {
 	Sidebar,
 	SidebarContent,
@@ -119,6 +121,11 @@ const data = {
 	],
 	navSecondary: [
 		{
+			title: "Organizations",
+			url: "organizations",
+			icon: IconBuilding,
+		},
+		{
 			title: "sidebar.secondary.settings",
 			url: "settings",
 			icon: IconSettings,
@@ -176,7 +183,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>
-			<SidebarHeader>
+			<SidebarHeader className="space-y-2">
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton
@@ -185,11 +192,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						>
 							<Link to="/">
 								<IconInnerShadowTop className="!size-5" />
-								<span className="text-base font-semibold">Acme Inc.</span>
+								<span className="text-base font-semibold">Vitro</span>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
+				<div className="px-2">
+					<OrganizationSwitcher
+						className="w-full"
+						onManageOrganizations={() => {
+							// This will be handled by the OrganizationSwitcher's routing
+						}}
+					/>
+				</div>
 			</SidebarHeader>
 			<SidebarContent>
 				<NavMain items={data.navMain} />
