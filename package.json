@@ -5,7 +5,7 @@
   "scripts": {
     "build": "nx build",
     "start": "nx start",
-    "dev": "nx dev",
+    "dev": "nx run-many -t dev",
     "lint": "nx lint",
     "test": "nx test",
     "migrate": "nx run api:migrate"
