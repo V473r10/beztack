@@ -64,7 +64,7 @@ export const MEMBERSHIP_TIERS: Record<string, MembershipTierConfig> = {
       storage: 10, // 10GB
       apiCalls: 10000, // per month
     },
-    polarProductId: process.env.POLAR_PRO_PRODUCT_ID,
+    polarProductId: undefined, // Set server-side via configuration
   },
   team: {
     id: "team",
@@ -104,7 +104,7 @@ export const MEMBERSHIP_TIERS: Record<string, MembershipTierConfig> = {
       storage: 100, // 100GB
       apiCalls: 50000, // per month
     },
-    polarProductId: process.env.POLAR_TEAM_PRODUCT_ID,
+    polarProductId: undefined,
   },
   enterprise: {
     id: "enterprise",
@@ -149,7 +149,7 @@ export const MEMBERSHIP_TIERS: Record<string, MembershipTierConfig> = {
       storage: -1, // unlimited
       apiCalls: -1, // unlimited
     },
-    polarProductId: process.env.POLAR_ENTERPRISE_PRODUCT_ID,
+    polarProductId: undefined, // Set server-side via configuration
   },
 } as const;
 

@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check, Crown, Users, Building2, Sparkles } from "lucide-react";
-import { formatCurrency, calculateYearlySavings } from "@buncn/payments/client";
-import type { MembershipTierConfig } from "@buncn/payments/types";
+import { formatCurrency, calculateYearlySavings } from "@nvn/payments/client";
+import type { MembershipTierConfig } from "@nvn/payments/types";
 
 export interface PricingCardProps {
   tier: MembershipTierConfig;

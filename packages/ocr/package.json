@@ -1,5 +1,5 @@
 {
-	"name": "@vitro/ocr",
+	"name": "@nvn/ocr",
 	"module": "index.ts",
 	"type": "module",
 	"devDependencies": {

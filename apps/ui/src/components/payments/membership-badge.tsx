@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Users, Building2, Sparkles } from "lucide-react";
-import { getTierConfig } from "@buncn/payments/constants";
-import type { MembershipTier } from "@buncn/payments/types";
+import { getTierConfig } from "@nvn/payments/constants";
+import type { MembershipTier } from "@nvn/payments/types";
 
 export interface MembershipBadgeProps {
   tier: MembershipTier;

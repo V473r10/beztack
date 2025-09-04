@@ -20,7 +20,7 @@
       "@/*": [
         "./src/*"
       ],
-      "@buncn/api/*": ["../../apps/api/src/*"]
+      "@nvn/api/*": ["../../apps/api/src/*"]
     },
     "strictNullChecks": true
   }

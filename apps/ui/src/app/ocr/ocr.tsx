@@ -16,7 +16,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { extractTextFromImage } from "@buncn/ocr";
+import { extractTextFromImage } from "@nvn/ocr";
 import {
 	Camera,
 	Copy,

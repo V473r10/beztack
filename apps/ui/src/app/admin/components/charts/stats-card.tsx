@@ -1,4 +1,3 @@
-import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -22,7 +21,7 @@ export function StatsCard({
   value, 
   icon, 
   trend, 
-  delay = 0,
+  delay: _delay = 0,
   className 
 }: StatsCardProps) {
   return (

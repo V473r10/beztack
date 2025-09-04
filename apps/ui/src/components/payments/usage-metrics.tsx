@@ -4,8 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, TrendingUp, Users, Database, Zap, ArrowUpRight } from "lucide-react";
-// import { getUsagePercentage, isUsageNearLimit } from "@buncn/payments/client";
-import type { CustomerMeter, MembershipTierConfig } from "@buncn/payments/types";
+// import { getUsagePercentage, isUsageNearLimit } from "@nvn/payments/client";
+import type { CustomerMeter, MembershipTierConfig } from "@nvn/payments/types";
 
 export interface UsageMetricsProps {
   meters?: CustomerMeter[];

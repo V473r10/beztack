@@ -272,7 +272,7 @@ export function useSubscriptionManagement(
   });
 
   const upgradeToTier = useCallback(
-    async (tier: MembershipTier, billingPeriod: "monthly" | "yearly" = "monthly") => {
+    async (tier: MembershipTier) => {
       await checkout.initiateCheckout({
         slug: tier,
         metadata: {
@@ -315,7 +315,7 @@ export function useOrganizationSubscription(
     active: true,
   });
 
-  const activeSubscription = subscriptions.data?.find(sub => 
+  const activeSubscription = subscriptions.data?.find((sub: Subscription) => 
     sub.metadata.organizationId === organizationId &&
     sub.status === "active"
   );

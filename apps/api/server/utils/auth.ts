@@ -3,15 +3,43 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db/db";
 import { schema } from "@/db/schema";
 import { twoFactor, admin, organization } from "better-auth/plugins";
-import { setupPolarForBetterAuth } from "@buncn/payments/server";
+import { setupPolarForBetterAuth } from "@nvn/payments/server";
 
-// Setup Polar configuration conditionally
+// Setup Polar configuration with proper validation
 function getPolarPlugin() {
+  // Check required environment variables
+  const hasAccessToken = !!process.env.POLAR_ACCESS_TOKEN;
+  const hasWebhookSecret = !!process.env.POLAR_WEBHOOK_SECRET;
+  
+  if (!hasAccessToken) {
+    console.info('Polar integration disabled: POLAR_ACCESS_TOKEN not provided');
+    return null;
+  }
+  
+  if (!hasWebhookSecret) {
+    console.warn('Polar webhooks disabled: POLAR_WEBHOOK_SECRET not provided');
+    // Continue without webhooks
+  }
+
   try {
     const polarConfig = setupPolarForBetterAuth();
-    return polarConfig ? polarConfig.plugin : null;
+    
+    if (polarConfig) {
+      console.info('Polar integration enabled:', {
+        server: process.env.POLAR_SERVER || 'sandbox',
+        webhooksEnabled: hasWebhookSecret,
+        hasProProduct: !!process.env.POLAR_PRO_PRODUCT_ID,
+        hasTeamProduct: !!process.env.POLAR_TEAM_PRODUCT_ID,
+        hasEnterpriseProduct: !!process.env.POLAR_ENTERPRISE_PRODUCT_ID
+      });
+      
+      return polarConfig.plugin;
+    }
+    
+    return null;
   } catch (error) {
-    console.warn('Polar configuration not available:', error.message);
+    console.error('Failed to setup Polar integration:', error instanceof Error ? error.message : String(error));
+    console.warn('Continuing without Polar integration. Check your configuration.');
     return null;
   }
 }
@@ -25,10 +53,10 @@ export const auth = betterAuth({
     requireEmailVerification: false,
   },
   socialProviders: {},
-  trustedOrigins: ["http://localhost:5173", "http://localhost:5174", "https://vitro.vercel.app"],
+  trustedOrigins: ["http://localhost:5173", "http://localhost:5174", "https://nvn.vercel.app"],
   plugins: [
     twoFactor({
-      issuer: "Vitro", 
+      issuer: "nvn", 
     }),
     admin(),
     organization({

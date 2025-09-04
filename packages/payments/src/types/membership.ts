@@ -1,4 +1,3 @@
-import type { z } from "zod";
 
 /**
  * Membership tier levels based on VIT-17 strategy

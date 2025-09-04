@@ -3,7 +3,6 @@ export {
   type PolarClientConfig,
   type PolarPluginConfig,
   type WebhookHandlers,
-  createPolarClient,
   createPolarPlugin,
   getPolarConfigFromEnv,
   setupPolarForBetterAuth,
@@ -19,3 +18,19 @@ export {
   verifyWebhookSignature,
   handleWebhookRequest,
 } from "./webhooks.ts";
+
+// Server-side tier configuration
+export {
+  getServerTierConfig,
+  getTierProductId,
+  getServerTierInfo,
+} from "./tier-config.ts";
+
+// Direct Polar API integration
+export {
+  PolarApiService,
+  createPolarClient,
+  polarApi,
+  validatePolarConnection,
+  getOrganizationProducts,
+} from "./polar-api.ts";

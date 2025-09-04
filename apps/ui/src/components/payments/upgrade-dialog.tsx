@@ -13,8 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, Sparkles, ArrowRight } from "lucide-react";
 import { PricingCard } from "./pricing-card";
 import { MembershipBadge } from "./membership-badge";
-import { getAllTiers, isTierHigher } from "@buncn/payments/constants";
-import type { MembershipTier } from "@buncn/payments/types";
+import { getAllTiers, isTierHigher } from "@nvn/payments/constants";
+import type { MembershipTier } from "@nvn/payments/types";
 
 export interface UpgradeDialogProps {
   open: boolean;

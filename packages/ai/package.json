@@ -1,5 +1,5 @@
 {
-  "name": "@vitro/ai",
+  "name": "@nvn/ai",
   "version": "1.0.0",
   "type": "module",
   "main": "index.ts",

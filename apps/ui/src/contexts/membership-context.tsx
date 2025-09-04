@@ -2,8 +2,8 @@ import React, { createContext, useContext, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 // import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
 import { toast } from "sonner";
-import { getBillingPortalUrl } from "@buncn/payments/client";
-import { getTierConfig } from "@buncn/payments/constants";
+import { getBillingPortalUrl } from "@nvn/payments/client";
+import { getTierConfig } from "@nvn/payments/constants";
 import type {
   MembershipTier,
   MembershipTierConfig,
@@ -12,7 +12,7 @@ import type {
   CustomerMeter,
   Benefit,
   CheckoutSessionParams,
-} from "@buncn/payments/types";
+} from "@nvn/payments/types";
 
 export interface MembershipContextValue {
   // Current membership state
@@ -76,7 +76,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // Fetch subscriptions
   const subscriptionsQuery = useQuery({
     queryKey: ["customer", "subscriptions"],
-    queryFn: async () => {
+    queryFn: async (): Promise<Subscription[]> => {
       // Mock subscriptions - replace with actual API call when server is ready
       return [];
     },
@@ -86,7 +86,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // Fetch orders
   const ordersQuery = useQuery({
     queryKey: ["customer", "orders"],
-    queryFn: async () => {
+    queryFn: async (): Promise<Order[]> => {
       // Mock orders - replace with actual API call when server is ready
       return [];
     },
@@ -96,7 +96,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // Fetch meters
   const metersQuery = useQuery({
     queryKey: ["customer", "meters"],
-    queryFn: async () => {
+    queryFn: async (): Promise<CustomerMeter[]> => {
       // Mock meters - replace with actual API call when server is ready
       return [];
     },
@@ -106,7 +106,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // Fetch benefits
   const benefitsQuery = useQuery({
     queryKey: ["customer", "benefits"],
-    queryFn: async () => {
+    queryFn: async (): Promise<Benefit[]> => {
       // Mock benefits - replace with actual API call when server is ready
       return [];
     },
@@ -152,13 +152,13 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const meters = metersQuery.data || [];
   const benefits = benefitsQuery.data || [];
   
-  const activeSubscription = subscriptions.find((sub: any) => 
-    sub?.status === "active" || (sub?.status === "canceled" && sub?.currentPeriodEnd > new Date())
+  const activeSubscription = subscriptions.find((sub: Subscription) => 
+    sub?.status === "active" || (sub?.status === "canceled" && sub?.currentPeriodEnd && new Date(sub.currentPeriodEnd) > new Date())
   ) || null;
 
   // Determine current tier from subscription or default to free
   const currentTier: MembershipTier = (
-    (activeSubscription as any)?.metadata?.tier as MembershipTier
+    activeSubscription?.metadata?.tier as MembershipTier
   ) || "free";
   
   const tierConfig = getTierConfig(currentTier) || null;

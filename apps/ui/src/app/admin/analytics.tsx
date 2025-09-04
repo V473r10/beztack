@@ -7,7 +7,6 @@ import { AnimatedBarChart } from "./components/charts/animated-bar-chart";
 import { StatsCard } from "./components/charts/stats-card";
 import { PingingDotChart } from "@/components/ui/pinging-dot-chart";
 import type { ChartConfig } from "@/components/ui/chart";
-import { motion } from "motion/react";
 
 // Types for API responses
 interface SystemMetric {

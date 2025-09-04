@@ -7,9 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Home, CreditCard } from "lucide-react";
 import { MembershipBadge } from "@/components/payments/membership-badge";
 import { useMembership } from "@/contexts/membership-context";
-import { getTierConfig } from "@buncn/payments/constants";
-import { formatCurrency } from "@buncn/payments/client";
-import type { MembershipTier } from "@buncn/payments/types";
+import { getTierConfig } from "@nvn/payments/constants";
+import { formatCurrency } from "@nvn/payments/client";
+import type { MembershipTier } from "@nvn/payments/types";
 
 export default function CheckoutSuccess() {
   const [searchParams] = useSearchParams();
@@ -95,9 +95,12 @@ export default function CheckoutSuccess() {
               <div className="space-y-1">
                 <div className="text-sm text-muted-foreground">Price</div>
                 <div className="font-medium">
-                  {activeSubscription ? (
+                  {activeSubscription && activeSubscription.metadata?.tier ? (
                     <>
-                      {formatCurrency((activeSubscription as any).amount || 0)} / {(activeSubscription as any).interval || "month"}
+                      {(() => {
+                        const tierConfig = getTierConfig(activeSubscription.metadata.tier!);
+                        return tierConfig ? `${formatCurrency(tierConfig.price.monthly)} / month` : "Unknown price";
+                      })()}
                     </>
                   ) : (
                     `${formatCurrency(tierConfig.price.monthly)} / month`
@@ -109,7 +112,7 @@ export default function CheckoutSuccess() {
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">Next billing</div>
                     <div className="font-medium">
-                      {activeSubscription.currentPeriodEnd.toLocaleDateString()}
+                      {activeSubscription.currentPeriodEnd ? new Date(activeSubscription.currentPeriodEnd).toLocaleDateString() : "N/A"}
                     </div>
                   </div>
                   <div className="space-y-1">

@@ -1,4 +1,4 @@
-# @buncn/ai
+# @nvn/ai
 
 A lightweight AI SDK wrapper package that provides pre-configured Amazon Bedrock integration for the BunCN project.
 
@@ -11,7 +11,7 @@ A lightweight AI SDK wrapper package that provides pre-configured Amazon Bedrock
 ## Installation
 
 ```bash
-bun add @buncn/ai
+bun add @nvn/ai
 ```
 
 ## Usage
@@ -19,7 +19,7 @@ bun add @buncn/ai
 ### Basic AI SDK Usage
 
 ```typescript
-import { generateText } from '@buncn/ai';
+import { generateText } from '@nvn/ai';
 
 const result = await generateText({
   model: 'your-model',
@@ -30,7 +30,7 @@ const result = await generateText({
 ### Amazon Bedrock Provider
 
 ```typescript
-import { bedrock, generateText } from '@buncn/ai';
+import { bedrock, generateText } from '@nvn/ai';
 
 const result = await generateText({
   model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),

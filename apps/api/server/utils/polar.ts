@@ -1,5 +1,5 @@
-import { createPolarClient, getPolarConfigFromEnv } from "@buncn/payments/server";
-import type { PolarClientConfig } from "@buncn/payments/server";
+import { createPolarClient, getPolarConfigFromEnv } from "@nvn/payments/server";
+import type { PolarClientConfig } from "@nvn/payments/server";
 
 /**
  * Create a configured Polar client instance
@@ -24,13 +24,47 @@ export function getPolarConfig(): PolarClientConfig | null {
   const server = process.env.POLAR_SERVER as 'sandbox' | 'production' | undefined;
   
   if (!accessToken) {
-    console.warn('POLAR_ACCESS_TOKEN not found in environment variables');
     return null;
   }
   
   return {
     accessToken,
     server: server || 'sandbox'
+  };
+}
+
+/**
+ * Check if Polar integration is properly configured
+ */
+export function isPolarConfigured(): {
+  configured: boolean;
+  missing: string[];
+  warnings: string[];
+} {
+  const missing: string[] = [];
+  const warnings: string[] = [];
+
+  if (!process.env.POLAR_ACCESS_TOKEN) {
+    missing.push('POLAR_ACCESS_TOKEN');
+  }
+
+  if (!process.env.POLAR_WEBHOOK_SECRET) {
+    warnings.push('POLAR_WEBHOOK_SECRET (webhooks will be disabled)');
+  }
+
+  const server = process.env.POLAR_SERVER;
+  if (server && !['sandbox', 'production'].includes(server)) {
+    warnings.push(`POLAR_SERVER should be 'sandbox' or 'production', got: ${server}`);
+  }
+
+  if (!process.env.POLAR_PRO_PRODUCT_ID && !process.env.POLAR_TEAM_PRODUCT_ID && !process.env.POLAR_ENTERPRISE_PRODUCT_ID) {
+    warnings.push('No product IDs configured - checkout may not work properly');
+  }
+
+  return {
+    configured: missing.length === 0,
+    missing,
+    warnings
   };
 }
 

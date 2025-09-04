@@ -13,7 +13,13 @@ export const user = pgTable("user", {
  role: text('role').$defaultFn(() => 'user'),
  banned: boolean('banned').$defaultFn(() => false),
  banReason: text('ban_reason'),
- banExpires: timestamp('ban_expires')
+ banExpires: timestamp('ban_expires'),
+ // Polar subscription fields for individual users
+ subscriptionTier: text('subscription_tier').$defaultFn(() => 'free'),
+ subscriptionStatus: text('subscription_status').$defaultFn(() => 'inactive'),
+ subscriptionId: text('subscription_id'),
+ polarCustomerId: text('polar_customer_id'),
+ subscriptionValidUntil: timestamp('subscription_valid_until')
 				});
 
 export const session = pgTable("session", {
@@ -71,7 +77,15 @@ export const organization = pgTable("organization", {
   slug: text('slug').notNull().unique(),
   logo: text('logo'),
   metadata: text('metadata'),
-  createdAt: timestamp('created_at').$defaultFn(() => new Date()).notNull()
+  // Polar subscription fields
+  subscriptionTier: text('subscription_tier').$defaultFn(() => 'free'),
+  subscriptionStatus: text('subscription_status').$defaultFn(() => 'inactive'),
+  subscriptionId: text('subscription_id'),
+  polarCustomerId: text('polar_customer_id'),
+  subscriptionValidUntil: timestamp('subscription_valid_until'),
+  usageMetrics: text('usage_metrics'), // JSON field for usage tracking
+  createdAt: timestamp('created_at').$defaultFn(() => new Date()).notNull(),
+  updatedAt: timestamp('updated_at').$defaultFn(() => new Date()).notNull()
 });
 
 export const member = pgTable("member", {

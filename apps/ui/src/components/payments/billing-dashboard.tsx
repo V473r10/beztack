@@ -21,14 +21,15 @@ import {
 import { MembershipBadge, MembershipStatus } from "./membership-badge";
 import { UsageMetrics } from "./usage-metrics";
 import { UpgradeDialog } from "./upgrade-dialog";
-import { formatCurrency, getBillingPortalUrl } from "@buncn/payments/client";
+import { formatCurrency, getBillingPortalUrl } from "@nvn/payments/client";
+import { getTierConfig } from "@nvn/payments/constants";
 import type { 
   Subscription, 
   Order, 
   CustomerMeter, 
   MembershipTierConfig,
   MembershipTier 
-} from "@buncn/payments/types";
+} from "@nvn/payments/types";
 
 export interface BillingDashboardProps {
   subscriptions?: Subscription[];
@@ -51,7 +52,7 @@ interface SubscriptionCardProps {
 function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCardProps) {
   const isActive = subscription.status === "active";
   const isCanceled = subscription.status === "canceled";
-  const inGracePeriod = isCanceled && subscription.currentPeriodEnd > new Date();
+  const inGracePeriod = isCanceled && subscription.currentPeriodEnd && new Date(subscription.currentPeriodEnd) > new Date();
   
   const getStatusColor = () => {
     if (isActive) return "default";
@@ -61,7 +62,7 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
 
   const getStatusText = () => {
     if (isActive) return "Active";
-    if (inGracePeriod) return "Canceled (Active until " + subscription.currentPeriodEnd.toLocaleDateString() + ")";
+    if (inGracePeriod && subscription.currentPeriodEnd) return "Canceled (Active until " + new Date(subscription.currentPeriodEnd).toLocaleDateString() + ")";
     return "Canceled";
   };
 
@@ -77,10 +78,15 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
               }
             </CardTitle>
             <CardDescription>
-              {formatCurrency((subscription as any).amount || 0)} / {(subscription as any).interval || "month"}
+              {subscription.metadata?.tier ? (
+                (() => {
+                  const tierConfig = getTierConfig(subscription.metadata.tier);
+                  return tierConfig ? `${formatCurrency(tierConfig.price.monthly)} / month` : "Unknown price";
+                })()
+              ) : "Unknown price"}
             </CardDescription>
           </div>
-          <Badge variant={getStatusColor() as any}>
+          <Badge variant={getStatusColor() as "default" | "secondary" | "destructive" | "outline"}>
             {getStatusText()}
           </Badge>
         </div>
@@ -89,7 +95,7 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
           <Alert>
             <Clock className="h-4 w-4" />
             <AlertDescription>
-              Your subscription is canceled but remains active until {subscription.currentPeriodEnd.toLocaleDateString()}.
+              Your subscription is canceled but remains active until {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : 'N/A'}.
               You can reactivate it anytime before then.
             </AlertDescription>
           </Alert>
@@ -101,13 +107,13 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground">Next billing</div>
             <div className="font-medium">
-              {isActive ? subscription.currentPeriodEnd.toLocaleDateString() : "—"}
+              {isActive && subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "—"}
             </div>
           </div>
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground">Started</div>
             <div className="font-medium">
-              {subscription.createdAt.toLocaleDateString()}
+              {subscription.createdAt ? new Date(subscription.createdAt).toLocaleDateString() : "—"}
             </div>
           </div>
         </div>
@@ -166,13 +172,13 @@ function OrderHistory({ orders }: OrderHistoryProps) {
             <div className="flex items-center gap-4">
               <div className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full",
-                (order as any).status === "paid" && "bg-green-100 text-green-600 dark:bg-green-900/20",
-                (order as any).status === "pending" && "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20",
-                (order as any).status === "failed" && "bg-red-100 text-red-600 dark:bg-red-900/20"
+                order.status === "completed" && "bg-green-100 text-green-600 dark:bg-green-900/20",
+                order.status === "pending" && "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20",
+                (order.status === "canceled" || order.status === "refunded") && "bg-red-100 text-red-600 dark:bg-red-900/20"
               )}>
-                {(order as any).status === "paid" && <CheckCircle className="h-4 w-4" />}
-                {(order as any).status === "pending" && <Clock className="h-4 w-4" />}
-                {(order as any).status === "failed" && <AlertCircle className="h-4 w-4" />}
+                {order.status === "completed" && <CheckCircle className="h-4 w-4" />}
+                {order.status === "pending" && <Clock className="h-4 w-4" />}
+                {(order.status === "canceled" || order.status === "refunded") && <AlertCircle className="h-4 w-4" />}
               </div>
               
               <div className="space-y-1">
@@ -183,16 +189,16 @@ function OrderHistory({ orders }: OrderHistoryProps) {
                   }
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {order.createdAt.toLocaleDateString()} • {formatCurrency(order.amount)}
+                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'} • {formatCurrency(order.amount)}
                 </div>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
               <Badge 
-                variant={(order as any).status === "paid" ? "default" : (order as any).status === "pending" ? "secondary" : "destructive"}
+                variant={order.status === "completed" ? "default" : order.status === "pending" ? "secondary" : "destructive"}
               >
-                {((order as any).status || "unknown").charAt(0).toUpperCase() + ((order as any).status || "unknown").slice(1)}
+                {(order.status || "unknown").charAt(0).toUpperCase() + (order.status || "unknown").slice(1)}
               </Badge>
               <Button variant="ghost" size="sm">
                 <Eye className="h-3 w-3" />
@@ -222,7 +228,7 @@ export function BillingDashboard({
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
   const activeSubscription = subscriptions.find(sub => 
-    sub.status === "active" || (sub.status === "canceled" && sub.currentPeriodEnd > new Date())
+    sub.status === "active" || (sub.status === "canceled" && sub.currentPeriodEnd && new Date(sub.currentPeriodEnd) > new Date())
   );
 
   const handleUpgrade = (tierId: string, billingPeriod: "monthly" | "yearly") => {
@@ -261,7 +267,7 @@ export function BillingDashboard({
               <MembershipStatus
                 tier={currentTier}
                 isActive={activeSubscription.status === "active"}
-                expiresAt={activeSubscription.currentPeriodEnd}
+                expiresAt={activeSubscription.currentPeriodEnd ? new Date(activeSubscription.currentPeriodEnd) : undefined}
               />
             ) : (
               <div className="text-sm text-muted-foreground">

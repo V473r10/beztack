@@ -1,5 +1,5 @@
 /**
- * @buncn/payments - Polar payment integration for Vitro
+ * @nvn/payments - Polar payment integration for nvn
  * 
  * This package provides a complete payment and subscription management
  * solution integrated with Polar and Better Auth.
@@ -19,13 +19,13 @@ export * from "./src/utils/index.ts";
 
 /**
  * Server-side utilities
- * Import with: import { ... } from "@buncn/payments/server"
+ * Import with: import { ... } from "@nvn/payments/server"
  */
 export * as server from "./src/server/index.ts";
 
 /**
  * Client-side utilities and React hooks
- * Import with: import { ... } from "@buncn/payments/client"
+ * Import with: import { ... } from "@nvn/payments/client"
  */
 export * as client from "./src/client/index.ts";
 
@@ -53,8 +53,8 @@ export const VERSION = "1.0.0";
  * Package metadata
  */
 export const PACKAGE_INFO = {
-  name: "@buncn/payments",
+  name: "@nvn/payments",
   version: VERSION,
-  description: "Polar payment integration for Vitro monorepo",
-  author: "Vitro Team",
+  description: "Polar payment integration for nvn monorepo",
+  author: "nvn Team",
 } as const;

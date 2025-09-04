@@ -1,6 +1,6 @@
-# @buncn/payments
+# @nvn/payments
 
-Polar payment integration package for the Vitro monorepo. This package provides complete payment and subscription management functionality integrated with Polar and Better Auth.
+Polar payment integration package for the nvn monorepo. This package provides complete payment and subscription management functionality integrated with Polar and Better Auth.
 
 ## Features
 
@@ -15,10 +15,10 @@ Polar payment integration package for the Vitro monorepo. This package provides 
 
 ## Installation
 
-This package is part of the Vitro monorepo and should be used internally:
+This package is part of the nvn monorepo and should be used internally:
 
 ```bash
-pnpm install @buncn/payments
+pnpm install @nvn/payments
 ```
 
 ## Quick Setup
@@ -40,7 +40,7 @@ POLAR_ENTERPRISE_PRODUCT_ID=your_enterprise_product_id
 
 ```typescript
 import { betterAuth } from "better-auth";
-import { setupPolarForBetterAuth } from "@buncn/payments";
+import { setupPolarForBetterAuth } from "@nvn/payments";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema: schema }),
@@ -75,7 +75,7 @@ export const authClient = createAuthClient({
 ### Membership Validation
 
 ```typescript
-import { validateMembership, hasPermission } from "@buncn/payments";
+import { validateMembership, hasPermission } from "@nvn/payments";
 
 // Validate user membership
 const membershipResult = validateMembership(customerPortalState);
@@ -93,7 +93,7 @@ if (membershipResult.isValid) {
 ### React Hooks
 
 ```typescript
-import { useCustomerState, useSubscriptionManagement } from "@buncn/payments/client";
+import { useCustomerState, useSubscriptionManagement } from "@nvn/payments/client";
 
 function BillingPage() {
   const { data: customerState, isLoading } = useCustomerState(authClient);
@@ -122,7 +122,7 @@ function BillingPage() {
 ### Usage Tracking
 
 ```typescript
-import { useUsageTracking } from "@buncn/payments/client";
+import { useUsageTracking } from "@nvn/payments/client";
 
 function MyComponent() {
   const usageTracking = useUsageTracking(authClient);
@@ -147,7 +147,7 @@ import {
   createWebhookHandler, 
   handleWebhookRequest,
   type MembershipUpdate 
-} from "@buncn/payments/server";
+} from "@nvn/payments/server";
 
 // Create webhook handler
 const webhookHandler = createWebhookHandler(
@@ -219,7 +219,7 @@ import type {
   Subscription,
   Customer,
   CheckoutSessionParams,
-} from "@buncn/payments";
+} from "@nvn/payments";
 ```
 
 ### Constants
@@ -229,7 +229,7 @@ import {
   MEMBERSHIP_TIERS,
   PERMISSIONS,
   TIER_HIERARCHY,
-} from "@buncn/payments";
+} from "@nvn/payments";
 ```
 
 ### Utilities
@@ -240,7 +240,7 @@ import {
   hasPermission,
   hasFeature,
   isWithinUsageLimits,
-} from "@buncn/payments";
+} from "@nvn/payments";
 ```
 
 ### Server Functions
@@ -250,7 +250,7 @@ import {
   setupPolarForBetterAuth,
   createPolarClient,
   createWebhookHandler,
-} from "@buncn/payments/server";
+} from "@nvn/payments/server";
 ```
 
 ### Client Hooks
@@ -261,7 +261,7 @@ import {
   useSubscriptionManagement,
   useUsageTracking,
   useBillingPortal,
-} from "@buncn/payments/client";
+} from "@nvn/payments/client";
 ```
 
 ## Environment Variables
@@ -284,7 +284,7 @@ Add the Polar plugin to your Better Auth configuration:
 
 ```typescript
 // apps/api/server/utils/auth.ts
-import { setupPolarForBetterAuth } from "@buncn/payments";
+import { setupPolarForBetterAuth } from "@nvn/payments";
 
 export const auth = betterAuth({
   // existing config...
@@ -301,7 +301,7 @@ Use the React hooks in your components:
 
 ```typescript
 // apps/ui/src/pages/BillingPage.tsx
-import { useSubscriptionManagement } from "@buncn/payments/client";
+import { useSubscriptionManagement } from "@nvn/payments/client";
 import { authClient } from "@/lib/auth-client";
 
 export function BillingPage() {
@@ -313,4 +313,4 @@ export function BillingPage() {
 
 ## License
 
-This package is part of the Vitro monorepo and is proprietary software.
+This package is part of the nvn monorepo and is proprietary software.

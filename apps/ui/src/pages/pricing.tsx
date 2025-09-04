@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, ArrowRight, Mail } from "lucide-react";
 import { PricingCard } from "@/components/payments/pricing-card";
 import { useMembership } from "@/contexts/membership-context";
-import { getAllTiers } from "@buncn/payments/constants";
+import { getAllTiers } from "@nvn/payments/constants";
 
 export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
@@ -276,7 +276,7 @@ export default function Pricing() {
               Ready to get started?
             </h2>
             <p className="text-lg mb-6 opacity-90">
-              Join thousands of teams already using Vitro to secure their applications.
+              Join thousands of teams already using nvn to secure their applications.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 

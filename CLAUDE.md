@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Vitro is an Nx workspace monorepo using pnpm as the package manager. The project contains:
+nvn is an Nx workspace monorepo using pnpm as the package manager. The project contains:
 - **Frontend**: React application with Vite, Tailwind CSS, and Radix UI components
 - **Backend**: Nitro server with PostgreSQL database using Drizzle ORM
 - **Shared packages**: AI utilities (AWS Bedrock integration), OCR functionality, and payment processing with Polar
@@ -44,8 +44,8 @@ nx run api:migrate
 pnpm install
 
 # Add dependencies to specific workspace
-pnpm add <package> --filter @vitro/ui
-pnpm add <package> --filter @vitro/api
+pnpm add <package> --filter @nvn/ui
+pnpm add <package> --filter @nvn/api
 ```
 
 ## Architecture
@@ -56,7 +56,7 @@ pnpm add <package> --filter @vitro/api
 - `packages/ai/` - AI SDK wrapper with Amazon Bedrock integration
 - `packages/ocr/` - OCR utilities using Tesseract.js
 
-### Frontend (`@vitro/ui`)
+### Frontend (`@nvn/ui`)
 - **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS v4
@@ -66,16 +66,16 @@ pnpm add <package> --filter @vitro/api
 - **Routing**: React Router v7
 - **Authentication**: Better Auth integration
 
-### Backend (`@vitro/api`)
+### Backend (`@nvn/api`)
 - **Framework**: Nitro (Universal JavaScript server)
 - **Database**: PostgreSQL with Drizzle ORM
 - **Authentication**: Better Auth
 - **Configuration**: Server source in `apps/api/server/`
 
 ### Shared Packages
-- `@buncn/ai` - Exports AI SDK with pre-configured Amazon Bedrock provider
-- `@buncn/ocr` - Text extraction from images using Tesseract.js
-- `@buncn/payments` - Polar payment integration with Better Auth, membership tiers, and billing management
+- `@nvn/ai` - Exports AI SDK with pre-configured Amazon Bedrock provider
+- `@nvn/ocr` - Text extraction from images using Tesseract.js
+- `@nvn/payments` - Polar payment integration with Better Auth, membership tiers, and billing management
 
 ## Development Guidelines
 
@@ -97,7 +97,7 @@ pnpm add <package> --filter @vitro/api
 
 ## Polar Payment Integration
 
-The project includes comprehensive Polar payment integration through the `@buncn/payments` package, providing developer-first monetization capabilities.
+The project includes comprehensive Polar payment integration through the `@nvn/payments` package, providing developer-first monetization capabilities.
 
 ### Configuration
 
@@ -128,7 +128,7 @@ The API automatically includes Polar integration when environment variables are 
 
 ```typescript
 // In apps/api/server/utils/auth.ts
-import { setupPolarForBetterAuth } from "@buncn/payments";
+import { setupPolarForBetterAuth } from "@nvn/payments";
 
 export const auth = betterAuth({
   plugins: [

@@ -26,19 +26,19 @@ export function createPolarClient(config: PolarClientConfig): Polar {
  * Webhook handlers configuration
  */
 export interface WebhookHandlers {
-  onCustomerStateChanged?: (payload: any) => Promise<void> | void;
-  onOrderPaid?: (payload: any) => Promise<void> | void;
-  onSubscriptionCreated?: (payload: any) => Promise<void> | void;
-  onSubscriptionUpdated?: (payload: any) => Promise<void> | void;
-  onSubscriptionActive?: (payload: any) => Promise<void> | void;
-  onSubscriptionCanceled?: (payload: any) => Promise<void> | void;
-  onSubscriptionRevoked?: (payload: any) => Promise<void> | void;
-  onCheckoutCreated?: (payload: any) => Promise<void> | void;
-  onCheckoutUpdated?: (payload: any) => Promise<void> | void;
-  onBenefitGrantCreated?: (payload: any) => Promise<void> | void;
-  onBenefitGrantUpdated?: (payload: any) => Promise<void> | void;
-  onBenefitGrantRevoked?: (payload: any) => Promise<void> | void;
-  onPayload?: (payload: any) => Promise<void> | void;
+  onCustomerStateChanged?: (payload: any) => Promise<void>;
+  onOrderPaid?: (payload: any) => Promise<void>;
+  onSubscriptionCreated?: (payload: any) => Promise<void>;
+  onSubscriptionUpdated?: (payload: any) => Promise<void>;
+  onSubscriptionActive?: (payload: any) => Promise<void>;
+  onSubscriptionCanceled?: (payload: any) => Promise<void>;
+  onSubscriptionRevoked?: (payload: any) => Promise<void>;
+  onCheckoutCreated?: (payload: any) => Promise<void>;
+  onCheckoutUpdated?: (payload: any) => Promise<void>;
+  onBenefitGrantCreated?: (payload: any) => Promise<void>;
+  onBenefitGrantUpdated?: (payload: any) => Promise<void>;
+  onBenefitGrantRevoked?: (payload: any) => Promise<void>;
+  onPayload?: (payload: any) => Promise<void>;
 }
 
 /**
@@ -47,12 +47,11 @@ export interface WebhookHandlers {
 export interface PolarPluginConfig {
   client: Polar;
   createCustomerOnSignUp?: boolean;
-  getCustomerCreateParams?: (
-    user: { id: string; email: string; name?: string },
-    request: Request
-  ) => {
+  getCustomerCreateParams?: (data: {
+    user: { id: string; email: string; emailVerified: boolean; name: string; createdAt: Date; updatedAt: Date; image?: string | null };
+  }, request?: Request) => Promise<{
     metadata?: Record<string, any>;
-  };
+  }>;
   webhookSecret?: string;
   webhookHandlers?: WebhookHandlers;
   successUrl?: string;
@@ -74,7 +73,7 @@ export function createPolarPlugin(config: PolarPluginConfig) {
   return polar({
     client: config.client,
     createCustomerOnSignUp: config.createCustomerOnSignUp ?? true,
-    getCustomerCreateParams: config.getCustomerCreateParams ?? (({ user }) => ({
+    getCustomerCreateParams: config.getCustomerCreateParams ?? (async ({ user }) => ({
       metadata: {
         userId: user.id,
         email: user.email,
