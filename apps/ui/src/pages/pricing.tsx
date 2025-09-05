@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,13 +7,48 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, ArrowRight, Mail } from "lucide-react";
 import { PricingCard } from "@/components/payments/pricing-card";
 import { useMembership } from "@/contexts/membership-context";
-import { getAllTiers } from "@nvn/payments/constants";
+import { MEMBERSHIP_TIERS } from "@nvn/payments/constants";
+import type { MembershipTierConfig } from "@nvn/payments/types";
+
+async function fetchPolarProducts(): Promise<MembershipTierConfig[]> {
+  try {
+    const response = await fetch('/api/polar/products');
+    const polarProducts = await response.json();
+    
+    // Convert static tiers to include Polar product data
+    const tiersWithPolar = Object.values(MEMBERSHIP_TIERS).map((tier) => {
+      const monthlyProduct = polarProducts.monthly;
+      const yearlyProduct = polarProducts.yearly;
+      
+      return {
+        ...tier,
+        polarProductId: monthlyProduct?.id || yearlyProduct?.id,
+        // Override prices if Polar has different pricing
+        price: {
+          monthly: monthlyProduct?.prices?.[0]?.priceAmount || tier.price.monthly,
+          yearly: yearlyProduct?.prices?.[0]?.priceAmount || tier.price.yearly,
+        }
+      };
+    }) as MembershipTierConfig[];
+    
+    return tiersWithPolar;
+  } catch (error) {
+    console.error('Failed to fetch Polar products:', error);
+    // Fallback to static tiers
+    return Object.values(MEMBERSHIP_TIERS);
+  }
+}
 
 export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const { currentTier, upgradeToTier, isLoading } = useMembership();
   
-  const allTiers = getAllTiers();
+  const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<MembershipTierConfig[]>({
+    queryKey: ['polar-products'],
+    queryFn: fetchPolarProducts,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+  });
 
   const handleTierSelect = async (tierId: string) => {
     try {
@@ -91,17 +127,37 @@ export default function Pricing() {
 
       {/* Pricing Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-        {allTiers.map((tier) => (
-          <PricingCard
-            key={tier.id}
-            tier={tier}
-            billingPeriod={billingPeriod}
-            currentTier={currentTier}
-            isPopular={tier.id === "pro"}
-            onSelect={handleTierSelect}
-            isLoading={isLoading}
-          />
-        ))}
+        {isLoadingTiers ? (
+          // Loading skeleton
+          Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index} className="relative">
+              <CardContent className="p-6">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-2 bg-muted rounded w-full mb-4"></div>
+                  <div className="h-8 bg-muted rounded w-1/2 mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="h-2 bg-muted rounded"></div>
+                    <div className="h-2 bg-muted rounded"></div>
+                    <div className="h-2 bg-muted rounded"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          allTiers.map((tier) => (
+            <PricingCard
+              key={tier.id}
+              tier={tier}
+              billingPeriod={billingPeriod}
+              currentTier={currentTier}
+              isPopular={tier.id === "pro"}
+              onSelect={handleTierSelect}
+              isLoading={isLoading}
+            />
+          ))
+        )}
       </div>
 
       {/* Feature Comparison Table */}

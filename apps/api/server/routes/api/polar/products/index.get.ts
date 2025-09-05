@@ -3,8 +3,8 @@ import { defineEventHandler } from "h3";
 
 
 interface ProductsByFrequency {
-    monthly: Object;
-    yearly: Object;
+    monthly: Object | null;
+    yearly: Object | null;
 }
 
 export default defineEventHandler(async (event) => {
@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
   });
 
   const productsByFrequency: ProductsByFrequency = {
-    monthly: products.result.items.find(item => item.metadata["frequency"] === "month"),
-    yearly: products.result.items.find(item => item.metadata["frequency"] === "year")
+    monthly: products.result.items.find(item => item.metadata["frequency"] === "month") || null,
+    yearly: products.result.items.find(item => item.metadata["frequency"] === "year") || null
   };
 
   return productsByFrequency;
