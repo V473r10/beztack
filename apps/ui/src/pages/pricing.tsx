@@ -7,35 +7,56 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, ArrowRight, Mail } from "lucide-react";
 import { PricingCard } from "@/components/payments/pricing-card";
 import { useMembership } from "@/contexts/membership-context";
-import { MEMBERSHIP_TIERS } from "@nvn/payments/constants";
-import type { MembershipTierConfig } from "@nvn/payments/types";
+import type { PolarPricingTier } from "@/types/polar-pricing";
 
-async function fetchPolarProducts(): Promise<MembershipTierConfig[]> {
+// Default features by tier - can be moved to Polar benefits later
+const DEFAULT_FEATURES = {
+  basic: [
+    "Email/password authentication",
+    "Basic dashboard access", 
+    "Community support",
+    "API access"
+  ],
+  pro: [
+    "All Basic features",
+    "Advanced analytics",
+    "Priority email support", 
+    "Team collaboration",
+    "Export data"
+  ],
+  ultimate: [
+    "All Pro features",
+    "Custom integrations",
+    "Dedicated support",
+    "Advanced security",
+    "Unlimited storage",
+    "SLA guarantees"
+  ]
+};
+
+const DEFAULT_LIMITS = {
+  basic: { users: 1, storage: 5, apiCalls: 1000 },
+  pro: { users: 5, storage: 50, apiCalls: 10000 },
+  ultimate: { users: -1, storage: -1, apiCalls: -1 }
+};
+
+async function fetchPolarProducts(): Promise<PolarPricingTier[]> {
   try {
-    const response = await fetch('/api/polar/products');
-    const polarProducts = await response.json();
+    const response = await fetch(`${process.env.VITE_API_URL}/api/polar/products`);
+    const polarTiers = await response.json();
     
-    // Convert static tiers to include Polar product data
-    const tiersWithPolar = Object.values(MEMBERSHIP_TIERS).map((tier) => {
-      const monthlyProduct = polarProducts.monthly;
-      const yearlyProduct = polarProducts.yearly;
-      
-      return {
-        ...tier,
-        polarProductId: monthlyProduct?.id || yearlyProduct?.id,
-        // Override prices if Polar has different pricing
-        price: {
-          monthly: monthlyProduct?.prices?.[0]?.priceAmount || tier.price.monthly,
-          yearly: yearlyProduct?.prices?.[0]?.priceAmount || tier.price.yearly,
-        }
-      };
-    }) as MembershipTierConfig[];
+    // Use Polar data directly, add default features and limits
+    const tiersWithDefaults = polarTiers.map((tier: PolarPricingTier) => ({
+      ...tier,
+      features: DEFAULT_FEATURES[tier.id as keyof typeof DEFAULT_FEATURES] || [],
+      limits: DEFAULT_LIMITS[tier.id as keyof typeof DEFAULT_LIMITS] || {}
+    }));
     
-    return tiersWithPolar;
+    return tiersWithDefaults;
   } catch (error) {
     console.error('Failed to fetch Polar products:', error);
-    // Fallback to static tiers
-    return Object.values(MEMBERSHIP_TIERS);
+    // Return empty array on error - no fallback to hardcoded data
+    return [];
   }
 }
 
@@ -43,11 +64,9 @@ export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const { currentTier, upgradeToTier, isLoading } = useMembership();
   
-  const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<MembershipTierConfig[]>({
+  const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<PolarPricingTier[]>({
     queryKey: ['polar-products'],
     queryFn: fetchPolarProducts,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
   });
 
   const handleTierSelect = async (tierId: string) => {

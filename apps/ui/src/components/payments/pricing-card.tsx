@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, Crown, Users, Building2, Sparkles } from "lucide-react";
+import { Check, Crown, Building2, Sparkles } from "lucide-react";
 import { formatCurrency, calculateYearlySavings } from "@nvn/payments/client";
-import type { MembershipTierConfig } from "@nvn/payments/types";
+import type { PolarPricingTier } from "@/types/polar-pricing";
 
 export interface PricingCardProps {
-  tier: MembershipTierConfig;
+  tier: PolarPricingTier;
   billingPeriod: "monthly" | "yearly";
   currentTier?: string;
   isPopular?: boolean;
@@ -18,10 +18,9 @@ export interface PricingCardProps {
 }
 
 const tierIcons = {
-  free: Sparkles,
-  pro: Crown,
-  team: Users,
-  enterprise: Building2,
+  basic: Sparkles,
+  pro: Crown, 
+  ultimate: Building2,
 };
 
 export function PricingCard({
@@ -51,8 +50,8 @@ export function PricingCard({
 
   const getButtonText = () => {
     if (isCurrentTier) return "Current Plan";
-    if (tier.id === "free") return "Get Started";
-    if (tier.id === "enterprise") return "Contact Sales";
+    if (tier.id === "basic") return "Get Started";
+    if (tier.id === "ultimate") return "Contact Sales";
     return "Upgrade";
   };
 
@@ -82,10 +81,9 @@ export function PricingCard({
         <div className="flex items-center gap-3">
           <div className={cn(
             "flex h-10 w-10 items-center justify-center rounded-lg",
-            tier.id === "free" && "bg-blue-100 text-blue-600 dark:bg-blue-900/20",
+            tier.id === "basic" && "bg-blue-100 text-blue-600 dark:bg-blue-900/20",
             tier.id === "pro" && "bg-purple-100 text-purple-600 dark:bg-purple-900/20",
-            tier.id === "team" && "bg-green-100 text-green-600 dark:bg-green-900/20",
-            tier.id === "enterprise" && "bg-orange-100 text-orange-600 dark:bg-orange-900/20"
+            tier.id === "ultimate" && "bg-orange-100 text-orange-600 dark:bg-orange-900/20"
           )}>
             <Icon className="h-5 w-5" />
           </div>
@@ -126,7 +124,7 @@ export function PricingCard({
         <div className="space-y-3">
           <div className="text-sm font-medium">Features included:</div>
           <ul className="space-y-2">
-            {tier.features.map((feature, index) => (
+            {(tier.features || []).map((feature: string, index: number) => (
               <li key={index} className="flex items-start gap-3 text-sm">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
                 <span>{feature}</span>
@@ -140,7 +138,7 @@ export function PricingCard({
             <Separator />
             <div className="text-sm font-medium">Usage limits:</div>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              {Object.entries(tier.limits).map(([key, value]) => (
+              {Object.entries(tier.limits).map(([key, value]: [string, number]) => (
                 <div key={key} className="flex justify-between">
                   <span className="capitalize text-muted-foreground">
                     {key.replace(/([A-Z])/g, ' $1').toLowerCase()}:
