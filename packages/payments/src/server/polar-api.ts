@@ -190,9 +190,12 @@ export async function getOrganizationProducts(orgId: string) {
   
   // Map products to tiers based on environment variables
   const tierMapping = {
-    [process.env.POLAR_PRO_PRODUCT_ID!]: 'pro',
-    [process.env.POLAR_TEAM_PRODUCT_ID!]: 'team', 
-    [process.env.POLAR_ENTERPRISE_PRODUCT_ID!]: 'enterprise',
+    [process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID!]: 'basic',
+    [process.env.POLAR_BASIC_YEARLY_PRODUCT_ID!]: 'basic',
+    [process.env.POLAR_PRO_MONTHLY_PRODUCT_ID!]: 'pro',
+    [process.env.POLAR_PRO_YEARLY_PRODUCT_ID!]: 'pro',
+    [process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID!]: 'ultimate',
+    [process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID!]: 'ultimate',
   };
   
   return products.map(product => ({

@@ -22,18 +22,18 @@ function getPolarPlugin() {
   }
 
   try {
-    const polarConfig = setupPolarForBetterAuth();
+    const polarPlugin = setupPolarForBetterAuth();
     
-    if (polarConfig) {
+    if (polarPlugin) {
       console.info('Polar integration enabled:', {
         server: process.env.POLAR_SERVER || 'sandbox',
         webhooksEnabled: hasWebhookSecret,
-        hasProProduct: !!process.env.POLAR_PRO_PRODUCT_ID,
-        hasTeamProduct: !!process.env.POLAR_TEAM_PRODUCT_ID,
-        hasEnterpriseProduct: !!process.env.POLAR_ENTERPRISE_PRODUCT_ID
+        hasBasicProduct: !!process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID || !!process.env.POLAR_BASIC_YEARLY_PRODUCT_ID,
+        hasProProduct: !!process.env.POLAR_PRO_MONTHLY_PRODUCT_ID || !!process.env.POLAR_PRO_YEARLY_PRODUCT_ID,
+        hasUltimateProduct: !!process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID || !!process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID
       });
       
-      return polarConfig.plugin;
+      return polarPlugin;
     }
     
     return null;

@@ -112,6 +112,12 @@ POLAR_SERVER=sandbox  # or 'production'
 # Optional: Product Configuration
 POLAR_PRO_PRODUCT_ID=your-pro-product-id-here
 POLAR_ENTERPRISE_PRODUCT_ID=your-enterprise-product-id-here
+POLAR_BASIC_MONTHLY_PRODUCT_ID=your-pro-product-id
+POLAR_BASIC_YEARLY_PRODUCT_ID=your-pro-product-id
+POLAR_PRO_MONTHLY_PRODUCT_ID=your-team-product-id
+POLAR_PRO_YEARLY_PRODUCT_ID=your-team-product-id
+POLAR_ULTIMATE_MONTHLY_PRODUCT_ID=your-enterprise-product-id
+POLAR_ULTIMATE_YEARLY_PRODUCT_ID=your-enterprise-product-id
 POLAR_SUCCESS_URL=http://localhost:5173/success?checkout_id={CHECKOUT_ID}
 ```
 

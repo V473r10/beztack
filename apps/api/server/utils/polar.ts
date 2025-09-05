@@ -57,7 +57,7 @@ export function isPolarConfigured(): {
     warnings.push(`POLAR_SERVER should be 'sandbox' or 'production', got: ${server}`);
   }
 
-  if (!process.env.POLAR_PRO_PRODUCT_ID && !process.env.POLAR_TEAM_PRODUCT_ID && !process.env.POLAR_ENTERPRISE_PRODUCT_ID) {
+  if (!process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID && !process.env.POLAR_BASIC_YEARLY_PRODUCT_ID && !process.env.POLAR_PRO_MONTHLY_PRODUCT_ID && !process.env.POLAR_PRO_YEARLY_PRODUCT_ID && !process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID && !process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID) {
     warnings.push('No product IDs configured - checkout may not work properly');
   }
 
@@ -81,17 +81,17 @@ export function getPolarWebhookSecret(): string | undefined {
 export function getPolarProducts() {
   const products = [];
   
-  if (process.env.POLAR_PRO_PRODUCT_ID) {
+  if (process.env.POLAR_PRO_MONTHLY_PRODUCT_ID) {
     products.push({
-      productId: process.env.POLAR_PRO_PRODUCT_ID,
+      productId: process.env.POLAR_PRO_MONTHLY_PRODUCT_ID,
       slug: 'pro'
     });
   }
   
-  if (process.env.POLAR_ENTERPRISE_PRODUCT_ID) {
+  if (process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID) {
     products.push({
-      productId: process.env.POLAR_ENTERPRISE_PRODUCT_ID,
-      slug: 'enterprise'
+      productId: process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
+      slug: 'ultimate'
     });
   }
   
