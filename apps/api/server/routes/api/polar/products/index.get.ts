@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
   // Group products by tier name (basic, pro, ultimate, etc.)
   const productsByTier: Record<string, ProductTier> = {};
 
-  products.result.items.forEach((product: any) => {
+  products.result.items.sort((a, b) => a.name.localeCompare(b.name)).forEach((product: any) => {
     // Extract tier name from product name (e.g., "Basic - Monthly" -> "basic")
     const tierName = product.name.split(' - ')[0].toLowerCase();
     const isMonthly = product.recurringInterval === 'month';

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, Crown, Building2, Sparkles } from "lucide-react";
+import { Check, Crown, Building2, Sparkles, Database, Zap, Users, FileText, Infinity } from "lucide-react";
 import { formatCurrency, calculateYearlySavings } from "@nvn/payments/client";
 import type { PolarPricingTier } from "@/types/polar-pricing";
 
@@ -21,6 +21,16 @@ const tierIcons = {
   basic: Sparkles,
   pro: Crown, 
   ultimate: Building2,
+};
+
+const limitIcons = {
+  storage: Database,
+  apiCalls: Zap,
+  users: Users,
+  projects: FileText,
+  documents: FileText,
+  requests: Zap,
+  uploads: Database,
 };
 
 export function PricingCard({
@@ -134,24 +144,76 @@ export function PricingCard({
         </div>
         
         {tier.limits && Object.keys(tier.limits).length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Separator />
-            <div className="text-sm font-medium">Usage limits:</div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {Object.entries(tier.limits).map(([key, value]: [string, number]) => (
-                <div key={key} className="flex justify-between">
-                  <span className="capitalize text-muted-foreground">
-                    {key.replace(/([A-Z])/g, ' $1').toLowerCase()}:
-                  </span>
-                  <span className="font-medium">
-                    {value === -1 ? "Unlimited" : 
-                     key === "storage" ? `${value}GB` :
-                     key === "apiCalls" ? `${value.toLocaleString()}/mo` :
-                     value.toLocaleString()
-                    }
-                  </span>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
+                  <Database className="h-3 w-3 text-primary" />
                 </div>
-              ))}
+                Usage Limits
+              </div>
+              <div className="space-y-3">
+                {Object.entries(tier.limits).map(([key, value]: [string, number]) => {
+                  const IconComponent = limitIcons[key as keyof typeof limitIcons] || FileText;
+                  const isUnlimited = value === -1;
+                  
+                  const formatValue = () => {
+                    if (isUnlimited) return "Unlimited";
+                    if (key === "storage") return `${value}GB`;
+                    if (key === "apiCalls" || key === "requests") return `${value.toLocaleString()}/mo`;
+                    return value.toLocaleString();
+                  };
+                  
+                  return (
+                    <div key={key} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-muted">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-lg",
+                          isUnlimited 
+                            ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                            : "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                        )}>
+                          {isUnlimited ? (
+                            <Infinity className="h-4 w-4" />
+                          ) : (
+                            <IconComponent className="h-4 w-4" />
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium capitalize">
+                            {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {key === "storage" && "File storage space"}
+                            {key === "apiCalls" && "API requests per month"}
+                            {key === "users" && "Team members"}
+                            {key === "projects" && "Active projects"}
+                            {key === "documents" && "Documents & files"}
+                            {key === "requests" && "Monthly requests"}
+                            {key === "uploads" && "File uploads"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "text-sm font-semibold",
+                          isUnlimited 
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-foreground"
+                        )}>
+                          {formatValue()}
+                        </span>
+                        {isUnlimited && (
+                          <Badge variant="secondary" className="px-2 py-0.5 text-xs bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                            ∞
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

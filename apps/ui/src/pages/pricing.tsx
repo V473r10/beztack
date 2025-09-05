@@ -1,13 +1,51 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, ArrowRight, Mail } from "lucide-react";
+import { Check, ArrowRight, Mail, X } from "lucide-react";
 import { PricingCard } from "@/components/payments/pricing-card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMembership } from "@/contexts/membership-context";
 import type { PolarPricingTier } from "@/types/polar-pricing";
+import { z } from "zod";
+
+// Feature schema for DataTable
+const featureSchema = z.object({
+  id: z.number(),
+  category: z.string(),
+  feature: z.string(),
+  basic: z.boolean().or(z.string()),
+  pro: z.boolean().or(z.string()),
+  ultimate: z.boolean().or(z.string()),
+});
+
+type FeatureRow = z.infer<typeof featureSchema>;
+
+// Features data structure for the table
+const FEATURES_DATA: FeatureRow[] = [
+  // Authentication Features
+  { id: 1, category: "Authentication", feature: "Email/Password Login", basic: true, pro: true, ultimate: true },
+  { id: 2, category: "Authentication", feature: "Social Login", basic: true, pro: true, ultimate: true },
+  { id: 3, category: "Authentication", feature: "Two-Factor Authentication", basic: false, pro: true, ultimate: true },
+  
+  // Limits
+  { id: 4, category: "Limits", feature: "Storage", basic: "5GB", pro: "50GB", ultimate: "Unlimited" },
+  { id: 5, category: "Limits", feature: "API Calls/Month", basic: "1,000", pro: "10,000", ultimate: "Unlimited" },
+  { id: 6, category: "Limits", feature: "Team Members", basic: "1", pro: "5", ultimate: "Unlimited" },
+  
+  // Support
+  { id: 7, category: "Support", feature: "Community Support", basic: true, pro: true, ultimate: true },
+  { id: 8, category: "Support", feature: "Email Support", basic: false, pro: true, ultimate: true },
+  { id: 9, category: "Support", feature: "Priority Support & SLA", basic: false, pro: false, ultimate: true },
+  
+  // Analytics & Features
+  { id: 10, category: "Features", feature: "Basic Analytics", basic: true, pro: true, ultimate: true },
+  { id: 11, category: "Features", feature: "Advanced Analytics", basic: false, pro: true, ultimate: true },
+  { id: 12, category: "Features", feature: "Custom Integrations", basic: false, pro: false, ultimate: true },
+  { id: 13, category: "Features", feature: "Export Data", basic: false, pro: true, ultimate: true },
+];
 
 // Default features by tier - can be moved to Polar benefits later
 const DEFAULT_FEATURES = {
@@ -42,7 +80,7 @@ const DEFAULT_LIMITS = {
 
 async function fetchPolarProducts(): Promise<PolarPricingTier[]> {
   try {
-    const response = await fetch(`${process.env.VITE_API_URL}/api/polar/products`);
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/polar/products`);
     const polarTiers = await response.json();
     
     // Use Polar data directly, add default features and limits
@@ -60,9 +98,62 @@ async function fetchPolarProducts(): Promise<PolarPricingTier[]> {
   }
 }
 
+// Feature cell component to render boolean/string values appropriately
+function FeatureCell({ value }: { value: boolean | string }) {
+  if (typeof value === "boolean") {
+    return (
+      <div className="text-center">
+        {value ? (
+          <Check className="h-4 w-4 mx-auto text-green-600" />
+        ) : (
+          <X className="h-4 w-4 mx-auto text-muted-foreground" />
+        )}
+      </div>
+    );
+  }
+  return <div className="text-center">{value}</div>;
+}
+
+// Feature comparison table component
+function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Feature</TableHead>
+          <TableHead className="text-center">Basic</TableHead>
+          <TableHead className="text-center">Pro</TableHead>
+          <TableHead className="text-center">Ultimate</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {features.map((feature) => (
+          <TableRow key={feature.id}>
+            <TableCell className="font-medium">{feature.feature}</TableCell>
+            <TableCell><FeatureCell value={feature.basic} /></TableCell>
+            <TableCell><FeatureCell value={feature.pro} /></TableCell>
+            <TableCell><FeatureCell value={feature.ultimate} /></TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
 export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const { currentTier, upgradeToTier, isLoading } = useMembership();
+
+  // Group features by category for better organization
+  const groupedFeatures = useMemo(() => {
+    return FEATURES_DATA.reduce((acc, feature) => {
+      if (!acc[feature.category]) {
+        acc[feature.category] = [];
+      }
+      acc[feature.category].push(feature);
+      return acc;
+    }, {} as Record<string, FeatureRow[]>);
+  }, []);
   
   const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<PolarPricingTier[]>({
     queryKey: ['polar-products'],
@@ -145,10 +236,10 @@ export default function Pricing() {
       </div>
 
       {/* Pricing Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
         {isLoadingTiers ? (
           // Loading skeleton
-          Array.from({ length: 4 }).map((_, index) => (
+          Array.from({ length: 3 }).map((_, index) => (
             <Card key={index} className="relative">
               <CardContent className="p-6">
                 <div className="animate-pulse">
@@ -188,138 +279,19 @@ export default function Pricing() {
           </p>
         </div>
         
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-4 font-medium">Features</th>
-                    {allTiers.map((tier) => (
-                      <th key={tier.id} className="text-center p-4 font-medium">
-                        {tier.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Authentication Features */}
-                  <tr className="border-b bg-muted/30">
-                    <td className="p-4 font-medium">Authentication</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4 pl-8">Email/Password Login</td>
-                    {allTiers.map((tier) => (
-                      <td key={tier.id} className="text-center p-4">
-                        <Check className="h-4 w-4 mx-auto text-green-600" />
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4 pl-8">Social Login</td>
-                    {allTiers.map((tier) => (
-                      <td key={tier.id} className="text-center p-4">
-                        <Check className="h-4 w-4 mx-auto text-green-600" />
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4 pl-8">Two-Factor Authentication</td>
-                    <td className="text-center p-4">—</td>
-                    {allTiers.slice(1).map((tier) => (
-                      <td key={tier.id} className="text-center p-4">
-                        <Check className="h-4 w-4 mx-auto text-green-600" />
-                      </td>
-                    ))}
-                  </tr>
-                  
-                  {/* Limits */}
-                  <tr className="border-b bg-muted/30">
-                    <td className="p-4 font-medium">Limits</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4 pl-8">Storage</td>
-                    {allTiers.map((tier) => (
-                      <td key={tier.id} className="text-center p-4">
-                        {tier.limits?.storage === -1 ? "Unlimited" : `${tier.limits?.storage}GB`}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4 pl-8">API Calls/Month</td>
-                    {allTiers.map((tier) => (
-                      <td key={tier.id} className="text-center p-4">
-                        {tier.limits?.apiCalls === -1 ? "Unlimited" : tier.limits?.apiCalls?.toLocaleString()}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4 pl-8">Team Members</td>
-                    {allTiers.map((tier) => (
-                      <td key={tier.id} className="text-center p-4">
-                        {tier.limits?.users === -1 ? "Unlimited" : tier.limits?.users}
-                      </td>
-                    ))}
-                  </tr>
-                  
-                  {/* Support */}
-                  <tr className="border-b bg-muted/30">
-                    <td className="p-4 font-medium">Support</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4 pl-8">Community Support</td>
-                    <td className="text-center p-4">
-                      <Check className="h-4 w-4 mx-auto text-green-600" />
-                    </td>
-                    <td className="text-center p-4">
-                      <Check className="h-4 w-4 mx-auto text-green-600" />
-                    </td>
-                    <td className="text-center p-4">
-                      <Check className="h-4 w-4 mx-auto text-green-600" />
-                    </td>
-                    <td className="text-center p-4">
-                      <Check className="h-4 w-4 mx-auto text-green-600" />
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4 pl-8">Email Support</td>
-                    <td className="text-center p-4">—</td>
-                    <td className="text-center p-4">
-                      <Check className="h-4 w-4 mx-auto text-green-600" />
-                    </td>
-                    <td className="text-center p-4">
-                      <Check className="h-4 w-4 mx-auto text-green-600" />
-                    </td>
-                    <td className="text-center p-4">
-                      <Check className="h-4 w-4 mx-auto text-green-600" />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-4 pl-8">Priority Support & SLA</td>
-                    <td className="text-center p-4">—</td>
-                    <td className="text-center p-4">—</td>
-                    <td className="text-center p-4">—</td>
-                    <td className="text-center p-4">
-                      <Check className="h-4 w-4 mx-auto text-green-600" />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Render features grouped by category */}
+        <div className="space-y-8">
+          {Object.entries(groupedFeatures).map(([category, features]) => (
+            <Card key={category}>
+              <CardContent className="p-0">
+                <div className="bg-muted/30 p-4 border-b">
+                  <h3 className="font-semibold text-lg">{category}</h3>
+                </div>
+                <FeatureComparisonTable features={features} />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {/* FAQ Section */}

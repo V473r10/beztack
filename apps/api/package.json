@@ -4,7 +4,7 @@
   "scripts": {
     "build": "nitro build",
     "dev": "nitro dev",
-    "migrate": "pnpm dlx @better-auth/cli generate --output ./src/db/auth.schema.ts -y & pnpm dlx bun drizzle-kit push"
+    "migrate": "pnpm dlx @better-auth/cli generate --output ./db/schema.ts --config ./server/utils/auth.ts -y & pnpm dlx bun drizzle-kit push"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
