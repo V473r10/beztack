@@ -6,15 +6,12 @@ import type {
   UserMembership,
   UsageMetrics,
 } from "../types/index.ts";
-import {
-  MEMBERSHIP_TIERS,
-  getTierConfig,
-  getTierLevel,
-  isTierHigher,
-} from "../constants/index.ts";
+// Note: Tier configurations are now fetched dynamically from API
+// See packages/payments/src/server/tier-config.ts for dynamic functions
 
 /**
  * Validate user membership based on customer portal state
+ * Note: This function now returns basic validation - full tier details should be fetched from API
  */
 export function validateMembership(state: CustomerPortalState): MembershipValidationResult {
   try {
@@ -23,37 +20,38 @@ export function validateMembership(state: CustomerPortalState): MembershipValida
       sub.status === "active" || sub.status === "trialing"
     );
 
-    // Get the highest tier from active subscriptions
-    let highestTier: MembershipTier = "free";
-    let validUntil: Date | undefined;
-
-    for (const subscription of activeSubscriptions) {
-      const tier = subscription.metadata?.tier as MembershipTier;
-      if (tier && isTierHigher(tier, highestTier)) {
-        highestTier = tier;
-        validUntil = subscription.currentPeriodEnd;
-      }
-    }
-
-    const tierConfig = getTierConfig(highestTier);
-    if (!tierConfig) {
+    if (activeSubscriptions.length === 0) {
       return {
-        isValid: false,
+        isValid: true,
         tier: "free",
-        permissions: [],
-        limits: {},
-        features: [],
-        error: "Invalid tier configuration",
+        permissions: ["auth:basic", "dashboard:view", "profile:manage"],
+        limits: { users: 1, organizations: 0, teams: 0, storage: 1, apiCalls: 1000 },
+        features: ["social-login", "basic-dashboard-access"],
       };
     }
 
+    // Determine highest tier from active subscriptions
+    const tierHierarchy: MembershipTier[] = ["free", "pro", "team", "enterprise"];
+    let highestTier: MembershipTier = "free";
+    
+    for (const subscription of activeSubscriptions) {
+      const tier = subscription.metadata?.tier as MembershipTier;
+      if (tier && tierHierarchy.includes(tier)) {
+        const currentIndex = tierHierarchy.indexOf(highestTier);
+        const tierIndex = tierHierarchy.indexOf(tier);
+        if (tierIndex > currentIndex) {
+          highestTier = tier;
+        }
+      }
+    }
+
+    // Return basic validation - detailed config should be fetched from API
     return {
       isValid: true,
       tier: highestTier,
-      permissions: tierConfig.permissions,
-      limits: tierConfig.limits,
-      features: tierConfig.features,
-      expiresAt: validUntil,
+      permissions: [], // Fetch from API
+      limits: {}, // Fetch from API  
+      features: [], // Fetch from API
     };
   } catch (error) {
     return {

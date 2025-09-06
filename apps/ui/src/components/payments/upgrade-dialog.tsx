@@ -17,7 +17,14 @@ import type { MembershipTier } from "@nvn/payments/types";
 import { useQuery } from "@tanstack/react-query";
 import type { PolarPricingTier } from "@/types/polar-pricing";
 import { usePolarProducts } from "@/pages/usePolarProducts";
-import { isTierHigher } from "@nvn/payments/constants";
+// Tier hierarchy helper - now local since tiers are dynamic
+const TIER_HIERARCHY: MembershipTier[] = ["free", "pro", "team", "enterprise"];
+
+const isTierHigher = (tierA: string, tierB: string): boolean => {
+  const indexA = TIER_HIERARCHY.indexOf(tierA as MembershipTier);
+  const indexB = TIER_HIERARCHY.indexOf(tierB as MembershipTier);
+  return indexA > indexB;
+};
 
 export interface UpgradeDialogProps {
   open: boolean;

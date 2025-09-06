@@ -7,21 +7,21 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Home, CreditCard } from "lucide-react";
 import { MembershipBadge } from "@/components/payments/membership-badge";
 import { useMembership } from "@/contexts/membership-context";
-import { getTierConfig } from "@nvn/payments/constants";
+// Tier configurations now fetched dynamically from API
 import { formatCurrency } from "@nvn/payments/client";
 import type { MembershipTier } from "@nvn/payments/types";
 
 export default function CheckoutSuccess() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { refreshMembership, activeSubscription } = useMembership();
+  const { refreshMembership, activeSubscription, tierConfig } = useMembership();
   
   // Get tier from URL params (Polar checkout should include this)
   const tier = searchParams.get("tier") as MembershipTier || "pro";
   const sessionId = searchParams.get("session_id");
   const organizationId = searchParams.get("organization_id");
   
-  const tierConfig = getTierConfig(tier);
+  // Tier config is now available through membership context
 
   // Refresh membership data when component mounts
   useEffect(() => {
@@ -90,20 +90,18 @@ export default function CheckoutSuccess() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <div className="text-sm text-muted-foreground">Plan</div>
-                <div className="font-medium">{tierConfig.name}</div>
+                <div className="font-medium">{tierConfig?.name || tier.charAt(0).toUpperCase() + tier.slice(1)}</div>
               </div>
               <div className="space-y-1">
                 <div className="text-sm text-muted-foreground">Price</div>
                 <div className="font-medium">
                   {activeSubscription && activeSubscription.metadata?.tier ? (
                     <>
-                      {(() => {
-                        const tierConfig = getTierConfig(activeSubscription.metadata.tier!);
-                        return tierConfig ? `${formatCurrency(tierConfig.price.monthly)} / month` : "Unknown price";
-                      })()}
+                      {/* Price info now from membership context */}
+                      Active subscription
                     </>
                   ) : (
-                    `${formatCurrency(tierConfig.price.monthly)} / month`
+                    `${formatCurrency(tierConfig?.price?.monthly || 0)} / month`
                   )}
                 </div>
               </div>
@@ -115,13 +113,38 @@ export default function CheckoutSuccess() {
                       {activeSubscription.currentPeriodEnd ? new Date(activeSubscription.currentPeriodEnd).toLocaleDateString() : "N/A"}
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-muted-foreground">Status</div>
-                    <div className="font-medium">
-                      <Badge variant="default">Active</Badge>
-                    </div>
+                  <div className="space-y-3">
+                    <div className="font-medium">What's included in your plan:</div>
+                    {tierConfig?.features?.map((feature: string, index: number) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span className="text-sm">{feature}</span>
+                      </div>
+                    )) || (
+                      <div className="text-sm text-muted-foreground">
+                        Loading plan features...
+                      </div>
+                    )}
                   </div>
                 </>
+              )}
+              {tierConfig?.limits && (
+                <div className="space-y-3">
+                  <div className="font-medium">Plan limits:</div>
+                  {Object.entries(tierConfig.limits).map(([key, value]: [string, number]) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{key}:</span>
+                      <span className="text-sm font-medium">{value === -1 ? "Unlimited" : value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {tierConfig && (
+                <div className="pt-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Enjoy all the features of your {tierConfig.name} plan!
+                  </div>
+                </div>
               )}
             </div>
             

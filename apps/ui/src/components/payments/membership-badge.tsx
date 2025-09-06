@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Users, Building2, Sparkles } from "lucide-react";
-import { getTierConfig } from "@nvn/payments/constants";
 import type { MembershipTier } from "@nvn/payments/types";
 
 export interface MembershipBadgeProps {
@@ -26,6 +25,13 @@ const tierColors = {
   enterprise: "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
 };
 
+const tierNames = {
+  free: "Free",
+  pro: "Pro", 
+  team: "Team",
+  enterprise: "Enterprise",
+};
+
 export function MembershipBadge({
   tier,
   variant = "default",
@@ -33,10 +39,10 @@ export function MembershipBadge({
   showIcon = true,
   className,
 }: MembershipBadgeProps) {
-  const tierConfig = getTierConfig(tier);
   const Icon = tierIcons[tier];
+  const tierName = tierNames[tier];
   
-  if (!tierConfig) {
+  if (!tierName) {
     return null;
   }
 
@@ -67,7 +73,7 @@ export function MembershipBadge({
       {showIcon && Icon && (
         <Icon className={iconSizes[size]} />
       )}
-      {tierConfig.name}
+      {tierName}
     </Badge>
   );
 }
@@ -85,9 +91,9 @@ export function MembershipStatus({
   expiresAt,
   className,
 }: MembershipStatusProps) {
-  const tierConfig = getTierConfig(tier);
+  const tierName = tierNames[tier];
   
-  if (!tierConfig) {
+  if (!tierName) {
     return null;
   }
 

@@ -70,15 +70,15 @@
 	"pricing": {
 		"features": {
 			"two-factor": "Two-Factor Authentication",
-			"passkeys": "Passkey Authentication",
-			"email-password": "Email/Password Login",
 			"social-login": "Social Login",
-			"basic-analytics": "Basic Analytics",
-			"advanced-analytics": "Advanced Analytics",
-			"custom-integrations": "Custom Integrations",
-			"export-data": "Export Data",
-			"community-support": "Community Support",
+			"passkeys": "Passkey Authentication",
+			"basic-dashboard-access": "Basic Dashboard Access",
 			"email-support": "Email Support",
+			"all-basic": "All Basic Features",
+			"organizations": "Multi-Organization Support",
+			"role-based-access-control": "Role-Based Access Control",
+			"all-pro": "All Pro Features",
+			"advanced-dashboard-access": "Advanced Dashboard Access",
 			"priority-support": "Priority Support & SLA"
 		},
 		"limits": {

@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 // import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
 import { toast } from "sonner";
 import { getBillingPortalUrl } from "@nvn/payments/client";
-import { getTierConfig } from "@nvn/payments/constants";
 import type {
   MembershipTier,
   MembershipTierConfig,
@@ -184,7 +183,21 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     activeSubscription?.metadata?.tier as MembershipTier
   ) || "free";
   
-  const tierConfig = getTierConfig(currentTier) || null;
+  // Fetch tier configurations from API instead of hardcoded constants
+  const tierConfigsQuery = useQuery({
+    queryKey: ["tierConfigs"],
+    queryFn: async (): Promise<MembershipTierConfig[]> => {
+      const response = await fetch("/api/polar/products");
+      if (!response.ok) {
+        throw new Error("Failed to fetch tier configurations");
+      }
+      const data = await response.json();
+      return data as MembershipTierConfig[];
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  const tierConfig = tierConfigsQuery.data?.find((config: MembershipTierConfig) => config.id === currentTier) || null;
   
   const isLoading = customerStateQuery.isLoading || 
                    subscriptionsQuery.isLoading || 

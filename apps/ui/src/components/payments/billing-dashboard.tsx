@@ -22,7 +22,7 @@ import { MembershipBadge, MembershipStatus } from "./membership-badge";
 import { UsageMetrics } from "./usage-metrics";
 import { UpgradeDialog } from "./upgrade-dialog";
 import { formatCurrency, getBillingPortalUrl } from "@nvn/payments/client";
-import { getTierConfig } from "@nvn/payments/constants";
+// Tier configurations now fetched dynamically from API
 import type { 
   Subscription, 
   Order, 
@@ -79,11 +79,9 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
             </CardTitle>
             <CardDescription>
               {subscription.metadata?.tier ? (
-                (() => {
-                  const tierConfig = getTierConfig(subscription.metadata.tier);
-                  return tierConfig ? `${formatCurrency(tierConfig.price.monthly)} / month` : "Unknown price";
-                })()
-              ) : "Unknown price"}
+                // Price information should be fetched from tier API or subscription data
+                `Active subscription`
+              ) : "Unknown subscription"}
             </CardDescription>
           </div>
           <Badge variant={getStatusColor() as "default" | "secondary" | "destructive" | "outline"}>

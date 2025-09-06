@@ -5,26 +5,21 @@
 export type MembershipTier = "free" | "pro" | "team" | "enterprise";
 
 /**
- * Membership tier configuration
+ * Membership tier configuration from Polar API
  */
 export interface MembershipTierConfig {
-  readonly id: MembershipTier;
+  readonly id: string;
   readonly name: string;
   readonly description: string;
   readonly price: {
     readonly monthly: number;
     readonly yearly: number;
   };
-  readonly features: readonly string[];
-  readonly permissions: readonly string[];
-  readonly limits: {
-    readonly users?: number;
-    readonly organizations?: number;
-    readonly teams?: number;
-    readonly storage?: number; // in GB
-    readonly apiCalls?: number; // per month
-  };
-  readonly polarProductId?: string;
+  readonly monthly?: any; // Full Polar product object for monthly billing
+  readonly yearly?: any;  // Full Polar product object for yearly billing
+  readonly features: string[];
+  readonly limits: Record<string, number>;
+  readonly permissions: string[];
 }
 
 /**

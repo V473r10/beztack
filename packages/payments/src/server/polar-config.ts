@@ -1,7 +1,7 @@
 import { polar, checkout, portal, usage, webhooks } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 import type { BetterAuthOptions } from "better-auth";
-import { MEMBERSHIP_TIERS, POLAR_CONFIG } from "../constants/index.ts";
+import { POLAR_CONFIG } from "../constants/index.ts";
 import type { MembershipTier } from "../types/index.ts";
 
 /**
@@ -61,14 +61,10 @@ export interface PolarPluginConfig {
 
 /**
  * Create Polar Better Auth plugin with full configuration
+ * Note: Products should be provided via config since tiers are now dynamic
  */
-export function createPolarPlugin(config: PolarPluginConfig) {
-  const products = Object.values(MEMBERSHIP_TIERS)
-    .filter(tier => tier.polarProductId)
-    .map(tier => ({
-      productId: tier.polarProductId!,
-      slug: tier.id,
-    }));
+export function createPolarPlugin(config: PolarPluginConfig & { products?: Array<{ productId: string; slug: string }> }) {
+  const products = config.products || [];
 
   return polar({
     client: config.client,
@@ -111,7 +107,8 @@ function getDefaultWebhookHandlers(): WebhookHandlers {
       const order = payload.order;
       if (order?.metadata?.userId && order?.metadata?.tier) {
         // TODO: Activate membership for user
-        console.log(`Activating ${order.metadata.tier} membership for user ${order.metadata.userId}`);
+        const tier = order.metadata.tier as MembershipTier;
+        console.log(`Activating ${tier} membership for user ${order.metadata.userId}`);
       }
     },
 
@@ -120,7 +117,8 @@ function getDefaultWebhookHandlers(): WebhookHandlers {
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId && subscription?.metadata?.tier) {
         // TODO: Update user membership status to active
-        console.log(`Subscription ${subscription.id} activated for user ${subscription.metadata.userId}`);
+        const tier = subscription.metadata.tier as MembershipTier;
+        console.log(`Subscription ${subscription.id} activated for user ${subscription.metadata.userId} with ${tier} tier`);
       }
     },
 

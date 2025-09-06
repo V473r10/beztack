@@ -1,13 +1,5 @@
-// Tier constants
-export {
-  MEMBERSHIP_TIERS,
-  TIER_HIERARCHY,
-  getTierConfig,
-  getAllTiers,
-  isValidTier,
-  getTierLevel,
-  isTierHigher,
-} from "./tiers.ts";
+// Tier constants - now fetched dynamically from Polar API
+// See packages/payments/src/server/tier-config.ts for dynamic tier functions
 
 // Permission constants
 export {

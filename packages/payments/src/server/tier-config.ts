@@ -1,39 +1,34 @@
-import { MEMBERSHIP_TIERS } from "../constants/tiers.ts";
 import type { MembershipTier, MembershipTierConfig } from "../types/membership.ts";
 
 /**
- * Server-side tier configuration with environment variable population
+ * Fetch tier configuration from Polar API
+ * This replaces the hardcoded tiers.ts constants
  */
-export function getServerTierConfig(): Record<MembershipTier, MembershipTierConfig> {
-  return {
-    free: MEMBERSHIP_TIERS.free!,
-    pro: {
-      ...MEMBERSHIP_TIERS.pro!,
-      polarProductId: process.env.POLAR_PRO_PRODUCT_ID,
-    } as MembershipTierConfig,
-    team: {
-      ...MEMBERSHIP_TIERS.team!,
-      polarProductId: process.env.POLAR_TEAM_PRODUCT_ID,
-    } as MembershipTierConfig,
-    enterprise: {
-      ...MEMBERSHIP_TIERS.enterprise!,
-      polarProductId: process.env.POLAR_ENTERPRISE_PRODUCT_ID,
-    } as MembershipTierConfig,
-  };
+export async function fetchTierConfigs(): Promise<MembershipTierConfig[]> {
+  try {
+    const response = await fetch(`${process.env.API_BASE_URL}/api/polar/products`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tier configs: ${response.statusText}`);
+    }
+    return await response.json() as MembershipTierConfig[];
+  } catch (error) {
+    console.error("Error fetching tier configurations:", error);
+    throw error;
+  }
 }
 
 /**
- * Get product ID for a specific tier
+ * Get tier configuration for a specific tier from API
  */
-export function getTierProductId(tier: MembershipTier): string | undefined {
-  const config = getServerTierConfig();
-  return config[tier]?.polarProductId;
+export async function getServerTierInfo(tier: MembershipTier): Promise<MembershipTierConfig | undefined> {
+  const configs = await fetchTierConfigs();
+  return configs.find(config => config.id === tier);
 }
 
 /**
- * Get tier configuration for a specific tier with server-side data
+ * Get product ID for a specific tier and billing period
  */
-export function getServerTierInfo(tier: MembershipTier) {
-  const config = getServerTierConfig();
-  return config[tier];
+export async function getTierProductId(tier: MembershipTier, billingPeriod: 'monthly' | 'yearly' = 'monthly'): Promise<string | undefined> {
+  const config = await getServerTierInfo(tier);
+  return billingPeriod === 'yearly' ? config?.yearly?.id : config?.monthly?.id;
 }
