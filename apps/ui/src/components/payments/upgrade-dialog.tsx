@@ -13,8 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, Sparkles, ArrowRight } from "lucide-react";
 import { PricingCard } from "./pricing-card";
 import { MembershipBadge } from "./membership-badge";
-import { getAllTiers, isTierHigher } from "@nvn/payments/constants";
 import type { MembershipTier } from "@nvn/payments/types";
+import { useQuery } from "@tanstack/react-query";
+import type { PolarPricingTier } from "@/types/polar-pricing";
+import { usePolarProducts } from "@/pages/usePolarProducts";
+import { isTierHigher } from "@nvn/payments/constants";
 
 export interface UpgradeDialogProps {
   open: boolean;
@@ -36,7 +39,12 @@ export function UpgradeDialog({
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const [selectedTier, setSelectedTier] = useState<string>(suggestedTier || "pro");
   
-  const allTiers = getAllTiers();
+  const { data: allTiers = [] } = useQuery<PolarPricingTier[]>({
+    queryKey: ['polar-products'],
+    queryFn: usePolarProducts,
+  });
+
+  console.log(allTiers);
   const availableTiers = allTiers.filter(tier => 
     isTierHigher(tier.id, currentTier)
   );

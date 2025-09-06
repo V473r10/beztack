@@ -177,7 +177,7 @@ export function isValidTier(tier: string): tier is keyof typeof MEMBERSHIP_TIERS
 /**
  * Get tier hierarchy (for upgrade/downgrade logic)
  */
-export const TIER_HIERARCHY = ["free", "pro", "team", "enterprise"] as const;
+export const TIER_HIERARCHY = ["free", "basic", "pro", "ultimate"] as const;
 
 /**
  * Get tier level (0-based index in hierarchy)

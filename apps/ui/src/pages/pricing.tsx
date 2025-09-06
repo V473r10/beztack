@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useMembership } from "@/contexts/membership-context";
 import type { PolarPricingTier } from "@/types/polar-pricing";
 import { z } from "zod";
+import { usePolarProducts } from "./usePolarProducts";
 
 // Feature schema for DataTable
 const featureSchema = z.object({
@@ -31,7 +32,7 @@ const FEATURES_DATA: FeatureRow[] = [
   { id: 3, category: "Authentication", feature: "Two-Factor Authentication", basic: false, pro: true, ultimate: true },
   
   // Limits
-  { id: 4, category: "Limits", feature: "Storage", basic: "5GB", pro: "50GB", ultimate: "Unlimited" },
+  { id: 4, category: "Limits", feature: "Storage", basic: "5GB", pro: "500GB", ultimate: "Unlimited" },
   { id: 5, category: "Limits", feature: "API Calls/Month", basic: "1,000", pro: "10,000", ultimate: "Unlimited" },
   { id: 6, category: "Limits", feature: "Team Members", basic: "1", pro: "5", ultimate: "Unlimited" },
   
@@ -46,57 +47,6 @@ const FEATURES_DATA: FeatureRow[] = [
   { id: 12, category: "Features", feature: "Custom Integrations", basic: false, pro: false, ultimate: true },
   { id: 13, category: "Features", feature: "Export Data", basic: false, pro: true, ultimate: true },
 ];
-
-// Default features by tier - can be moved to Polar benefits later
-const DEFAULT_FEATURES = {
-  basic: [
-    "Email/password authentication",
-    "Basic dashboard access", 
-    "Community support",
-    "API access"
-  ],
-  pro: [
-    "All Basic features",
-    "Advanced analytics",
-    "Priority email support", 
-    "Team collaboration",
-    "Export data"
-  ],
-  ultimate: [
-    "All Pro features",
-    "Custom integrations",
-    "Dedicated support",
-    "Advanced security",
-    "Unlimited storage",
-    "SLA guarantees"
-  ]
-};
-
-const DEFAULT_LIMITS = {
-  basic: { users: 1, storage: 5, apiCalls: 1000 },
-  pro: { users: 5, storage: 50, apiCalls: 10000 },
-  ultimate: { users: -1, storage: -1, apiCalls: -1 }
-};
-
-async function fetchPolarProducts(): Promise<PolarPricingTier[]> {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/polar/products`);
-    const polarTiers = await response.json();
-    
-    // Use Polar data directly, add default features and limits
-    const tiersWithDefaults = polarTiers.map((tier: PolarPricingTier) => ({
-      ...tier,
-      features: DEFAULT_FEATURES[tier.id as keyof typeof DEFAULT_FEATURES] || [],
-      limits: DEFAULT_LIMITS[tier.id as keyof typeof DEFAULT_LIMITS] || {}
-    }));
-    
-    return tiersWithDefaults;
-  } catch (error) {
-    console.error('Failed to fetch Polar products:', error);
-    // Return empty array on error - no fallback to hardcoded data
-    return [];
-  }
-}
 
 // Feature cell component to render boolean/string values appropriately
 function FeatureCell({ value }: { value: boolean | string }) {
@@ -157,7 +107,7 @@ export default function Pricing() {
   
   const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<PolarPricingTier[]>({
     queryKey: ['polar-products'],
-    queryFn: fetchPolarProducts,
+    queryFn: usePolarProducts,
   });
 
   const handleTierSelect = async (tierId: string) => {

@@ -348,6 +348,7 @@ export function BillingDashboard({
       {/* Upgrade Dialog */}
       <UpgradeDialog
         open={showUpgradeDialog}
+        suggestedTier="pro"
         onOpenChange={setShowUpgradeDialog}
         currentTier={currentTier}
         onUpgrade={handleUpgrade}

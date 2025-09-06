@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, serial } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -140,6 +140,43 @@ export const invitation = pgTable("invitation", {
   updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull(),
 });
 
+export const feature = pgTable("feature", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+});
+
+export const permission = pgTable("permission", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+});
+
+export const limit = pgTable("limit", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+});
+
+export const planFeature = pgTable("plan_feature", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").notNull(),
+  featureId: integer("feature_id").notNull().references(() => feature.id, { onDelete: "cascade" }),
+});
+
+export const planPermission = pgTable("plan_permission", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").notNull(),
+  permissionId: integer("permission_id").notNull().references(() => permission.id, { onDelete: "cascade" }),
+});
+
+export const planLimit = pgTable("plan_limit", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").notNull(),
+  limitId: integer("limit_id").notNull().references(() => limit.id, { onDelete: "cascade" }),
+  value: integer("value").notNull(),
+});
+
 // Export schema object for Better Auth drizzle adapter
 export const schema = {
   user,
@@ -152,4 +189,10 @@ export const schema = {
   organization,
   member,
   invitation,
+  feature,
+  permission,
+  limit,
+  planFeature,
+  planPermission,
+  planLimit,
 };
