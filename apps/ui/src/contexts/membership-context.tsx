@@ -11,7 +11,6 @@ import type {
   Order,
   CustomerMeter,
   Benefit,
-  CheckoutSessionParams,
 } from "@nvn/payments/types";
 
 export interface MembershipContextValue {
@@ -115,11 +114,35 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   // Checkout mutation
   const checkoutMutation = useMutation({
-    mutationFn: async (params: CheckoutSessionParams) => {
-      // Mock checkout - replace with actual server API call
-      console.log("Mock checkout:", params);
-      toast.success("Mock checkout initiated (replace with actual implementation)");
-      return { url: "/pricing" }; // Mock response
+    mutationFn: async (params: { productId: string; billingPeriod: "monthly" | "yearly"; metadata?: any }) => {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/polar/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: params.productId,
+          successUrl: `${window.location.origin}/dashboard?checkout=success`,
+          cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
+          metadata: {
+            billingPeriod: params.billingPeriod,
+            ...params.metadata,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Checkout failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Redirect to Polar checkout
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+      
+      return data;
     },
     onSuccess: () => {
       toast.success("Redirecting to checkout...");
@@ -176,10 +199,11 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   // Actions
   const upgradeToTier = useCallback(
-    async (tierId: string, _billingPeriod: "monthly" | "yearly" = "monthly", organizationId?: string) => {
+    async (tierId: string, billingPeriod: "monthly" | "yearly" = "monthly", organizationId?: string) => {
       try {
         await checkoutMutation.mutateAsync({
-          slug: tierId,
+          productId: tierId,
+          billingPeriod,
           metadata: {
             tier: tierId as MembershipTier,
             organizationId,

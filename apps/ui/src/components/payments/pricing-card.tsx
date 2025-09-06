@@ -55,7 +55,18 @@ export function PricingCard({
 
   const handleSelect = () => {
     if (!onSelect || disabled || isLoading || isCurrentTier) return;
-    onSelect(tier.id);
+    
+    // Get the correct Polar product ID based on billing period
+    const productId = billingPeriod === "yearly" 
+      ? tier.yearly?.id 
+      : tier.monthly?.id;
+    
+    if (!productId) {
+      console.error(`No ${billingPeriod} product ID found for tier ${tier.id}`);
+      return;
+    }
+    
+    onSelect(productId);
   };
 
   const getButtonText = () => {

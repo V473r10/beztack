@@ -156,9 +156,9 @@ export default function Pricing() {
     return categories;
   }, [allTiers, t]);
 
-  const handleTierSelect = async (tierId: string) => {
+  const handleTierSelect = async (productId: string) => {
     try {
-      await upgradeToTier(tierId, billingPeriod);
+      await upgradeToTier(productId, billingPeriod);
     } catch (error) {
       console.error("Failed to upgrade:", error);
     }
