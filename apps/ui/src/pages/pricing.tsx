@@ -11,6 +11,7 @@ import { useMembership } from "@/contexts/membership-context";
 import type { PolarPricingTier } from "@/types/polar-pricing";
 import { z } from "zod";
 import { usePolarProducts } from "./usePolarProducts";
+import { useTranslation } from "react-i18next";
 
 // Feature schema for DataTable
 const featureSchema = z.object({
@@ -23,30 +24,6 @@ const featureSchema = z.object({
 });
 
 type FeatureRow = z.infer<typeof featureSchema>;
-
-// Features data structure for the table
-const FEATURES_DATA: FeatureRow[] = [
-  // Authentication Features
-  { id: 1, category: "Authentication", feature: "Email/Password Login", basic: true, pro: true, ultimate: true },
-  { id: 2, category: "Authentication", feature: "Social Login", basic: true, pro: true, ultimate: true },
-  { id: 3, category: "Authentication", feature: "Two-Factor Authentication", basic: false, pro: true, ultimate: true },
-  
-  // Limits
-  { id: 4, category: "Limits", feature: "Storage", basic: "5GB", pro: "500GB", ultimate: "Unlimited" },
-  { id: 5, category: "Limits", feature: "API Calls/Month", basic: "1,000", pro: "10,000", ultimate: "Unlimited" },
-  { id: 6, category: "Limits", feature: "Team Members", basic: "1", pro: "5", ultimate: "Unlimited" },
-  
-  // Support
-  { id: 7, category: "Support", feature: "Community Support", basic: true, pro: true, ultimate: true },
-  { id: 8, category: "Support", feature: "Email Support", basic: false, pro: true, ultimate: true },
-  { id: 9, category: "Support", feature: "Priority Support & SLA", basic: false, pro: false, ultimate: true },
-  
-  // Analytics & Features
-  { id: 10, category: "Features", feature: "Basic Analytics", basic: true, pro: true, ultimate: true },
-  { id: 11, category: "Features", feature: "Advanced Analytics", basic: false, pro: true, ultimate: true },
-  { id: 12, category: "Features", feature: "Custom Integrations", basic: false, pro: false, ultimate: true },
-  { id: 13, category: "Features", feature: "Export Data", basic: false, pro: true, ultimate: true },
-];
 
 // Feature cell component to render boolean/string values appropriately
 function FeatureCell({ value }: { value: boolean | string }) {
@@ -93,22 +70,91 @@ function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
 export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const { currentTier, upgradeToTier, isLoading } = useMembership();
+  const { t } = useTranslation();
 
-  // Group features by category for better organization
-  const groupedFeatures = useMemo(() => {
-    return FEATURES_DATA.reduce((acc, feature) => {
-      if (!acc[feature.category]) {
-        acc[feature.category] = [];
-      }
-      acc[feature.category].push(feature);
-      return acc;
-    }, {} as Record<string, FeatureRow[]>);
-  }, []);
-  
   const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<PolarPricingTier[]>({
     queryKey: ['polar-products'],
     queryFn: usePolarProducts,
   });
+
+  // Generate feature comparison data from API response
+  const groupedFeatures = useMemo(() => {
+    if (!allTiers.length) return {};
+
+    const categories: Record<string, FeatureRow[]> = {};
+    let featureId = 1;
+
+    // Get all unique features from all tiers
+    const allFeatures = new Set<string>();
+    const allLimits = new Set<string>();
+    const allPermissions = new Set<string>();
+
+    allTiers.forEach(tier => {
+      tier.features?.forEach(feature => allFeatures.add(feature));
+      Object.keys(tier.limits || {}).forEach(limit => allLimits.add(limit));
+      tier.permissions?.forEach(permission => allPermissions.add(permission));
+    });
+
+    // Process features
+    allFeatures.forEach(feature => {
+      const category = t('pricing.categories.features');
+      if (!categories[category]) categories[category] = [];
+      
+      const featureRow: FeatureRow = {
+        id: featureId++,
+        category,
+        feature: t(`pricing.features.${feature}`, feature),
+        basic: allTiers.find(t => t.id === 'basic')?.features?.includes(feature) || false,
+        pro: allTiers.find(t => t.id === 'pro')?.features?.includes(feature) || false,
+        ultimate: allTiers.find(t => t.id === 'ultimate')?.features?.includes(feature) || false,
+      };
+      categories[category].push(featureRow);
+    });
+
+    // Process limits
+    allLimits.forEach(limit => {
+      const category = t('pricing.categories.limits');
+      if (!categories[category]) categories[category] = [];
+      
+      const basicTier = allTiers.find(t => t.id === 'basic');
+      const proTier = allTiers.find(t => t.id === 'pro');
+      const ultimateTier = allTiers.find(t => t.id === 'ultimate');
+      
+      const formatLimitValue = (value: number | undefined) => {
+        if (value === undefined) return false;
+        if (value === -1 || value === 999999) return t('pricing.unlimited');
+        return value.toLocaleString();
+      };
+
+      const featureRow: FeatureRow = {
+        id: featureId++,
+        category,
+        feature: t(`pricing.limits.${limit}`, limit),
+        basic: formatLimitValue(basicTier?.limits?.[limit]),
+        pro: formatLimitValue(proTier?.limits?.[limit]),
+        ultimate: formatLimitValue(ultimateTier?.limits?.[limit]),
+      };
+      categories[category].push(featureRow);
+    });
+
+    // Process permissions
+    allPermissions.forEach(permission => {
+      const category = t('pricing.categories.features');
+      if (!categories[category]) categories[category] = [];
+      
+      const featureRow: FeatureRow = {
+        id: featureId++,
+        category,
+        feature: t(`pricing.permissions.${permission}`, permission),
+        basic: allTiers.find(t => t.id === 'basic')?.permissions?.includes(permission) || false,
+        pro: allTiers.find(t => t.id === 'pro')?.permissions?.includes(permission) || false,
+        ultimate: allTiers.find(t => t.id === 'ultimate')?.permissions?.includes(permission) || false,
+      };
+      categories[category].push(featureRow);
+    });
+
+    return categories;
+  }, [allTiers, t]);
 
   const handleTierSelect = async (tierId: string) => {
     try {

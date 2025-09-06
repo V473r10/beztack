@@ -10,13 +10,8 @@ export interface PolarPricingTier {
   readonly monthly?: PolarProduct;
   readonly yearly?: PolarProduct;
   readonly features?: readonly string[];
-  readonly limits?: {
-    readonly users?: number;
-    readonly organizations?: number;
-    readonly teams?: number;
-    readonly storage?: number;
-    readonly apiCalls?: number;
-  };
+  readonly limits?: Record<string, number>;
+  readonly permissions?: readonly string[];
 }
 
 // Polar product structure from API

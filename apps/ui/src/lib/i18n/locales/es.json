@@ -67,6 +67,40 @@
 			"title": "Crear una cuenta"
 		}
 	},
+	"pricing": {
+		"features": {
+			"two-factor": "Autenticación de Dos Factores",
+			"passkeys": "Autenticación con Passkeys",
+			"email-password": "Inicio de Sesión con Email/Contraseña",
+			"social-login": "Inicio de Sesión Social",
+			"basic-analytics": "Analíticas Básicas",
+			"advanced-analytics": "Analíticas Avanzadas",
+			"custom-integrations": "Integraciones Personalizadas",
+			"export-data": "Exportar Datos",
+			"community-support": "Soporte de Comunidad",
+			"email-support": "Soporte por Email",
+			"priority-support": "Soporte Prioritario y SLA"
+		},
+		"limits": {
+			"users": "Miembros del Equipo",
+			"organizations": "Organizaciones",
+			"storage": "Almacenamiento",
+			"api-calls": "Llamadas API/Mes"
+		},
+		"permissions": {
+			"read": "Acceso de Lectura",
+			"write": "Acceso de Escritura",
+			"admin": "Acceso de Administrador",
+			"billing": "Acceso de Facturación"
+		},
+		"categories": {
+			"authentication": "Autenticación",
+			"limits": "Límites",
+			"support": "Soporte",
+			"features": "Características"
+		},
+		"unlimited": "Ilimitado"
+	},
 	"common": {
 		"footer": "© {{year}} Tu Compañía. Todos los derechos reservados.",
 		"more": "Más",
