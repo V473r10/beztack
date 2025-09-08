@@ -16,5 +16,8 @@ export default defineNitroConfig({
   sourceMap: true,
   typescript: {
     generateTsConfig: false
+  },
+  experimental: {
+    openAPI: true
   }
 });
