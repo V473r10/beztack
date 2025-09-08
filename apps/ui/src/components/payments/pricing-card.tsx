@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Check, Crown, Building2, Sparkles, Database, Zap, Users, FileText, Infinity } from "lucide-react";
 import { formatCurrency, calculateYearlySavings } from "@nvn/payments/client";
 import type { PolarPricingTier } from "@/types/polar-pricing";
+import { useTranslation } from "react-i18next";
 
 export interface PricingCardProps {
   tier: PolarPricingTier;
@@ -42,6 +43,7 @@ export function PricingCard({
   isLoading = false,
   disabled = false,
 }: PricingCardProps) {
+  const { t } = useTranslation();
   const Icon = tierIcons[tier.id as keyof typeof tierIcons] || Sparkles;
   const isCurrentTier = currentTier === tier.id;
   const price = tier.price[billingPeriod];
@@ -148,7 +150,7 @@ export function PricingCard({
             {(tier.features || []).map((feature: string, index: number) => (
               <li key={index} className="flex items-start gap-3 text-sm">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-                <span>{feature}</span>
+                <span>{t(`pricing.features.${feature}`, feature)}</span>
               </li>
             ))}
           </ul>
