@@ -14,15 +14,15 @@ import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
 import OrganizationsPage from "./app/organizations/organizations.tsx";
 import Settings from "./app/settings/settings.tsx";
-import Pricing from "./pages/pricing.tsx";
-import Billing from "./pages/billing.tsx";
-import CheckoutSuccess from "./pages/checkout-success.tsx";
+import Billing from "./app/billing/billing.tsx";
+import CheckoutSuccess from "./app/billing/checkout-success.tsx";
 import { AdminRoute } from "./components/admin-route.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
 import { ProtectedRoute } from "./components/protected-route.tsx";
 import { PublicRoute } from "./components/public-route.tsx";
 import { ThemeProvider } from "./contexts/theme-context.tsx";
 import { MembershipProvider } from "./contexts/membership-context.tsx";
+import Pricing from "./app/billing/pricing.tsx";
 
 function makeQueryClient() {
 	return new QueryClient({

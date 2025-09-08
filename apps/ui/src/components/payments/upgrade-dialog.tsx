@@ -16,7 +16,7 @@ import { MembershipBadge } from "./membership-badge";
 import type { MembershipTier } from "@nvn/payments/types";
 import { useQuery } from "@tanstack/react-query";
 import type { PolarPricingTier } from "@/types/polar-pricing";
-import { usePolarProducts } from "@/pages/usePolarProducts";
+import { usePolarProducts } from "@/hooks/use-polar-products";
 // Tier hierarchy helper - now local since tiers are dynamic
 const TIER_HIERARCHY: MembershipTier[] = ["free", "pro", "team", "enterprise"];
 

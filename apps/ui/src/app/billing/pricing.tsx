@@ -10,8 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useMembership } from "@/contexts/membership-context";
 import type { PolarPricingTier } from "@/types/polar-pricing";
 import { z } from "zod";
-import { usePolarProducts } from "./usePolarProducts";
 import { useTranslation } from "react-i18next";
+import { usePolarProducts } from "@/hooks/use-polar-products";
 
 // Feature schema for DataTable
 const featureSchema = z.object({
