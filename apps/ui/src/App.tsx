@@ -14,11 +14,15 @@ import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
 import OrganizationsPage from "./app/organizations/organizations.tsx";
 import Settings from "./app/settings/settings.tsx";
+import Pricing from "./pages/pricing.tsx";
+import Billing from "./pages/billing.tsx";
+import CheckoutSuccess from "./pages/checkout-success.tsx";
 import { AdminRoute } from "./components/admin-route.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
 import { ProtectedRoute } from "./components/protected-route.tsx";
 import { PublicRoute } from "./components/public-route.tsx";
 import { ThemeProvider } from "./contexts/theme-context.tsx";
+import { MembershipProvider } from "./contexts/membership-context.tsx";
 
 function makeQueryClient() {
 	return new QueryClient({
@@ -51,7 +55,8 @@ function App() {
 		<>
 		<ThemeProvider>
 			<QueryClientProvider client={queryClient}>
-				<BrowserRouter>
+				<MembershipProvider>
+					<BrowserRouter>
 					<Routes>
 						<Route
 							element={
@@ -81,6 +86,15 @@ function App() {
 							<Route path="organizations" element={<OrganizationsPage />} />
 						</Route>
 						<Route
+							element={
+								<ProtectedRoute>
+									<MainLayout />
+								</ProtectedRoute>
+							}
+						>
+							<Route path="billing" element={<Billing />} />
+						</Route>
+						<Route
 							path="admin"
 							element={
 								<AdminRoute>
@@ -105,13 +119,16 @@ function App() {
 							<Route path="sign-up" element={<SignUp />} />
 							<Route index element={<Navigate to="sign-in" replace />} />
 						</Route>
+						<Route path="pricing" element={<Pricing />} />
+						<Route path="checkout-success" element={<CheckoutSuccess />} />
 						<Route path="ai" element={<AI />} />
 						<Route path="ocr" element={<OCR />} />
 						{/* Redirect any unknown routes to home */}
 						<Route path="*" element={<Navigate to="/" replace />} />
 					</Routes>
-				</BrowserRouter>
-				<Toaster />
+					</BrowserRouter>
+					<Toaster />
+				</MembershipProvider>
 			</QueryClientProvider>
 			</ThemeProvider>
 		</>

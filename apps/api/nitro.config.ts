@@ -9,5 +9,15 @@ export default defineNitroConfig({
   alias: {
     "@": resolve(__dirname, "."),
     "server": resolve(__dirname, "server")
+  },
+  devServer: {
+    watch: ["server/**/*"],
+  },
+  sourceMap: true,
+  typescript: {
+    generateTsConfig: false
+  },
+  experimental: {
+    openAPI: true
   }
 });

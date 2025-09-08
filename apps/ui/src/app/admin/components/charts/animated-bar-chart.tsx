@@ -67,7 +67,7 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
                     className="bg-background border rounded-lg p-3 shadow-lg"
                   >
                     <p className="text-sm font-medium">{label}</p>
-                    <p className="text-sm font-mono" style={{ color: statusColors[data.status] || 'hsl(var(--chart-2))' }}>
+                    <p className="text-sm font-mono" style={{ color: statusColors[data.status as keyof typeof statusColors] || 'hsl(var(--chart-2))' }}>
                       {payload[0].value}{data.unit || '%'}
                     </p>
                     {data.status && (

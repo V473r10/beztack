@@ -17,6 +17,8 @@ import {
 	IconUsers,
 	IconUserCog,
 	IconBuilding,
+	IconCreditCard,
+	IconCrown,
 } from "@tabler/icons-react";
 import type * as React from "react";
 
@@ -126,6 +128,16 @@ const data = {
 			icon: IconBuilding,
 		},
 		{
+			title: "Billing",
+			url: "billing",
+			icon: IconCreditCard,
+		},
+		{
+			title: "Pricing",
+			url: "pricing",
+			icon: IconCrown,
+		},
+		{
 			title: "sidebar.secondary.settings",
 			url: "settings",
 			icon: IconSettings,
@@ -192,7 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						>
 							<Link to="/">
 								<IconInnerShadowTop className="!size-5" />
-								<span className="text-base font-semibold">Vitro</span>
+								<span className="text-base font-semibold">nvn</span>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>

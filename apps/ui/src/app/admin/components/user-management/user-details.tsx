@@ -22,7 +22,7 @@ interface UserDetailsProps {
 	onRefresh?: () => void;
 }
 
-export function UserDetails({ user, onEdit, onRefresh }: UserDetailsProps) {
+export function UserDetails({ user, onEdit, onRefresh: _onRefresh }: UserDetailsProps) {
 	const status = getUserStatus(user);
 	const roles = getUserRoles(user);
 

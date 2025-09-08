@@ -1,0 +1,106 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Launch UI (React + Vite)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/ui",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/apps/ui/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "name": "🔧 Launch API (Nitro)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/apps/api/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "name": "🐛 Attach to Chrome (Frontend Debug)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/apps/ui/src",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "/@/*": "${workspaceFolder}/apps/ui/src/*"
+      }
+    },
+    {
+      "name": "🌐 Launch Chrome (Frontend Debug)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/apps/ui/src",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "/@/*": "${workspaceFolder}/apps/ui/src/*"
+      }
+    },
+    {
+      "name": "🔍 Debug API with Nitro",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/api/node_modules/.bin/nitro",
+      "args": ["dev"],
+      "cwd": "${workspaceFolder}/apps/api",
+      "env": {
+        "NODE_ENV": "development",
+        "NODE_OPTIONS": "--inspect"
+      },
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🚀 Launch Full Stack (UI + API)",
+      "configurations": [
+        "🚀 Launch UI (React + Vite)",
+        "🔧 Launch API (Nitro)"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "hidden": false,
+        "group": "fullstack",
+        "order": 1
+      }
+    },
+    {
+      "name": "🐛 Debug Full Stack (Chrome + API)",
+      "configurations": [
+        "🌐 Launch Chrome (Frontend Debug)",
+        "🔍 Debug API with Nitro"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "hidden": false,
+        "group": "fullstack",
+        "order": 2
+      }
+    }
+  ]
+}

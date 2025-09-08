@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { Torus, TramFront } from "lucide-react";
+import { TramFront } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export interface TourStep {

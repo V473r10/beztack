@@ -67,6 +67,40 @@
 			"title": "Create an account"
 		}
 	},
+	"pricing": {
+		"features": {
+			"two-factor": "Two-Factor Authentication",
+			"social-login": "Social Login",
+			"passkeys": "Passkey Authentication",
+			"basic-dashboard-access": "Basic Dashboard Access",
+			"email-support": "Email Support",
+			"all-basic": "All Basic Features",
+			"organizations": "Multi-Organization Support",
+			"role-based-access-control": "Role-Based Access Control",
+			"all-pro": "All Pro Features",
+			"advanced-dashboard-access": "Advanced Dashboard Access",
+			"priority-support": "Priority Support & SLA"
+		},
+		"limits": {
+			"users": "Team Members",
+			"organizations": "Organizations",
+			"storage": "Storage",
+			"api-calls": "API Calls/Month"
+		},
+		"permissions": {
+			"read": "Read Access",
+			"write": "Write Access",
+			"admin": "Admin Access",
+			"billing": "Billing Access"
+		},
+		"categories": {
+			"authentication": "Authentication",
+			"limits": "Limits",
+			"support": "Support",
+			"features": "Features"
+		},
+		"unlimited": "Unlimited"
+	},
 	"common": {
 		"footer": "© {{year}} Your Company. All rights reserved.",
 		"more": "More",

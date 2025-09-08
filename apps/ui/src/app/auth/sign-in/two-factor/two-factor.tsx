@@ -85,7 +85,7 @@ const TwoFactor = () => {
 						toast.success("Signed in successfully with backup code!");
 						navigate("/");
 					},
-					async onError(res) {
+					async onError(_res) {
 						// If dash format fails, try without dash
 						const codeWithoutDash = backupCode.replace('-', '');
 						try {
