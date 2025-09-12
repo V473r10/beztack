@@ -84,74 +84,73 @@ export default function Pricing() {
     const categories: Record<string, FeatureRow[]> = {};
     let featureId = 1;
 
-    // Get all unique features from all tiers
+    // Create tier lookup map for O(1) access instead of O(n) find operations
+    const tierMap = new Map<string, PolarPricingTier>();
     const allFeatures = new Set<string>();
     const allLimits = new Set<string>();
     const allPermissions = new Set<string>();
 
+    // Single pass to build tier map and collect all unique items
     allTiers.forEach(tier => {
+      tierMap.set(tier.id, tier);
       tier.features?.forEach(feature => allFeatures.add(feature));
       Object.keys(tier.limits || {}).forEach(limit => allLimits.add(limit));
       tier.permissions?.forEach(permission => allPermissions.add(permission));
     });
 
+    // Get tier references once
+    const basicTier = tierMap.get('basic');
+    const proTier = tierMap.get('pro');
+    const ultimateTier = tierMap.get('ultimate');
+
+    const formatLimitValue = (value: number | undefined) => {
+      if (value === undefined) return false;
+      if (value === -1 || value === 999999) return t('pricing.unlimited');
+      return value.toLocaleString();
+    };
+
     // Process features
-    allFeatures.forEach(feature => {
+    if (allFeatures.size > 0) {
       const category = t('pricing.categories.features');
-      if (!categories[category]) categories[category] = [];
-      
-      const featureRow: FeatureRow = {
+      categories[category] = Array.from(allFeatures, feature => ({
         id: featureId++,
         category,
         feature: t(`pricing.features.${feature}`, feature),
-        basic: allTiers.find(t => t.id === 'basic')?.features?.includes(feature) || false,
-        pro: allTiers.find(t => t.id === 'pro')?.features?.includes(feature) || false,
-        ultimate: allTiers.find(t => t.id === 'ultimate')?.features?.includes(feature) || false,
-      };
-      categories[category].push(featureRow);
-    });
+        basic: basicTier?.features?.includes(feature) || false,
+        pro: proTier?.features?.includes(feature) || false,
+        ultimate: ultimateTier?.features?.includes(feature) || false,
+      }));
+    }
 
     // Process limits
-    allLimits.forEach(limit => {
+    if (allLimits.size > 0) {
       const category = t('pricing.categories.limits');
-      if (!categories[category]) categories[category] = [];
-      
-      const basicTier = allTiers.find(t => t.id === 'basic');
-      const proTier = allTiers.find(t => t.id === 'pro');
-      const ultimateTier = allTiers.find(t => t.id === 'ultimate');
-      
-      const formatLimitValue = (value: number | undefined) => {
-        if (value === undefined) return false;
-        if (value === -1 || value === 999999) return t('pricing.unlimited');
-        return value.toLocaleString();
-      };
-
-      const featureRow: FeatureRow = {
+      categories[category] = Array.from(allLimits, limit => ({
         id: featureId++,
         category,
         feature: t(`pricing.limits.${limit}`, limit),
         basic: formatLimitValue(basicTier?.limits?.[limit]),
         pro: formatLimitValue(proTier?.limits?.[limit]),
         ultimate: formatLimitValue(ultimateTier?.limits?.[limit]),
-      };
-      categories[category].push(featureRow);
-    });
+      }));
+    }
 
     // Process permissions
-    allPermissions.forEach(permission => {
+    if (allPermissions.size > 0) {
       const category = t('pricing.categories.features');
       if (!categories[category]) categories[category] = [];
       
-      const featureRow: FeatureRow = {
+      const permissionRows = Array.from(allPermissions, permission => ({
         id: featureId++,
         category,
         feature: t(`pricing.permissions.${permission}`, permission),
-        basic: allTiers.find(t => t.id === 'basic')?.permissions?.includes(permission) || false,
-        pro: allTiers.find(t => t.id === 'pro')?.permissions?.includes(permission) || false,
-        ultimate: allTiers.find(t => t.id === 'ultimate')?.permissions?.includes(permission) || false,
-      };
-      categories[category].push(featureRow);
-    });
+        basic: basicTier?.permissions?.includes(permission) || false,
+        pro: proTier?.permissions?.includes(permission) || false,
+        ultimate: ultimateTier?.permissions?.includes(permission) || false,
+      }));
+      
+      categories[category].push(...permissionRows);
+    }
 
     return categories;
   }, [allTiers, t]);

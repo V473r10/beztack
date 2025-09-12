@@ -32,6 +32,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@nvn/email':
+        specifier: workspace:*
+        version: link:../../packages/email
       '@nvn/payments':
         specifier: workspace:*
         version: link:../../packages/payments
@@ -351,15 +354,27 @@ importers:
         specifier: 0.5.3
         version: 0.5.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react:
-        specifier: ^19.1.1
+        specifier: ^19.1.0
         version: 19.1.1
       react-dom:
         specifier: ^19.1.1
         version: 19.1.1(react@19.1.1)
+      resend:
+        specifier: ^6.0.3
+        version: 6.0.3(@react-email/render@1.2.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
     devDependencies:
       '@react-email/preview-server':
         specifier: 4.2.11
         version: 4.2.11(@opentelemetry/api@1.9.0)(@swc/core@1.5.29(@swc/helpers@0.5.17))(postcss@8.5.6)
+      '@types/node':
+        specifier: ^22.18.0
+        version: 22.18.0
+      '@types/react':
+        specifier: ^19.1.2
+        version: 19.1.12
+      '@types/react-dom':
+        specifier: ^19.1.2
+        version: 19.1.9(@types/react@19.1.12)
       react-email:
         specifier: 4.2.11
         version: 4.2.11
@@ -408,7 +423,7 @@ importers:
         specifier: latest
         version: 1.2.21(@types/react@19.1.12)
       '@types/react':
-        specifier: ^19
+        specifier: ^19.1.12
         version: 19.1.12
 
 packages:
@@ -7309,6 +7324,15 @@ packages:
 
   require-package-name@2.0.1:
     resolution: {integrity: sha512-uuoJ1hU/k6M0779t3VMVIYpb2VMJk05cehCaABFhXaibcbvfgR8wKiozLjVFSzJPmQMRqIcO0HMyTFqfV09V6Q==}
+
+  resend@6.0.3:
+    resolution: {integrity: sha512-Yb7o2n52v91LjkUjq5vIZQbJrGiaPoMo2VPAyS0QTKA73tmvHMUQ7P1M56J1ux/Cw9Lf68PeaKidTl6GuS8DTA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@react-email/render': ^1.1.0
+    peerDependenciesMeta:
+      '@react-email/render':
+        optional: true
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -15687,6 +15711,10 @@ snapshots:
   require-from-string@2.0.2: {}
 
   require-package-name@2.0.1: {}
+
+  resend@6.0.3(@react-email/render@1.2.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)):
+    optionalDependencies:
+      '@react-email/render': 1.2.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
 
   resolve-from@4.0.0: {}
 

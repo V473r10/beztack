@@ -1,0 +1,116 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🚀 Start UI with Debug",
+      "type": "shell",
+      "command": "google-chrome",
+      "args": ["--remote-debugging-port=9222", "--user-data-dir=${workspaceFolder}/.vscode/chrome-debug", "http://localhost:5173"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "dependsOn": "Start Vite Process"
+    },
+    {
+      "label": "Start Vite Process", 
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/ui"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*VITE.*",
+          "endsPattern": ".*Local:.*"
+        }
+      }
+    },
+    {
+      "label": "🔧 Start API with Debug",
+      "type": "shell",
+      "command": "pnpm", 
+      "args": ["dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/api",
+        "env": {
+          "NODE_OPTIONS": "--inspect=9229"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always", 
+        "focus": false,
+        "panel": "shared"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "nitro",
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*nitro.*dev.*",
+          "endsPattern": ".*Nitro Server built.*"
+        }
+      }
+    },
+    {
+      "label": "🧹 Clear Vite Cache & Restart Debug",
+      "type": "shell",
+      "command": "rm",
+      "args": ["-rf", "node_modules/.vite", "node_modules/.tmp", ".vscode/chrome-debug-profile"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/ui"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔄 Reset Full Stack Debug Environment", 
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "🧹 Clear Vite Cache & Restart Debug",
+        "Start Vite Process"
+      ]
+    },
+    {
+      "label": "🚀 Auto Start Full Stack",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "🚀 Start UI with Debug",
+        "🔧 Start API with Debug"
+      ]
+    }
+  ]
+}

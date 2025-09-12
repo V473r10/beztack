@@ -1,5 +1,5 @@
 {
-  "name": "email",
+  "name": "@nvn/email",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,11 +12,19 @@
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {
     "@react-email/preview-server": "4.2.11",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
     "react-email": "4.2.11"
   },
   "dependencies": {
     "@react-email/components": "0.5.3",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react": "^19.1.0",
+    "react-dom": "^19.1.1",
+    "resend": "^6.0.3"
+  },
+  "peerDependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   }
 }

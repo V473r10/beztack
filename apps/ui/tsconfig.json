@@ -22,6 +22,8 @@
       ],
       "@nvn/api/*": ["../../apps/api/src/*"]
     },
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "sourceMap": true
   }
+  
 }
