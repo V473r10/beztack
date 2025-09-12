@@ -240,9 +240,27 @@ pnpm dev  # Starts preview server on :3001
 
 ### Key Features
 
-- **React-based templates** with full TypeScript support
-- **Responsive design** tested across major email clients
-- **Error handling** with detailed validation and logging
+- **HTML templates** with professional styling and responsive design
+- **React components available** (requires JSX runtime configuration in server)
+- **Robust error handling** with detailed validation and logging
 - **Multi-recipient support** for bulk emails
 - **Environment validation** ensures required credentials
 - **Spanish localization** for user-facing content
+
+### Template Options
+
+**Recommended: HTML Templates**
+- Use `welcomeEmailTemplate()`, `passwordResetTemplate()` functions
+- Work immediately with any server setup
+- Professional styling and responsive design
+- Full customization with parameters
+
+**Advanced: React Components** 
+- Use `WelcomeEmail`, `PasswordResetEmail` components with `sendWithReact()`
+- Require JSX runtime configuration in Nitro server
+- Full React ecosystem support
+- More complex but more flexible
+
+### React Templates Limitation
+
+React email templates currently require additional JSX runtime setup in Nitro server environment. The HTML template functions provide the same professional appearance and work immediately without additional configuration.

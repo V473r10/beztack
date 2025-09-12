@@ -19,5 +19,13 @@ export default defineNitroConfig({
   },
   experimental: {
     openAPI: true
+  },
+  esbuild: {
+    jsx: "automatic",
+    jsxImportSource: "react"
+  },
+  rollupConfig: {
+    external: [],
+    plugins: []
   }
 });

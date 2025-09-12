@@ -1,13 +1,12 @@
-import { SubscriptionConfirmationEmail, send } from "@nvn/email";
+import { sendSubscriptionConfirmationEmail } from "@nvn/email";
 import { defineEventHandler, readBody, createError } from "h3";
-import * as React from "react";
 
 interface SubscriptionConfirmationEmailRequest {
     to: string;
     username?: string;
-    planName?: string;
-    amount?: string;
-    billingPeriod?: string;
+    planName: string;
+    amount: string;
+    billingPeriod: string;
     dashboardUrl?: string;
 }
 
@@ -22,16 +21,34 @@ export default defineEventHandler(async (event) => {
             });
         }
 
-        const result = await send({
+        if (!body.planName) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: "Plan name ('planName') is required"
+            });
+        }
+
+        if (!body.amount) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: "Amount ('amount') is required"
+            });
+        }
+
+        if (!body.billingPeriod) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: "Billing period ('billingPeriod') is required"
+            });
+        }
+
+        const result = await sendSubscriptionConfirmationEmail({
             to: body.to,
-            subject: `Confirmación de Suscripción - ${body.planName || 'Plan'} nvn`,
-            react: React.createElement(SubscriptionConfirmationEmail, {
-                username: body.username,
-                planName: body.planName,
-                amount: body.amount,
-                billingPeriod: body.billingPeriod,
-                dashboardUrl: body.dashboardUrl,
-            }),
+            username: body.username,
+            planName: body.planName,
+            amount: body.amount,
+            billingPeriod: body.billingPeriod,
+            dashboardUrl: body.dashboardUrl,
         });
 
         if (!result.success) {
@@ -43,7 +60,7 @@ export default defineEventHandler(async (event) => {
 
         return {
             success: true,
-            message: "Subscription confirmation email sent successfully",
+            message: "Subscription confirmation email sent successfully with React template",
             emailId: result.data?.id,
         };
     } catch (error) {

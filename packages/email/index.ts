@@ -1,5 +1,5 @@
-import { send, sendWithReact } from "./lib/send";
-import type { SendEmailProps, EmailResult } from "./lib/send";
+import { send, sendWithReact, sendWelcomeEmail, sendPasswordResetEmail, sendSubscriptionConfirmationEmail } from "./lib/send";
+import type { SendEmailProps, SendEmailPropsWithReact, EmailResult } from "./lib/send";
 import { welcomeEmailTemplate, passwordResetTemplate } from "./lib/templates";
 
 // Email templates (React components - may cause issues in server environment)
@@ -11,14 +11,18 @@ import { SubscriptionConfirmationEmail } from "./emails/subscription-confirmatio
 export { 
   send,
   sendWithReact,
-  // HTML Templates (recommended for server use)
+  // Specific email methods (recommended approach - encapsulates React templates)
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+  sendSubscriptionConfirmationEmail,
+  // HTML Templates (fallback for direct server use)
   welcomeEmailTemplate,
   passwordResetTemplate,
-  // React Templates (may need special server setup)
+  // React Templates (low-level components, use specific methods instead)
   MyEmail,
   WelcomeEmail,
   PasswordResetEmail,
   SubscriptionConfirmationEmail
 };
 
-export type { SendEmailProps, EmailResult };
+export type { SendEmailProps, SendEmailPropsWithReact, EmailResult };

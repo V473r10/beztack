@@ -1,10 +1,10 @@
-import { passwordResetTemplate, send } from "@nvn/email";
+import { sendPasswordResetEmail } from "@nvn/email";
 import { defineEventHandler, readBody, createError } from "h3";
 
 interface PasswordResetEmailRequest {
     to: string;
     username?: string;
-    resetUrl?: string;
+    resetUrl: string;
 }
 
 export default defineEventHandler(async (event) => {
@@ -18,10 +18,17 @@ export default defineEventHandler(async (event) => {
             });
         }
 
-        const result = await send({
+        if (!body.resetUrl) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: "Reset URL ('resetUrl') is required"
+            });
+        }
+
+        const result = await sendPasswordResetEmail({
             to: body.to,
-            subject: "Restablecimiento de Contraseña - nvn",
-            html: passwordResetTemplate(body.username || 'Usuario'),
+            username: body.username,
+            resetUrl: body.resetUrl,
         });
 
         if (!result.success) {
@@ -33,7 +40,7 @@ export default defineEventHandler(async (event) => {
 
         return {
             success: true,
-            message: "Password reset email sent successfully",
+            message: "Password reset email sent successfully with React template",
             emailId: result.data?.id,
         };
     } catch (error) {

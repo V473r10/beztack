@@ -1,5 +1,5 @@
 // Simple HTML email templates
-export const welcomeEmailTemplate = (username: string = 'Usuario') => `
+export const welcomeEmailTemplate = (username: string = 'Usuario', loginUrl: string = 'https://nvn.app/login') => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -20,7 +20,7 @@ export const welcomeEmailTemplate = (username: string = 'Usuario') => `
                 Para comenzar, iniciá sesión con el siguiente enlace:
             </p>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://nvn.app/login" style="background-color: #000; border-radius: 5px; color: #fff; font-size: 16px; font-weight: bold; text-decoration: none; display: inline-block; padding: 14px 24px;">
+                <a href="${loginUrl}" style="background-color: #000; border-radius: 5px; color: #fff; font-size: 16px; font-weight: bold; text-decoration: none; display: inline-block; padding: 14px 24px;">
                     Iniciar Sesión
                 </a>
             </div>
