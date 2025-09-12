@@ -76,6 +76,7 @@ pnpm add <package> --filter @nvn/api
 - `@nvn/ai` - Exports AI SDK with pre-configured Amazon Bedrock provider
 - `@nvn/ocr` - Text extraction from images using Tesseract.js
 - `@nvn/payments` - Polar payment integration with Better Auth, membership tiers, and billing management
+- `@nvn/email` - React Email templates with Resend integration for transactional emails
 
 ## Development Guidelines
 
@@ -171,3 +172,77 @@ nx dev ui     # Frontend with payment components
 ```
 
 The integration works in sandbox mode by default and gracefully handles missing credentials during development.
+
+## Email Integration with React Email & Resend
+
+The project includes a comprehensive email system through the `@nvn/email` package, providing React-based email templates with Resend delivery.
+
+### Configuration
+
+Set up environment variables in `.env`:
+
+```bash
+# Resend Email Integration
+RESEND_API_KEY=re_your_api_key_here
+RESEND_FROM_EMAIL=hello@yourdomain.com
+RESEND_FROM_NAME=nvn  # Optional, defaults to 'nvn'
+```
+
+### Available Email Templates
+
+- **Welcome Email** (`/api/email/welcome`) - User onboarding
+- **Password Reset** (`/api/email/password-reset`) - Password recovery
+- **Subscription Confirmation** (`/api/email/subscription-confirmation`) - Payment confirmations
+- **Custom Email** (`/api/email`) - General purpose template
+
+### API Usage
+
+All endpoints accept POST requests with the following pattern:
+
+```bash
+# Welcome email
+POST /api/email/welcome
+{
+  "to": "user@example.com",
+  "username": "John Doe",
+  "loginUrl": "https://nvn.app/login"
+}
+
+# Password reset email  
+POST /api/email/password-reset
+{
+  "to": "user@example.com",
+  "username": "John Doe",
+  "resetUrl": "https://nvn.app/reset?token=abc123"
+}
+
+# Subscription confirmation
+POST /api/email/subscription-confirmation
+{
+  "to": "user@example.com",
+  "username": "John Doe",
+  "planName": "Pro",
+  "amount": "$29",
+  "billingPeriod": "mes",
+  "dashboardUrl": "https://nvn.app/billing"
+}
+```
+
+### Template Development
+
+Email templates are located in `packages/email/emails/` using React Email components:
+
+```bash
+# Preview templates during development
+cd packages/email
+pnpm dev  # Starts preview server on :3001
+```
+
+### Key Features
+
+- **React-based templates** with full TypeScript support
+- **Responsive design** tested across major email clients
+- **Error handling** with detailed validation and logging
+- **Multi-recipient support** for bulk emails
+- **Environment validation** ensures required credentials
+- **Spanish localization** for user-facing content

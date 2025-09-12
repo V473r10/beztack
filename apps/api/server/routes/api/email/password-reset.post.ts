@@ -1,15 +1,15 @@
-import { MyEmail, send } from "@nvn/email";
+import { passwordResetTemplate, send } from "@nvn/email";
 import { defineEventHandler, readBody, createError } from "h3";
-import * as React from "react";
 
-interface CustomEmailRequest {
+interface PasswordResetEmailRequest {
     to: string;
-    subject: string;
+    username?: string;
+    resetUrl?: string;
 }
 
 export default defineEventHandler(async (event) => {
     try {
-        const body = await readBody<CustomEmailRequest>(event);
+        const body = await readBody<PasswordResetEmailRequest>(event);
         
         if (!body.to) {
             throw createError({
@@ -18,33 +18,26 @@ export default defineEventHandler(async (event) => {
             });
         }
 
-        if (!body.subject) {
-            throw createError({
-                statusCode: 400,
-                statusMessage: "Email subject is required"
-            });
-        }
-
         const result = await send({
             to: body.to,
-            subject: body.subject,
-            react: React.createElement(MyEmail),
+            subject: "Restablecimiento de Contraseña - nvn",
+            html: passwordResetTemplate(body.username || 'Usuario'),
         });
 
         if (!result.success) {
             throw createError({
                 statusCode: 500,
-                statusMessage: `Failed to send email: ${result.error}`
+                statusMessage: `Failed to send password reset email: ${result.error}`
             });
         }
 
         return {
             success: true,
-            message: "Email sent successfully",
+            message: "Password reset email sent successfully",
             emailId: result.data?.id,
         };
     } catch (error) {
-        console.error("Error sending custom email:", error);
+        console.error("Error sending password reset email:", error);
         
         if (error && typeof error === 'object' && 'statusCode' in error) {
             throw error;
