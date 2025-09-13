@@ -2,8 +2,9 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db/db";
 import { schema } from "@/db/schema";
-import { twoFactor, admin, organization } from "better-auth/plugins";
+import { twoFactor, admin, organization, createAuthMiddleware } from "better-auth/plugins";
 import { setupPolarForBetterAuth } from "@nvn/payments/server";
+import { sendEmail } from "@nvn/email";
 
 // Setup Polar configuration with proper validation
 function getPolarPlugin() {
@@ -89,5 +90,15 @@ export const auth = betterAuth({
     }),
     // Integrate Polar plugin if available
     ...(polarPlugin ? [polarPlugin] : [])
-  ]
+  ],
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+            if(ctx.path.includes("/sign-up")){
+                const newSession = ctx.context.newSession;
+                if(newSession){
+                    await sendEmail({ type: 'welcome', to: newSession.user.email, data: { username: newSession.user.name } });
+                }
+            }
+        }),
+  }
 });
