@@ -3,31 +3,12 @@ import { render } from "@react-email/render";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactElement } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
+import type { EmailResult, EmailType, SendEmailProps, SendEmailPropsWithReact, SendEmailUnifiedProps } from "./interfaces";
 
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-interface SendEmailProps {
-    to: string | string[];
-    subject: string;
-    html: string;
-    from?: string;
-    replyTo?: string;
-}
 
-interface SendEmailPropsWithReact {
-    to: string | string[];
-    subject: string;
-    react: ReactElement;
-    from?: string;
-    replyTo?: string;
-}
-
-interface EmailResult {
-    success: boolean;
-    data?: any;
-    error?: string;
-}
 
 export const send = async (props: SendEmailProps): Promise<EmailResult> => {
     try {
@@ -114,15 +95,16 @@ export const sendWithReact = async (props: SendEmailPropsWithReact): Promise<Ema
         try {
             // First try the @react-email/render
             htmlContent = await render(props.react);
-        } catch (reactEmailError) {
+        } catch (reactEmailError: unknown) {
             console.warn('React Email render failed, trying react-dom/server:', reactEmailError);
             try {
                 // Fallback to react-dom/server
                 htmlContent = renderToStaticMarkup(props.react);
-            } catch (reactDomError) {
+            } catch (reactDomError: unknown) {
                 console.warn('React DOM render failed, throwing error to allow method-level fallback:', reactDomError);
                 // Instead of generating error HTML, throw to allow method-level fallback  
-                throw new Error(`React rendering failed: ${reactEmailError?.message || 'Unknown JSX error'}`);
+                const msg = reactEmailError instanceof Error ? reactEmailError.message : 'Unknown JSX error';
+                throw new Error(`React rendering failed: ${msg}`);
             }
         }
 
@@ -157,93 +139,6 @@ export const sendWithReact = async (props: SendEmailPropsWithReact): Promise<Ema
     }
 };
 
-// Specific email methods
-export const sendWelcomeEmail = async (props: { to: string; username?: string; loginUrl?: string }): Promise<EmailResult> => {
-    try {
-        const { WelcomeEmail } = await import("../emails/welcome");
-        const React = await import("react");
-        
-        const result = await sendWithReact({
-            to: props.to,
-            subject: "¡Bienvenido a nvn!",
-            react: React.createElement(WelcomeEmail, {
-                username: props.username,
-                loginUrl: props.loginUrl,
-            }),
-        });
-        
-        // Check if we got the error HTML instead of proper React rendering
-        if (result.success && !result.error) {
-            return result;
-        } else {
-            throw new Error(result.error || 'React email failed');
-        }
-    } catch (error) {
-        console.warn('React welcome email failed, using HTML template fallback');
-        // Fallback to HTML template if React fails
-        const { welcomeEmailTemplate } = await import("../lib/templates");
-        return send({
-            to: props.to,
-            subject: "¡Bienvenido a nvn!",
-            html: welcomeEmailTemplate(props.username || 'Usuario', props.loginUrl),
-        });
-    }
-};
-
-export const sendPasswordResetEmail = async (props: { to: string; username?: string; resetUrl: string }): Promise<EmailResult> => {
-    const { PasswordResetEmail } = await import("../emails/password-reset");
-    const React = await import("react");
-    
-    return sendWithReact({
-        to: props.to,
-        subject: "Restablece tu contraseña - nvn",
-        react: React.createElement(PasswordResetEmail, {
-            username: props.username,
-            resetUrl: props.resetUrl,
-        }),
-    });
-};
-
-export const sendSubscriptionConfirmationEmail = async (props: { 
-    to: string; 
-    username?: string; 
-    planName: string;
-    amount: string;
-    billingPeriod: string;
-    dashboardUrl?: string;
-}): Promise<EmailResult> => {
-    const { SubscriptionConfirmationEmail } = await import("../emails/subscription-confirmation");
-    const React = await import("react");
-    
-    return sendWithReact({
-        to: props.to,
-        subject: `Confirmación de suscripción - Plan ${props.planName}`,
-        react: React.createElement(SubscriptionConfirmationEmail, {
-            username: props.username,
-            planName: props.planName,
-            amount: props.amount,
-            billingPeriod: props.billingPeriod,
-            dashboardUrl: props.dashboardUrl,
-        }),
-    });
-};
-
-// Main unified email function - API should use this
-type EmailType = 'welcome' | 'password-reset' | 'subscription-confirmation';
-
-interface SendEmailUnifiedProps {
-    type: EmailType;
-    to: string;
-    data: {
-        username?: string;
-        loginUrl?: string;
-        resetUrl?: string;
-        planName?: string;
-        amount?: string;
-        billingPeriod?: string;
-        dashboardUrl?: string;
-    };
-}
 
 export const sendEmail = async (props: SendEmailUnifiedProps): Promise<EmailResult> => {
     try {
