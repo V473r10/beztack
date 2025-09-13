@@ -228,4 +228,115 @@ export const sendSubscriptionConfirmationEmail = async (props: {
     });
 };
 
-export type { SendEmailProps, SendEmailPropsWithReact, EmailResult };
+// Main unified email function - API should use this
+type EmailType = 'welcome' | 'password-reset' | 'subscription-confirmation';
+
+interface SendEmailUnifiedProps {
+    type: EmailType;
+    to: string;
+    data: {
+        username?: string;
+        loginUrl?: string;
+        resetUrl?: string;
+        planName?: string;
+        amount?: string;
+        billingPeriod?: string;
+        dashboardUrl?: string;
+    };
+}
+
+export const sendEmail = async (props: SendEmailUnifiedProps): Promise<EmailResult> => {
+    try {
+        // Try React templates first
+        const reactTemplate = await getReactTemplate(props.type, props.data);
+        const result = await sendWithReact({
+            to: props.to,
+            subject: getEmailSubject(props.type, props.data),
+            react: reactTemplate,
+        });
+        
+        if (result.success && !result.error) {
+            return result;
+        } else {
+            throw new Error(result.error || 'React email failed');
+        }
+    } catch (error) {
+        console.warn(`React ${props.type} email failed, using HTML template fallback`);
+        // Fallback to HTML template
+        const htmlTemplate = await getHTMLTemplate(props.type, props.data);
+        return send({
+            to: props.to,
+            subject: getEmailSubject(props.type, props.data),
+            html: htmlTemplate,
+        });
+    }
+};
+
+// Internal helper functions
+async function getReactTemplate(type: EmailType, data: any) {
+    const React = await import("react");
+    
+    switch (type) {
+        case 'welcome': {
+            const { WelcomeEmail } = await import("../emails/welcome");
+            return React.createElement(WelcomeEmail, {
+                username: data.username,
+                loginUrl: data.loginUrl,
+            });
+        }
+        case 'password-reset': {
+            const { PasswordResetEmail } = await import("../emails/password-reset");
+            return React.createElement(PasswordResetEmail, {
+                username: data.username,
+                resetUrl: data.resetUrl,
+            });
+        }
+        case 'subscription-confirmation': {
+            const { SubscriptionConfirmationEmail } = await import("../emails/subscription-confirmation");
+            return React.createElement(SubscriptionConfirmationEmail, {
+                username: data.username,
+                planName: data.planName,
+                amount: data.amount,
+                billingPeriod: data.billingPeriod,
+                dashboardUrl: data.dashboardUrl,
+            });
+        }
+        default:
+            throw new Error(`Unknown email type: ${type}`);
+    }
+}
+
+async function getHTMLTemplate(type: EmailType, data: any): Promise<string> {
+    switch (type) {
+        case 'welcome': {
+            const { welcomeEmailTemplate } = await import("../lib/templates");
+            return welcomeEmailTemplate(data.username || 'Usuario', data.loginUrl);
+        }
+        case 'password-reset': {
+            const { passwordResetTemplate } = await import("../lib/templates");
+            return passwordResetTemplate(data.username || 'Usuario');
+        }
+        case 'subscription-confirmation': {
+            // For now, use welcome template as placeholder
+            const { welcomeEmailTemplate: welcomeTemplate } = await import("../lib/templates");
+            return welcomeTemplate(data.username || 'Usuario');
+        }
+        default:
+            throw new Error(`Unknown email type: ${type}`);
+    }
+}
+
+function getEmailSubject(type: EmailType, data: any): string {
+    switch (type) {
+        case 'welcome':
+            return "¡Bienvenido a nvn!";
+        case 'password-reset':
+            return "Restablece tu contraseña - nvn";
+        case 'subscription-confirmation':
+            return `Confirmación de suscripción - Plan ${data.planName || 'Premium'}`;
+        default:
+            return "Email from nvn";
+    }
+}
+
+export type { SendEmailProps, SendEmailPropsWithReact, EmailResult, SendEmailUnifiedProps };

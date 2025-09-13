@@ -1,4 +1,4 @@
-import { sendSubscriptionConfirmationEmail } from "@nvn/email";
+import { sendEmail } from "@nvn/email";
 import { defineEventHandler, readBody, createError } from "h3";
 
 interface SubscriptionConfirmationEmailRequest {
@@ -42,13 +42,16 @@ export default defineEventHandler(async (event) => {
             });
         }
 
-        const result = await sendSubscriptionConfirmationEmail({
+        const result = await sendEmail({
+            type: 'subscription-confirmation',
             to: body.to,
-            username: body.username,
-            planName: body.planName,
-            amount: body.amount,
-            billingPeriod: body.billingPeriod,
-            dashboardUrl: body.dashboardUrl,
+            data: {
+                username: body.username,
+                planName: body.planName,
+                amount: body.amount,
+                billingPeriod: body.billingPeriod,
+                dashboardUrl: body.dashboardUrl,
+            },
         });
 
         if (!result.success) {
@@ -60,7 +63,7 @@ export default defineEventHandler(async (event) => {
 
         return {
             success: true,
-            message: "Subscription confirmation email sent successfully with React template",
+            message: "Subscription confirmation email sent successfully",
             emailId: result.data?.id,
         };
     } catch (error) {

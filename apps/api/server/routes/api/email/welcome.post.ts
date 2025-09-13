@@ -1,4 +1,4 @@
-import { sendWelcomeEmail } from "@nvn/email";
+import { sendEmail } from "@nvn/email";
 import { defineEventHandler, readBody, createError } from "h3";
 
 interface WelcomeEmailRequest {
@@ -18,10 +18,13 @@ export default defineEventHandler(async (event) => {
             });
         }
 
-        const result = await sendWelcomeEmail({
+        const result = await sendEmail({
+            type: 'welcome',
             to: body.to,
-            username: body.username,
-            loginUrl: body.loginUrl,
+            data: {
+                username: body.username,
+                loginUrl: body.loginUrl,
+            },
         });
 
         if (!result.success) {
@@ -33,7 +36,7 @@ export default defineEventHandler(async (event) => {
 
         return {
             success: true,
-            message: "Welcome email sent successfully with React template",
+            message: "Welcome email sent successfully",
             emailId: result.data?.id,
         };
     } catch (error) {

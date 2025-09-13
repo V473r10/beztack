@@ -1,4 +1,4 @@
-import { sendPasswordResetEmail } from "@nvn/email";
+import { sendEmail } from "@nvn/email";
 import { defineEventHandler, readBody, createError } from "h3";
 
 interface PasswordResetEmailRequest {
@@ -25,10 +25,13 @@ export default defineEventHandler(async (event) => {
             });
         }
 
-        const result = await sendPasswordResetEmail({
+        const result = await sendEmail({
+            type: 'password-reset',
             to: body.to,
-            username: body.username,
-            resetUrl: body.resetUrl,
+            data: {
+                username: body.username,
+                resetUrl: body.resetUrl,
+            },
         });
 
         if (!result.success) {
@@ -40,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
         return {
             success: true,
-            message: "Password reset email sent successfully with React template",
+            message: "Password reset email sent successfully",
             emailId: result.data?.id,
         };
     } catch (error) {
