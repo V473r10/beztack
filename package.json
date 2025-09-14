@@ -11,14 +11,22 @@
     "migrate": "nx run api:migrate"
   },
   "private": true,
-  "dependencies": {},
   "devDependencies": {
+    "@biomejs/biome": "2.2.2",
     "@nx/js": "21.4.1",
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
+    "lefthook": "^1.13.0",
+    "lint-staged": "^16.1.6",
     "nx": "21.4.1",
     "tslib": "^2.3.0",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "ultracite": "5.3.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
+      "pnpm dlx ultracite fix"
+    ]
   }
 }

@@ -9,5 +9,8 @@
     {
       "path": "./packages/ai"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
 }
