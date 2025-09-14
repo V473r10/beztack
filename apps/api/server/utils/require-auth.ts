@@ -12,11 +12,12 @@ export const requireAuth: EventHandler = async (event: H3Event) => {
   const session = await auth.api.getSession({
     headers,
   });
-  if (!session)
+  if (!session) {
     throw createError({
       statusCode: 401,
       statusMessage: "Unauthorized",
     });
+  }
   // You can save the session to the event context for later use
   event.context.auth = session;
 };

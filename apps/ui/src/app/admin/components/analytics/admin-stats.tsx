@@ -8,12 +8,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
 
-interface AdminStats {
+type AdminStats = {
   totalUsers: number;
   activeUsers: number;
   bannedUsers: number;
   recentSignups: number;
-}
+};
 
 // Mock function - replace with actual admin API call
 async function fetchAdminStats(): Promise<AdminStats> {

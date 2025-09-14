@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Organization types based on Better Auth organization plugin
-export interface Organization {
+export type Organization = {
   id: string;
   name: string;
   slug: string;
@@ -9,9 +9,9 @@ export interface Organization {
   metadata?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface OrganizationMember {
+export type OrganizationMember = {
   id: string;
   organizationId: string;
   userId: string;
@@ -25,9 +25,9 @@ export interface OrganizationMember {
     email: string;
     image?: string;
   };
-}
+};
 
-export interface OrganizationInvitation {
+export type OrganizationInvitation = {
   id: string;
   organizationId: string;
   email: string;
@@ -37,17 +37,17 @@ export interface OrganizationInvitation {
   invitedBy: string;
   createdAt: Date;
   organization?: Organization;
-}
+};
 
-export interface Team {
+export type Team = {
   id: string;
   name: string;
   organizationId: string;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface TeamMember {
+export type TeamMember = {
   id: string;
   teamId: string;
   userId: string;
@@ -58,7 +58,7 @@ export interface TeamMember {
     email: string;
     image?: string;
   };
-}
+};
 
 // Validation schemas
 export const createOrganizationSchema = z.object({

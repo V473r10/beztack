@@ -18,12 +18,10 @@ function getPolarPlugin() {
   const hasWebhookSecret = !!process.env.POLAR_WEBHOOK_SECRET;
 
   if (!hasAccessToken) {
-    console.info("Polar integration disabled: POLAR_ACCESS_TOKEN not provided");
     return null;
   }
 
   if (!hasWebhookSecret) {
-    console.warn("Polar webhooks disabled: POLAR_WEBHOOK_SECRET not provided");
     // Continue without webhooks
   }
 
@@ -31,32 +29,11 @@ function getPolarPlugin() {
     const polarPlugin = setupPolarForBetterAuth();
 
     if (polarPlugin) {
-      console.info("Polar integration enabled:", {
-        server: process.env.POLAR_SERVER || "sandbox",
-        webhooksEnabled: hasWebhookSecret,
-        hasBasicProduct:
-          !!process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID ||
-          !!process.env.POLAR_BASIC_YEARLY_PRODUCT_ID,
-        hasProProduct:
-          !!process.env.POLAR_PRO_MONTHLY_PRODUCT_ID ||
-          !!process.env.POLAR_PRO_YEARLY_PRODUCT_ID,
-        hasUltimateProduct:
-          !!process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID ||
-          !!process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
-      });
-
       return polarPlugin;
     }
 
     return null;
-  } catch (error) {
-    console.error(
-      "Failed to setup Polar integration:",
-      error instanceof Error ? error.message : String(error)
-    );
-    console.warn(
-      "Continuing without Polar integration. Check your configuration."
-    );
+  } catch (_error) {
     return null;
   }
 }
@@ -82,25 +59,11 @@ export const auth = betterAuth({
     admin(),
     organization({
       requireEmailVerificationOnInvitation: false, // Start with false for development
-      async sendInvitationEmail(data) {
-        // TODO: Implement email sending logic
-        // For now, just log the invitation details
-        console.log("Organization invitation:", {
-          email: data.email,
-          organizationName: data.organization.name,
-          inviterName: data.inviter.user.name,
-          role: data.role,
-          invitation: data.invitation,
-        });
-      },
+      async sendInvitationEmail(_data) {},
       organizationDeletion: {
         disabled: false,
-        beforeDelete: async (data, request) => {
-          console.log("Organization deletion started:", data.organization.id);
-        },
-        afterDelete: async (data, request) => {
-          console.log("Organization deleted:", data.organization.id);
-        },
+        beforeDelete: async (_data, _request) => {},
+        afterDelete: async (_data, _request) => {},
       },
       teams: {
         enabled: true,

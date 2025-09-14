@@ -1,11 +1,11 @@
 import { sendEmail } from "@nvn/email";
 import { createError, defineEventHandler, readBody } from "h3";
 
-interface PasswordResetEmailRequest {
+type PasswordResetEmailRequest = {
   to: string;
   username?: string;
   resetUrl: string;
-}
+};
 
 export default defineEventHandler(async (event) => {
   try {
@@ -47,8 +47,6 @@ export default defineEventHandler(async (event) => {
       emailId: result.data?.id,
     };
   } catch (error) {
-    console.error("Error sending password reset email:", error);
-
     if (error && typeof error === "object" && "statusCode" in error) {
       throw error;
     }

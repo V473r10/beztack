@@ -1,6 +1,6 @@
+import os from "node:os";
+import process from "node:process";
 import { createError, eventHandler } from "h3";
-import os from "os";
-import process from "process";
 import { requireAuth } from "@/server/utils/require-auth";
 
 export default eventHandler(async (event) => {
@@ -76,7 +76,7 @@ export default eventHandler(async (event) => {
       },
       timestamp: new Date().toISOString(),
     };
-  } catch (error) {
+  } catch (_error) {
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to retrieve system metrics",

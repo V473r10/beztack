@@ -9,7 +9,7 @@ import { createError, defineEventHandler } from "h3";
  * Test endpoint to validate Polar integration
  * Only available in development environment for security
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (_event) => {
   // Only allow in development environment
   if (process.env.NODE_ENV === "production") {
     throw createError({
@@ -45,9 +45,7 @@ export default defineEventHandler(async (event) => {
           slug: org.slug,
         };
       }
-    } catch (error) {
-      console.log("Could not fetch organization info:", error);
-    }
+    } catch (_error) {}
 
     // Try to list products if organization ID is available
     let productsCount = 0;
@@ -57,9 +55,7 @@ export default defineEventHandler(async (event) => {
           process.env.POLAR_ORGANIZATION_ID
         );
         productsCount = products?.length || 0;
-      } catch (error) {
-        console.log("Could not fetch products:", error);
-      }
+      } catch (_error) {}
     }
 
     // Check environment configuration (without exposing sensitive values)
@@ -91,8 +87,6 @@ export default defineEventHandler(async (event) => {
       environment: process.env.NODE_ENV || "development",
     };
   } catch (error) {
-    console.error("Polar test failed:", error);
-
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

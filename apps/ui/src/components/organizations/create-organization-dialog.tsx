@@ -17,10 +17,10 @@ import {
   createOrganizationSchema,
 } from "@/lib/organization-types";
 
-interface CreateOrganizationDialogProps {
+type CreateOrganizationDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+};
 
 export function CreateOrganizationDialog({
   open,
@@ -40,7 +40,7 @@ export function CreateOrganizationDialog({
         await createOrganization.mutateAsync(value);
         onOpenChange(false);
         form.reset();
-      } catch (error) {
+      } catch (_error) {
         // Error handling is done in the mutation
       }
     },

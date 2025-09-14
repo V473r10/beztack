@@ -55,7 +55,6 @@ export function SignInForm() {
             ? err.message
             : "Invalid email or password. Please try again.";
         toast.error(errorMessage);
-        console.error("Sign in failed:", err);
       } finally {
         setIsLoading(false);
       }

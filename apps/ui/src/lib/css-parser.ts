@@ -1,22 +1,22 @@
-export interface ParsedThemeColors {
+export type ParsedThemeColors = {
   background: string;
   foreground: string;
   primary: string;
   secondary: string;
   accent: string;
-}
+};
 
-export interface ParsedThemeFonts {
+export type ParsedThemeFonts = {
   sans?: string;
   serif?: string;
   mono?: string;
-}
+};
 
-export interface ParsedTheme {
+export type ParsedTheme = {
   colors: ParsedThemeColors;
   fonts: ParsedThemeFonts;
   radius?: string;
-}
+};
 
 // Extract CSS variables from theme CSS content
 export function parseCSSVariables(cssContent: string): Record<string, string> {
@@ -181,14 +181,12 @@ export async function loadThemeCSS(
     // Instead, we'll make a fetch request to the theme CSS file
     const response = await fetch(`/src/styles/themes/${themeName}.css`);
     if (!response.ok) {
-      console.warn(`Failed to load theme CSS for ${themeName}`);
       return null;
     }
 
     const cssContent = await response.text();
     return parseThemeCSS(cssContent);
-  } catch (error) {
-    console.error(`Error loading theme CSS for ${themeName}:`, error);
+  } catch (_error) {
     return null;
   }
 }

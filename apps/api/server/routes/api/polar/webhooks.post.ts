@@ -12,15 +12,6 @@ export default defineEventHandler(async (event) => {
     // Create webhook handlers with proper database integration
     const webhookHandlers = createDefaultWebhookHandlers({
       onOrderPaid: async (payload) => {
-        console.log("Order paid:", {
-          orderId: payload.data.id,
-          customerId: payload.data.customer_id,
-          referenceId: payload.data.metadata?.referenceId,
-          userId: payload.data.metadata?.userId,
-          amount: payload.data.amount,
-          products: payload.data.products,
-        });
-
         // Handle organization-level subscription
         if (payload.data.metadata?.referenceId) {
           const organizationId = payload.data.metadata.referenceId;
@@ -39,16 +30,7 @@ export default defineEventHandler(async (event) => {
                 updatedAt: new Date(),
               })
               .where(eq(schema.organization.id, organizationId));
-
-            console.log(
-              `Organization ${organizationId} subscription activated with tier: ${tierName}`
-            );
-          } catch (error) {
-            console.error(
-              `Failed to update organization ${organizationId}:`,
-              error
-            );
-          }
+          } catch (_error) {}
         }
 
         // Handle individual user subscription
@@ -69,26 +51,11 @@ export default defineEventHandler(async (event) => {
                 updatedAt: new Date(),
               })
               .where(eq(schema.user.id, userId));
-
-            console.log(
-              `User ${userId} subscription activated with tier: ${tierName}`
-            );
-          } catch (error) {
-            console.error(`Failed to update user ${userId}:`, error);
-          }
+          } catch (_error) {}
         }
       },
 
       onSubscriptionActive: async (payload) => {
-        console.log("Subscription activated:", {
-          subscriptionId: payload.data.id,
-          customerId: payload.data.customer_id,
-          organizationId: payload.data.metadata?.referenceId,
-          userId: payload.data.metadata?.userId,
-          status: payload.data.status,
-          currentPeriodEnd: payload.data.current_period_end,
-        });
-
         // Handle organization-level subscription activation
         if (payload.data.metadata?.referenceId) {
           const organizationId = payload.data.metadata.referenceId;
@@ -108,16 +75,7 @@ export default defineEventHandler(async (event) => {
                 updatedAt: new Date(),
               })
               .where(eq(schema.organization.id, organizationId));
-
-            console.log(
-              `Organization ${organizationId} subscription activated: ${tierName}`
-            );
-          } catch (error) {
-            console.error(
-              `Failed to activate organization subscription ${organizationId}:`,
-              error
-            );
-          }
+          } catch (_error) {}
         }
 
         // Handle individual user subscription activation
@@ -139,27 +97,11 @@ export default defineEventHandler(async (event) => {
                 updatedAt: new Date(),
               })
               .where(eq(schema.user.id, userId));
-
-            console.log(`User ${userId} subscription activated: ${tierName}`);
-          } catch (error) {
-            console.error(
-              `Failed to activate user subscription ${userId}:`,
-              error
-            );
-          }
+          } catch (_error) {}
         }
       },
 
       onSubscriptionCanceled: async (payload) => {
-        console.log("Subscription canceled:", {
-          subscriptionId: payload.data.id,
-          customerId: payload.data.customer_id,
-          organizationId: payload.data.metadata?.referenceId,
-          userId: payload.data.metadata?.userId,
-          status: payload.data.status,
-          currentPeriodEnd: payload.data.current_period_end,
-        });
-
         // Handle organization-level subscription cancellation
         if (payload.data.metadata?.referenceId) {
           const organizationId = payload.data.metadata.referenceId;
@@ -176,16 +118,7 @@ export default defineEventHandler(async (event) => {
                 updatedAt: new Date(),
               })
               .where(eq(schema.organization.id, organizationId));
-
-            console.log(
-              `Organization ${organizationId} subscription canceled, active until: ${payload.data.current_period_end}`
-            );
-          } catch (error) {
-            console.error(
-              `Failed to cancel organization subscription ${organizationId}:`,
-              error
-            );
-          }
+          } catch (_error) {}
         }
 
         // Handle individual user subscription cancellation
@@ -204,28 +137,11 @@ export default defineEventHandler(async (event) => {
                 updatedAt: new Date(),
               })
               .where(eq(schema.user.id, userId));
-
-            console.log(
-              `User ${userId} subscription canceled, active until: ${payload.data.current_period_end}`
-            );
-          } catch (error) {
-            console.error(
-              `Failed to cancel user subscription ${userId}:`,
-              error
-            );
-          }
+          } catch (_error) {}
         }
       },
 
       onCustomerStateChanged: async (payload) => {
-        console.log("Customer state changed:", {
-          customerId: payload.data.id,
-          email: payload.data.email,
-          subscriptions: payload.data.subscriptions,
-          benefits: payload.data.benefits,
-          metadata: payload.data.metadata,
-        });
-
         // Update user/customer data in database
         // Find user by Polar customer metadata (userId or external_id)
         const userId =
@@ -259,14 +175,7 @@ export default defineEventHandler(async (event) => {
               .update(schema.user)
               .set(updates)
               .where(eq(schema.user.id, userId));
-
-            console.log(`Updated user ${userId} with customer state`);
-          } catch (error) {
-            console.error(
-              `Failed to update user ${userId} customer state:`,
-              error
-            );
-          }
+          } catch (_error) {}
         }
 
         if (organizationId) {
@@ -296,36 +205,13 @@ export default defineEventHandler(async (event) => {
               .update(schema.organization)
               .set(updates)
               .where(eq(schema.organization.id, organizationId));
-
-            console.log(
-              `Updated organization ${organizationId} with customer state`
-            );
-          } catch (error) {
-            console.error(
-              `Failed to update organization ${organizationId} customer state:`,
-              error
-            );
-          }
+          } catch (_error) {}
         }
       },
 
-      onBenefitGrantCreated: async (payload) => {
-        console.log("Benefit grant created:", {
-          benefitId: payload.data.benefit.id,
-          customerId: payload.data.customer_id,
-          organizationId: payload.data.properties?.organization_id,
-          type: payload.data.benefit.type,
-        });
-      },
+      onBenefitGrantCreated: async (_payload) => {},
 
-      onBenefitGrantRevoked: async (payload) => {
-        console.log("Benefit grant revoked:", {
-          benefitId: payload.data.benefit.id,
-          customerId: payload.data.customer_id,
-          organizationId: payload.data.properties?.organization_id,
-          type: payload.data.benefit.type,
-        });
-      },
+      onBenefitGrantRevoked: async (_payload) => {},
     });
 
     // Handle the webhook request
@@ -333,8 +219,6 @@ export default defineEventHandler(async (event) => {
 
     return { success: true, processed: result };
   } catch (error) {
-    console.error("Webhook processing error:", error);
-
     // Return 400 for client errors, 500 for server errors
     if (error instanceof Error && error.message.includes("Invalid signature")) {
       throw createError({

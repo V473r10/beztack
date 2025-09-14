@@ -45,93 +45,93 @@ function getQueryClient() {
   // This is very important, so we don't re-make a new client if React
   // suspends during the initial render. This may not be needed if we
   // have a suspense boundary BELOW the creation of the query client
-  if (!browserQueryClient) browserQueryClient = makeQueryClient();
+  if (!browserQueryClient) {
+    browserQueryClient = makeQueryClient();
+  }
   return browserQueryClient;
 }
 
 function App() {
   const queryClient = getQueryClient();
   return (
-    <>
-      <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <MembershipProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Home />} index />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Settings />} path="settings" />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<OrganizationsPage />} path="organizations" />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Billing />} path="billing" />
-                </Route>
-                <Route
-                  element={
-                    <AdminRoute>
-                      <MainLayout />
-                    </AdminRoute>
-                  }
-                  path="admin"
-                >
-                  <Route element={<AdminDashboard />} index />
-                  <Route element={<UsersPage />} path="users" />
-                  <Route element={<AdminAnalytics />} path="analytics" />
-                </Route>
-                <Route
-                  element={
-                    <PublicRoute>
-                      <AuthLayout />
-                    </PublicRoute>
-                  }
-                  path="auth"
-                >
-                  <Route element={<SignIn />} path="sign-in" />
-                  <Route element={<TwoFactor />} path="sign-in/two-factor" />
-                  <Route element={<SignUp />} path="sign-up" />
-                  <Route element={<Navigate replace to="sign-in" />} index />
-                </Route>
-                <Route element={<Pricing />} path="pricing" />
-                <Route element={<CheckoutSuccess />} path="checkout-success" />
-                <Route element={<AI />} path="ai" />
-                <Route element={<OCR />} path="ocr" />
-                {/* Redirect any unknown routes to home */}
-                <Route element={<Navigate replace to="/" />} path="*" />
-              </Routes>
-            </BrowserRouter>
-            <Toaster />
-          </MembershipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <MembershipProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route element={<Home />} index />
+              </Route>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route element={<Settings />} path="settings" />
+              </Route>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route element={<OrganizationsPage />} path="organizations" />
+              </Route>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route element={<Billing />} path="billing" />
+              </Route>
+              <Route
+                element={
+                  <AdminRoute>
+                    <MainLayout />
+                  </AdminRoute>
+                }
+                path="admin"
+              >
+                <Route element={<AdminDashboard />} index />
+                <Route element={<UsersPage />} path="users" />
+                <Route element={<AdminAnalytics />} path="analytics" />
+              </Route>
+              <Route
+                element={
+                  <PublicRoute>
+                    <AuthLayout />
+                  </PublicRoute>
+                }
+                path="auth"
+              >
+                <Route element={<SignIn />} path="sign-in" />
+                <Route element={<TwoFactor />} path="sign-in/two-factor" />
+                <Route element={<SignUp />} path="sign-up" />
+                <Route element={<Navigate replace to="sign-in" />} index />
+              </Route>
+              <Route element={<Pricing />} path="pricing" />
+              <Route element={<CheckoutSuccess />} path="checkout-success" />
+              <Route element={<AI />} path="ai" />
+              <Route element={<OCR />} path="ocr" />
+              {/* Redirect any unknown routes to home */}
+              <Route element={<Navigate replace to="/" />} path="*" />
+            </Routes>
+          </BrowserRouter>
+          <Toaster />
+        </MembershipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

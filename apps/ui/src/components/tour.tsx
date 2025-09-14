@@ -21,16 +21,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export interface TourStep {
+export type TourStep = {
   content: React.ReactNode;
   selectorId: string;
   width?: number;
   height?: number;
   onClickWithinArea?: () => void;
   position?: "top" | "bottom" | "left" | "right";
-}
+};
 
-interface TourContextType {
+type TourContextType = {
   currentStep: number;
   totalSteps: number;
   nextStep: () => void;
@@ -42,14 +42,14 @@ interface TourContextType {
   steps: TourStep[];
   isTourCompleted: boolean;
   setIsTourCompleted: (completed: boolean) => void;
-}
+};
 
-interface TourProviderProps {
+type TourProviderProps = {
   children: React.ReactNode;
   onComplete?: () => void;
   className?: string;
   isTourCompleted?: boolean;
-}
+};
 
 const TourContext = createContext<TourContextType | null>(null);
 
@@ -59,7 +59,9 @@ const CONTENT_HEIGHT = 200;
 
 function getElementPosition(id: string) {
   const element = document.getElementById(id);
-  if (!element) return null;
+  if (!element) {
+    return null;
+  }
   const rect = element.getBoundingClientRect();
   return {
     top: rect.top + window.scrollY,
@@ -160,7 +162,7 @@ export function TourProvider({
       setIsTourCompleted(true);
       onComplete?.();
     }
-  }, [steps.length, onComplete, currentStep]);
+  }, [steps.length, onComplete, currentStep, setIsTourCompleted]);
 
   const previousStep = useCallback(() => {
     setCurrentStep((prev) => (prev > 0 ? prev - 1 : prev));

@@ -5,14 +5,14 @@ import { createConfiguredPolarClient } from "./polar";
 
 export type MembershipTier = "free" | "pro" | "enterprise";
 
-export interface MembershipInfo {
+export type MembershipInfo = {
   tier: MembershipTier;
   hasActiveSubscription: boolean;
   subscriptionId?: string;
   benefits: string[];
   organizationId?: string;
   expiresAt?: Date;
-}
+};
 
 export interface AuthenticatedUser extends User {
   session: Session;
@@ -119,9 +119,7 @@ export async function getMembershipInfo(
       organizationId,
       expiresAt,
     };
-  } catch (error) {
-    console.error("Error fetching membership info:", error);
-
+  } catch (_error) {
     // Return free tier on error to be safe
     return {
       tier: "free",

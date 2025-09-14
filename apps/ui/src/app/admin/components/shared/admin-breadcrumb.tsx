@@ -9,10 +9,10 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
-interface BreadcrumbItem {
+type BreadcrumbItem = {
   label: string;
   href?: string;
-}
+};
 
 export function AdminBreadcrumb() {
   const location = useLocation();

@@ -32,7 +32,7 @@ export function createPolarClient(config?: {
  * Polar API service class
  */
 export class PolarApiService {
-  private client: Polar;
+  private readonly client: Polar;
 
   constructor(config?: {
     accessToken?: string;
@@ -188,8 +188,7 @@ export async function validatePolarConnection(): Promise<boolean> {
     // Try to make a simple API call to validate connection
     await client.organizations.list({ limit: 1 });
     return true;
-  } catch (error) {
-    console.error("Polar connection validation failed:", error);
+  } catch (_error) {
     return false;
   }
 }

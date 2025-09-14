@@ -42,7 +42,9 @@ export function useOrganizationMembers(organizationId?: string) {
   return useQuery({
     queryKey: ["organizationMembers", organizationId],
     queryFn: async () => {
-      if (!organizationId) return [];
+      if (!organizationId) {
+        return [];
+      }
       const response = await authClient.organization.listMembers({
         query: {
           organizationId,
@@ -63,7 +65,9 @@ export function useOrganizationInvitations(organizationId?: string) {
   return useQuery({
     queryKey: ["organizationInvitations", organizationId],
     queryFn: async () => {
-      if (!organizationId) return [];
+      if (!organizationId) {
+        return [];
+      }
       const response = await authClient.organization.listInvitations({
         query: {
           organizationId,
@@ -107,7 +111,9 @@ export function useTeams(organizationId?: string) {
   return useQuery({
     queryKey: ["teams", organizationId],
     queryFn: async () => {
-      if (!organizationId) return [];
+      if (!organizationId) {
+        return [];
+      }
       const response = await authClient.organization.listTeams({
         query: {
           organizationId,
@@ -126,7 +132,9 @@ export function useTeamMembers(teamId?: string) {
   return useQuery({
     queryKey: ["teamMembers", teamId],
     queryFn: async () => {
-      if (!teamId) return [];
+      if (!teamId) {
+        return [];
+      }
       const response = await authClient.organization.listTeamMembers({
         query: {
           teamId,

@@ -3,13 +3,13 @@ import { Building2, Crown, Sparkles, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export interface MembershipBadgeProps {
+export type MembershipBadgeProps = {
   tier: MembershipTier;
   variant?: "default" | "secondary" | "outline";
   size?: "sm" | "md" | "lg";
   showIcon?: boolean;
   className?: string;
-}
+};
 
 const tierIcons = {
   free: Sparkles,
@@ -77,12 +77,12 @@ export function MembershipBadge({
   );
 }
 
-export interface MembershipStatusProps {
+export type MembershipStatusProps = {
   tier: MembershipTier;
   isActive: boolean;
   expiresAt?: Date;
   className?: string;
-}
+};
 
 export function MembershipStatus({
   tier,
@@ -97,15 +97,25 @@ export function MembershipStatus({
   }
 
   const getStatusColor = () => {
-    if (!isActive) return "destructive";
-    if (expiresAt && expiresAt < new Date()) return "destructive";
-    if (tier === "free") return "secondary";
+    if (!isActive) {
+      return "destructive";
+    }
+    if (expiresAt && expiresAt < new Date()) {
+      return "destructive";
+    }
+    if (tier === "free") {
+      return "secondary";
+    }
     return "default";
   };
 
   const getStatusText = () => {
-    if (!isActive) return "Inactive";
-    if (expiresAt && expiresAt < new Date()) return "Expired";
+    if (!isActive) {
+      return "Inactive";
+    }
+    if (expiresAt && expiresAt < new Date()) {
+      return "Expired";
+    }
     return "Active";
   };
 

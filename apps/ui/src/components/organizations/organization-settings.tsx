@@ -35,12 +35,12 @@ import {
   updateOrganizationSchema,
 } from "@/lib/organization-types";
 
-interface OrganizationSettingsProps {
+type OrganizationSettingsProps = {
   organization: Organization;
   userRole?: string;
   canEdit?: boolean;
   canDelete?: boolean;
-}
+};
 
 export function OrganizationSettings({
   organization,
@@ -68,7 +68,7 @@ export function OrganizationSettings({
           data: value,
         });
         setIsEditing(false);
-      } catch (error) {
+      } catch (_error) {
         // Error handling is done in the mutation
       }
     },
@@ -92,7 +92,7 @@ export function OrganizationSettings({
     try {
       await deleteOrganization.mutateAsync(organization.id);
       navigate("/");
-    } catch (error) {
+    } catch (_error) {
       // Error handling is done in the mutation
     }
   };
@@ -101,7 +101,7 @@ export function OrganizationSettings({
     try {
       await leaveOrganization.mutateAsync(organization.id);
       navigate("/");
-    } catch (error) {
+    } catch (_error) {
       // Error handling is done in the mutation
     }
   };

@@ -2,11 +2,11 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminBreadcrumb } from "./admin-breadcrumb";
 
-interface AdminHeaderProps {
+type AdminHeaderProps = {
   title: string;
   description?: string;
   action?: React.ReactNode;
-}
+};
 
 export function AdminHeader({ title, description, action }: AdminHeaderProps) {
   return (

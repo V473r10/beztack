@@ -96,9 +96,7 @@ export default defineEventHandler(async (event) => {
         },
       },
     };
-  } catch (error) {
-    console.error("Error fetching organization features:", error);
-
+  } catch (_error) {
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to fetch organization features",

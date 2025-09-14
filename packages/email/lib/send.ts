@@ -1,6 +1,4 @@
 import { render } from "@react-email/render";
-import type { ReactElement } from "react";
-import { jsx, jsxs } from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Resend } from "resend";
 import type {
@@ -48,7 +46,6 @@ export const send = async (props: SendEmailProps): Promise<EmailResult> => {
     });
 
     if (error) {
-      console.error("Resend API error:", error);
       return {
         success: false,
         error: error.message || "Unknown email sending error",
@@ -62,7 +59,6 @@ export const send = async (props: SendEmailProps): Promise<EmailResult> => {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Email sending error:", errorMessage);
 
     return {
       success: false,
@@ -103,18 +99,10 @@ export const sendWithReact = async (
       // First try the @react-email/render
       htmlContent = await render(props.react);
     } catch (reactEmailError: unknown) {
-      console.warn(
-        "React Email render failed, trying react-dom/server:",
-        reactEmailError
-      );
       try {
         // Fallback to react-dom/server
         htmlContent = renderToStaticMarkup(props.react);
-      } catch (reactDomError: unknown) {
-        console.warn(
-          "React DOM render failed, throwing error to allow method-level fallback:",
-          reactDomError
-        );
+      } catch (_reactDomError: unknown) {
         // Instead of generating error HTML, throw to allow method-level fallback
         const msg =
           reactEmailError instanceof Error
@@ -133,7 +121,6 @@ export const sendWithReact = async (
     });
 
     if (error) {
-      console.error("Resend API error:", error);
       return {
         success: false,
         error: error.message || "Unknown email sending error",
@@ -147,7 +134,6 @@ export const sendWithReact = async (
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Email sending error:", errorMessage);
 
     return {
       success: false,
@@ -172,10 +158,7 @@ export const sendEmail = async (
       return result;
     }
     throw new Error(result.error || "React email failed");
-  } catch (error) {
-    console.warn(
-      `React ${props.type} email failed, using HTML template fallback`
-    );
+  } catch (_error) {
     // Fallback to HTML template
     const htmlTemplate = await getHTMLTemplate(props.type, props.data);
     return send({

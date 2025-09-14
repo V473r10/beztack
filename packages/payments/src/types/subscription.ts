@@ -20,7 +20,7 @@ export type BillingPeriod = "monthly" | "yearly";
 /**
  * Subscription data from Polar
  */
-export interface Subscription {
+export type Subscription = {
   readonly id: string;
   readonly customerId: string;
   readonly productId: string;
@@ -40,7 +40,7 @@ export interface Subscription {
   };
   readonly createdAt: Date;
   readonly updatedAt: Date;
-}
+};
 
 /**
  * Subscription with associated tier information
@@ -53,7 +53,7 @@ export interface SubscriptionWithTier extends Subscription {
 /**
  * Subscription creation parameters
  */
-export interface CreateSubscriptionParams {
+export type CreateSubscriptionParams = {
   readonly customerId: string;
   readonly productId: string;
   readonly priceId: string;
@@ -64,32 +64,32 @@ export interface CreateSubscriptionParams {
     readonly referenceId?: string;
   };
   readonly trialPeriodDays?: number;
-}
+};
 
 /**
  * Subscription update parameters
  */
-export interface UpdateSubscriptionParams {
+export type UpdateSubscriptionParams = {
   readonly subscriptionId: string;
   readonly priceId?: string;
   readonly metadata?: Subscription["metadata"];
   readonly cancelAtPeriodEnd?: boolean;
   readonly prorationBehavior?: "create_prorations" | "none";
-}
+};
 
 /**
  * Subscription cancellation parameters
  */
-export interface CancelSubscriptionParams {
+export type CancelSubscriptionParams = {
   readonly subscriptionId: string;
   readonly cancelAtPeriodEnd: boolean;
   readonly cancellationReason?: string;
-}
+};
 
 /**
  * Subscription preview for upgrades/downgrades
  */
-export interface SubscriptionPreview {
+export type SubscriptionPreview = {
   readonly subscriptionId: string;
   readonly currentPriceId: string;
   readonly newPriceId: string;
@@ -97,4 +97,4 @@ export interface SubscriptionPreview {
   readonly prorationAmount: number;
   readonly nextInvoiceAmount: number;
   readonly nextInvoiceDate: Date;
-}
+};

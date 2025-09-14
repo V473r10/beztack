@@ -6,29 +6,29 @@ export type EmailType =
   | "password-reset"
   | "subscription-confirmation";
 
-export interface SendEmailProps {
+export type SendEmailProps = {
   to: string | string[];
   subject: string;
   html: string;
   from?: string;
   replyTo?: string;
-}
+};
 
-export interface SendEmailPropsWithReact {
+export type SendEmailPropsWithReact = {
   to: string | string[];
   subject: string;
   react: ReactElement;
   from?: string;
   replyTo?: string;
-}
+};
 
-export interface EmailResult {
+export type EmailResult = {
   success: boolean;
   data?: any;
   error?: string;
-}
+};
 
-export interface SendEmailUnifiedProps {
+export type SendEmailUnifiedProps = {
   type: EmailType;
   to: string;
   data: {
@@ -40,4 +40,4 @@ export interface SendEmailUnifiedProps {
     billingPeriod?: string;
     dashboardUrl?: string;
   };
-}
+};

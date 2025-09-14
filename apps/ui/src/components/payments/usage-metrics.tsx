@@ -20,21 +20,21 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-export interface UsageMetricsProps {
+export type UsageMetricsProps = {
   meters?: CustomerMeter[];
   tierConfig: MembershipTierConfig;
   onUpgrade?: () => void;
   className?: string;
-}
+};
 
-interface UsageItemProps {
+type UsageItemProps = {
   label: string;
   current: number;
   limit: number;
   icon: React.ComponentType<{ className?: string }>;
   unit?: string;
   warningThreshold?: number;
-}
+};
 
 const usageIcons = {
   users: Users,

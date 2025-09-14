@@ -47,12 +47,12 @@ const userFormSchema = z.object({
 
 type UserFormData = z.infer<typeof userFormSchema>;
 
-interface UserFormProps {
+type UserFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user?: AdminUser | null;
   onSuccess: () => void;
-}
+};
 
 export function UserForm({
   open,
@@ -110,14 +110,16 @@ export function UserForm({
       form.reset();
     },
     onError: (error) => {
-      toast.error("Failed to create user: " + error.message);
+      toast.error(`Failed to create user: ${error.message}`);
     },
   });
 
   // Update user mutation
   const updateUserMutation = useMutation({
     mutationFn: async (data: Partial<AdminUser>) => {
-      if (!user) throw new Error("No user to update");
+      if (!user) {
+        throw new Error("No user to update");
+      }
 
       const response = await authClient.admin.updateUser({
         userId: user.id,
@@ -134,7 +136,7 @@ export function UserForm({
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error("Failed to update user: " + error.message);
+      toast.error(`Failed to update user: ${error.message}`);
     },
   });
 
@@ -142,11 +144,18 @@ export function UserForm({
     if (isEditing) {
       // For editing, only send changed fields
       const updates: Partial<AdminUser> = {};
-      if (data.email !== user.email) updates.email = data.email;
-      if (data.name !== user.name) updates.name = data.name;
-      if (data.role !== user.role) updates.role = data.role;
-      if (data.emailVerified !== user.emailVerified)
+      if (data.email !== user.email) {
+        updates.email = data.email;
+      }
+      if (data.name !== user.name) {
+        updates.name = data.name;
+      }
+      if (data.role !== user.role) {
+        updates.role = data.role;
+      }
+      if (data.emailVerified !== user.emailVerified) {
         updates.emailVerified = data.emailVerified;
+      }
 
       updateUserMutation.mutate(updates);
     } else {

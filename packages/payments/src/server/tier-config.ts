@@ -8,18 +8,13 @@ import type {
  * This replaces the hardcoded tiers.ts constants
  */
 export async function fetchTierConfigs(): Promise<MembershipTierConfig[]> {
-  try {
-    const response = await fetch(
-      `${process.env.API_BASE_URL}/api/polar/products`
-    );
-    if (!response.ok) {
-      throw new Error(`Failed to fetch tier configs: ${response.statusText}`);
-    }
-    return (await response.json()) as MembershipTierConfig[];
-  } catch (error) {
-    console.error("Error fetching tier configurations:", error);
-    throw error;
+  const response = await fetch(
+    `${process.env.API_BASE_URL}/api/polar/products`
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to fetch tier configs: ${response.statusText}`);
   }
+  return (await response.json()) as MembershipTierConfig[];
 }
 
 /**

@@ -9,7 +9,7 @@ import {
   YAxis,
 } from "recharts";
 
-interface AnimatedBarChartProps {
+type AnimatedBarChartProps = {
   data: Array<{
     label: string;
     value: number;
@@ -17,7 +17,7 @@ interface AnimatedBarChartProps {
     status?: "good" | "warning" | "critical";
     color?: string;
   }>;
-}
+};
 
 export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
   return (

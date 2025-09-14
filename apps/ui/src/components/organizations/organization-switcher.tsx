@@ -32,11 +32,11 @@ import type { Organization } from "@/lib/organization-types";
 import { cn } from "@/lib/utils";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 
-interface OrganizationSwitcherProps {
+type OrganizationSwitcherProps = {
   className?: string;
   onCreateOrganization?: () => void;
   onManageOrganizations?: () => void;
-}
+};
 
 export function OrganizationSwitcher({
   className,

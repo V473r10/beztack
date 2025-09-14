@@ -27,10 +27,10 @@ import {
 } from "@/lib/admin-utils";
 import { authClient } from "@/lib/auth-client";
 
-interface UserDetailsProps {
+type UserDetailsProps = {
   user: AdminUser;
   onEdit: () => void;
-}
+};
 
 export function UserDetails({ user, onEdit }: UserDetailsProps) {
   const status = getUserStatus(user);
@@ -66,7 +66,7 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
       refetchSessions();
     },
     onError: (error) => {
-      toast.error("Failed to revoke session: " + error.message);
+      toast.error(`Failed to revoke session: ${error.message}`);
     },
   });
 
@@ -86,7 +86,7 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
       refetchSessions();
     },
     onError: (error) => {
-      toast.error("Failed to revoke all sessions: " + error.message);
+      toast.error(`Failed to revoke all sessions: ${error.message}`);
     },
   });
 

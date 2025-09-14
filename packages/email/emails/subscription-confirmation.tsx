@@ -9,13 +9,13 @@ import {
   Text,
 } from "@react-email/components";
 
-interface SubscriptionConfirmationEmailProps {
+type SubscriptionConfirmationEmailProps = {
   username?: string;
   planName?: string;
   amount?: string;
   billingPeriod?: string;
   dashboardUrl?: string;
-}
+};
 
 export const SubscriptionConfirmationEmail = ({
   username = "User",

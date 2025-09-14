@@ -14,8 +14,7 @@ export async function usePolarProducts(): Promise<PolarPricingTier[]> {
 
     // The API now returns the complete data including features, limits, and permissions from the database
     return polarTiers;
-  } catch (error) {
-    console.error("Failed to fetch Polar products:", error);
+  } catch (_error) {
     // Return empty array on error - no fallback to hardcoded data
     return [];
   }

@@ -8,10 +8,10 @@ import {
   Text,
 } from "@react-email/components";
 
-interface WelcomeEmailProps {
+type WelcomeEmailProps = {
   username?: string;
   loginUrl?: string;
-}
+};
 
 export const WelcomeEmail = ({
   username = "User",

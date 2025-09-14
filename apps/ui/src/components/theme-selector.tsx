@@ -29,8 +29,7 @@ export function ThemeSelector() {
         setLoading(true);
         const availableThemes = await getAllThemes();
         setThemes(availableThemes);
-      } catch (error) {
-        console.error("Failed to load themes:", error);
+      } catch (_error) {
       } finally {
         setLoading(false);
       }

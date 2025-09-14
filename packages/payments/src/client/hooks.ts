@@ -15,7 +15,7 @@ import type {
 /**
  * Auth client interface (to be provided by Better Auth)
  */
-interface AuthClient {
+type AuthClient = {
   checkout: (params: CheckoutSessionParams) => Promise<void>;
   customer: {
     state: () => Promise<{ data: CustomerPortalState }>;
@@ -61,7 +61,7 @@ interface AuthClient {
       }) => Promise<{ data: CustomerMeter[] }>;
     };
   };
-}
+};
 
 /**
  * Hook for customer portal state

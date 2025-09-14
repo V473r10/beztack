@@ -1,5 +1,5 @@
 // Types for Polar-integrated pricing tiers (from real Polar data)
-export interface PolarPricingTier {
+export type PolarPricingTier = {
   readonly id: string;
   readonly name: string;
   readonly description: string;
@@ -12,10 +12,10 @@ export interface PolarPricingTier {
   readonly features?: readonly string[];
   readonly limits?: Record<string, number>;
   readonly permissions?: readonly string[];
-}
+};
 
 // Polar product structure from API
-export interface PolarProduct {
+export type PolarProduct = {
   id: string;
   name: string;
   description?: string | null;
@@ -30,5 +30,5 @@ export interface PolarProduct {
     priceCurrency: string;
     recurringInterval: string;
   }>;
-  benefits?: Array<any>;
-}
+  benefits?: any[];
+};

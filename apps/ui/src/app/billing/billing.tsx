@@ -94,17 +94,13 @@ export default function Billing() {
   ) => {
     try {
       await upgradeToTier(tierId, billingPeriod);
-    } catch (error) {
-      console.error("Failed to upgrade:", error);
-    }
+    } catch (_error) {}
   };
 
   const handleManageBilling = async () => {
     try {
       await openBillingPortal(window.location.href);
-    } catch (error) {
-      console.error("Failed to open billing portal:", error);
-    }
+    } catch (_error) {}
   };
 
   return (

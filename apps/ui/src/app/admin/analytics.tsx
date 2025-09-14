@@ -21,18 +21,18 @@ import { StatsCard } from "./components/charts/stats-card";
 import { AdminHeader } from "./components/shared/admin-header";
 
 // Types for API responses
-interface SystemMetric {
+type SystemMetric = {
   label: string;
   value: number;
   unit: string;
   status: "good" | "warning" | "critical";
-}
+};
 
-interface SystemMetricsResponse {
+type SystemMetricsResponse = {
   metrics: SystemMetric[];
   systemInfo?: Record<string, unknown>;
   timestamp: string;
-}
+};
 
 // Enhanced data fetching functions
 async function fetchUserGrowthData() {
@@ -95,8 +95,7 @@ async function fetchSystemMetrics(): Promise<SystemMetric[]> {
 
     // Return empty array if no metrics found
     return [];
-  } catch (error) {
-    console.error("Failed to fetch system metrics:", error);
+  } catch (_error) {
     // Fallback to simulated data if API fails
     return [
       { label: "Memory Usage", value: 67, unit: "%", status: "good" as const },

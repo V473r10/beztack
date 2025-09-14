@@ -27,9 +27,7 @@ export default defineEventHandler(async (event) => {
         ...membershipStatus,
       },
     };
-  } catch (error) {
-    console.error("Error fetching membership status:", error);
-
+  } catch (_error) {
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to fetch membership status",

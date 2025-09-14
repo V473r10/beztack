@@ -27,14 +27,14 @@ const isTierHigher = (tierA: string, tierB: string): boolean => {
   return indexA > indexB;
 };
 
-export interface UpgradeDialogProps {
+export type UpgradeDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentTier: MembershipTier;
   onUpgrade: (tierId: string, billingPeriod: "monthly" | "yearly") => void;
   isLoading?: boolean;
   suggestedTier?: MembershipTier;
-}
+};
 
 export function UpgradeDialog({
   open,
@@ -55,8 +55,6 @@ export function UpgradeDialog({
     queryKey: ["polar-products"],
     queryFn: usePolarProducts,
   });
-
-  console.log(allTiers);
   const availableTiers = allTiers.filter((tier) =>
     isTierHigher(tier.id, currentTier)
   );

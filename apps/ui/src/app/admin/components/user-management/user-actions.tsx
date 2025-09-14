@@ -32,11 +32,11 @@ import {
 import type { AdminUser } from "@/lib/admin-types";
 import { authClient } from "@/lib/auth-client";
 
-interface UserActionsProps {
+type UserActionsProps = {
   user: AdminUser;
   onEdit: () => void;
   onRefresh: () => void;
-}
+};
 
 type ActionType = "ban" | "unban" | "delete" | null;
 

@@ -41,9 +41,9 @@ import {
   ROLE_LABELS,
 } from "@/lib/organization-types";
 
-interface UserInvitationsProps {
+type UserInvitationsProps = {
   className?: string;
-}
+};
 
 // Simple date formatting utility
 const formatDate = (date: Date | string) => {
@@ -61,13 +61,17 @@ const formatRelativeTime = (date: Date | string) => {
     (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60)
   );
 
-  if (diffInHours < 1) return "Expires soon";
-  if (diffInHours < 24)
+  if (diffInHours < 1) {
+    return "Expires soon";
+  }
+  if (diffInHours < 24) {
     return `Expires in ${diffInHours} hour${diffInHours === 1 ? "" : "s"}`;
+  }
 
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7)
+  if (diffInDays < 7) {
     return `Expires in ${diffInDays} day${diffInDays === 1 ? "" : "s"}`;
+  }
 
   return `Expires ${formatDate(date)}`;
 };
@@ -107,23 +111,27 @@ export function UserInvitations({ className }: UserInvitationsProps) {
   };
 
   const confirmAcceptInvitation = async () => {
-    if (!invitationToAccept) return;
+    if (!invitationToAccept) {
+      return;
+    }
 
     try {
       await acceptInvitation.mutateAsync(invitationToAccept.id);
       setInvitationToAccept(null);
-    } catch (error) {
+    } catch (_error) {
       // Error handling is done in the mutation
     }
   };
 
   const confirmRejectInvitation = async () => {
-    if (!invitationToReject) return;
+    if (!invitationToReject) {
+      return;
+    }
 
     try {
       await rejectInvitation.mutateAsync(invitationToReject.id);
       setInvitationToReject(null);
-    } catch (error) {
+    } catch (_error) {
       // Error handling is done in the mutation
     }
   };

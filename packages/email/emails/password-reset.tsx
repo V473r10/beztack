@@ -8,10 +8,10 @@ import {
   Text,
 } from "@react-email/components";
 
-interface PasswordResetEmailProps {
+type PasswordResetEmailProps = {
   username?: string;
   resetUrl?: string;
-}
+};
 
 export const PasswordResetEmail = ({
   username = "User",

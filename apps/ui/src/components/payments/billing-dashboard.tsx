@@ -37,7 +37,7 @@ import { MembershipBadge, MembershipStatus } from "./membership-badge";
 import { UpgradeDialog } from "./upgrade-dialog";
 import { UsageMetrics } from "./usage-metrics";
 
-export interface BillingDashboardProps {
+export type BillingDashboardProps = {
   subscriptions?: Subscription[];
   orders?: Order[];
   meters?: CustomerMeter[];
@@ -47,13 +47,13 @@ export interface BillingDashboardProps {
   onManageBilling?: () => void;
   isLoading?: boolean;
   className?: string;
-}
+};
 
-interface SubscriptionCardProps {
+type SubscriptionCardProps = {
   subscription: Subscription;
   onManage?: () => void;
   onUpgrade?: () => void;
-}
+};
 
 function SubscriptionCard({
   subscription,
@@ -68,19 +68,26 @@ function SubscriptionCard({
     new Date(subscription.currentPeriodEnd) > new Date();
 
   const getStatusColor = () => {
-    if (isActive) return "default";
-    if (inGracePeriod) return "secondary";
+    if (isActive) {
+      return "default";
+    }
+    if (inGracePeriod) {
+      return "secondary";
+    }
     return "destructive";
   };
 
   const getStatusText = () => {
-    if (isActive) return "Active";
-    if (inGracePeriod && subscription.currentPeriodEnd)
+    if (isActive) {
+      return "Active";
+    }
+    if (inGracePeriod && subscription.currentPeriodEnd) {
       return (
         "Canceled (Active until " +
         new Date(subscription.currentPeriodEnd).toLocaleDateString() +
         ")"
       );
+    }
     return "Canceled";
   };
 
@@ -174,9 +181,9 @@ function SubscriptionCard({
   );
 }
 
-interface OrderHistoryProps {
+type OrderHistoryProps = {
   orders: Order[];
-}
+};
 
 function OrderHistory({ orders }: OrderHistoryProps) {
   if (orders.length === 0) {

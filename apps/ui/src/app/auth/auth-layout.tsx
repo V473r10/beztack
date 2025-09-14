@@ -3,9 +3,9 @@ import { Outlet } from "react-router";
 import { LanguageToggle } from "@/components/language-toggle";
 import { cn } from "@/lib/utils";
 
-interface AuthLayoutProps {
+type AuthLayoutProps = {
   className?: string;
-}
+};
 
 const AuthLayout = ({ className }: AuthLayoutProps) => {
   const { t } = useTranslation();

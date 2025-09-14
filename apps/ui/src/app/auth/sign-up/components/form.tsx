@@ -67,7 +67,6 @@ export function SignUpForm() {
             ? err.message
             : t("notifications.account.creationFailed");
         toast.error(errorMessage);
-        console.error("Sign up failed:", err);
       } finally {
         setIsLoading(false);
       }

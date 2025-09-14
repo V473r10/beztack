@@ -27,10 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface Language {
+type Language = {
   code: string;
   name: string;
-}
+};
 
 const languages: Language[] = [
   { code: "eng", name: "English" },
@@ -102,7 +102,9 @@ export default function OCR() {
   };
 
   const capturePhoto = () => {
-    if (!(videoRef.current && canvasRef.current)) return;
+    if (!(videoRef.current && canvasRef.current)) {
+      return;
+    }
 
     const canvas = canvasRef.current;
     const video = videoRef.current;

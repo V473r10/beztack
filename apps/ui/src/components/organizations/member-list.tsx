@@ -65,13 +65,13 @@ const formatDate = (date: Date | string) => {
   });
 };
 
-interface MemberListProps {
+type MemberListProps = {
   organizationId: string;
   currentUserRole?: string;
   currentUserId?: string;
   onInviteMembers?: () => void;
   onEditMember?: (member: OrganizationMember) => void;
-}
+};
 
 export function MemberList({
   organizationId,
@@ -119,14 +119,22 @@ export function MemberList({
   };
 
   const canEditMember = (member: OrganizationMember) => {
-    if (member.userId === currentUserId) return false; // Can't edit self
-    if (member.role === "owner") return isOwner; // Only owner can edit owner
+    if (member.userId === currentUserId) {
+      return false; // Can't edit self
+    }
+    if (member.role === "owner") {
+      return isOwner; // Only owner can edit owner
+    }
     return canManageMembers;
   };
 
   const canRemoveMember = (member: OrganizationMember) => {
-    if (member.userId === currentUserId) return false; // Can't remove self
-    if (member.role === "owner") return false; // Can't remove owner
+    if (member.userId === currentUserId) {
+      return false; // Can't remove self
+    }
+    if (member.role === "owner") {
+      return false; // Can't remove owner
+    }
     return canManageMembers;
   };
 
@@ -134,13 +142,17 @@ export function MemberList({
     member: OrganizationMember,
     newRole: string
   ) => {
-    if (newRole === member.role) return;
+    if (newRole === member.role) {
+      return;
+    }
 
     setMemberToUpdate({ member, newRole });
   };
 
   const confirmUpdateRole = async () => {
-    if (!memberToUpdate) return;
+    if (!memberToUpdate) {
+      return;
+    }
 
     try {
       await updateMemberRole.mutateAsync({
@@ -149,7 +161,7 @@ export function MemberList({
         data: { role: memberToUpdate.newRole },
       });
       setMemberToUpdate(null);
-    } catch (error) {
+    } catch (_error) {
       // Error handling is done in the mutation
     }
   };
@@ -159,7 +171,9 @@ export function MemberList({
   };
 
   const confirmRemoveMember = async () => {
-    if (!memberToRemove) return;
+    if (!memberToRemove) {
+      return;
+    }
 
     try {
       await removeMember.mutateAsync({
@@ -167,7 +181,7 @@ export function MemberList({
         userId: memberToRemove.userId,
       });
       setMemberToRemove(null);
-    } catch (error) {
+    } catch (_error) {
       // Error handling is done in the mutation
     }
   };

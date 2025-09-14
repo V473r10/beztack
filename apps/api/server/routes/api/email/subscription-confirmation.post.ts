@@ -1,14 +1,14 @@
 import { sendEmail } from "@nvn/email";
 import { createError, defineEventHandler, readBody } from "h3";
 
-interface SubscriptionConfirmationEmailRequest {
+type SubscriptionConfirmationEmailRequest = {
   to: string;
   username?: string;
   planName: string;
   amount: string;
   billingPeriod: string;
   dashboardUrl?: string;
-}
+};
 
 export default defineEventHandler(async (event) => {
   try {
@@ -67,8 +67,6 @@ export default defineEventHandler(async (event) => {
       emailId: result.data?.id,
     };
   } catch (error) {
-    console.error("Error sending subscription confirmation email:", error);
-
     if (error && typeof error === "object" && "statusCode" in error) {
       throw error;
     }

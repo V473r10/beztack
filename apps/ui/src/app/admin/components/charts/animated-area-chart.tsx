@@ -8,12 +8,12 @@ import {
   YAxis,
 } from "recharts";
 
-interface AnimatedAreaChartProps {
+type AnimatedAreaChartProps = {
   data: Array<{
     month: string;
     count: number;
   }>;
-}
+};
 
 export function AnimatedAreaChart({ data }: AnimatedAreaChartProps) {
   // Transform data to have proper labels

@@ -8,13 +8,13 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-interface PingingDotChartProps {
+type PingingDotChartProps = {
   data: any[];
   config: ChartConfig;
   xAxisKey: string;
   yAxisKey: string;
   className?: string;
-}
+};
 
 export function PingingDotChart({
   data,

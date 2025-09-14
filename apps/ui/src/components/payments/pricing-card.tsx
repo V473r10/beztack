@@ -25,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { PolarPricingTier } from "@/types/polar-pricing";
 
-export interface PricingCardProps {
+export type PricingCardProps = {
   tier: PolarPricingTier;
   billingPeriod: "monthly" | "yearly";
   currentTier?: string;
@@ -33,7 +33,7 @@ export interface PricingCardProps {
   onSelect?: (tierId: string) => void;
   isLoading?: boolean;
   disabled?: boolean;
-}
+};
 
 const tierIcons = {
   basic: Sparkles,
@@ -74,14 +74,15 @@ export function PricingCard({
       : null;
 
   const handleSelect = () => {
-    if (!onSelect || disabled || isLoading || isCurrentTier) return;
+    if (!onSelect || disabled || isLoading || isCurrentTier) {
+      return;
+    }
 
     // Get the correct Polar product ID based on billing period
     const productId =
       billingPeriod === "yearly" ? tier.yearly?.id : tier.monthly?.id;
 
     if (!productId) {
-      console.error(`No ${billingPeriod} product ID found for tier ${tier.id}`);
       return;
     }
 
@@ -89,15 +90,25 @@ export function PricingCard({
   };
 
   const getButtonText = () => {
-    if (isCurrentTier) return "Current Plan";
-    if (tier.id === "basic") return "Get Started";
-    if (tier.id === "ultimate") return "Contact Sales";
+    if (isCurrentTier) {
+      return "Current Plan";
+    }
+    if (tier.id === "basic") {
+      return "Get Started";
+    }
+    if (tier.id === "ultimate") {
+      return "Contact Sales";
+    }
     return "Upgrade";
   };
 
   const getButtonVariant = () => {
-    if (isCurrentTier) return "outline";
-    if (isPopular) return "default";
+    if (isCurrentTier) {
+      return "outline";
+    }
+    if (isPopular) {
+      return "default";
+    }
     return "outline";
   };
 
@@ -196,10 +207,15 @@ export function PricingCard({
                     const isUnlimited = value === -1;
 
                     const formatValue = () => {
-                      if (isUnlimited) return "Unlimited";
-                      if (key === "storage") return `${value}GB`;
-                      if (key === "apiCalls" || key === "requests")
+                      if (isUnlimited) {
+                        return "Unlimited";
+                      }
+                      if (key === "storage") {
+                        return `${value}GB`;
+                      }
+                      if (key === "apiCalls" || key === "requests") {
                         return `${value.toLocaleString()}/mo`;
+                      }
                       return value.toLocaleString();
                     };
 

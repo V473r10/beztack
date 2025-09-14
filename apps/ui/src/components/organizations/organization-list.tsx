@@ -16,11 +16,11 @@ import {
 } from "@/hooks/use-organizations";
 import type { Organization } from "@/lib/organization-types";
 
-interface OrganizationListProps {
+type OrganizationListProps = {
   onSelectOrganization?: (organization: Organization) => void;
   onManageOrganization?: (organization: Organization) => void;
   showActions?: boolean;
-}
+};
 
 export function OrganizationList({
   onSelectOrganization,

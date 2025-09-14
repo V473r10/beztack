@@ -91,8 +91,6 @@ export default defineEventHandler(async (event) => {
     if (error.statusCode) {
       throw error;
     }
-
-    console.error("Failed to get user membership:", error);
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to retrieve user membership",

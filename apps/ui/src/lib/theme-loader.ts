@@ -1,6 +1,6 @@
 import { loadThemeCSS } from "./css-parser";
 
-export interface ThemeInfo {
+export type ThemeInfo = {
   name: string;
   label: string;
   description: string;
@@ -18,7 +18,7 @@ export interface ThemeInfo {
   };
   googleFontsUrl?: string;
   radius?: string;
-}
+};
 
 // Theme metadata extracted from CSS files
 const themeMetadata: Record<string, Omit<ThemeInfo, "name" | "preview">> = {
@@ -266,9 +266,7 @@ export async function loadThemeInfo(themeName: string): Promise<ThemeInfo> {
         radius: parsedTheme.radius,
       };
     }
-  } catch (error) {
-    console.warn(`Failed to parse CSS for theme ${themeName}:`, error);
-  }
+  } catch (_error) {}
 
   // Fallback to default preview if parsing fails
   return {

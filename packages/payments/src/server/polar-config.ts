@@ -6,17 +6,16 @@ import {
   webhooks,
 } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
-import type { BetterAuthOptions } from "better-auth";
 import { POLAR_CONFIG } from "../constants/index.ts";
 import type { MembershipTier } from "../types/index.ts";
 
 /**
  * Polar client configuration
  */
-export interface PolarClientConfig {
+export type PolarClientConfig = {
   accessToken: string;
   server?: "production" | "sandbox";
-}
+};
 
 /**
  * Create Polar SDK client
@@ -31,7 +30,7 @@ export function createPolarClient(config: PolarClientConfig): Polar {
 /**
  * Webhook handlers configuration
  */
-export interface WebhookHandlers {
+export type WebhookHandlers = {
   onCustomerStateChanged?: (payload: any) => Promise<void>;
   onOrderPaid?: (payload: any) => Promise<void>;
   onSubscriptionCreated?: (payload: any) => Promise<void>;
@@ -45,12 +44,12 @@ export interface WebhookHandlers {
   onBenefitGrantUpdated?: (payload: any) => Promise<void>;
   onBenefitGrantRevoked?: (payload: any) => Promise<void>;
   onPayload?: (payload: any) => Promise<void>;
-}
+};
 
 /**
  * Polar plugin configuration
  */
-export interface PolarPluginConfig {
+export type PolarPluginConfig = {
   client: Polar;
   createCustomerOnSignUp?: boolean;
   getCustomerCreateParams?: (
@@ -74,7 +73,7 @@ export interface PolarPluginConfig {
   successUrl?: string;
   cancelUrl?: string;
   authenticatedUsersOnly?: boolean;
-}
+};
 
 /**
  * Create Polar Better Auth plugin with full configuration
@@ -122,70 +121,47 @@ export function createPolarPlugin(
 // Import default handlers from webhooks module (avoiding duplicate definition)
 function getDefaultWebhookHandlers(): WebhookHandlers {
   return {
-    onCustomerStateChanged: async (payload) => {
-      console.log("Customer state changed:", payload.customer?.id);
+    onCustomerStateChanged: async (_payload) => {
       // TODO: Update user membership in database
     },
 
     onOrderPaid: async (payload) => {
-      console.log("Order paid:", payload.order?.id);
       const order = payload.order;
       if (order?.metadata?.userId && order?.metadata?.tier) {
         // TODO: Activate membership for user
-        const tier = order.metadata.tier as MembershipTier;
-        console.log(
-          `Activating ${tier} membership for user ${order.metadata.userId}`
-        );
+        const _tier = order.metadata.tier as MembershipTier;
       }
     },
 
     onSubscriptionActive: async (payload) => {
-      console.log("Subscription activated:", payload.subscription?.id);
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId && subscription?.metadata?.tier) {
         // TODO: Update user membership status to active
-        const tier = subscription.metadata.tier as MembershipTier;
-        console.log(
-          `Subscription ${subscription.id} activated for user ${subscription.metadata.userId} with ${tier} tier`
-        );
+        const _tier = subscription.metadata.tier as MembershipTier;
       }
     },
 
     onSubscriptionCanceled: async (payload) => {
-      console.log("Subscription canceled:", payload.subscription?.id);
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId) {
-        // TODO: Update user membership status to canceled
-        console.log(
-          `Subscription ${subscription.id} canceled for user ${subscription.metadata.userId}`
-        );
       }
     },
 
     onSubscriptionRevoked: async (payload) => {
-      console.log("Subscription revoked:", payload.subscription?.id);
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId) {
-        // TODO: Immediately revoke user access
-        console.log(
-          `Subscription ${subscription.id} revoked for user ${subscription.metadata.userId}`
-        );
       }
     },
 
-    onBenefitGrantCreated: async (payload) => {
-      console.log("Benefit granted:", payload.benefitGrant?.id);
+    onBenefitGrantCreated: async (_payload) => {
       // TODO: Enable specific features for user
     },
 
-    onBenefitGrantRevoked: async (payload) => {
-      console.log("Benefit revoked:", payload.benefitGrant?.id);
+    onBenefitGrantRevoked: async (_payload) => {
       // TODO: Disable specific features for user
     },
 
-    onPayload: async (payload) => {
-      console.log("Polar webhook received:", payload.type);
-    },
+    onPayload: async (_payload) => {},
   };
 }
 

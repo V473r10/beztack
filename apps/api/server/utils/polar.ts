@@ -9,7 +9,6 @@ export function createConfiguredPolarClient() {
   const config = getPolarConfigFromEnv();
 
   if (!config) {
-    console.warn("Polar configuration not found in environment variables");
     return null;
   }
 

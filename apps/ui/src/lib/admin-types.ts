@@ -1,4 +1,4 @@
-export interface AdminUser {
+export type AdminUser = {
   id: string;
   email: string;
   name?: string;
@@ -9,9 +9,9 @@ export interface AdminUser {
   banExpires?: Date | null;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface AdminSession {
+export type AdminSession = {
   id: string;
   userId: string;
   impersonatedBy?: string | null;
@@ -20,17 +20,17 @@ export interface AdminSession {
   expiresAt: Date;
   ipAddress?: string;
   userAgent?: string;
-}
+};
 
-export interface CreateUserData {
+export type CreateUserData = {
   email: string;
   password: string;
   name: string;
   role?: "user" | "admin" | ("user" | "admin")[];
   data?: Record<string, any>;
-}
+};
 
-export interface ListUsersQuery {
+export type ListUsersQuery = {
   searchValue?: string;
   searchField?: "email" | "name";
   searchOperator?: "contains" | "starts_with" | "ends_with";
@@ -41,33 +41,33 @@ export interface ListUsersQuery {
   filterField?: string;
   filterValue?: string | number | boolean;
   filterOperator?: "eq" | "ne" | "lt" | "lte" | "gt" | "gte";
-}
+};
 
-export interface ListUsersResponse {
+export type ListUsersResponse = {
   users: AdminUser[];
   total: number;
   limit?: number;
   offset?: number;
-}
+};
 
-export interface UserPermissions {
+export type UserPermissions = {
   [resource: string]: string[];
-}
+};
 
-export interface AdminRole {
+export type AdminRole = {
   name: string;
   permissions: UserPermissions;
-}
+};
 
 // Helper for pagination calculations
-export interface PaginationInfo {
+export type PaginationInfo = {
   totalPages: number;
   currentPage: number;
   nextOffset: number;
   prevOffset: number;
   hasNext: boolean;
   hasPrev: boolean;
-}
+};
 
 export function calculatePagination(
   total: number,
@@ -90,7 +90,7 @@ export function calculatePagination(
 }
 
 // Admin action types for better type safety
-export interface AdminActionHandlers {
+export type AdminActionHandlers = {
   onCreateUser: (data: CreateUserData) => Promise<void>;
   onEditUser: (userId: string, updates: Partial<AdminUser>) => Promise<void>;
   onSetRole: (userId: string, role: string | string[]) => Promise<void>;
@@ -106,4 +106,4 @@ export interface AdminActionHandlers {
   onRevokeAllSessions: (userId: string) => Promise<void>;
   onImpersonateUser: (userId: string) => Promise<void>;
   onStopImpersonating: () => Promise<void>;
-}
+};

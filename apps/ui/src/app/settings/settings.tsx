@@ -34,12 +34,12 @@ import { Switch } from "@/components/ui/switch";
 import { authClient } from "@/lib/auth-client";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
-interface TwoFactorEnableSuccessData {
+type TwoFactorEnableSuccessData = {
   totpURI: string;
   backupCodes: string[];
-}
+};
 
-interface SettingsState {
+type SettingsState = {
   profile: {
     username: string;
     email: string;
@@ -57,7 +57,7 @@ interface SettingsState {
     isVerifyingTotp: boolean;
     hasConfirmedBackupCodes: boolean;
   };
-}
+};
 
 type SettingsAction =
   | {
@@ -276,7 +276,9 @@ export function Settings() {
     queryKey: ["user-session"],
     queryFn: async () => {
       const session = await authClient.getSession();
-      if (!session.data) throw new Error("No session");
+      if (!session.data) {
+        throw new Error("No session");
+      }
       return session.data.user;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -313,7 +315,6 @@ export function Settings() {
     }) => {
       // TODO: Implement actual profile update API call
       await new Promise((resolve) => setTimeout(resolve, 500)); // Simulated API call
-      console.log("Profile saved:", { username, email });
       return { success: true };
     },
     onSuccess: () => {
@@ -456,7 +457,9 @@ export function Settings() {
   }, [totpVerificationMutation, state.twoFactor.totpCode]);
 
   const handleCopyBackupCodes = useCallback(() => {
-    if (!state.twoFactor.backupCodes) return;
+    if (!state.twoFactor.backupCodes) {
+      return;
+    }
 
     const codesText = state.twoFactor.backupCodes.join("\n");
     navigator.clipboard
@@ -470,7 +473,9 @@ export function Settings() {
   }, [state.twoFactor.backupCodes]);
 
   const handleDownloadBackupCodes = useCallback(() => {
-    if (!state.twoFactor.backupCodes) return;
+    if (!state.twoFactor.backupCodes) {
+      return;
+    }
 
     const codesText = [
       "Two-Factor Authentication Backup Codes",
@@ -480,7 +485,7 @@ export function Settings() {
       "",
       ...state.twoFactor.backupCodes,
       "",
-      "Generated on: " + new Date().toLocaleString(),
+      `Generated on: ${new Date().toLocaleString()}`,
     ].join("\n");
 
     const blob = new Blob([codesText], { type: "text/plain" });
@@ -733,7 +738,9 @@ export function Settings() {
 
       <Dialog
         onOpenChange={(open) => {
-          if (state.twoFactor.isSubmitting) return; // Prevent closing while submitting
+          if (state.twoFactor.isSubmitting) {
+            return; // Prevent closing while submitting
+          }
           if (!open) {
             dispatch({ type: "CLOSE_PASSWORD_DIALOG" });
           }
@@ -772,7 +779,9 @@ export function Settings() {
             <Button
               disabled={state.twoFactor.isSubmitting}
               onClick={() => {
-                if (state.twoFactor.isSubmitting) return;
+                if (state.twoFactor.isSubmitting) {
+                  return;
+                }
                 dispatch({ type: "CLOSE_PASSWORD_DIALOG" });
               }}
               variant="outline"

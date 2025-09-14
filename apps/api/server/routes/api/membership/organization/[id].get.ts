@@ -88,8 +88,6 @@ export default defineEventHandler(async (event) => {
     if (error.statusCode) {
       throw error;
     }
-
-    console.error("Failed to get organization membership:", error);
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to retrieve organization membership",

@@ -11,7 +11,7 @@ import {
   planPermission,
 } from "@/db/schema";
 
-interface ProductTier {
+type ProductTier = {
   id: string;
   name: string;
   description: string;
@@ -24,9 +24,9 @@ interface ProductTier {
   features: string[];
   limits: Record<string, number>;
   permissions: string[];
-}
+};
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (_event) => {
   const polar = createPolarClient();
 
   const products = await polar.products.list({

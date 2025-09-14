@@ -17,11 +17,11 @@ const BACKUP_CODE_LENGTH = 11;
 const PRIMARY_FORMAT = /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/;
 const TOTP_CODE_LENGTH = 6;
 
-interface AuthError {
+type AuthError = {
   error: {
     message?: string;
   };
-}
+};
 
 const extractAuthErrorMessage = (result: unknown): string => {
   if (typeof result === "object" && result !== null && "error" in result) {

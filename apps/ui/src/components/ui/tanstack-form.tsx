@@ -125,7 +125,9 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   const body = errors.length
     ? String(errors.at(0)?.message ?? "")
     : props.children;
-  if (!body) return null;
+  if (!body) {
+    return null;
+  }
 
   return (
     <p

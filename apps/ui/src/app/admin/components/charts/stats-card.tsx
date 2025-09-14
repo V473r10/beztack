@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-interface StatsCardProps {
+type StatsCardProps = {
   title: string;
   description?: string;
   value: string | number;
@@ -12,7 +12,7 @@ interface StatsCardProps {
     label: string;
   };
   className?: string;
-}
+};
 
 export function StatsCard({
   title,

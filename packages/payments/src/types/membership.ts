@@ -6,7 +6,7 @@ export type MembershipTier = "free" | "pro" | "team" | "enterprise";
 /**
  * Membership tier configuration from Polar API
  */
-export interface MembershipTierConfig {
+export type MembershipTierConfig = {
   readonly id: string;
   readonly name: string;
   readonly description: string;
@@ -19,12 +19,12 @@ export interface MembershipTierConfig {
   readonly features: string[];
   readonly limits: Record<string, number>;
   readonly permissions: string[];
-}
+};
 
 /**
  * User membership status
  */
-export interface UserMembership {
+export type UserMembership = {
   readonly userId: string;
   readonly tier: MembershipTier;
   readonly status: "active" | "inactive" | "canceled" | "past_due";
@@ -34,24 +34,24 @@ export interface UserMembership {
   readonly validUntil?: Date;
   readonly createdAt: Date;
   readonly updatedAt: Date;
-}
+};
 
 /**
  * Membership upgrade/downgrade request
  */
-export interface MembershipChangeRequest {
+export type MembershipChangeRequest = {
   readonly userId: string;
   readonly fromTier: MembershipTier;
   readonly toTier: MembershipTier;
   readonly billingPeriod: "monthly" | "yearly";
   readonly organizationId?: string;
   readonly prorationBehavior?: "create_prorations" | "none";
-}
+};
 
 /**
  * Membership validation result
  */
-export interface MembershipValidationResult {
+export type MembershipValidationResult = {
   readonly isValid: boolean;
   readonly tier: MembershipTier;
   readonly permissions: readonly string[];
@@ -59,12 +59,12 @@ export interface MembershipValidationResult {
   readonly features: readonly string[];
   readonly expiresAt?: Date;
   readonly error?: string;
-}
+};
 
 /**
  * Usage tracking for metered features
  */
-export interface UsageMetrics {
+export type UsageMetrics = {
   readonly userId: string;
   readonly organizationId?: string;
   readonly period: {
@@ -78,4 +78,4 @@ export interface UsageMetrics {
     readonly organizations: number;
     readonly teams: number;
   };
-}
+};

@@ -27,11 +27,11 @@ import {
   ROLE_LABELS,
 } from "@/lib/organization-types";
 
-interface InviteMemberDialogProps {
+type InviteMemberDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   organizationId: string;
-}
+};
 
 export function InviteMemberDialog({
   open,
@@ -59,7 +59,7 @@ export function InviteMemberDialog({
         });
         onOpenChange(false);
         form.reset();
-      } catch (error) {
+      } catch (_error) {
         // Error handling is done in the mutation
       }
     },

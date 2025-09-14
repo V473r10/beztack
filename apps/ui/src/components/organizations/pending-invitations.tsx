@@ -38,10 +38,10 @@ import {
   ROLE_LABELS,
 } from "@/lib/organization-types";
 
-interface PendingInvitationsProps {
+type PendingInvitationsProps = {
   organizationId: string;
   canCancelInvitations?: boolean;
-}
+};
 
 // Simple date formatting utility
 const formatDate = (date: Date | string) => {
@@ -59,13 +59,17 @@ const formatRelativeTime = (date: Date | string) => {
     (now.getTime() - targetDate.getTime()) / (1000 * 60 * 60)
   );
 
-  if (diffInHours < 1) return "Less than an hour ago";
-  if (diffInHours < 24)
+  if (diffInHours < 1) {
+    return "Less than an hour ago";
+  }
+  if (diffInHours < 24) {
     return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+  }
 
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7)
+  if (diffInDays < 7) {
     return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
+  }
 
   return formatDate(date);
 };
@@ -143,7 +147,9 @@ export function PendingInvitations({
   };
 
   const confirmCancelInvitation = async () => {
-    if (!invitationToCancel) return;
+    if (!invitationToCancel) {
+      return;
+    }
 
     try {
       await cancelInvitation.mutateAsync({
@@ -151,7 +157,7 @@ export function PendingInvitations({
         invitationId: invitationToCancel.id,
       });
       setInvitationToCancel(null);
-    } catch (error) {
+    } catch (_error) {
       // Error handling is done in the mutation
     }
   };

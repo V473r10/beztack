@@ -72,7 +72,9 @@ export function ThemeProvider({
 
   // Load color theme CSS and fonts dynamically
   useEffect(() => {
-    if (colorTheme === "default") return;
+    if (colorTheme === "default") {
+      return;
+    }
 
     const loadThemeAssets = async () => {
       // Load CSS
@@ -125,9 +127,7 @@ export function ThemeProvider({
             }
           }
         }
-      } catch (error) {
-        console.warn(`Failed to load fonts for theme ${colorTheme}:`, error);
-      }
+      } catch (_error) {}
     };
 
     loadThemeAssets();
@@ -172,8 +172,9 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
 
-  if (context === undefined)
+  if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
+  }
 
   return context;
 };

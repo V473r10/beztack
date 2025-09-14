@@ -28,8 +28,7 @@ export function verifyWebhookSignature(
       Buffer.from(expectedSignature, "hex"),
       Buffer.from(normalizedSignature, "hex")
     );
-  } catch (error) {
-    console.error("Error verifying webhook signature:", error);
+  } catch (_error) {
     return false;
   }
 }
@@ -37,7 +36,7 @@ export function verifyWebhookSignature(
 /**
  * Webhook payload types from Polar
  */
-export interface PolarWebhookPayload {
+export type PolarWebhookPayload = {
   type: string;
   data: {
     customer?: Customer;
@@ -47,29 +46,31 @@ export interface PolarWebhookPayload {
     checkout?: any;
     [key: string]: any;
   };
-}
+};
 
 /**
  * Membership update data
  */
-export interface MembershipUpdate {
+export type MembershipUpdate = {
   userId: string;
   tier: MembershipTier;
   status: "active" | "inactive" | "canceled" | "past_due";
   subscriptionId?: string;
   organizationId?: string;
   validUntil?: Date;
-}
+};
 
 /**
  * Webhook event handlers
  */
 export class WebhookEventHandler {
-  private membershipUpdateCallback?: (
+  private readonly membershipUpdateCallback?: (
     update: MembershipUpdate
   ) => Promise<void>;
-  private customHandlers: Map<string, (payload: any) => Promise<void>> =
-    new Map();
+  private readonly customHandlers: Map<
+    string,
+    (payload: any) => Promise<void>
+  > = new Map();
 
   constructor(
     membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>
@@ -88,39 +89,33 @@ export class WebhookEventHandler {
    * Handle webhook payload
    */
   async handle(payload: PolarWebhookPayload): Promise<void> {
-    try {
-      // Call custom handler if registered
-      const customHandler = this.customHandlers.get(payload.type);
-      if (customHandler) {
-        await customHandler(payload.data);
-      }
+    // Call custom handler if registered
+    const customHandler = this.customHandlers.get(payload.type);
+    if (customHandler) {
+      await customHandler(payload.data);
+    }
 
-      // Handle membership-related events
-      switch (payload.type) {
-        case "order.paid":
-          await this.handleOrderPaid(payload.data.order);
-          break;
-        case "subscription.active":
-          await this.handleSubscriptionActive(payload.data.subscription);
-          break;
-        case "subscription.canceled":
-          await this.handleSubscriptionCanceled(payload.data.subscription);
-          break;
-        case "subscription.revoked":
-          await this.handleSubscriptionRevoked(payload.data.subscription);
-          break;
-        case "subscription.past_due":
-          await this.handleSubscriptionPastDue(payload.data.subscription);
-          break;
-        case "customer.updated":
-          await this.handleCustomerUpdated(payload.data.customer);
-          break;
-        default:
-          console.log(`Unhandled webhook event: ${payload.type}`);
-      }
-    } catch (error) {
-      console.error(`Error handling webhook ${payload.type}:`, error);
-      throw error;
+    // Handle membership-related events
+    switch (payload.type) {
+      case "order.paid":
+        await this.handleOrderPaid(payload.data.order);
+        break;
+      case "subscription.active":
+        await this.handleSubscriptionActive(payload.data.subscription);
+        break;
+      case "subscription.canceled":
+        await this.handleSubscriptionCanceled(payload.data.subscription);
+        break;
+      case "subscription.revoked":
+        await this.handleSubscriptionRevoked(payload.data.subscription);
+        break;
+      case "subscription.past_due":
+        await this.handleSubscriptionPastDue(payload.data.subscription);
+        break;
+      case "customer.updated":
+        await this.handleCustomerUpdated(payload.data.customer);
+        break;
+      default:
     }
   }
 
@@ -129,7 +124,6 @@ export class WebhookEventHandler {
    */
   private async handleOrderPaid(order?: Order): Promise<void> {
     if (!(order?.metadata?.userId && order.metadata.tier)) {
-      console.log("Order missing userId or tier metadata");
       return;
     }
 
@@ -151,7 +145,6 @@ export class WebhookEventHandler {
     subscription?: Subscription
   ): Promise<void> {
     if (!(subscription?.metadata?.userId && subscription.metadata.tier)) {
-      console.log("Subscription missing userId or tier metadata");
       return;
     }
 
@@ -174,7 +167,6 @@ export class WebhookEventHandler {
     subscription?: Subscription
   ): Promise<void> {
     if (!subscription?.metadata?.userId) {
-      console.log("Subscription missing userId metadata");
       return;
     }
 
@@ -197,7 +189,6 @@ export class WebhookEventHandler {
     subscription?: Subscription
   ): Promise<void> {
     if (!subscription?.metadata?.userId) {
-      console.log("Subscription missing userId metadata");
       return;
     }
 
@@ -220,7 +211,6 @@ export class WebhookEventHandler {
     subscription?: Subscription
   ): Promise<void> {
     if (!(subscription?.metadata?.userId && subscription.metadata.tier)) {
-      console.log("Subscription missing userId or tier metadata");
       return;
     }
 
@@ -241,14 +231,8 @@ export class WebhookEventHandler {
    */
   private async handleCustomerUpdated(customer?: Customer): Promise<void> {
     if (!customer?.metadata?.userId) {
-      console.log("Customer missing userId metadata");
       return;
     }
-
-    // This is mainly for informational purposes
-    console.log(
-      `Customer ${customer.id} updated for user ${customer.metadata.userId}`
-    );
   }
 
   /**
@@ -258,7 +242,6 @@ export class WebhookEventHandler {
     if (this.membershipUpdateCallback) {
       await this.membershipUpdateCallback(update);
     } else {
-      console.log("Membership update:", update);
     }
   }
 }
@@ -279,41 +262,19 @@ export function createDefaultWebhookHandlers(
   customHandlers: Record<string, (payload: any) => Promise<void>> = {}
 ): Record<string, (payload: any) => Promise<void>> {
   return {
-    "order.paid":
-      customHandlers.onOrderPaid ||
-      (async (payload) => {
-        console.log("Order paid:", payload);
-      }),
+    "order.paid": customHandlers.onOrderPaid || (async (_payload) => {}),
     "subscription.active":
-      customHandlers.onSubscriptionActive ||
-      (async (payload) => {
-        console.log("Subscription activated:", payload);
-      }),
+      customHandlers.onSubscriptionActive || (async (_payload) => {}),
     "subscription.canceled":
-      customHandlers.onSubscriptionCanceled ||
-      (async (payload) => {
-        console.log("Subscription canceled:", payload);
-      }),
+      customHandlers.onSubscriptionCanceled || (async (_payload) => {}),
     "subscription.revoked":
-      customHandlers.onSubscriptionRevoked ||
-      (async (payload) => {
-        console.log("Subscription revoked:", payload);
-      }),
+      customHandlers.onSubscriptionRevoked || (async (_payload) => {}),
     "customer.updated":
-      customHandlers.onCustomerStateChanged ||
-      (async (payload) => {
-        console.log("Customer state changed:", payload);
-      }),
+      customHandlers.onCustomerStateChanged || (async (_payload) => {}),
     "benefit.grant.created":
-      customHandlers.onBenefitGrantCreated ||
-      (async (payload) => {
-        console.log("Benefit grant created:", payload);
-      }),
+      customHandlers.onBenefitGrantCreated || (async (_payload) => {}),
     "benefit.grant.revoked":
-      customHandlers.onBenefitGrantRevoked ||
-      (async (payload) => {
-        console.log("Benefit grant revoked:", payload);
-      }),
+      customHandlers.onBenefitGrantRevoked || (async (_payload) => {}),
     // Add any custom handlers
     ...Object.fromEntries(
       Object.entries(customHandlers).filter(([key]) => !key.startsWith("on"))
@@ -355,12 +316,10 @@ export async function handleWebhookRequest(
     if (handler) {
       await handler(payload.data);
     } else {
-      console.log(`No handler registered for webhook event: ${payload.type}`);
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Webhook handling error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

@@ -57,8 +57,6 @@ export default defineEventHandler(async (event) => {
       checkoutId: checkout.id,
     };
   } catch (error) {
-    console.error("Polar checkout error:", error);
-
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,

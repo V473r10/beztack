@@ -13,7 +13,7 @@ import { createContext, useCallback, useContext } from "react";
 // import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
 import { toast } from "sonner";
 
-export interface MembershipContextValue {
+export type MembershipContextValue = {
   // Current membership state
   currentTier: MembershipTier;
   tierConfig: MembershipTierConfig | null;
@@ -41,7 +41,7 @@ export interface MembershipContextValue {
   hasPermission: (permission: string) => boolean;
   isWithinLimit: (limitKey: string, currentUsage: number) => boolean;
   canUpgrade: boolean;
-}
+};
 
 const MembershipContext = createContext<MembershipContextValue | null>(null);
 
@@ -53,9 +53,9 @@ export function useMembership() {
   return context;
 }
 
-export interface MembershipProviderProps {
+export type MembershipProviderProps = {
   children: React.ReactNode;
-}
+};
 
 export function MembershipProvider({ children }: MembershipProviderProps) {
   const queryClient = useQueryClient();
@@ -158,17 +158,14 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     onSuccess: () => {
       toast.success("Redirecting to checkout...");
     },
-    onError: (error) => {
+    onError: (_error) => {
       toast.error("Failed to start checkout process");
-      console.error("Checkout error:", error);
     },
   });
 
   // Billing portal mutation
   const billingPortalMutation = useMutation({
     mutationFn: async () => {
-      // Mock billing portal - replace with actual server API call
-      console.log("Mock billing portal access");
       toast.success(
         "Mock billing portal opened (replace with actual implementation)"
       );
@@ -176,9 +173,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     onSuccess: () => {
       toast.success("Opening billing portal...");
     },
-    onError: (error) => {
+    onError: (_error) => {
       toast.error("Failed to open billing portal");
-      console.error("Billing portal error:", error);
     },
   });
 
@@ -240,18 +236,14 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       billingPeriod: "monthly" | "yearly" = "monthly",
       organizationId?: string
     ) => {
-      try {
-        await checkoutMutation.mutateAsync({
-          productId: tierId,
-          billingPeriod,
-          metadata: {
-            tier: tierId as MembershipTier,
-            organizationId,
-          },
-        });
-      } catch (error) {
-        throw error;
-      }
+      await checkoutMutation.mutateAsync({
+        productId: tierId,
+        billingPeriod,
+        metadata: {
+          tier: tierId as MembershipTier,
+          organizationId,
+        },
+      });
     },
     [checkoutMutation]
   );
@@ -260,7 +252,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     async (returnUrl?: string) => {
       try {
         await billingPortalMutation.mutateAsync();
-      } catch (error) {
+      } catch (_error) {
         // Fallback to direct URL
         window.open(getBillingPortalUrl(returnUrl), "_blank");
       }
@@ -275,7 +267,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // Utility functions
   const hasFeature = useCallback(
     (feature: string) => {
-      if (!tierConfig) return false;
+      if (!tierConfig) {
+        return false;
+      }
       return tierConfig.features.some((f) =>
         f.toLowerCase().includes(feature.toLowerCase())
       );
@@ -285,7 +279,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   const hasPermission = useCallback(
     (permission: string) => {
-      if (!tierConfig) return false;
+      if (!tierConfig) {
+        return false;
+      }
       return tierConfig.permissions.includes(permission);
     },
     [tierConfig]
@@ -293,11 +289,17 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   const isWithinLimit = useCallback(
     (limitKey: string, currentUsage: number) => {
-      if (!tierConfig?.limits) return true;
+      if (!tierConfig?.limits) {
+        return true;
+      }
       const limit =
         tierConfig.limits[limitKey as keyof typeof tierConfig.limits];
-      if (limit === undefined) return true;
-      if (limit === -1) return true; // Unlimited
+      if (limit === undefined) {
+        return true;
+      }
+      if (limit === -1) {
+        return true; // Unlimited
+      }
       return currentUsage <= limit;
     },
     [tierConfig]

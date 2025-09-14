@@ -3,7 +3,7 @@ import type { MembershipTier } from "./membership.ts";
 /**
  * Customer data from Polar
  */
-export interface Customer {
+export type Customer = {
   readonly id: string;
   readonly externalId?: string; // Better Auth user ID
   readonly email: string;
@@ -14,7 +14,7 @@ export interface Customer {
   };
   readonly createdAt: Date;
   readonly updatedAt: Date;
-}
+};
 
 /**
  * Order status from Polar
@@ -29,7 +29,7 @@ export type OrderStatus =
 /**
  * Order data from Polar
  */
-export interface Order {
+export type Order = {
   readonly id: string;
   readonly customerId: string;
   readonly productId: string;
@@ -45,12 +45,12 @@ export interface Order {
   };
   readonly createdAt: Date;
   readonly updatedAt: Date;
-}
+};
 
 /**
  * Invoice data from Polar
  */
-export interface Invoice {
+export type Invoice = {
   readonly id: string;
   readonly customerId: string;
   readonly subscriptionId?: string;
@@ -64,12 +64,12 @@ export interface Invoice {
   readonly metadata?: Record<string, string>;
   readonly createdAt: Date;
   readonly updatedAt: Date;
-}
+};
 
 /**
  * Payment method data
  */
-export interface PaymentMethod {
+export type PaymentMethod = {
   readonly id: string;
   readonly customerId: string;
   readonly type: "card" | "bank_account";
@@ -86,12 +86,12 @@ export interface PaymentMethod {
   };
   readonly isDefault: boolean;
   readonly createdAt: Date;
-}
+};
 
 /**
  * Checkout session parameters
  */
-export interface CheckoutSessionParams {
+export type CheckoutSessionParams = {
   readonly productIds?: readonly string[];
   readonly slug?: string;
   readonly metadata?: {
@@ -103,12 +103,12 @@ export interface CheckoutSessionParams {
   readonly successUrl?: string;
   readonly cancelUrl?: string;
   readonly allowPromotionCodes?: boolean;
-}
+};
 
 /**
  * Checkout session data
  */
-export interface CheckoutSession {
+export type CheckoutSession = {
   readonly id: string;
   readonly url: string;
   readonly customerId?: string;
@@ -116,24 +116,24 @@ export interface CheckoutSession {
   readonly metadata?: CheckoutSessionParams["metadata"];
   readonly createdAt: Date;
   readonly expiresAt: Date;
-}
+};
 
 /**
  * Billing portal session
  */
-export interface BillingPortalSession {
+export type BillingPortalSession = {
   readonly id: string;
   readonly customerId: string;
   readonly url: string;
   readonly returnUrl?: string;
   readonly createdAt: Date;
   readonly expiresAt: Date;
-}
+};
 
 /**
  * Usage event for metered billing
  */
-export interface UsageEvent {
+export type UsageEvent = {
   readonly eventName: string;
   readonly customerId: string;
   readonly timestamp: Date;
@@ -143,34 +143,34 @@ export interface UsageEvent {
     readonly organizationId?: string;
     readonly feature?: string;
   };
-}
+};
 
 /**
  * Customer portal state from Polar
  */
-export interface CustomerPortalState {
+export type CustomerPortalState = {
   readonly customer: Customer;
   readonly subscriptions: readonly Subscription[];
   readonly benefits: readonly Benefit[];
   readonly meters: readonly CustomerMeter[];
-}
+};
 
 /**
  * Benefit data from Polar
  */
-export interface Benefit {
+export type Benefit = {
   readonly id: string;
   readonly type: string;
   readonly description: string;
   readonly isGranted: boolean;
   readonly grantedAt?: Date;
   readonly properties?: Record<string, unknown>;
-}
+};
 
 /**
  * Customer meter for usage-based billing
  */
-export interface CustomerMeter {
+export type CustomerMeter = {
   readonly id: string;
   readonly customerId: string;
   readonly meterName: string;
@@ -179,6 +179,6 @@ export interface CustomerMeter {
   readonly creditedUnits: number;
   readonly lastResetAt?: Date;
   readonly nextResetAt?: Date;
-}
+};
 
 import type { Subscription } from "./subscription.ts";

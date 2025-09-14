@@ -19,7 +19,9 @@ export function useIsAdmin() {
  * Get user role(s) as an array
  */
 export function getUserRoles(user: AdminUser | undefined): string[] {
-  if (!user?.role) return ["user"];
+  if (!user?.role) {
+    return ["user"];
+  }
 
   if (typeof user.role === "string") {
     return user.role.split(",").map((r) => r.trim());

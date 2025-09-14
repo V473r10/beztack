@@ -8,13 +8,13 @@ import {
   YAxis,
 } from "recharts";
 
-interface GlowingLineChartProps {
+type GlowingLineChartProps = {
   data: Array<{
     time: string;
     value: number;
   }>;
   title?: string;
-}
+};
 
 export function GlowingLineChart({
   data,

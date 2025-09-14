@@ -2,7 +2,6 @@ import { MEMBERSHIP_TIERS } from "../constants/index.ts";
 import type {
   CustomerPortalState,
   MembershipTier,
-  MembershipTierConfig,
   MembershipValidationResult,
   UsageMetrics,
   UserMembership,

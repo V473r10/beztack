@@ -29,10 +29,10 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { UserActions } from "./user-actions";
 
-interface UserListProps {
+type UserListProps = {
   onEditUser?: (user: AdminUser) => void;
   onCreateUser?: () => void;
-}
+};
 
 export function UserList({ onEditUser, onCreateUser }: UserListProps) {
   const [query, setQuery] = useState<ListUsersQuery>({
