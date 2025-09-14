@@ -31,5 +31,10 @@
       "@/*": ["./*"],
       "server/*": ["./server/*"]
     }
-  }
+  },
+  "references": [
+    {
+      "path": "../../packages/payments"
+    }
+  ]
 }

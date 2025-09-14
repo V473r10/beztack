@@ -3,13 +3,13 @@
 
 // Permission constants
 export {
-  PERMISSIONS,
-  PERMISSION_CATEGORIES,
-  PERMISSION_DESCRIPTIONS,
   getAllPermissions,
+  getPermissionDescription,
   getPermissionsByCategory,
   isValidPermission,
-  getPermissionDescription,
+  PERMISSION_CATEGORIES,
+  PERMISSION_DESCRIPTIONS,
+  PERMISSIONS,
 } from "./permissions.ts";
 
 /**
@@ -54,4 +54,14 @@ export const SUBSCRIPTION_CHANGE_TYPES = {
   CANCEL: "cancel",
   REACTIVATE: "reactivate",
   CHANGE_BILLING_PERIOD: "change_billing_period",
+} as const;
+
+/**
+ * Membership tiers
+ */
+export const MEMBERSHIP_TIERS = {
+  FREE: "free",
+  PRO: "pro",
+  TEAM: "team",
+  ENTERPRISE: "enterprise",
 } as const;

@@ -1,10 +1,11 @@
+import { MEMBERSHIP_TIERS } from "../constants/index.ts";
 import type {
+  CustomerPortalState,
   MembershipTier,
   MembershipTierConfig,
   MembershipValidationResult,
-  CustomerPortalState,
-  UserMembership,
   UsageMetrics,
+  UserMembership,
 } from "../types/index.ts";
 // Note: Tier configurations are now fetched dynamically from API
 // See packages/payments/src/server/tier-config.ts for dynamic functions
@@ -13,11 +14,13 @@ import type {
  * Validate user membership based on customer portal state
  * Note: This function now returns basic validation - full tier details should be fetched from API
  */
-export function validateMembership(state: CustomerPortalState): MembershipValidationResult {
+export function validateMembership(
+  state: CustomerPortalState
+): MembershipValidationResult {
   try {
     // Check for active subscriptions
-    const activeSubscriptions = state.subscriptions.filter(sub => 
-      sub.status === "active" || sub.status === "trialing"
+    const activeSubscriptions = state.subscriptions.filter(
+      (sub) => sub.status === "active" || sub.status === "trialing"
     );
 
     if (activeSubscriptions.length === 0) {
@@ -25,15 +28,26 @@ export function validateMembership(state: CustomerPortalState): MembershipValida
         isValid: true,
         tier: "free",
         permissions: ["auth:basic", "dashboard:view", "profile:manage"],
-        limits: { users: 1, organizations: 0, teams: 0, storage: 1, apiCalls: 1000 },
+        limits: {
+          users: 1,
+          organizations: 0,
+          teams: 0,
+          storage: 1,
+          apiCalls: 1000,
+        },
         features: ["social-login", "basic-dashboard-access"],
       };
     }
 
     // Determine highest tier from active subscriptions
-    const tierHierarchy: MembershipTier[] = ["free", "pro", "team", "enterprise"];
+    const tierHierarchy: MembershipTier[] = [
+      "free",
+      "pro",
+      "team",
+      "enterprise",
+    ];
     let highestTier: MembershipTier = "free";
-    
+
     for (const subscription of activeSubscriptions) {
       const tier = subscription.metadata?.tier as MembershipTier;
       if (tier && tierHierarchy.includes(tier)) {
@@ -50,7 +64,7 @@ export function validateMembership(state: CustomerPortalState): MembershipValida
       isValid: true,
       tier: highestTier,
       permissions: [], // Fetch from API
-      limits: {}, // Fetch from API  
+      limits: {}, // Fetch from API
       features: [], // Fetch from API
     };
   } catch (error) {
@@ -82,7 +96,9 @@ export function hasAnyPermission(
   membership: MembershipValidationResult,
   permissions: string[]
 ): boolean {
-  return permissions.some(permission => hasPermission(membership, permission));
+  return permissions.some((permission) =>
+    hasPermission(membership, permission)
+  );
 }
 
 /**
@@ -92,7 +108,9 @@ export function hasAllPermissions(
   membership: MembershipValidationResult,
   permissions: string[]
 ): boolean {
-  return permissions.every(permission => hasPermission(membership, permission));
+  return permissions.every((permission) =>
+    hasPermission(membership, permission)
+  );
 }
 
 /**
@@ -125,10 +143,26 @@ export function isWithinUsageLimits(
 
   // Check each limit
   const checks = [
-    { metric: "apiCalls", current: usage.metrics.apiCalls, limit: limits.apiCalls },
-    { metric: "storageUsed", current: usage.metrics.storageUsed, limit: limits.storage },
-    { metric: "activeUsers", current: usage.metrics.activeUsers, limit: limits.users },
-    { metric: "organizations", current: usage.metrics.organizations, limit: limits.organizations },
+    {
+      metric: "apiCalls",
+      current: usage.metrics.apiCalls,
+      limit: limits.apiCalls,
+    },
+    {
+      metric: "storageUsed",
+      current: usage.metrics.storageUsed,
+      limit: limits.storage,
+    },
+    {
+      metric: "activeUsers",
+      current: usage.metrics.activeUsers,
+      limit: limits.users,
+    },
+    {
+      metric: "organizations",
+      current: usage.metrics.organizations,
+      limit: limits.organizations,
+    },
     { metric: "teams", current: usage.metrics.teams, limit: limits.teams },
   ];
 
@@ -155,7 +189,7 @@ export function isWithinUsageLimits(
 export function getUsageWarnings(
   membership: MembershipValidationResult,
   usage: UsageMetrics,
-  warningThreshold: number = 80
+  warningThreshold = 80
 ): Array<{
   metric: string;
   current: number;
@@ -167,35 +201,35 @@ export function getUsageWarnings(
   const limits = membership.limits;
 
   const checks = [
-    { 
-      metric: "apiCalls", 
-      current: usage.metrics.apiCalls, 
+    {
+      metric: "apiCalls",
+      current: usage.metrics.apiCalls,
       limit: limits.apiCalls,
-      label: "API calls"
+      label: "API calls",
     },
-    { 
-      metric: "storageUsed", 
-      current: usage.metrics.storageUsed, 
+    {
+      metric: "storageUsed",
+      current: usage.metrics.storageUsed,
       limit: limits.storage,
-      label: "storage"
+      label: "storage",
     },
-    { 
-      metric: "activeUsers", 
-      current: usage.metrics.activeUsers, 
+    {
+      metric: "activeUsers",
+      current: usage.metrics.activeUsers,
       limit: limits.users,
-      label: "active users"
+      label: "active users",
     },
-    { 
-      metric: "organizations", 
-      current: usage.metrics.organizations, 
+    {
+      metric: "organizations",
+      current: usage.metrics.organizations,
       limit: limits.organizations,
-      label: "organizations"
+      label: "organizations",
     },
-    { 
-      metric: "teams", 
-      current: usage.metrics.teams, 
+    {
+      metric: "teams",
+      current: usage.metrics.teams,
       limit: limits.teams,
-      label: "teams"
+      label: "teams",
     },
   ];
 
@@ -230,25 +264,48 @@ export function getRecommendedTier(usage: UsageMetrics): {
 
   // Check against each tier's limits
   const tiers = Object.values(MEMBERSHIP_TIERS);
-  
+
   for (const tier of tiers) {
     const exceedsLimits = [
-      { metric: "API calls", current: usage.metrics.apiCalls, limit: tier.limits.apiCalls },
-      { metric: "Storage", current: usage.metrics.storageUsed, limit: tier.limits.storage },
-      { metric: "Users", current: usage.metrics.activeUsers, limit: tier.limits.users },
-      { metric: "Organizations", current: usage.metrics.organizations, limit: tier.limits.organizations },
-      { metric: "Teams", current: usage.metrics.teams, limit: tier.limits.teams },
-    ].filter(check => check.limit && check.limit > 0 && check.current > check.limit);
+      {
+        metric: "API calls",
+        current: usage.metrics.apiCalls,
+        limit: tier.limits.apiCalls,
+      },
+      {
+        metric: "Storage",
+        current: usage.metrics.storageUsed,
+        limit: tier.limits.storage,
+      },
+      {
+        metric: "Users",
+        current: usage.metrics.activeUsers,
+        limit: tier.limits.users,
+      },
+      {
+        metric: "Organizations",
+        current: usage.metrics.organizations,
+        limit: tier.limits.organizations,
+      },
+      {
+        metric: "Teams",
+        current: usage.metrics.teams,
+        limit: tier.limits.teams,
+      },
+    ].filter(
+      (check) => check.limit && check.limit > 0 && check.current > check.limit
+    );
 
     if (exceedsLimits.length === 0) {
       // This tier can handle the usage
       break;
-    } else {
-      recommendedTier = tier.id;
-      reasons.push(...exceedsLimits.map(check => 
-        `${check.metric}: ${check.current} (exceeds ${check.limit})`
-      ));
     }
+    recommendedTier = tier.id;
+    reasons.push(
+      ...exceedsLimits.map(
+        (check) => `${check.metric}: ${check.current} (exceeds ${check.limit})`
+      )
+    );
   }
 
   return {
@@ -274,15 +331,17 @@ export function isMembershipExpired(membership: UserMembership): boolean {
  */
 export function isMembershipExpiringSoon(
   membership: UserMembership,
-  daysThreshold: number = 7
+  daysThreshold = 7
 ): boolean {
   if (!membership.validUntil) {
     return false;
   }
 
   const now = new Date();
-  const threshold = new Date(now.getTime() + (daysThreshold * 24 * 60 * 60 * 1000));
-  
+  const threshold = new Date(
+    now.getTime() + daysThreshold * 24 * 60 * 60 * 1000
+  );
+
   return membership.validUntil <= threshold && membership.validUntil > now;
 }
 

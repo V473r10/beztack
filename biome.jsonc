@@ -5,7 +5,21 @@
     "rules": {
       "nursery": {
         "useConsistentTypeDefinitions": "info"
+      },
+      "performance": {
+        "noBarrelFile": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/tsconfig*.json"],
+      "json": {
+        "parser": {
+          "allowComments": true,
+          "allowTrailingCommas": true
+        }
+      }
+    }
+  ]
 }
