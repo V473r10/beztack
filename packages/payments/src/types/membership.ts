@@ -1,4 +1,17 @@
 /**
+ * Polar product object type
+ */
+type PolarProduct = {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  billing_period?: string;
+  [key: string]: unknown;
+};
+
+/**
  * Membership tier levels based on VIT-17 strategy
  */
 export type MembershipTier = "free" | "pro" | "team" | "enterprise";
@@ -14,8 +27,8 @@ export type MembershipTierConfig = {
     readonly monthly: number;
     readonly yearly: number;
   };
-  readonly monthly?: any; // Full Polar product object for monthly billing
-  readonly yearly?: any; // Full Polar product object for yearly billing
+  readonly monthly?: PolarProduct; // Full Polar product object for monthly billing
+  readonly yearly?: PolarProduct; // Full Polar product object for yearly billing
   readonly features: string[];
   readonly limits: Record<string, number>;
   readonly permissions: string[];

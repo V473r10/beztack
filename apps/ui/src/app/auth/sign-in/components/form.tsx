@@ -9,11 +9,14 @@ import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import { authClient } from "@/lib/auth-client";
 
+// Constants
+const MIN_PASSWORD_LENGTH = 8;
+
 const FormSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  password: z.string().min(8, {
+  password: z.string().min(MIN_PASSWORD_LENGTH, {
     message: "Password must be at least 8 characters.",
   }),
 });
@@ -38,7 +41,7 @@ export function SignInForm() {
             password: value.password,
           },
           {
-            async onSuccess(context) {
+            onSuccess(context) {
               if (context.data.twoFactorRedirect) {
                 toast.success("Two-factor authentication required!");
                 navigate("/auth/sign-in/two-factor");

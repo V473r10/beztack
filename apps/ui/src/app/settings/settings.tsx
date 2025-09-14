@@ -34,6 +34,13 @@ import { Switch } from "@/components/ui/switch";
 import { authClient } from "@/lib/auth-client";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
+// Time constants
+const MILLISECONDS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+const CACHE_STALE_TIME_MINUTES = 5;
+const USER_QUERY_STALE_TIME =
+  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * CACHE_STALE_TIME_MINUTES;
+
 type TwoFactorEnableSuccessData = {
   totpURI: string;
   backupCodes: string[];
@@ -281,7 +288,7 @@ export function Settings() {
       }
       return session.data.user;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: USER_QUERY_STALE_TIME, // 5 minutes
   });
 
   useEffect(() => {

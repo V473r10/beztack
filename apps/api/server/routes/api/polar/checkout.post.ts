@@ -18,6 +18,59 @@ type PolarApiError = {
   };
 };
 
+type ParsedCheckoutData = z.infer<typeof checkoutRequestSchema>;
+
+// Helper function to build checkout data
+function buildCheckoutData(parsed: ParsedCheckoutData) {
+  return {
+    products: [parsed.productId], // Required: array of product IDs
+    success_url:
+      parsed.successUrl ||
+      `${process.env.FRONTEND_URL}/dashboard?checkout=success`,
+    ...(parsed.customerEmail && { customer_email: parsed.customerEmail }),
+    ...(parsed.customerName && { customer_name: parsed.customerName }),
+    ...(parsed.metadata && { metadata: parsed.metadata }),
+    ...(parsed.customFieldData && {
+      custom_field_data: parsed.customFieldData,
+    }),
+    ...(parsed.allowDiscountCodes !== undefined && {
+      allow_discount_codes: parsed.allowDiscountCodes,
+    }),
+    ...(parsed.requireBillingAddress !== undefined && {
+      require_billing_address: parsed.requireBillingAddress,
+    }),
+    ...(parsed.amount && { amount: parsed.amount }),
+  };
+}
+
+// Helper function to handle Polar API errors
+function handlePolarApiError(error: unknown) {
+  if (error && typeof error === "object" && "status" in error) {
+    const polarError = error as PolarApiError;
+
+    if (polarError.status === HTTP_VALIDATION_ERROR) {
+      throw createError({
+        statusCode: HTTP_VALIDATION_ERROR,
+        statusMessage: "Validation error from Polar API",
+        data: polarError.body?.detail || "Invalid product or request data",
+      });
+    }
+
+    if (polarError.status === HTTP_UNAUTHORIZED) {
+      throw createError({
+        statusCode: HTTP_UNAUTHORIZED,
+        statusMessage: "Unauthorized: Invalid Polar API credentials",
+      });
+    }
+  }
+
+  throw createError({
+    statusCode: 500,
+    statusMessage: "Failed to create checkout session",
+    data: error instanceof Error ? error.message : "Unknown error",
+  });
+}
+
 const checkoutRequestSchema = z.object({
   productId: z.string().uuid(),
   successUrl: z.string().url().optional(),
@@ -43,28 +96,7 @@ export default defineEventHandler(async (event) => {
     const parsed = checkoutRequestSchema.parse(body);
 
     const polar = createPolarClient();
-
-    // Create checkout session with Polar
-    const checkoutData = {
-      products: [parsed.productId], // Required: array of product IDs
-      success_url:
-        parsed.successUrl ||
-        `${process.env.FRONTEND_URL}/dashboard?checkout=success`,
-      ...(parsed.customerEmail && { customer_email: parsed.customerEmail }),
-      ...(parsed.customerName && { customer_name: parsed.customerName }),
-      ...(parsed.metadata && { metadata: parsed.metadata }),
-      ...(parsed.customFieldData && {
-        custom_field_data: parsed.customFieldData,
-      }),
-      ...(parsed.allowDiscountCodes !== undefined && {
-        allow_discount_codes: parsed.allowDiscountCodes,
-      }),
-      ...(parsed.requireBillingAddress !== undefined && {
-        require_billing_address: parsed.requireBillingAddress,
-      }),
-      ...(parsed.amount && { amount: parsed.amount }),
-    };
-
+    const checkoutData = buildCheckoutData(parsed);
     const checkout = await polar.checkouts.create(checkoutData);
 
     return {
@@ -81,30 +113,6 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Handle Polar API errors
-    if (error && typeof error === "object" && "status" in error) {
-      const polarError = error as PolarApiError;
-
-      if (polarError.status === HTTP_VALIDATION_ERROR) {
-        throw createError({
-          statusCode: HTTP_VALIDATION_ERROR,
-          statusMessage: "Validation error from Polar API",
-          data: polarError.body?.detail || "Invalid product or request data",
-        });
-      }
-
-      if (polarError.status === HTTP_UNAUTHORIZED) {
-        throw createError({
-          statusCode: HTTP_UNAUTHORIZED,
-          statusMessage: "Unauthorized: Invalid Polar API credentials",
-        });
-      }
-    }
-
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Failed to create checkout session",
-      data: error instanceof Error ? error.message : "Unknown error",
-    });
+    handlePolarApiError(error);
   }
 });

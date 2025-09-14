@@ -6,8 +6,12 @@
       "nursery": {
         "useConsistentTypeDefinitions": "info"
       },
+      "correctness": {
+        "useExhaustiveDependencies": "off"
+      },
       "performance": {
-        "noBarrelFile": "off"
+        "noBarrelFile": "off",
+        "noImgElement": "off"
       }
     }
   },

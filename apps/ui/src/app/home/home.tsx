@@ -7,6 +7,8 @@ import { TourAlertDialog, type TourStep, useTour } from "@/components/tour";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { data } from "./data";
 
+const TOUR_OPEN_DELAY = 100;
+
 export default function Page() {
   const { t } = useTranslation();
   const { setSteps, isTourCompleted } = useTour();
@@ -19,7 +21,6 @@ export default function Page() {
     },
   ];
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (localStorage.getItem("home_tour_completed") === "true") {
       return;
@@ -28,7 +29,7 @@ export default function Page() {
     setSteps(steps);
     const timer = setTimeout(() => {
       setOpenTour(true);
-    }, 100);
+    }, TOUR_OPEN_DELAY);
 
     return () => clearTimeout(timer);
   }, [setSteps, isTourCompleted]);

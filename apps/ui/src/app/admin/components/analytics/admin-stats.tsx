@@ -34,8 +34,9 @@ async function fetchAdminStats(): Promise<AdminStats> {
   const activeUsers = totalUsers - bannedUsers;
 
   // Count recent signups (last 7 days)
+  const RECENT_SIGNUP_DAYS = 7;
   const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - RECENT_SIGNUP_DAYS);
   const recentSignups = users.filter(
     (user) => new Date(user.createdAt) > sevenDaysAgo
   ).length;
@@ -62,8 +63,8 @@ export function AdminStats() {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
+        {Array.from({ length: 4 }, (_, i) => `loading-card-${i}`).map((key) => (
+          <Card key={key}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="font-medium text-sm">Loading...</CardTitle>
             </CardHeader>

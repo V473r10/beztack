@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import * as React from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -34,12 +34,14 @@ import { Switch } from "@/components/ui/switch";
 import type { AdminUser, CreateUserData } from "@/lib/admin-types";
 import { authClient } from "@/lib/auth-client";
 
+const MIN_PASSWORD_LENGTH = 8;
+
 const userFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   name: z.string().min(1, "Name is required"),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
+    .min(MIN_PASSWORD_LENGTH, "Password must be at least 8 characters")
     .optional(),
   role: z.string(),
   emailVerified: z.boolean(),
@@ -74,7 +76,7 @@ export function UserForm({
   });
 
   // Reset form when user changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       form.reset({
         email: user.email,
@@ -140,34 +142,44 @@ export function UserForm({
     },
   });
 
+  const handleUserUpdate = (data: UserFormData) => {
+    const updates: Partial<AdminUser> = {};
+    if (data.email !== user.email) {
+      updates.email = data.email;
+    }
+    if (data.name !== user.name) {
+      updates.name = data.name;
+    }
+    if (data.role !== user.role) {
+      updates.role = data.role;
+    }
+    if (data.emailVerified !== user.emailVerified) {
+      updates.emailVerified = data.emailVerified;
+    }
+    updateUserMutation.mutate(updates);
+  };
+
+  const handleUserCreation = (data: UserFormData) => {
+    if (!data.password) {
+      toast.error("Password is required for new users");
+      return;
+    }
+
+    const createData = {
+      email: data.email,
+      password: data.password,
+      name: data.name || data.email.split("@")[0],
+      role: data.role as "user" | "admin",
+    };
+
+    createUserMutation.mutate(createData);
+  };
+
   const onSubmit = (data: UserFormData) => {
     if (isEditing) {
-      // For editing, only send changed fields
-      const updates: Partial<AdminUser> = {};
-      if (data.email !== user.email) {
-        updates.email = data.email;
-      }
-      if (data.name !== user.name) {
-        updates.name = data.name;
-      }
-      if (data.role !== user.role) {
-        updates.role = data.role;
-      }
-      if (data.emailVerified !== user.emailVerified) {
-        updates.emailVerified = data.emailVerified;
-      }
-
-      updateUserMutation.mutate(updates);
+      handleUserUpdate(data);
     } else {
-      // For creating, send all required fields
-      const createData = {
-        email: data.email,
-        password: data.password!,
-        name: data.name || data.email.split("@")[0],
-        role: data.role as "user" | "admin",
-      };
-
-      createUserMutation.mutate(createData);
+      handleUserCreation(data);
     }
   };
 
@@ -298,13 +310,12 @@ export function UserForm({
                 Cancel
               </Button>
               <Button disabled={isLoading} type="submit">
-                {isLoading
-                  ? isEditing
-                    ? "Updating..."
-                    : "Creating..."
-                  : isEditing
-                    ? "Update User"
-                    : "Create User"}
+                {(() => {
+                  if (isLoading) {
+                    return isEditing ? "Updating..." : "Creating...";
+                  }
+                  return isEditing ? "Update User" : "Create User";
+                })()}
               </Button>
             </DialogFooter>
           </form>

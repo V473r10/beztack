@@ -6,6 +6,8 @@ import type {
   Subscription,
 } from "../types/index.ts";
 
+const SHA256_PREFIX_LENGTH = 7;
+
 /**
  * Webhook signature verification
  */
@@ -21,7 +23,7 @@ export function verifyWebhookSignature(
       .digest("hex");
 
     const normalizedSignature = signature.startsWith("sha256=")
-      ? signature.slice(7)
+      ? signature.slice(SHA256_PREFIX_LENGTH)
       : signature;
 
     return crypto.timingSafeEqual(
@@ -34,18 +36,64 @@ export function verifyWebhookSignature(
 }
 
 /**
+ * Benefit grant data from Polar
+ */
+export type BenefitGrant = {
+  id: string;
+  type: string;
+  benefit_id: string;
+  user_id?: string;
+  customer_id?: string;
+  granted_at: string;
+  revoked_at?: string;
+  properties: Record<string, unknown>;
+};
+
+/**
+ * Checkout data from Polar
+ */
+export type Checkout = {
+  id: string;
+  url?: string;
+  product_id: string;
+  product_price_id: string;
+  amount?: number;
+  tax_amount?: number;
+  currency?: string;
+  status: string;
+  customer_id?: string;
+  customer_email?: string;
+  success_url?: string;
+  created_at: string;
+  expires_at?: string;
+  metadata?: Record<string, string>;
+};
+
+/**
+ * Generic webhook payload data
+ */
+export type WebhookPayloadData = {
+  customer?: Customer;
+  order?: Order;
+  subscription?: Subscription;
+  benefit_grant?: BenefitGrant;
+  checkout?: Checkout;
+  [key: string]: unknown;
+};
+
+/**
+ * Webhook payload handler function type
+ */
+export type WebhookPayloadHandler = (
+  payload: WebhookPayloadData
+) => Promise<void>;
+
+/**
  * Webhook payload types from Polar
  */
 export type PolarWebhookPayload = {
   type: string;
-  data: {
-    customer?: Customer;
-    order?: Order;
-    subscription?: Subscription;
-    benefit_grant?: any;
-    checkout?: any;
-    [key: string]: any;
-  };
+  data: WebhookPayloadData;
 };
 
 /**
@@ -67,10 +115,8 @@ export class WebhookEventHandler {
   private readonly membershipUpdateCallback?: (
     update: MembershipUpdate
   ) => Promise<void>;
-  private readonly customHandlers: Map<
-    string,
-    (payload: any) => Promise<void>
-  > = new Map();
+  private readonly customHandlers: Map<string, WebhookPayloadHandler> =
+    new Map();
 
   constructor(
     membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>
@@ -81,7 +127,7 @@ export class WebhookEventHandler {
   /**
    * Register custom event handler
    */
-  on(eventType: string, handler: (payload: any) => Promise<void>) {
+  on(eventType: string, handler: WebhookPayloadHandler) {
     this.customHandlers.set(eventType, handler);
   }
 
@@ -229,7 +275,7 @@ export class WebhookEventHandler {
   /**
    * Handle customer updates
    */
-  private async handleCustomerUpdated(customer?: Customer): Promise<void> {
+  private handleCustomerUpdated(customer?: Customer): void {
     if (!customer?.metadata?.userId) {
       return;
     }
@@ -241,7 +287,6 @@ export class WebhookEventHandler {
   private async updateMembership(update: MembershipUpdate): Promise<void> {
     if (this.membershipUpdateCallback) {
       await this.membershipUpdateCallback(update);
-    } else {
     }
   }
 }
@@ -259,22 +304,44 @@ export function createWebhookHandler(
  * Create default webhook handlers for common events
  */
 export function createDefaultWebhookHandlers(
-  customHandlers: Record<string, (payload: any) => Promise<void>> = {}
-): Record<string, (payload: any) => Promise<void>> {
+  customHandlers: Record<string, WebhookPayloadHandler> = {}
+): Record<string, WebhookPayloadHandler> {
   return {
-    "order.paid": customHandlers.onOrderPaid || (async (_payload) => {}),
+    "order.paid":
+      customHandlers.onOrderPaid ||
+      (async (_payload) => {
+        // Default no-op handler
+      }),
     "subscription.active":
-      customHandlers.onSubscriptionActive || (async (_payload) => {}),
+      customHandlers.onSubscriptionActive ||
+      (async (_payload) => {
+        // Default no-op handler
+      }),
     "subscription.canceled":
-      customHandlers.onSubscriptionCanceled || (async (_payload) => {}),
+      customHandlers.onSubscriptionCanceled ||
+      (async (_payload) => {
+        // Default no-op handler
+      }),
     "subscription.revoked":
-      customHandlers.onSubscriptionRevoked || (async (_payload) => {}),
+      customHandlers.onSubscriptionRevoked ||
+      (async (_payload) => {
+        // Default no-op handler
+      }),
     "customer.updated":
-      customHandlers.onCustomerStateChanged || (async (_payload) => {}),
+      customHandlers.onCustomerStateChanged ||
+      (async (_payload) => {
+        // Default no-op handler
+      }),
     "benefit.grant.created":
-      customHandlers.onBenefitGrantCreated || (async (_payload) => {}),
+      customHandlers.onBenefitGrantCreated ||
+      (async (_payload) => {
+        // Default no-op handler
+      }),
     "benefit.grant.revoked":
-      customHandlers.onBenefitGrantRevoked || (async (_payload) => {}),
+      customHandlers.onBenefitGrantRevoked ||
+      (async (_payload) => {
+        // Default no-op handler
+      }),
     // Add any custom handlers
     ...Object.fromEntries(
       Object.entries(customHandlers).filter(([key]) => !key.startsWith("on"))
@@ -286,8 +353,14 @@ export function createDefaultWebhookHandlers(
  * Nitro/h3 webhook endpoint helper
  */
 export async function handleWebhookRequest(
-  event: any, // H3Event type
-  handlers: Record<string, (payload: any) => Promise<void>>
+  event: {
+    node: {
+      req: {
+        headers: Record<string, string | string[] | undefined>;
+      };
+    };
+  },
+  handlers: Record<string, WebhookPayloadHandler>
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Import h3 readBody function dynamically
@@ -315,7 +388,6 @@ export async function handleWebhookRequest(
     const handler = handlers[payload.type];
     if (handler) {
       await handler(payload.data);
-    } else {
     }
 
     return { success: true };

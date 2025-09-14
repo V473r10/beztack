@@ -29,6 +29,9 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { UserActions } from "./user-actions";
 
+// Constants
+const DEFAULT_PAGE_LIMIT = 50;
+
 type UserListProps = {
   onEditUser?: (user: AdminUser) => void;
   onCreateUser?: () => void;
@@ -145,9 +148,14 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
           {/* Users Table */}
           {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div className="h-16 animate-pulse rounded bg-muted" key={i} />
-              ))}
+              {Array.from({ length: 5 }, (_, i) => `loading-row-${i}`).map(
+                (key) => (
+                  <div
+                    className="h-16 animate-pulse rounded bg-muted"
+                    key={key}
+                  />
+                )
+              )}
             </div>
           ) : (
             <Table>
@@ -220,7 +228,8 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
             <div className="mt-4 text-muted-foreground text-sm">
               Showing {Math.min(Number(query.offset || 0) + 1, data.total)} -{" "}
               {Math.min(
-                Number(query.offset || 0) + Number(query.limit || 50),
+                Number(query.offset || 0) +
+                  Number(query.limit || DEFAULT_PAGE_LIMIT),
                 data.total
               )}{" "}
               of {data.total} users

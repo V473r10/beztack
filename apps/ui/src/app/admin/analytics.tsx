@@ -130,8 +130,9 @@ async function fetchUserStats() {
   const activeUsers = totalUsers - bannedUsers;
 
   // Count recent signups (last 7 days)
+  const RECENT_SIGNUP_DAYS = 7;
   const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - RECENT_SIGNUP_DAYS);
   const recentSignups = users.filter(
     (user) => new Date(user.createdAt) > sevenDaysAgo
   ).length;
@@ -223,18 +224,22 @@ export default function AdminAnalytics() {
           <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
             {isLoading ? (
               <div className="h-[300px] animate-pulse rounded bg-gradient-to-r from-muted/50 to-muted" />
-            ) : growthData && growthData.length > 0 ? (
-              <PingingDotChart
-                className="aspect-auto h-[300px] w-full"
-                config={growthChartConfig}
-                data={growthData}
-                xAxisKey="month"
-                yAxisKey="users"
-              />
             ) : (
-              <p className="flex h-[300px] items-center justify-center text-center text-muted-foreground text-sm">
-                No growth data available
-              </p>
+              <div>
+                {growthData && growthData.length > 0 ? (
+                  <PingingDotChart
+                    className="aspect-auto h-[300px] w-full"
+                    config={growthChartConfig}
+                    data={growthData}
+                    xAxisKey="month"
+                    yAxisKey="users"
+                  />
+                ) : (
+                  <p className="flex h-[300px] items-center justify-center text-center text-muted-foreground text-sm">
+                    No growth data available
+                  </p>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -251,20 +256,32 @@ export default function AdminAnalytics() {
           <CardContent>
             {isLoadingMetrics ? (
               <div className="h-[250px] animate-pulse rounded bg-gradient-to-r from-muted/50 to-muted" />
-            ) : metricsError ? (
-              <div className="flex h-[250px] items-center justify-center text-center">
-                <div className="text-muted-foreground text-sm">
-                  <p>Failed to load system metrics</p>
-                  <p className="mt-1 text-xs">Using fallback data</p>
-                </div>
-              </div>
-            ) : systemMetrics && systemMetrics.length > 0 ? (
-              <AnimatedBarChart data={systemMetrics} />
             ) : (
-              <div className="flex h-[250px] items-center justify-center">
-                <p className="text-muted-foreground text-sm">
-                  No metrics available
-                </p>
+              <div>
+                {(() => {
+                  if (metricsError) {
+                    return (
+                      <div className="flex h-[250px] items-center justify-center text-center">
+                        <div className="text-muted-foreground text-sm">
+                          <p>Failed to load system metrics</p>
+                          <p className="mt-1 text-xs">Using fallback data</p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (systemMetrics && systemMetrics.length > 0) {
+                    return <AnimatedBarChart data={systemMetrics} />;
+                  }
+
+                  return (
+                    <div className="flex h-[250px] items-center justify-center">
+                      <p className="text-muted-foreground text-sm">
+                        No metrics available
+                      </p>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </CardContent>

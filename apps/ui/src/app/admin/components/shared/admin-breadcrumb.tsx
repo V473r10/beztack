@@ -9,7 +9,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
-type BreadcrumbItem = {
+type BreadcrumbItemData = {
   label: string;
   href?: string;
 };
@@ -19,7 +19,7 @@ export function AdminBreadcrumb() {
   const pathSegments = location.pathname.split("/").filter(Boolean);
 
   // Build breadcrumb items
-  const breadcrumbItems: BreadcrumbItem[] = [];
+  const breadcrumbItems: BreadcrumbItemData[] = [];
 
   // Always start with Home
   breadcrumbItems.push({ label: "Home", href: "/" });
@@ -50,7 +50,7 @@ export function AdminBreadcrumb() {
     <Breadcrumb>
       <BreadcrumbList>
         {breadcrumbItems.map((item, index) => (
-          <Fragment key={index}>
+          <Fragment key={`breadcrumb-${item.label}-${index}`}>
             <BreadcrumbItem>
               {item.href ? (
                 <BreadcrumbLink asChild>

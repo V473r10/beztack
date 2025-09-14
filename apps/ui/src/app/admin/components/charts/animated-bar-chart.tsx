@@ -19,6 +19,10 @@ type AnimatedBarChartProps = {
   }>;
 };
 
+// Constants for chart styling
+const BAR_CORNER_RADIUS = 4;
+const BAR_BORDER_RADIUS = [BAR_CORNER_RADIUS, BAR_CORNER_RADIUS, 0, 0] as const;
+
 export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
   return (
     <motion.div
@@ -90,7 +94,7 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
           <Tooltip
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
-                const data = payload[0].payload;
+                const chartData = payload[0].payload;
                 const statusColors = {
                   good: "hsl(142 76% 36%)",
                   warning: "hsl(38 92% 50%)",
@@ -109,7 +113,7 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
                       style={{
                         color:
                           statusColors[
-                            data.status as keyof typeof statusColors
+                            chartData.status as keyof typeof statusColors
                           ] || "hsl(var(--chart-2))",
                       }}
                     >
@@ -127,7 +131,7 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
               return null;
             }}
           />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+          <Bar dataKey="value" radius={BAR_BORDER_RADIUS}>
             {data.map((entry, index) => {
               let fillColor = "url(#barGradientDefault)";
               switch (entry.status) {
@@ -140,8 +144,16 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
                 case "critical":
                   fillColor = "url(#barGradientCritical)";
                   break;
+                default:
+                  fillColor = "url(#barGradientDefault)";
+                  break;
               }
-              return <Cell fill={fillColor} key={`cell-${index}`} />;
+              return (
+                <Cell
+                  fill={fillColor}
+                  key={entry.id || entry.name || `fallback-${index}`}
+                />
+              );
             })}
           </Bar>
         </BarChart>

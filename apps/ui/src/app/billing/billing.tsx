@@ -5,6 +5,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMembership } from "@/contexts/membership-context";
 
+const SKELETON_ITEMS = 3;
+const SKELETON_ITEMS_COUNT = Array.from(
+  { length: SKELETON_ITEMS },
+  (_, i) => i + 1
+);
+
 export default function Billing() {
   const {
     subscriptions,
@@ -71,7 +77,7 @@ export default function Billing() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {[1, 2, 3].map((i) => (
+                {SKELETON_ITEMS_COUNT.map((i) => (
                   <div className="space-y-2" key={i}>
                     <div className="flex justify-between">
                       <Skeleton className="h-4 w-24" />
@@ -94,13 +100,17 @@ export default function Billing() {
   ) => {
     try {
       await upgradeToTier(tierId, billingPeriod);
-    } catch (_error) {}
+    } catch (_upgradeError) {
+      // Error is handled by the upgradeToTier function's internal error handling
+    }
   };
 
   const handleManageBilling = async () => {
     try {
       await openBillingPortal(window.location.href);
-    } catch (_error) {}
+    } catch (_billingError) {
+      // Error is handled by the openBillingPortal function's internal error handling
+    }
   };
 
   return (

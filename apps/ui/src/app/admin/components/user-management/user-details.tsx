@@ -27,6 +27,9 @@ import {
 } from "@/lib/admin-utils";
 import { authClient } from "@/lib/auth-client";
 
+// Constants
+const SESSION_ID_PREVIEW_LENGTH = 8;
+
 type UserDetailsProps = {
   user: AdminUser;
   onEdit: () => void;
@@ -233,7 +236,8 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
                 >
                   <div className="space-y-1">
                     <div className="font-medium text-sm">
-                      Session {session.id.slice(0, 8)}...
+                      Session {session.id.slice(0, SESSION_ID_PREVIEW_LENGTH)}
+                      ...
                     </div>
                     <div className="space-y-1 text-muted-foreground text-xs">
                       <div>Created: {formatDate(session.createdAt)}</div>

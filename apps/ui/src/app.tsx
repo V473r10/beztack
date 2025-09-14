@@ -24,13 +24,18 @@ import { PublicRoute } from "./components/public-route.tsx";
 import { MembershipProvider } from "./contexts/membership-context.tsx";
 import { ThemeProvider } from "./contexts/theme-context.tsx";
 
+// Constants
+const SECONDS_PER_MINUTE = 60;
+const MILLISECONDS_PER_SECOND = 1000;
+const DEFAULT_STALE_TIME_MS = SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND; // 60 seconds in milliseconds
+
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
         // With SSR, we usually want to set some default staleTime
         // above 0 to avoid refetching immediately on the client
-        staleTime: 60 * 1000, // 60 seconds in milliseconds
+        staleTime: DEFAULT_STALE_TIME_MS,
       },
     },
   });

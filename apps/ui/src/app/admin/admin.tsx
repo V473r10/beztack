@@ -76,39 +76,47 @@ export default function AdminDashboard() {
           <CardContent>
             {isLoading ? (
               <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div className="flex items-center space-x-3" key={i}>
-                    <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
-                    <div className="flex-1 space-y-1">
-                      <div className="h-4 animate-pulse rounded bg-muted" />
-                      <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                {Array.from({ length: 3 }, (_, i) => `loading-${i}`).map(
+                  (key) => (
+                    <div className="flex items-center space-x-3" key={key}>
+                      <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
+                      <div className="flex-1 space-y-1">
+                        <div className="h-4 animate-pulse rounded bg-muted" />
+                        <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : recentActivity && recentActivity.length > 0 ? (
-              <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div
-                    className="flex items-center space-x-3"
-                    key={activity.id}
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-                      <IconUsers className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="font-medium text-sm">{activity.message}</p>
-                      <p className="text-muted-foreground text-xs">
-                        {formatRelativeTime(activity.timestamp)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">
-                No recent activity to display
-              </p>
+              <div>
+                {recentActivity && recentActivity.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentActivity.map((activity) => (
+                      <div
+                        className="flex items-center space-x-3"
+                        key={activity.id}
+                      >
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                          <IconUsers className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="font-medium text-sm">
+                            {activity.message}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {formatRelativeTime(activity.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    No recent activity to display
+                  </p>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>

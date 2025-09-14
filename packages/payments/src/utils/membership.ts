@@ -6,8 +6,17 @@ import type {
   UsageMetrics,
   UserMembership,
 } from "../types/index.ts";
+
 // Note: Tier configurations are now fetched dynamically from API
 // See packages/payments/src/server/tier-config.ts for dynamic functions
+
+// Constants
+const PERCENTAGE_MULTIPLIER = 100;
+const MAX_PERCENTAGE = 100;
+const HOURS_PER_DAY = 24;
+const MINUTES_PER_HOUR = 60;
+const SECONDS_PER_MINUTE = 60;
+const MILLISECONDS_PER_SECOND = 1000;
 
 /**
  * Validate user membership based on customer portal state
@@ -176,7 +185,7 @@ export function isWithinUsageLimits(
         metric: check.metric,
         current: check.current,
         limit: check.limit,
-        percentage: (check.current / check.limit) * 100, // Convert to percentage
+        percentage: (check.current / check.limit) * PERCENTAGE_MULTIPLIER, // Convert to percentage
       });
     }
   }
@@ -245,8 +254,6 @@ export function getUsageWarnings(
 
   for (const check of checks) {
     if (check.limit && check.limit > 0) {
-      const PERCENTAGE_MULTIPLIER = 100;
-      const MAX_PERCENTAGE = 100;
       const percentage = (check.current / check.limit) * PERCENTAGE_MULTIPLIER;
       if (percentage >= warningThreshold && percentage < MAX_PERCENTAGE) {
         warnings.push({
@@ -351,7 +358,12 @@ export function isMembershipExpiringSoon(
 
   const now = new Date();
   const threshold = new Date(
-    now.getTime() + daysThreshold * 24 * 60 * 60 * 1000 // Convert days to milliseconds
+    now.getTime() +
+      daysThreshold *
+        HOURS_PER_DAY *
+        MINUTES_PER_HOUR *
+        SECONDS_PER_MINUTE *
+        MILLISECONDS_PER_SECOND // Convert days to milliseconds
   );
 
   return membership.validUntil <= threshold && membership.validUntil > now;

@@ -9,14 +9,20 @@ import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import { authClient } from "@/lib/auth-client";
 
+const MIN_PASSWORD_LENGTH = 8;
+const UPPERCASE_REGEX = /[A-Z]/;
+const LOWERCASE_REGEX = /[a-z]/;
+const NUMBER_REGEX = /[0-9]/;
+const SPECIAL_CHAR_REGEX = /[^A-Za-z0-9]/;
+
 const passwordSchema = (t: (key: string) => string) =>
   z
     .string()
-    .min(8, { message: t("validation.password.length") })
-    .regex(/[A-Z]/, { message: t("validation.password.uppercase") })
-    .regex(/[a-z]/, { message: t("validation.password.lowercase") })
-    .regex(/[0-9]/, { message: t("validation.password.number") })
-    .regex(/[^A-Za-z0-9]/, {
+    .min(MIN_PASSWORD_LENGTH, { message: t("validation.password.length") })
+    .regex(UPPERCASE_REGEX, { message: t("validation.password.uppercase") })
+    .regex(LOWERCASE_REGEX, { message: t("validation.password.lowercase") })
+    .regex(NUMBER_REGEX, { message: t("validation.password.number") })
+    .regex(SPECIAL_CHAR_REGEX, {
       message: t("validation.password.special"),
     });
 

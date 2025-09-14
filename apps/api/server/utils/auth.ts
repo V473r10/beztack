@@ -78,7 +78,7 @@ export const auth = betterAuth({
       },
     }),
     // Integrate Polar plugin if available
-    ...(polarPlugin ? [polarPlugin] : []),
+    ...(polarPlugin !== null ? [polarPlugin] : []),
   ],
   hooks: {
     after: createAuthMiddleware(async (ctx) => {

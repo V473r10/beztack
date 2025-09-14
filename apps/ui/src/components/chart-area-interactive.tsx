@@ -1,8 +1,13 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+
+const DAYS_90 = 90;
+const DAYS_30 = 30;
+const DAYS_7 = 7;
+
 import {
   Card,
   CardAction,
@@ -140,15 +145,15 @@ export function ChartAreaInteractive() {
     },
   } satisfies ChartConfig;
   const isMobile = useIsMobile();
-  const [timeRange, setTimeRange] = React.useState("90d");
+  const [timeRange, setTimeRange] = useState("90d");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isMobile) {
       setTimeRange("7d");
     }
   }, [isMobile]);
 
-  const activeRangeLabel = React.useMemo(
+  const activeRangeLabel = useMemo(
     () =>
       ({
         "90d": t("dashboard.chart.last3Months"),
@@ -161,11 +166,11 @@ export function ChartAreaInteractive() {
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date);
     const referenceDate = new Date("2024-06-30");
-    let daysToSubtract = 90;
+    let daysToSubtract = DAYS_90;
     if (timeRange === "30d") {
-      daysToSubtract = 30;
+      daysToSubtract = DAYS_30;
     } else if (timeRange === "7d") {
-      daysToSubtract = 7;
+      daysToSubtract = DAYS_7;
     }
     const startDate = new Date(referenceDate);
     startDate.setDate(startDate.getDate() - daysToSubtract);
