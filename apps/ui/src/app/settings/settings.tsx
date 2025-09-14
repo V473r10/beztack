@@ -41,6 +41,12 @@ const CACHE_STALE_TIME_MINUTES = 5;
 const USER_QUERY_STALE_TIME =
   MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * CACHE_STALE_TIME_MINUTES;
 
+// API simulation constants
+const SIMULATED_API_DELAY_MS = 500;
+
+// TOTP constants
+const TOTP_CODE_LENGTH = 6;
+
 type TwoFactorEnableSuccessData = {
   totpURI: string;
   backupCodes: string[];
@@ -314,14 +320,16 @@ export function Settings() {
 
   const profileMutation = useMutation({
     mutationFn: async ({
-      username,
-      email,
+      username: _username,
+      email: _email,
     }: {
       username: string;
       email: string;
     }) => {
       // TODO: Implement actual profile update API call
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulated API call
+      await new Promise((resolve) =>
+        setTimeout(resolve, SIMULATED_API_DELAY_MS)
+      ); // Simulated API call
       return { success: true };
     },
     onSuccess: () => {
@@ -455,7 +463,7 @@ export function Settings() {
   ]);
 
   const handleTotpVerification = useCallback(() => {
-    if (state.twoFactor.totpCode.length !== 6) {
+    if (state.twoFactor.totpCode.length !== TOTP_CODE_LENGTH) {
       toast.error("Please enter a 6-digit verification code.");
       return;
     }
@@ -706,7 +714,8 @@ export function Settings() {
                       <Button
                         disabled={
                           state.twoFactor.isVerifyingTotp ||
-                          state.twoFactor.totpCode.length !== 6 ||
+                          state.twoFactor.totpCode.length !==
+                            TOTP_CODE_LENGTH ||
                           !state.twoFactor.hasConfirmedBackupCodes
                         }
                         onClick={handleTotpVerification}

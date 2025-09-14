@@ -20,6 +20,23 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
+// Constants
+const PERCENTAGE_MAX = 100;
+const PERCENTAGE_MIN = 0;
+const WARNING_THRESHOLD_DEFAULT = 80;
+const UNLIMITED_LIMIT = -1;
+
+// Helper function to determine unit for a key
+function getUnitForKey(key: string): string {
+  if (key === "storage") {
+    return " GB";
+  }
+  if (key === "apiCalls") {
+    return "";
+  }
+  return "";
+}
+
 export type UsageMetricsProps = {
   meters?: CustomerMeter[];
   tierConfig: MembershipTierConfig;
@@ -52,9 +69,13 @@ function UsageItem({
   unit = "",
   warningThreshold = 80,
 }: UsageItemProps) {
-  const percentage = limit === -1 ? 0 : Math.min((current / limit) * 100, 100);
-  const isNearLimit = limit !== -1 && percentage >= warningThreshold;
-  const isOverLimit = limit !== -1 && current > limit;
+  const percentage =
+    limit === UNLIMITED_LIMIT
+      ? PERCENTAGE_MIN
+      : Math.min((current / limit) * PERCENTAGE_MAX, PERCENTAGE_MAX);
+  const isNearLimit =
+    limit !== UNLIMITED_LIMIT && percentage >= warningThreshold;
+  const isOverLimit = limit !== UNLIMITED_LIMIT && current > limit;
 
   // Helper function for formatting (currently inline)
   // const formatValue = (value: number, key: string) => {
@@ -74,9 +95,12 @@ function UsageItem({
         <div className="text-right">
           <div className="font-medium text-sm">
             {current.toLocaleString()}
-            {unit} / {limit === -1 ? "∞" : `${limit.toLocaleString()}${unit}`}
+            {unit} /{" "}
+            {limit === UNLIMITED_LIMIT
+              ? "∞"
+              : `${limit.toLocaleString()}${unit}`}
           </div>
-          {limit !== -1 && (
+          {limit !== UNLIMITED_LIMIT && (
             <div className="text-muted-foreground text-xs">
               {percentage.toFixed(0)}% used
             </div>
@@ -84,7 +108,7 @@ function UsageItem({
         </div>
       </div>
 
-      {limit !== -1 && (
+      {limit !== UNLIMITED_LIMIT && (
         <div className="space-y-2">
           <Progress
             className={cn(
@@ -124,8 +148,8 @@ export function UsageMetrics({
 }: UsageMetricsProps) {
   // Mock current usage data based on meters or use defaults
   const getCurrentUsage = (key: string) => {
-    const meter = meters.find((m: any) => m.id?.includes(key));
-    return (meter as any)?.consumedUnits || 0;
+    const meter = meters.find((m: CustomerMeter) => m.id?.includes(key));
+    return meter?.consumedUnits || 0;
   };
 
   const usageData = Object.entries(tierConfig.limits || {}).map(
@@ -136,16 +160,18 @@ export function UsageMetrics({
       current: getCurrentUsage(key),
       limit,
       icon: usageIcons[key as keyof typeof usageIcons] || Database,
-      unit: key === "storage" ? " GB" : key === "apiCalls" ? "" : "",
+      unit: getUnitForKey(key),
     })
   );
 
   const hasNearLimitUsage = usageData.some(
-    (item) => item.limit !== -1 && (item.current / item.limit) * 100 >= 80
+    (item) =>
+      item.limit !== UNLIMITED_LIMIT &&
+      (item.current / item.limit) * PERCENTAGE_MAX >= WARNING_THRESHOLD_DEFAULT
   );
 
   const hasOverLimitUsage = usageData.some(
-    (item) => item.limit !== -1 && item.current > item.limit
+    (item) => item.limit !== UNLIMITED_LIMIT && item.current > item.limit
   );
 
   return (

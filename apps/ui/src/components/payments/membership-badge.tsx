@@ -122,7 +122,16 @@ export function MembershipStatus({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <MembershipBadge tier={tier} />
-      <Badge className="h-5 px-2 text-xs" variant={getStatusColor() as any}>
+      <Badge
+        className="h-5 px-2 text-xs"
+        variant={
+          getStatusColor() as
+            | "default"
+            | "destructive"
+            | "outline"
+            | "secondary"
+        }
+      >
         {getStatusText()}
       </Badge>
       {expiresAt && isActive && expiresAt > new Date() && (

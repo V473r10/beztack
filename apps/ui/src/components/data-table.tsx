@@ -46,7 +46,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import * as React from "react";
+import { useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { toast } from "sonner";
@@ -98,6 +98,22 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+// Constants
+const SAVE_TIMEOUT_MS = 1000;
+const PAGE_SIZE_SMALL = 10;
+const PAGE_SIZE_MEDIUM = 20;
+const PAGE_SIZE_LARGE = 30;
+const PAGE_SIZE_XLARGE = 40;
+const PAGE_SIZE_XXLARGE = 50;
+const PAGE_SIZE_OPTIONS = [
+  PAGE_SIZE_SMALL,
+  PAGE_SIZE_MEDIUM,
+  PAGE_SIZE_LARGE,
+  PAGE_SIZE_XLARGE,
+  PAGE_SIZE_XXLARGE,
+];
+const MONTH_ABBREVIATION_LENGTH = 3;
 
 export const schema = z.object({
   id: z.number(),
@@ -202,11 +218,14 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
-          });
+          toast.promise(
+            new Promise((resolve) => setTimeout(resolve, SAVE_TIMEOUT_MS)),
+            {
+              loading: `Saving ${row.original.header}`,
+              success: "Done",
+              error: "Error",
+            }
+          );
         }}
       >
         <Label className="sr-only" htmlFor={`${row.original.id}-target`}>
@@ -227,11 +246,14 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
-          });
+          toast.promise(
+            new Promise((resolve) => setTimeout(resolve, SAVE_TIMEOUT_MS)),
+            {
+              loading: `Saving ${row.original.header}`,
+              success: "Done",
+              error: "Error",
+            }
+          );
         }}
       >
         <Label className="sr-only" htmlFor={`${row.original.id}-limit`}>
@@ -336,26 +358,23 @@ export function DataTable({
   data: z.infer<typeof schema>[];
 }) {
   const { t } = useTranslation();
-  const [data, setData] = React.useState(() => initialData);
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [pagination, setPagination] = React.useState({
+  const [data, setData] = useState(() => initialData);
+  const [rowSelection, setRowSelection] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-  const sortableId = React.useId();
+  const sortableId = useId();
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
     useSensor(KeyboardSensor, {})
   );
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
+  const dataIds = useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],
     [data]
   );
@@ -388,10 +407,10 @@ export function DataTable({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (active && over && active.id !== over.id) {
-      setData((data) => {
+      setData((currentData) => {
         const oldIndex = dataIds.indexOf(active.id);
         const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(data, oldIndex, newIndex);
+        return arrayMove(currentData, oldIndex, newIndex);
       });
     }
   }
@@ -565,7 +584,7 @@ export function DataTable({
                   />
                 </SelectTrigger>
                 <SelectContent side="top">
-                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                  {PAGE_SIZE_OPTIONS.map((pageSize) => (
                     <SelectItem key={pageSize} value={`${pageSize}`}>
                       {pageSize}
                     </SelectItem>
@@ -697,7 +716,9 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                     axisLine={false}
                     dataKey="month"
                     hide
-                    tickFormatter={(value) => value.slice(0, 3)}
+                    tickFormatter={(value) =>
+                      value.slice(0, MONTH_ABBREVIATION_LENGTH)
+                    }
                     tickLine={false}
                     tickMargin={8}
                   />

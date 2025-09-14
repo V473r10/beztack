@@ -185,6 +185,47 @@ type OrderHistoryProps = {
   orders: Order[];
 };
 
+// Helper function to get badge variant based on order status
+function getOrderStatusVariant(status: string) {
+  if (status === "completed") {
+    return "default";
+  }
+  if (status === "pending") {
+    return "secondary";
+  }
+  return "destructive";
+}
+
+// Helper function to get status icon
+function getStatusIcon(status: string) {
+  if (status === "completed") {
+    return <CheckCircle className="h-4 w-4" />;
+  }
+  if (status === "pending") {
+    return <Clock className="h-4 w-4" />;
+  }
+  if (status === "canceled" || status === "refunded") {
+    return <AlertCircle className="h-4 w-4" />;
+  }
+  return null;
+}
+
+// Helper function to get status styling classes
+function getStatusClasses(status: string) {
+  const baseClasses = "flex h-8 w-8 items-center justify-center rounded-full";
+
+  if (status === "completed") {
+    return `${baseClasses} bg-green-100 text-green-600 dark:bg-green-900/20`;
+  }
+  if (status === "pending") {
+    return `${baseClasses} bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20`;
+  }
+  if (status === "canceled" || status === "refunded") {
+    return `${baseClasses} bg-red-100 text-red-600 dark:bg-red-900/20`;
+  }
+  return baseClasses;
+}
+
 function OrderHistory({ orders }: OrderHistoryProps) {
   if (orders.length === 0) {
     return (
@@ -203,26 +244,8 @@ function OrderHistory({ orders }: OrderHistoryProps) {
         <Card key={order.id}>
           <CardContent className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
-              <div
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full",
-                  order.status === "completed" &&
-                    "bg-green-100 text-green-600 dark:bg-green-900/20",
-                  order.status === "pending" &&
-                    "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20",
-                  (order.status === "canceled" ||
-                    order.status === "refunded") &&
-                    "bg-red-100 text-red-600 dark:bg-red-900/20"
-                )}
-              >
-                {order.status === "completed" && (
-                  <CheckCircle className="h-4 w-4" />
-                )}
-                {order.status === "pending" && <Clock className="h-4 w-4" />}
-                {(order.status === "canceled" ||
-                  order.status === "refunded") && (
-                  <AlertCircle className="h-4 w-4" />
-                )}
+              <div className={getStatusClasses(order.status)}>
+                {getStatusIcon(order.status)}
               </div>
 
               <div className="space-y-1">
@@ -241,15 +264,7 @@ function OrderHistory({ orders }: OrderHistoryProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <Badge
-                variant={
-                  order.status === "completed"
-                    ? "default"
-                    : order.status === "pending"
-                      ? "secondary"
-                      : "destructive"
-                }
-              >
+              <Badge variant={getOrderStatusVariant(order.status)}>
                 {(order.status || "unknown").charAt(0).toUpperCase() +
                   (order.status || "unknown").slice(1)}
               </Badge>

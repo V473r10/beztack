@@ -19,9 +19,15 @@ export function ThemeSelector() {
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
+  // Constants for theme display
+  const INITIAL_THEMES_TO_SHOW = 8;
+  const THEMES_CALCULATION_OFFSET = 6;
+
   // Show 6 themes initially (2 rows × 3 cols on desktop)
-  const themesToShow = showAll ? themes : themes.slice(0, 8);
-  const hasMoreThemes = themes.length > 8;
+  const themesToShow = showAll
+    ? themes
+    : themes.slice(0, INITIAL_THEMES_TO_SHOW);
+  const hasMoreThemes = themes.length > INITIAL_THEMES_TO_SHOW;
 
   useEffect(() => {
     const loadThemes = async () => {
@@ -30,6 +36,8 @@ export function ThemeSelector() {
         const availableThemes = await getAllThemes();
         setThemes(availableThemes);
       } catch (_error) {
+        // TODO: Handle theme loading error
+        // Silently handle theme loading errors
       } finally {
         setLoading(false);
       }
@@ -139,7 +147,7 @@ export function ThemeSelector() {
                     ? t("settings.theme.showLess", "Ver menos")
                     : t(
                         "settings.theme.showMore",
-                        `Ver más (${themes.length - 6})`
+                        `Ver más (${themes.length - THEMES_CALCULATION_OFFSET})`
                       )}
                 </Button>
               </div>

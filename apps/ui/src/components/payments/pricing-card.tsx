@@ -5,7 +5,7 @@ import {
   Crown,
   Database,
   FileText,
-  Infinity,
+  Infinity as InfinityIcon,
   Sparkles,
   Users,
   Zap,
@@ -50,6 +50,45 @@ const limitIcons = {
   requests: Zap,
   uploads: Database,
 };
+
+// Helper function to get tier styling classes
+function getTierStyling(tierId: string) {
+  const baseClasses = "flex h-10 w-10 items-center justify-center rounded-lg";
+
+  if (tierId === "basic") {
+    return `${baseClasses} bg-blue-100 text-blue-600 dark:bg-blue-900/20`;
+  }
+  if (tierId === "pro") {
+    return `${baseClasses} bg-purple-100 text-purple-600 dark:bg-purple-900/20`;
+  }
+  if (tierId === "ultimate") {
+    return `${baseClasses} bg-orange-100 text-orange-600 dark:bg-orange-900/20`;
+  }
+  return baseClasses;
+}
+
+// Helper function to format limit values
+function formatLimitValue(key: string, value: number) {
+  if (value === -1) {
+    return "Unlimited";
+  }
+
+  if (key === "storage") {
+    return `${value} GB`;
+  }
+  if (key === "requests") {
+    return value.toLocaleString();
+  }
+  if (key === "uploads") {
+    return value.toLocaleString();
+  }
+  return value.toString();
+}
+
+// Helper function to get limit icon
+function getLimitIcon(key: string) {
+  return limitIcons[key as keyof typeof limitIcons] || FileText;
+}
 
 export function PricingCard({
   tier,
@@ -130,17 +169,7 @@ export function PricingCard({
 
       <CardHeader className="space-y-4">
         <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-lg",
-              tier.id === "basic" &&
-                "bg-blue-100 text-blue-600 dark:bg-blue-900/20",
-              tier.id === "pro" &&
-                "bg-purple-100 text-purple-600 dark:bg-purple-900/20",
-              tier.id === "ultimate" &&
-                "bg-orange-100 text-orange-600 dark:bg-orange-900/20"
-            )}
-          >
+          <div className={getTierStyling(tier.id)}>
             <Icon className="h-5 w-5" />
           </div>
           <div>
@@ -180,8 +209,11 @@ export function PricingCard({
         <div className="space-y-3">
           <div className="font-medium text-sm">Features included:</div>
           <ul className="space-y-2">
-            {(tier.features || []).map((feature: string, index: number) => (
-              <li className="flex items-start gap-3 text-sm" key={index}>
+            {(tier.features || []).map((feature: string, _index: number) => (
+              <li
+                className="flex items-start gap-3 text-sm"
+                key={`${tier.id}-feature-${feature}-${crypto.randomUUID()}`}
+              >
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
                 <span>{t(`pricing.features.${feature}`, feature)}</span>
               </li>
@@ -290,7 +322,15 @@ export function PricingCard({
           disabled={disabled || isLoading || isCurrentTier}
           onClick={handleSelect}
           size="lg"
-          variant={getButtonVariant() as any}
+          variant={
+            getButtonVariant() as
+              | "default"
+              | "destructive"
+              | "outline"
+              | "secondary"
+              | "ghost"
+              | "link"
+          }
         >
           {isLoading ? "Processing..." : getButtonText()}
         </Button>

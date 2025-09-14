@@ -10,6 +10,57 @@ import { POLAR_CONFIG } from "../constants/index.ts";
 import type { MembershipTier } from "../types/index.ts";
 
 /**
+ * Webhook payload types for better type safety
+ */
+export interface WebhookPayload {
+  type: string;
+  id: string;
+  created_at: string;
+}
+
+export interface CustomerStateChangedPayload extends WebhookPayload {
+  customer: {
+    id: string;
+    email: string;
+    name?: string;
+  };
+}
+
+export interface OrderPayload extends WebhookPayload {
+  order: {
+    id: string;
+    status: string;
+    amount: number;
+    currency: string;
+  };
+}
+
+export interface SubscriptionPayload extends WebhookPayload {
+  subscription: {
+    id: string;
+    status: string;
+    product_id: string;
+    customer_id: string;
+  };
+}
+
+export interface CheckoutPayload extends WebhookPayload {
+  checkout: {
+    id: string;
+    status: string;
+    product_id: string;
+  };
+}
+
+export interface BenefitGrantPayload extends WebhookPayload {
+  benefit_grant: {
+    id: string;
+    customer_id: string;
+    benefit_id: string;
+  };
+}
+
+/**
  * Polar client configuration
  */
 export type PolarClientConfig = {
@@ -31,19 +82,21 @@ export function createPolarClient(config: PolarClientConfig): Polar {
  * Webhook handlers configuration
  */
 export type WebhookHandlers = {
-  onCustomerStateChanged?: (payload: any) => Promise<void>;
-  onOrderPaid?: (payload: any) => Promise<void>;
-  onSubscriptionCreated?: (payload: any) => Promise<void>;
-  onSubscriptionUpdated?: (payload: any) => Promise<void>;
-  onSubscriptionActive?: (payload: any) => Promise<void>;
-  onSubscriptionCanceled?: (payload: any) => Promise<void>;
-  onSubscriptionRevoked?: (payload: any) => Promise<void>;
-  onCheckoutCreated?: (payload: any) => Promise<void>;
-  onCheckoutUpdated?: (payload: any) => Promise<void>;
-  onBenefitGrantCreated?: (payload: any) => Promise<void>;
-  onBenefitGrantUpdated?: (payload: any) => Promise<void>;
-  onBenefitGrantRevoked?: (payload: any) => Promise<void>;
-  onPayload?: (payload: any) => Promise<void>;
+  onCustomerStateChanged?: (
+    payload: CustomerStateChangedPayload
+  ) => Promise<void>;
+  onOrderPaid?: (payload: OrderPayload) => Promise<void>;
+  onSubscriptionCreated?: (payload: SubscriptionPayload) => Promise<void>;
+  onSubscriptionUpdated?: (payload: SubscriptionPayload) => Promise<void>;
+  onSubscriptionActive?: (payload: SubscriptionPayload) => Promise<void>;
+  onSubscriptionCanceled?: (payload: SubscriptionPayload) => Promise<void>;
+  onSubscriptionRevoked?: (payload: SubscriptionPayload) => Promise<void>;
+  onCheckoutCreated?: (payload: CheckoutPayload) => Promise<void>;
+  onCheckoutUpdated?: (payload: CheckoutPayload) => Promise<void>;
+  onBenefitGrantCreated?: (payload: BenefitGrantPayload) => Promise<void>;
+  onBenefitGrantUpdated?: (payload: BenefitGrantPayload) => Promise<void>;
+  onBenefitGrantRevoked?: (payload: BenefitGrantPayload) => Promise<void>;
+  onPayload?: (payload: WebhookPayload) => Promise<void>;
 };
 
 /**
@@ -66,7 +119,7 @@ export type PolarPluginConfig = {
     },
     request?: Request
   ) => Promise<{
-    metadata?: Record<string, any>;
+    metadata?: Record<string, string | number | boolean>;
   }>;
   webhookSecret?: string;
   webhookHandlers?: WebhookHandlers;
@@ -121,47 +174,59 @@ export function createPolarPlugin(
 // Import default handlers from webhooks module (avoiding duplicate definition)
 function getDefaultWebhookHandlers(): WebhookHandlers {
   return {
-    onCustomerStateChanged: async (_payload) => {
+    onCustomerStateChanged: (_payload) => {
       // TODO: Update user membership in database
+      return Promise.resolve();
     },
 
-    onOrderPaid: async (payload) => {
+    onOrderPaid: (payload) => {
       const order = payload.order;
       if (order?.metadata?.userId && order?.metadata?.tier) {
         // TODO: Activate membership for user
         const _tier = order.metadata.tier as MembershipTier;
       }
+      return Promise.resolve();
     },
 
-    onSubscriptionActive: async (payload) => {
+    onSubscriptionActive: (payload) => {
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId && subscription?.metadata?.tier) {
         // TODO: Update user membership status to active
         const _tier = subscription.metadata.tier as MembershipTier;
       }
+      return Promise.resolve();
     },
 
-    onSubscriptionCanceled: async (payload) => {
+    onSubscriptionCanceled: (payload) => {
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId) {
+        // TODO: Handle subscription cancellation
       }
+      return Promise.resolve();
     },
 
-    onSubscriptionRevoked: async (payload) => {
+    onSubscriptionRevoked: (payload) => {
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId) {
+        // TODO: Handle subscription revocation
       }
+      return Promise.resolve();
     },
 
-    onBenefitGrantCreated: async (_payload) => {
+    onBenefitGrantCreated: (_payload) => {
       // TODO: Enable specific features for user
+      return Promise.resolve();
     },
 
-    onBenefitGrantRevoked: async (_payload) => {
+    onBenefitGrantRevoked: (_payload) => {
       // TODO: Disable specific features for user
+      return Promise.resolve();
     },
 
-    onPayload: async (_payload) => {},
+    onPayload: (_payload) => {
+      // TODO: Handle generic payload
+      return Promise.resolve();
+    },
   };
 }
 

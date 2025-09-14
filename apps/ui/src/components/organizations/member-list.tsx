@@ -138,10 +138,7 @@ export function MemberList({
     return canManageMembers;
   };
 
-  const handleUpdateRole = async (
-    member: OrganizationMember,
-    newRole: string
-  ) => {
+  const handleUpdateRole = (member: OrganizationMember, newRole: string) => {
     if (newRole === member.role) {
       return;
     }
@@ -166,7 +163,7 @@ export function MemberList({
     }
   };
 
-  const handleRemoveMember = async (member: OrganizationMember) => {
+  const handleRemoveMember = (member: OrganizationMember) => {
     setMemberToRemove(member);
   };
 
@@ -200,8 +197,11 @@ export function MemberList({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div className="flex items-center space-x-4" key={i}>
+            {Array.from({ length: 5 }).map((_, _i) => (
+              <div
+                className="flex items-center space-x-4"
+                key={`member-skeleton-${crypto.randomUUID()}`}
+              >
                 <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-32" />

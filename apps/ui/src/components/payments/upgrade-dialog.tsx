@@ -18,6 +18,9 @@ import type { PolarPricingTier } from "@/types/polar-pricing";
 import { MembershipBadge } from "./membership-badge";
 import { PricingCard } from "./pricing-card";
 
+// Constants
+const MIN_TIERS_FOR_THREE_COLUMN = 3;
+
 // Tier hierarchy helper - now local since tiers are dynamic
 const TIER_HIERARCHY: MembershipTier[] = ["free", "pro", "team", "enterprise"];
 
@@ -140,7 +143,7 @@ export function UpgradeDialog({
               "grid gap-6",
               availableTiers.length === 1 && "mx-auto max-w-sm grid-cols-1",
               availableTiers.length === 2 && "grid-cols-1 md:grid-cols-2",
-              availableTiers.length >= 3 &&
+              availableTiers.length >= MIN_TIERS_FOR_THREE_COLUMN &&
                 "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
             )}
           >

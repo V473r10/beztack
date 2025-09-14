@@ -184,13 +184,13 @@ export function OrganizationSettings({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="font-medium text-sm">Name</label>
+                  <div className="font-medium text-sm">Name</div>
                   <p className="text-muted-foreground text-sm">
                     {organization.name}
                   </p>
                 </div>
                 <div>
-                  <label className="font-medium text-sm">Slug</label>
+                  <div className="font-medium text-sm">Slug</div>
                   <p className="text-muted-foreground text-sm">
                     @{organization.slug}
                   </p>
@@ -199,12 +199,14 @@ export function OrganizationSettings({
 
               {organization.logo && (
                 <div>
-                  <label className="font-medium text-sm">Logo</label>
+                  <div className="font-medium text-sm">Logo</div>
                   <div className="mt-2">
                     <img
                       alt={organization.name}
                       className="h-16 w-16 rounded-lg object-cover"
+                      height={64}
                       src={organization.logo}
+                      width={64}
                     />
                   </div>
                 </div>

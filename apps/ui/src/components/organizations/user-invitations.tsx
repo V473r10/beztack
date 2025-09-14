@@ -41,6 +41,15 @@ import {
   ROLE_LABELS,
 } from "@/lib/organization-types";
 
+// Time calculation constants
+const MILLISECONDS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+const MINUTES_PER_HOUR = 60;
+const MILLISECONDS_PER_HOUR =
+  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
+const HOURS_PER_DAY = 24;
+const DAYS_PER_WEEK = 7;
+
 type UserInvitationsProps = {
   className?: string;
 };
@@ -58,18 +67,18 @@ const formatRelativeTime = (date: Date | string) => {
   const now = new Date();
   const targetDate = new Date(date);
   const diffInHours = Math.floor(
-    (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+    (targetDate.getTime() - now.getTime()) / MILLISECONDS_PER_HOUR
   );
 
   if (diffInHours < 1) {
     return "Expires soon";
   }
-  if (diffInHours < 24) {
+  if (diffInHours < HOURS_PER_DAY) {
     return `Expires in ${diffInHours} hour${diffInHours === 1 ? "" : "s"}`;
   }
 
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) {
+  const diffInDays = Math.floor(diffInHours / HOURS_PER_DAY);
+  if (diffInDays < DAYS_PER_WEEK) {
     return `Expires in ${diffInDays} day${diffInDays === 1 ? "" : "s"}`;
   }
 
@@ -148,10 +157,10 @@ export function UserInvitations({ className }: UserInvitationsProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Array.from({ length: 2 }).map((_, i) => (
+            {Array.from({ length: 2 }).map((_, _i) => (
               <div
                 className="flex items-center justify-between rounded border p-4"
-                key={i}
+                key={`invitation-skeleton-${crypto.randomUUID()}`}
               >
                 <div className="space-y-2">
                   <Skeleton className="h-5 w-32" />
@@ -209,7 +218,9 @@ export function UserInvitations({ className }: UserInvitationsProps) {
                       <img
                         alt={invitation.organization.name || "Organization"}
                         className="h-12 w-12 rounded-lg object-cover"
+                        height={48}
                         src={invitation.organization.logo}
+                        width={48}
                       />
                     ) : (
                       <Building2 className="h-6 w-6 text-muted-foreground" />

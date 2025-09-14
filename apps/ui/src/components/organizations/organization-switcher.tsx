@@ -143,7 +143,9 @@ export function OrganizationSwitcher({
                           <img
                             alt={organization.name}
                             className="h-5 w-5 rounded"
+                            height={20}
                             src={organization.logo}
+                            width={20}
                           />
                         ) : (
                           <Building2 className="h-3 w-3" />

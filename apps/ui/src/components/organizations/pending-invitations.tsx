@@ -38,6 +38,15 @@ import {
   ROLE_LABELS,
 } from "@/lib/organization-types";
 
+// Time calculation constants
+const MILLISECONDS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+const MINUTES_PER_HOUR = 60;
+const MILLISECONDS_PER_HOUR =
+  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
+const HOURS_PER_DAY = 24;
+const DAYS_PER_WEEK = 7;
+
 type PendingInvitationsProps = {
   organizationId: string;
   canCancelInvitations?: boolean;
@@ -56,18 +65,18 @@ const formatRelativeTime = (date: Date | string) => {
   const now = new Date();
   const targetDate = new Date(date);
   const diffInHours = Math.floor(
-    (now.getTime() - targetDate.getTime()) / (1000 * 60 * 60)
+    (now.getTime() - targetDate.getTime()) / MILLISECONDS_PER_HOUR
   );
 
   if (diffInHours < 1) {
     return "Less than an hour ago";
   }
-  if (diffInHours < 24) {
+  if (diffInHours < HOURS_PER_DAY) {
     return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
   }
 
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) {
+  const diffInDays = Math.floor(diffInHours / HOURS_PER_DAY);
+  if (diffInDays < DAYS_PER_WEEK) {
     return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
   }
 
@@ -171,10 +180,10 @@ export function PendingInvitations({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
+            {Array.from({ length: 3 }).map((_, _i) => (
               <div
                 className="flex items-center justify-between rounded border p-4"
-                key={i}
+                key={`invitation-skeleton-${crypto.randomUUID()}`}
               >
                 <div className="flex items-center space-x-3">
                   <Skeleton className="h-4 w-4" />
