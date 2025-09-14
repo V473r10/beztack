@@ -45,7 +45,9 @@ export default defineEventHandler(async (_event) => {
           slug: org.slug,
         };
       }
-    } catch (_error) {}
+    } catch (_error) {
+      // Silently handle organization fetch errors
+    }
 
     // Try to list products if organization ID is available
     let productsCount = 0;
@@ -55,7 +57,9 @@ export default defineEventHandler(async (_event) => {
           process.env.POLAR_ORGANIZATION_ID
         );
         productsCount = products?.length || 0;
-      } catch (_error) {}
+      } catch (_error) {
+        // Silently handle products fetch errors
+      }
     }
 
     // Check environment configuration (without exposing sensitive values)

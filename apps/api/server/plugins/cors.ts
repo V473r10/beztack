@@ -1,7 +1,10 @@
 import { defineNitroPlugin } from "nitropack/runtime";
 
+// HTTP status code constants
+const HTTP_NO_CONTENT = 204;
+
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook("render:response", (response, { event }) => {
+  nitroApp.hooks.hook("render:response", (response, _context) => {
     if (!response.headers) {
       response.headers = {};
     }
@@ -13,7 +16,7 @@ export default defineNitroPlugin((nitroApp) => {
     response.headers["Access-Control-Allow-Credentials"] = "true";
   });
 
-  nitroApp.hooks.hook("request", async (event) => {
+  nitroApp.hooks.hook("request", (event) => {
     // Handle preflight OPTIONS requests
     if (event.node.req.method === "OPTIONS") {
       event.node.res.setHeader(
@@ -30,7 +33,7 @@ export default defineNitroPlugin((nitroApp) => {
       );
       event.node.res.setHeader("Access-Control-Allow-Credentials", "true");
       event.node.res.setHeader("Access-Control-Max-Age", "86400");
-      event.node.res.statusCode = 204;
+      event.node.res.statusCode = HTTP_NO_CONTENT;
       event.node.res.end();
       return;
     }

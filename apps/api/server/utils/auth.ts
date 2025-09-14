@@ -59,11 +59,17 @@ export const auth = betterAuth({
     admin(),
     organization({
       requireEmailVerificationOnInvitation: false, // Start with false for development
-      async sendInvitationEmail(_data) {},
+      async sendInvitationEmail(_data) {
+        // TODO: Implement invitation email sending
+      },
       organizationDeletion: {
         disabled: false,
-        beforeDelete: async (_data, _request) => {},
-        afterDelete: async (_data, _request) => {},
+        beforeDelete: async (_data, _request) => {
+          // TODO: Implement pre-deletion hooks
+        },
+        afterDelete: async (_data, _request) => {
+          // TODO: Implement post-deletion hooks
+        },
       },
       teams: {
         enabled: true,

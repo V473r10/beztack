@@ -137,7 +137,12 @@ export function isWithinUsageLimits(
     percentage: number;
   }>;
 } {
-  const violations = [];
+  const violations: Array<{
+    metric: string;
+    current: number;
+    limit: number;
+    percentage: number;
+  }> = [];
   const limits = membership.limits;
 
   // Check each limit
@@ -171,7 +176,7 @@ export function isWithinUsageLimits(
         metric: check.metric,
         current: check.current,
         limit: check.limit,
-        percentage: (check.current / check.limit) * 100,
+        percentage: (check.current / check.limit) * 100, // Convert to percentage
       });
     }
   }
@@ -196,7 +201,13 @@ export function getUsageWarnings(
   percentage: number;
   message: string;
 }> {
-  const warnings = [];
+  const warnings: Array<{
+    metric: string;
+    current: number;
+    limit: number;
+    percentage: number;
+    message: string;
+  }> = [];
   const limits = membership.limits;
 
   const checks = [
@@ -234,8 +245,10 @@ export function getUsageWarnings(
 
   for (const check of checks) {
     if (check.limit && check.limit > 0) {
-      const percentage = (check.current / check.limit) * 100;
-      if (percentage >= warningThreshold && percentage < 100) {
+      const PERCENTAGE_MULTIPLIER = 100;
+      const MAX_PERCENTAGE = 100;
+      const percentage = (check.current / check.limit) * PERCENTAGE_MULTIPLIER;
+      if (percentage >= warningThreshold && percentage < MAX_PERCENTAGE) {
         warnings.push({
           metric: check.metric,
           current: check.current,
@@ -338,7 +351,7 @@ export function isMembershipExpiringSoon(
 
   const now = new Date();
   const threshold = new Date(
-    now.getTime() + daysThreshold * 24 * 60 * 60 * 1000
+    now.getTime() + daysThreshold * 24 * 60 * 60 * 1000 // Convert days to milliseconds
   );
 
   return membership.validUntil <= threshold && membership.validUntil > now;

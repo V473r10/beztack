@@ -92,7 +92,7 @@ export function getPolarWebhookSecret(): string | undefined {
  * Get Polar product configuration from environment
  */
 export function getPolarProducts() {
-  const products = [];
+  const products: Array<{ id: string; tier: string; type: string }> = [];
 
   if (process.env.POLAR_PRO_MONTHLY_PRODUCT_ID) {
     products.push({

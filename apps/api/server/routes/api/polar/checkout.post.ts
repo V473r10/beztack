@@ -2,6 +2,22 @@ import { createPolarClient } from "@nvn/payments/server";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 
+// Constants for validation
+const MIN_AMOUNT_CENTS = 50;
+const MAX_AMOUNT_CENTS = 99_999_999;
+
+// HTTP status codes
+const HTTP_VALIDATION_ERROR = 422;
+const HTTP_UNAUTHORIZED = 401;
+
+// Polar API error interface
+type PolarApiError = {
+  status: number;
+  body?: {
+    detail?: string;
+  };
+};
+
 const checkoutRequestSchema = z.object({
   productId: z.string().uuid(),
   successUrl: z.string().url().optional(),
@@ -11,7 +27,7 @@ const checkoutRequestSchema = z.object({
   customFieldData: z.record(z.any()).optional(),
   allowDiscountCodes: z.boolean().optional(),
   requireBillingAddress: z.boolean().optional(),
-  amount: z.number().min(50).max(99_999_999).optional(),
+  amount: z.number().min(MIN_AMOUNT_CENTS).max(MAX_AMOUNT_CENTS).optional(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -67,19 +83,19 @@ export default defineEventHandler(async (event) => {
 
     // Handle Polar API errors
     if (error && typeof error === "object" && "status" in error) {
-      const polarError = error as any;
+      const polarError = error as PolarApiError;
 
-      if (polarError.status === 422) {
+      if (polarError.status === HTTP_VALIDATION_ERROR) {
         throw createError({
-          statusCode: 422,
+          statusCode: HTTP_VALIDATION_ERROR,
           statusMessage: "Validation error from Polar API",
           data: polarError.body?.detail || "Invalid product or request data",
         });
       }
 
-      if (polarError.status === 401) {
+      if (polarError.status === HTTP_UNAUTHORIZED) {
         throw createError({
-          statusCode: 401,
+          statusCode: HTTP_UNAUTHORIZED,
           statusMessage: "Unauthorized: Invalid Polar API credentials",
         });
       }

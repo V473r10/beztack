@@ -7,6 +7,12 @@ import type {
   UsageEvent,
 } from "../types/index.ts";
 
+// Top-level regex constants for performance
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WEBHOOK_SIGNATURE_REGEX = /^(sha256=)?[a-f0-9]{64}$/i;
+
 /**
  * Membership tier validation schema
  */
@@ -200,7 +206,9 @@ export function validateTierChange(
  * Validate usage event name
  */
 export function validateUsageEventName(eventName: string): boolean {
-  return Object.values(USAGE_EVENTS).includes(eventName as any);
+  return Object.values(USAGE_EVENTS).includes(
+    eventName as (typeof USAGE_EVENTS)[keyof typeof USAGE_EVENTS]
+  );
 }
 
 /**
@@ -208,9 +216,7 @@ export function validateUsageEventName(eventName: string): boolean {
  */
 export function validateOrganizationId(organizationId: string): boolean {
   // Basic UUID format validation
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(organizationId);
+  return UUID_REGEX.test(organizationId);
 }
 
 /**
@@ -218,17 +224,14 @@ export function validateOrganizationId(organizationId: string): boolean {
  */
 export function validateUserId(userId: string): boolean {
   // Basic UUID format validation
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(userId);
+  return UUID_REGEX.test(userId);
 }
 
 /**
  * Validate email format
  */
 export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  return EMAIL_REGEX.test(email);
 }
 
 /**
@@ -236,15 +239,14 @@ export function validateEmail(email: string): boolean {
  */
 export function validateWebhookSignature(signature: string): boolean {
   // Polar uses sha256 signatures
-  const signatureRegex = /^(sha256=)?[a-f0-9]{64}$/i;
-  return signatureRegex.test(signature);
+  return WEBHOOK_SIGNATURE_REGEX.test(signature);
 }
 
 /**
  * Sanitize metadata object
  */
 export function sanitizeMetadata(
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
 ): Record<string, string> {
   const sanitized: Record<string, string> = {};
 

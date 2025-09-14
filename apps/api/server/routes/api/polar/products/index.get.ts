@@ -19,8 +19,8 @@ type ProductTier = {
     monthly: number;
     yearly: number;
   };
-  monthly?: any; // Full Polar product object
-  yearly?: any; // Full Polar product object
+  monthly?: unknown; // Full Polar product object
+  yearly?: unknown; // Full Polar product object
   features: string[];
   limits: Record<string, number>;
   permissions: string[];
@@ -59,7 +59,8 @@ export default defineEventHandler(async (_event) => {
       };
     }
 
-    const priceAmount = (product.prices[0] as any)?.priceAmount || 0;
+    const priceAmount =
+      (product.prices[0] as { priceAmount?: number })?.priceAmount || 0;
 
     if (isMonthly) {
       // Include the complete product object for monthly
@@ -67,14 +68,17 @@ export default defineEventHandler(async (_event) => {
         ...product,
         // Ensure all properties from the Polar API are included
       };
-      productsByTier[tierName].price.monthly = priceAmount / 100; // Convert cents to dollars
+      const CENTS_TO_DOLLARS = 100;
+      productsByTier[tierName].price.monthly = priceAmount / CENTS_TO_DOLLARS; // Convert cents to dollars
     } else if (isYearly) {
       // Include the complete product object for yearly
       productsByTier[tierName].yearly = {
         ...product,
         // Ensure all properties from the Polar API are included
       };
-      productsByTier[tierName].price.yearly = priceAmount / 100; // Convert cents to dollars
+      const CENTS_TO_DOLLARS_YEARLY = 100;
+      productsByTier[tierName].price.yearly =
+        priceAmount / CENTS_TO_DOLLARS_YEARLY; // Convert cents to dollars
     }
   }
 
