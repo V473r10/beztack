@@ -1,13 +1,12 @@
 import { Slot } from "@radix-ui/react-slot";
-import * as React from "react";
-
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import {
   createFormHook,
   createFormHookContexts,
   useStore,
 } from "@tanstack/react-form";
+import * as React from "react";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const {
   fieldContext,
@@ -34,7 +33,7 @@ type FormItemContextValue = {
 };
 
 const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue,
+  {} as FormItemContextValue
 );
 
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
@@ -43,8 +42,8 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <FormItemContext.Provider value={{ id }}>
       <div
-        data-slot="form-item"
         className={cn("grid gap-2", className)}
+        data-slot="form-item"
         {...props}
       />
     </FormItemContext.Provider>
@@ -80,9 +79,9 @@ function FormLabel({
 
   return (
     <Label
-      data-slot="form-label"
-      data-error={!!errors.length}
       className={cn("data-[error=true]:text-destructive", className)}
+      data-error={!!errors.length}
+      data-slot="form-label"
       htmlFor={formItemId}
       {...props}
     />
@@ -95,14 +94,14 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
 
   return (
     <Slot
-      data-slot="form-control"
-      id={formItemId}
       aria-describedby={
-        !errors.length
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
+        errors.length
+          ? `${formDescriptionId} ${formMessageId}`
+          : `${formDescriptionId}`
       }
       aria-invalid={!!errors.length}
+      data-slot="form-control"
+      id={formItemId}
       {...props}
     />
   );
@@ -113,9 +112,9 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 
   return (
     <p
+      className={cn("text-muted-foreground text-sm", className)}
       data-slot="form-description"
       id={formDescriptionId}
-      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   );
@@ -130,9 +129,9 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
 
   return (
     <p
+      className={cn("text-destructive text-sm", className)}
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
       {...props}
     >
       {body}

@@ -1,14 +1,17 @@
-import path from 'node:path'
-import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react-swc'
-import { defineConfig } from 'vite'
+import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react-swc";
+import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react({
-    // Força sourcemaps consistentes para React
-    jsxImportSource: "react"
-  }), tailwindcss()],
+  plugins: [
+    react({
+      // Força sourcemaps consistentes para React
+      jsxImportSource: "react",
+    }),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -22,11 +25,11 @@ export default defineConfig({
     port: 5173,
     host: true,
     hmr: {
-      overlay: false
-    }
+      overlay: false,
+    },
   },
   esbuild: {
-    sourcemap: 'inline', // Sourcemaps inline são mais estáveis
+    sourcemap: "inline", // Sourcemaps inline são mais estáveis
     keepNames: true,
     minifyIdentifiers: false,
     minifySyntax: false,
@@ -34,9 +37,9 @@ export default defineConfig({
   // Configuração crucial para debugging consistente
   optimizeDeps: {
     force: false, // Evita rebuilds desnecessários
-    include: ["react", "react-dom"]
+    include: ["react", "react-dom"],
   },
   css: {
-    devSourcemap: true
-  }
-})
+    devSourcemap: true,
+  },
+});

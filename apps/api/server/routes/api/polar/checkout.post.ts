@@ -1,5 +1,5 @@
 import { createPolarClient } from "@nvn/payments/server";
-import { defineEventHandler, readBody, createError } from "h3";
+import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 
 const checkoutRequestSchema = z.object({
@@ -11,7 +11,7 @@ const checkoutRequestSchema = z.object({
   customFieldData: z.record(z.any()).optional(),
   allowDiscountCodes: z.boolean().optional(),
   requireBillingAddress: z.boolean().optional(),
-  amount: z.number().min(50).max(99999999).optional(),
+  amount: z.number().min(50).max(99_999_999).optional(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -31,13 +31,21 @@ export default defineEventHandler(async (event) => {
     // Create checkout session with Polar
     const checkoutData = {
       products: [parsed.productId], // Required: array of product IDs
-      success_url: parsed.successUrl || `${process.env.FRONTEND_URL}/dashboard?checkout=success`,
+      success_url:
+        parsed.successUrl ||
+        `${process.env.FRONTEND_URL}/dashboard?checkout=success`,
       ...(parsed.customerEmail && { customer_email: parsed.customerEmail }),
       ...(parsed.customerName && { customer_name: parsed.customerName }),
       ...(parsed.metadata && { metadata: parsed.metadata }),
-      ...(parsed.customFieldData && { custom_field_data: parsed.customFieldData }),
-      ...(parsed.allowDiscountCodes !== undefined && { allow_discount_codes: parsed.allowDiscountCodes }),
-      ...(parsed.requireBillingAddress !== undefined && { require_billing_address: parsed.requireBillingAddress }),
+      ...(parsed.customFieldData && {
+        custom_field_data: parsed.customFieldData,
+      }),
+      ...(parsed.allowDiscountCodes !== undefined && {
+        allow_discount_codes: parsed.allowDiscountCodes,
+      }),
+      ...(parsed.requireBillingAddress !== undefined && {
+        require_billing_address: parsed.requireBillingAddress,
+      }),
       ...(parsed.amount && { amount: parsed.amount }),
     };
 
@@ -50,7 +58,7 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     console.error("Polar checkout error:", error);
-    
+
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,
@@ -60,9 +68,9 @@ export default defineEventHandler(async (event) => {
     }
 
     // Handle Polar API errors
-    if (error && typeof error === 'object' && 'status' in error) {
+    if (error && typeof error === "object" && "status" in error) {
       const polarError = error as any;
-      
+
       if (polarError.status === 422) {
         throw createError({
           statusCode: 422,
@@ -70,7 +78,7 @@ export default defineEventHandler(async (event) => {
           data: polarError.body?.detail || "Invalid product or request data",
         });
       }
-      
+
       if (polarError.status === 401) {
         throw createError({
           statusCode: 401,

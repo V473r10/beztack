@@ -1,16 +1,17 @@
-import React, { createContext, useContext, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-// import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
-import { toast } from "sonner";
 import { getBillingPortalUrl } from "@nvn/payments/client";
 import type {
+  Benefit,
+  CustomerMeter,
   MembershipTier,
   MembershipTierConfig,
-  Subscription,
   Order,
-  CustomerMeter,
-  Benefit,
+  Subscription,
 } from "@nvn/payments/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type React from "react";
+import { createContext, useCallback, useContext } from "react";
+// import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
+import { toast } from "sonner";
 
 export interface MembershipContextValue {
   // Current membership state
@@ -25,12 +26,16 @@ export interface MembershipContextValue {
   orders: Order[];
   meters: CustomerMeter[];
   benefits: Benefit[];
-  
+
   // Actions
-  upgradeToTier: (tierId: string, billingPeriod?: "monthly" | "yearly", organizationId?: string) => Promise<void>;
+  upgradeToTier: (
+    tierId: string,
+    billingPeriod?: "monthly" | "yearly",
+    organizationId?: string
+  ) => Promise<void>;
   openBillingPortal: (returnUrl?: string) => Promise<void>;
   refreshMembership: () => void;
-  
+
   // Utility functions
   hasFeature: (feature: string) => boolean;
   hasPermission: (permission: string) => boolean;
@@ -65,7 +70,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         subscriptions: [],
         orders: [],
         benefits: [],
-        meters: []
+        meters: [],
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -113,34 +118,41 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   // Checkout mutation
   const checkoutMutation = useMutation({
-    mutationFn: async (params: { productId: string; billingPeriod: "monthly" | "yearly"; metadata?: any }) => {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/polar/checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId: params.productId,
-          successUrl: `${window.location.origin}/dashboard?checkout=success`,
-          cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
-          metadata: {
-            billingPeriod: params.billingPeriod,
-            ...params.metadata,
+    mutationFn: async (params: {
+      productId: string;
+      billingPeriod: "monthly" | "yearly";
+      metadata?: any;
+    }) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/polar/checkout`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            productId: params.productId,
+            successUrl: `${window.location.origin}/dashboard?checkout=success`,
+            cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
+            metadata: {
+              billingPeriod: params.billingPeriod,
+              ...params.metadata,
+            },
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Checkout failed: ${response.statusText}`);
       }
 
       const data = await response.json();
-      
+
       // Redirect to Polar checkout
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       }
-      
+
       return data;
     },
     onSuccess: () => {
@@ -157,7 +169,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     mutationFn: async () => {
       // Mock billing portal - replace with actual server API call
       console.log("Mock billing portal access");
-      toast.success("Mock billing portal opened (replace with actual implementation)");
+      toast.success(
+        "Mock billing portal opened (replace with actual implementation)"
+      );
     },
     onSuccess: () => {
       toast.success("Opening billing portal...");
@@ -173,16 +187,20 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const orders = ordersQuery.data || [];
   const meters = metersQuery.data || [];
   const benefits = benefitsQuery.data || [];
-  
-  const activeSubscription = subscriptions.find((sub: Subscription) => 
-    sub?.status === "active" || (sub?.status === "canceled" && sub?.currentPeriodEnd && new Date(sub.currentPeriodEnd) > new Date())
-  ) || null;
+
+  const activeSubscription =
+    subscriptions.find(
+      (sub: Subscription) =>
+        sub?.status === "active" ||
+        (sub?.status === "canceled" &&
+          sub?.currentPeriodEnd &&
+          new Date(sub.currentPeriodEnd) > new Date())
+    ) || null;
 
   // Determine current tier from subscription or default to free
-  const currentTier: MembershipTier = (
-    activeSubscription?.metadata?.tier as MembershipTier
-  ) || "free";
-  
+  const currentTier: MembershipTier =
+    (activeSubscription?.metadata?.tier as MembershipTier) || "free";
+
   // Fetch tier configurations from API instead of hardcoded constants
   const tierConfigsQuery = useQuery({
     queryKey: ["tierConfigs"],
@@ -197,22 +215,31 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  const tierConfig = tierConfigsQuery.data?.find((config: MembershipTierConfig) => config.id === currentTier) || null;
-  
-  const isLoading = customerStateQuery.isLoading || 
-                   subscriptionsQuery.isLoading || 
-                   checkoutMutation.isPending ||
-                   billingPortalMutation.isPending;
+  const tierConfig =
+    tierConfigsQuery.data?.find(
+      (config: MembershipTierConfig) => config.id === currentTier
+    ) || null;
 
-  const error = customerStateQuery.error || 
-               subscriptionsQuery.error || 
-               ordersQuery.error || 
-               metersQuery.error || 
-               benefitsQuery.error;
+  const isLoading =
+    customerStateQuery.isLoading ||
+    subscriptionsQuery.isLoading ||
+    checkoutMutation.isPending ||
+    billingPortalMutation.isPending;
+
+  const error =
+    customerStateQuery.error ||
+    subscriptionsQuery.error ||
+    ordersQuery.error ||
+    metersQuery.error ||
+    benefitsQuery.error;
 
   // Actions
   const upgradeToTier = useCallback(
-    async (tierId: string, billingPeriod: "monthly" | "yearly" = "monthly", organizationId?: string) => {
+    async (
+      tierId: string,
+      billingPeriod: "monthly" | "yearly" = "monthly",
+      organizationId?: string
+    ) => {
       try {
         await checkoutMutation.mutateAsync({
           productId: tierId,
@@ -249,7 +276,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const hasFeature = useCallback(
     (feature: string) => {
       if (!tierConfig) return false;
-      return tierConfig.features.some(f => 
+      return tierConfig.features.some((f) =>
         f.toLowerCase().includes(feature.toLowerCase())
       );
     },
@@ -267,7 +294,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const isWithinLimit = useCallback(
     (limitKey: string, currentUsage: number) => {
       if (!tierConfig?.limits) return true;
-      const limit = tierConfig.limits[limitKey as keyof typeof tierConfig.limits];
+      const limit =
+        tierConfig.limits[limitKey as keyof typeof tierConfig.limits];
       if (limit === undefined) return true;
       if (limit === -1) return true; // Unlimited
       return currentUsage <= limit;
@@ -282,17 +310,17 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     tierConfig,
     isLoading,
     error: error as Error | null,
-    
+
     subscriptions,
     activeSubscription,
     orders,
     meters,
     benefits,
-    
+
     upgradeToTier,
     openBillingPortal,
     refreshMembership,
-    
+
     hasFeature,
     hasPermission,
     isWithinLimit,

@@ -1,4 +1,10 @@
-import { polar, checkout, portal, usage, webhooks } from "@polar-sh/better-auth";
+import {
+  checkout,
+  polar,
+  portal,
+  usage,
+  webhooks,
+} from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 import type { BetterAuthOptions } from "better-auth";
 import { POLAR_CONFIG } from "../constants/index.ts";
@@ -47,9 +53,20 @@ export interface WebhookHandlers {
 export interface PolarPluginConfig {
   client: Polar;
   createCustomerOnSignUp?: boolean;
-  getCustomerCreateParams?: (data: {
-    user: { id: string; email: string; emailVerified: boolean; name: string; createdAt: Date; updatedAt: Date; image?: string | null };
-  }, request?: Request) => Promise<{
+  getCustomerCreateParams?: (
+    data: {
+      user: {
+        id: string;
+        email: string;
+        emailVerified: boolean;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        image?: string | null;
+      };
+    },
+    request?: Request
+  ) => Promise<{
     metadata?: Record<string, any>;
   }>;
   webhookSecret?: string;
@@ -63,19 +80,25 @@ export interface PolarPluginConfig {
  * Create Polar Better Auth plugin with full configuration
  * Note: Products should be provided via config since tiers are now dynamic
  */
-export function createPolarPlugin(config: PolarPluginConfig & { products?: Array<{ productId: string; slug: string }> }) {
+export function createPolarPlugin(
+  config: PolarPluginConfig & {
+    products?: Array<{ productId: string; slug: string }>;
+  }
+) {
   const products = config.products || [];
 
   return polar({
     client: config.client,
     createCustomerOnSignUp: config.createCustomerOnSignUp ?? true,
-    getCustomerCreateParams: config.getCustomerCreateParams ?? (async ({ user }) => ({
-      metadata: {
-        userId: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    })),
+    getCustomerCreateParams:
+      config.getCustomerCreateParams ??
+      (async ({ user }) => ({
+        metadata: {
+          userId: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      })),
     use: [
       checkout({
         products,
@@ -84,12 +107,14 @@ export function createPolarPlugin(config: PolarPluginConfig & { products?: Array
       }),
       portal(),
       usage(),
-      ...(config.webhookSecret && config.webhookHandlers ? [
-        webhooks({
-          secret: config.webhookSecret,
-          ...config.webhookHandlers,
-        })
-      ] : []),
+      ...(config.webhookSecret && config.webhookHandlers
+        ? [
+            webhooks({
+              secret: config.webhookSecret,
+              ...config.webhookHandlers,
+            }),
+          ]
+        : []),
     ],
   });
 }
@@ -108,7 +133,9 @@ function getDefaultWebhookHandlers(): WebhookHandlers {
       if (order?.metadata?.userId && order?.metadata?.tier) {
         // TODO: Activate membership for user
         const tier = order.metadata.tier as MembershipTier;
-        console.log(`Activating ${tier} membership for user ${order.metadata.userId}`);
+        console.log(
+          `Activating ${tier} membership for user ${order.metadata.userId}`
+        );
       }
     },
 
@@ -118,7 +145,9 @@ function getDefaultWebhookHandlers(): WebhookHandlers {
       if (subscription?.metadata?.userId && subscription?.metadata?.tier) {
         // TODO: Update user membership status to active
         const tier = subscription.metadata.tier as MembershipTier;
-        console.log(`Subscription ${subscription.id} activated for user ${subscription.metadata.userId} with ${tier} tier`);
+        console.log(
+          `Subscription ${subscription.id} activated for user ${subscription.metadata.userId} with ${tier} tier`
+        );
       }
     },
 
@@ -127,7 +156,9 @@ function getDefaultWebhookHandlers(): WebhookHandlers {
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId) {
         // TODO: Update user membership status to canceled
-        console.log(`Subscription ${subscription.id} canceled for user ${subscription.metadata.userId}`);
+        console.log(
+          `Subscription ${subscription.id} canceled for user ${subscription.metadata.userId}`
+        );
       }
     },
 
@@ -136,7 +167,9 @@ function getDefaultWebhookHandlers(): WebhookHandlers {
       const subscription = payload.subscription;
       if (subscription?.metadata?.userId) {
         // TODO: Immediately revoke user access
-        console.log(`Subscription ${subscription.id} revoked for user ${subscription.metadata.userId}`);
+        console.log(
+          `Subscription ${subscription.id} revoked for user ${subscription.metadata.userId}`
+        );
       }
     },
 
@@ -174,10 +207,12 @@ export function getPolarConfigFromEnv(): PolarClientConfig {
 /**
  * Complete Polar setup for Better Auth
  */
-export function setupPolarForBetterAuth(customHandlers?: Partial<WebhookHandlers>) {
+export function setupPolarForBetterAuth(
+  customHandlers?: Partial<WebhookHandlers>
+) {
   const polarClient = createPolarClient(getPolarConfigFromEnv());
   const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
-  
+
   const defaultHandlers = getDefaultWebhookHandlers();
   const handlers = { ...defaultHandlers, ...customHandlers };
 

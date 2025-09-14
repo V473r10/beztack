@@ -35,7 +35,7 @@
         "/src/*": "${workspaceFolder}/apps/ui/src/*",
         "/*": "*",
         "/./~/*": "${workspaceFolder}/node_modules/*"
-      },
+      }
     },
     {
       "name": "🔥 Debug Backend (Nitro with Inspector)",

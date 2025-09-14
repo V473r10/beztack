@@ -6,6 +6,6 @@ export * from "ai";
 
 // Re-export Amazon Bedrock provider
 export const bedrock = createAmazonBedrock({
-	region: "us-east-1",
-	credentialProvider: fromNodeProviderChain(),
+  region: "us-east-1",
+  credentialProvider: fromNodeProviderChain(),
 });

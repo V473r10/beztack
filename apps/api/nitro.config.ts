@@ -1,5 +1,5 @@
-import { defineNitroConfig } from "nitropack/config"
-import { resolve } from "path"
+import { defineNitroConfig } from "nitropack/config";
+import { resolve } from "path";
 
 // https://nitro.build/config
 export default defineNitroConfig({
@@ -8,24 +8,24 @@ export default defineNitroConfig({
   imports: false,
   alias: {
     "@": resolve(__dirname, "."),
-    "server": resolve(__dirname, "server")
+    server: resolve(__dirname, "server"),
   },
   devServer: {
     watch: ["server/**/*"],
   },
   sourceMap: true,
   typescript: {
-    generateTsConfig: false
+    generateTsConfig: false,
   },
   experimental: {
-    openAPI: true
+    openAPI: true,
   },
   esbuild: {
     jsx: "automatic",
-    jsxImportSource: "react"
+    jsxImportSource: "react",
   },
   rollupConfig: {
     external: [],
-    plugins: []
-  }
+    plugins: [],
+  },
 });

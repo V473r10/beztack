@@ -1,21 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, Clock, Crown, Mail, Shield, User, X } from "lucide-react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,13 +10,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  useOrganizationInvitations, 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   useCancelInvitation,
+  useOrganizationInvitations,
 } from "@/hooks/use-organizations";
-import { ROLE_LABELS, type OrganizationInvitation, type OrganizationRole } from "@/lib/organization-types";
-import { Clock, Mail, X, AlertCircle, Crown, Shield, User } from "lucide-react";
-import { useState } from "react";
+import {
+  type OrganizationInvitation,
+  type OrganizationRole,
+  ROLE_LABELS,
+} from "@/lib/organization-types";
 
 interface PendingInvitationsProps {
   organizationId: string;
@@ -43,35 +47,43 @@ interface PendingInvitationsProps {
 const formatDate = (date: Date | string) => {
   return new Date(date).toLocaleDateString("en-US", {
     month: "short",
-    day: "numeric", 
-    year: "numeric"
+    day: "numeric",
+    year: "numeric",
   });
 };
 
 const formatRelativeTime = (date: Date | string) => {
   const now = new Date();
   const targetDate = new Date(date);
-  const diffInHours = Math.floor((now.getTime() - targetDate.getTime()) / (1000 * 60 * 60));
-  
+  const diffInHours = Math.floor(
+    (now.getTime() - targetDate.getTime()) / (1000 * 60 * 60)
+  );
+
   if (diffInHours < 1) return "Less than an hour ago";
-  if (diffInHours < 24) return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
-  
+  if (diffInHours < 24)
+    return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
-  
+  if (diffInDays < 7)
+    return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
+
   return formatDate(date);
 };
 
-export function PendingInvitations({ 
+export function PendingInvitations({
   organizationId,
-  canCancelInvitations = false
+  canCancelInvitations = false,
 }: PendingInvitationsProps) {
-  const [invitationToCancel, setInvitationToCancel] = useState<OrganizationInvitation | null>(null);
-  
-  const { data: invitations = [], isLoading } = useOrganizationInvitations(organizationId);
+  const [invitationToCancel, setInvitationToCancel] =
+    useState<OrganizationInvitation | null>(null);
+
+  const { data: invitations = [], isLoading } =
+    useOrganizationInvitations(organizationId);
   const cancelInvitation = useCancelInvitation();
 
-  const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
+  const pendingInvitations = invitations.filter(
+    (inv) => inv.status === "pending"
+  );
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -86,11 +98,11 @@ export function PendingInvitations({
 
   const getStatusIcon = (status: string, expiresAt: Date | string) => {
     const isExpired = new Date(expiresAt) < new Date();
-    
+
     if (isExpired) {
       return <AlertCircle className="h-4 w-4 text-destructive" />;
     }
-    
+
     switch (status) {
       case "pending":
         return <Clock className="h-4 w-4 text-yellow-500" />;
@@ -107,11 +119,11 @@ export function PendingInvitations({
 
   const getStatusBadge = (status: string, expiresAt: Date | string) => {
     const isExpired = new Date(expiresAt) < new Date();
-    
+
     if (isExpired) {
       return <Badge variant="destructive">Expired</Badge>;
     }
-    
+
     switch (status) {
       case "pending":
         return <Badge variant="secondary">Pending</Badge>;
@@ -132,7 +144,7 @@ export function PendingInvitations({
 
   const confirmCancelInvitation = async () => {
     if (!invitationToCancel) return;
-    
+
     try {
       await cancelInvitation.mutateAsync({
         organizationId,
@@ -148,13 +160,16 @@ export function PendingInvitations({
     return (
       <Card>
         <CardHeader>
-          <Skeleton className="h-6 w-48 mb-2" />
+          <Skeleton className="mb-2 h-6 w-48" />
           <Skeleton className="h-4 w-64" />
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border rounded">
+              <div
+                className="flex items-center justify-between rounded border p-4"
+                key={i}
+              >
                 <div className="flex items-center space-x-3">
                   <Skeleton className="h-4 w-4" />
                   <Skeleton className="h-4 w-48" />
@@ -185,9 +200,11 @@ export function PendingInvitations({
         </CardHeader>
         <CardContent>
           {pendingInvitations.length === 0 ? (
-            <div className="text-center py-8">
-              <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No pending invitations</h3>
+            <div className="py-8 text-center">
+              <Mail className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <h3 className="mb-2 font-semibold text-lg">
+                No pending invitations
+              </h3>
               <p className="text-muted-foreground">
                 All invitations have been resolved or none have been sent yet.
               </p>
@@ -202,12 +219,15 @@ export function PendingInvitations({
                     <TableHead>Status</TableHead>
                     <TableHead>Sent</TableHead>
                     <TableHead>Expires</TableHead>
-                    {canCancelInvitations && <TableHead className="w-[100px]">Actions</TableHead>}
+                    {canCancelInvitations && (
+                      <TableHead className="w-[100px]">Actions</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pendingInvitations.map((invitation) => {
-                    const isExpired = new Date(invitation.expiresAt) < new Date();
+                    const isExpired =
+                      new Date(invitation.expiresAt) < new Date();
                     return (
                       <TableRow key={invitation.id}>
                         <TableCell className="font-medium">
@@ -216,31 +236,43 @@ export function PendingInvitations({
                         <TableCell>
                           <div className="flex items-center space-x-2">
                             {getRoleIcon(invitation.role)}
-                            <span>{ROLE_LABELS[invitation.role as OrganizationRole] || invitation.role}</span>
+                            <span>
+                              {ROLE_LABELS[
+                                invitation.role as OrganizationRole
+                              ] || invitation.role}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            {getStatusIcon(invitation.status, invitation.expiresAt)}
-                            {getStatusBadge(invitation.status, invitation.expiresAt)}
+                            {getStatusIcon(
+                              invitation.status,
+                              invitation.expiresAt
+                            )}
+                            {getStatusBadge(
+                              invitation.status,
+                              invitation.expiresAt
+                            )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-muted-foreground text-sm">
                           {formatRelativeTime(invitation.createdAt)}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-muted-foreground text-sm">
                           <span className={isExpired ? "text-destructive" : ""}>
                             {formatDate(invitation.expiresAt)}
                           </span>
                         </TableCell>
                         {canCancelInvitations && (
                           <TableCell>
-                            {!isExpired && invitation.status === 'pending' && (
+                            {!isExpired && invitation.status === "pending" && (
                               <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCancelInvitation(invitation)}
                                 disabled={cancelInvitation.isPending}
+                                onClick={() =>
+                                  handleCancelInvitation(invitation)
+                                }
+                                size="sm"
+                                variant="ghost"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -258,20 +290,24 @@ export function PendingInvitations({
       </Card>
 
       {/* Cancel Invitation Confirmation Dialog */}
-      <AlertDialog open={!!invitationToCancel} onOpenChange={(open) => !open && setInvitationToCancel(null)}>
+      <AlertDialog
+        onOpenChange={(open) => !open && setInvitationToCancel(null)}
+        open={!!invitationToCancel}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel the invitation for {invitationToCancel?.email}? 
-              They will not be able to join using this invitation link.
+              Are you sure you want to cancel the invitation for{" "}
+              {invitationToCancel?.email}? They will not be able to join using
+              this invitation link.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>No, keep it</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmCancelInvitation}
               disabled={cancelInvitation.isPending}
+              onClick={confirmCancelInvitation}
             >
               Yes, cancel invitation
             </AlertDialogAction>

@@ -1,3 +1,5 @@
+import { Crown, Loader2, Mail, Shield, User } from "lucide-react";
+import { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,9 +20,12 @@ import {
 } from "@/components/ui/select";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import { useInviteMember, useTeams } from "@/hooks/use-organizations";
-import { inviteMemberSchema, ROLE_LABELS, ROLE_DESCRIPTIONS, type InviteMemberData } from "@/lib/organization-types";
-import { Loader2, Mail, Crown, Shield, User } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import {
+  type InviteMemberData,
+  inviteMemberSchema,
+  ROLE_DESCRIPTIONS,
+  ROLE_LABELS,
+} from "@/lib/organization-types";
 
 interface InviteMemberDialogProps {
   open: boolean;
@@ -28,10 +33,10 @@ interface InviteMemberDialogProps {
   organizationId: string;
 }
 
-export function InviteMemberDialog({ 
-  open, 
+export function InviteMemberDialog({
+  open,
   onOpenChange,
-  organizationId
+  organizationId,
 }: InviteMemberDialogProps) {
   const inviteMember = useInviteMember();
   const { data: teams = [] } = useTeams(organizationId);
@@ -88,7 +93,7 @@ export function InviteMemberDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -96,23 +101,24 @@ export function InviteMemberDialog({
             <span>Invite Member</span>
           </DialogTitle>
           <DialogDescription>
-            Send an invitation to join this organization. They will receive an email with instructions.
+            Send an invitation to join this organization. They will receive an
+            email with instructions.
           </DialogDescription>
         </DialogHeader>
         <form.AppForm>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <form.AppField name="email">
               {(field) => (
                 <field.FormItem>
                   <field.FormLabel>Email Address</field.FormLabel>
                   <field.FormControl>
                     <Input
-                      type="email"
-                      placeholder="colleague@company.com"
                       disabled={inviteMember.isPending}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
                       onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="colleague@company.com"
+                      type="email"
+                      value={field.state.value}
                     />
                   </field.FormControl>
                   <field.FormDescription>
@@ -129,9 +135,9 @@ export function InviteMemberDialog({
                   <field.FormLabel>Role</field.FormLabel>
                   <field.FormControl>
                     <Select
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
                       disabled={inviteMember.isPending}
+                      onValueChange={field.handleChange}
+                      value={field.state.value}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
@@ -143,8 +149,12 @@ export function InviteMemberDialog({
                               {getRoleIcon(role)}
                               <div>
                                 <div className="font-medium">{label}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {ROLE_DESCRIPTIONS[role as keyof typeof ROLE_DESCRIPTIONS]}
+                                <div className="text-muted-foreground text-sm">
+                                  {
+                                    ROLE_DESCRIPTIONS[
+                                      role as keyof typeof ROLE_DESCRIPTIONS
+                                    ]
+                                  }
                                 </div>
                               </div>
                             </div>
@@ -165,9 +175,9 @@ export function InviteMemberDialog({
                     <field.FormLabel>Team (Optional)</field.FormLabel>
                     <field.FormControl>
                       <Select
-                        value={field.state.value}
-                        onValueChange={field.handleChange}
                         disabled={inviteMember.isPending}
+                        onValueChange={field.handleChange}
+                        value={field.state.value}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select a team (optional)" />
@@ -193,17 +203,14 @@ export function InviteMemberDialog({
 
             <DialogFooter>
               <Button
+                disabled={inviteMember.isPending}
+                onClick={() => onOpenChange(false)}
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={inviteMember.isPending}
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={inviteMember.isPending}
-              >
+              <Button disabled={inviteMember.isPending} type="submit">
                 {inviteMember.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}

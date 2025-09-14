@@ -1,5 +1,9 @@
-import { defineEventHandler, createError } from "h3";
-import { polarApi, validatePolarConnection, createPolarClient } from "@nvn/payments/server";
+import {
+  createPolarClient,
+  polarApi,
+  validatePolarConnection,
+} from "@nvn/payments/server";
+import { createError, defineEventHandler } from "h3";
 
 /**
  * Test endpoint to validate Polar integration
@@ -7,25 +11,26 @@ import { polarApi, validatePolarConnection, createPolarClient } from "@nvn/payme
  */
 export default defineEventHandler(async (event) => {
   // Only allow in development environment
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === "production") {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Endpoint not available in production'
+      statusMessage: "Endpoint not available in production",
     });
   }
 
   try {
     // Validate connection
     const isConnected = await validatePolarConnection();
-    
+
     if (!isConnected) {
       return {
         success: false,
         error: "Failed to connect to Polar API",
-        message: "Check your POLAR_ACCESS_TOKEN and POLAR_SERVER environment variables"
+        message:
+          "Check your POLAR_ACCESS_TOKEN and POLAR_SERVER environment variables",
       };
     }
-    
+
     // Test API connection by listing organizations (safer endpoint)
     let organizationInfo = null;
     let products = null;
@@ -37,35 +42,43 @@ export default defineEventHandler(async (event) => {
         organizationInfo = {
           id: org.id,
           name: org.name,
-          slug: org.slug
+          slug: org.slug,
         };
       }
     } catch (error) {
       console.log("Could not fetch organization info:", error);
     }
-    
+
     // Try to list products if organization ID is available
     let productsCount = 0;
     if (process.env.POLAR_ORGANIZATION_ID) {
       try {
-        products = await polarApi.getProducts(process.env.POLAR_ORGANIZATION_ID);
+        products = await polarApi.getProducts(
+          process.env.POLAR_ORGANIZATION_ID
+        );
         productsCount = products?.length || 0;
       } catch (error) {
         console.log("Could not fetch products:", error);
       }
     }
-    
+
     // Check environment configuration (without exposing sensitive values)
     const config = {
       hasAccessToken: !!process.env.POLAR_ACCESS_TOKEN,
       hasWebhookSecret: !!process.env.POLAR_WEBHOOK_SECRET,
-      server: process.env.POLAR_SERVER || 'sandbox',
-      hasBasicProductId: !!process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID || !!process.env.POLAR_BASIC_YEARLY_PRODUCT_ID,
-      hasProProductId: !!process.env.POLAR_PRO_MONTHLY_PRODUCT_ID || !!process.env.POLAR_PRO_YEARLY_PRODUCT_ID,
-      hasUltimateProductId: !!process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID || !!process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
+      server: process.env.POLAR_SERVER || "sandbox",
+      hasBasicProductId:
+        !!process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID ||
+        !!process.env.POLAR_BASIC_YEARLY_PRODUCT_ID,
+      hasProProductId:
+        !!process.env.POLAR_PRO_MONTHLY_PRODUCT_ID ||
+        !!process.env.POLAR_PRO_YEARLY_PRODUCT_ID,
+      hasUltimateProductId:
+        !!process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID ||
+        !!process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
       hasOrganizationId: !!process.env.POLAR_ORGANIZATION_ID,
     };
-    
+
     return {
       success: true,
       message: "Polar integration is working",
@@ -75,17 +88,16 @@ export default defineEventHandler(async (event) => {
       products,
       config,
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || "development",
     };
-    
   } catch (error) {
-    console.error('Polar test failed:', error);
-    
+    console.error("Polar test failed:", error);
+
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
       message: "Check your Polar configuration and credentials",
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 });

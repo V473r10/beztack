@@ -1,16 +1,21 @@
 import { z } from "zod";
-import type { 
-  MembershipTier, 
+import { MEMBERSHIP_TIERS, USAGE_EVENTS } from "../constants/index.ts";
+import type {
   BillingPeriod,
   CheckoutSessionParams,
-  UsageEvent 
+  MembershipTier,
+  UsageEvent,
 } from "../types/index.ts";
-import { MEMBERSHIP_TIERS, USAGE_EVENTS } from "../constants/index.ts";
 
 /**
  * Membership tier validation schema
  */
-export const membershipTierSchema = z.enum(["free", "pro", "team", "enterprise"]);
+export const membershipTierSchema = z.enum([
+  "free",
+  "pro",
+  "team",
+  "enterprise",
+]);
 
 /**
  * Billing period validation schema
@@ -20,24 +25,25 @@ export const billingPeriodSchema = z.enum(["monthly", "yearly"]);
 /**
  * Checkout session params validation schema
  */
-export const checkoutSessionParamsSchema = z.object({
-  productIds: z.array(z.string()).optional(),
-  slug: z.string().optional(),
-  metadata: z.object({
-    userId: z.string().optional(),
-    organizationId: z.string().optional(),
-    tier: membershipTierSchema.optional(),
-    referenceId: z.string().optional(),
-  }).optional(),
-  successUrl: z.string().url().optional(),
-  cancelUrl: z.string().url().optional(),
-  allowPromotionCodes: z.boolean().optional(),
-}).refine(
-  (data) => data.productIds || data.slug,
-  {
+export const checkoutSessionParamsSchema = z
+  .object({
+    productIds: z.array(z.string()).optional(),
+    slug: z.string().optional(),
+    metadata: z
+      .object({
+        userId: z.string().optional(),
+        organizationId: z.string().optional(),
+        tier: membershipTierSchema.optional(),
+        referenceId: z.string().optional(),
+      })
+      .optional(),
+    successUrl: z.string().url().optional(),
+    cancelUrl: z.string().url().optional(),
+    allowPromotionCodes: z.boolean().optional(),
+  })
+  .refine((data) => data.productIds || data.slug, {
     message: "Either productIds or slug must be provided",
-  }
-);
+  });
 
 /**
  * Usage event validation schema
@@ -47,29 +53,30 @@ export const usageEventSchema = z.object({
   customerId: z.string().min(1, "Customer ID is required"),
   timestamp: z.date(),
   quantity: z.number().min(0, "Quantity must be non-negative"),
-  metadata: z.object({
-    userId: z.string().optional(),
-    organizationId: z.string().optional(),
-    feature: z.string().optional(),
-  }).optional(),
+  metadata: z
+    .object({
+      userId: z.string().optional(),
+      organizationId: z.string().optional(),
+      feature: z.string().optional(),
+    })
+    .optional(),
 });
 
 /**
  * Membership change request validation schema
  */
-export const membershipChangeRequestSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-  fromTier: membershipTierSchema,
-  toTier: membershipTierSchema,
-  billingPeriod: billingPeriodSchema,
-  organizationId: z.string().optional(),
-  prorationBehavior: z.enum(["create_prorations", "none"]).optional(),
-}).refine(
-  (data) => data.fromTier !== data.toTier,
-  {
+export const membershipChangeRequestSchema = z
+  .object({
+    userId: z.string().min(1, "User ID is required"),
+    fromTier: membershipTierSchema,
+    toTier: membershipTierSchema,
+    billingPeriod: billingPeriodSchema,
+    organizationId: z.string().optional(),
+    prorationBehavior: z.enum(["create_prorations", "none"]).optional(),
+  })
+  .refine((data) => data.fromTier !== data.toTier, {
     message: "From tier and to tier must be different",
-  }
-);
+  });
 
 /**
  * User membership validation schema
@@ -92,15 +99,14 @@ export const userMembershipSchema = z.object({
 export const usageMetricsSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
   organizationId: z.string().optional(),
-  period: z.object({
-    start: z.date(),
-    end: z.date(),
-  }).refine(
-    (data) => data.start < data.end,
-    {
+  period: z
+    .object({
+      start: z.date(),
+      end: z.date(),
+    })
+    .refine((data) => data.start < data.end, {
       message: "Start date must be before end date",
-    }
-  ),
+    }),
   metrics: z.object({
     apiCalls: z.number().min(0),
     storageUsed: z.number().min(0),
@@ -135,7 +141,9 @@ export function validateBillingPeriod(period: unknown): BillingPeriod {
 /**
  * Validate checkout session parameters
  */
-export function validateCheckoutSessionParams(params: unknown): CheckoutSessionParams {
+export function validateCheckoutSessionParams(
+  params: unknown
+): CheckoutSessionParams {
   return checkoutSessionParamsSchema.parse(params);
 }
 
@@ -149,7 +157,10 @@ export function validateUsageEvent(event: unknown): UsageEvent {
 /**
  * Validate tier upgrade/downgrade
  */
-export function validateTierChange(fromTier: MembershipTier, toTier: MembershipTier): {
+export function validateTierChange(
+  fromTier: MembershipTier,
+  toTier: MembershipTier
+): {
   isValid: boolean;
   changeType: "upgrade" | "downgrade" | "same";
   error?: string;
@@ -165,7 +176,7 @@ export function validateTierChange(fromTier: MembershipTier, toTier: MembershipT
   const fromConfig = MEMBERSHIP_TIERS[fromTier];
   const toConfig = MEMBERSHIP_TIERS[toTier];
 
-  if (!fromConfig || !toConfig) {
+  if (!(fromConfig && toConfig)) {
     return {
       isValid: false,
       changeType: fromTier === "free" ? "upgrade" : "downgrade",
@@ -197,7 +208,8 @@ export function validateUsageEventName(eventName: string): boolean {
  */
 export function validateOrganizationId(organizationId: string): boolean {
   // Basic UUID format validation
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(organizationId);
 }
 
@@ -206,7 +218,8 @@ export function validateOrganizationId(organizationId: string): boolean {
  */
 export function validateUserId(userId: string): boolean {
   // Basic UUID format validation
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(userId);
 }
 
@@ -230,9 +243,11 @@ export function validateWebhookSignature(signature: string): boolean {
 /**
  * Sanitize metadata object
  */
-export function sanitizeMetadata(metadata: Record<string, any>): Record<string, string> {
+export function sanitizeMetadata(
+  metadata: Record<string, any>
+): Record<string, string> {
   const sanitized: Record<string, string> = {};
-  
+
   for (const [key, value] of Object.entries(metadata)) {
     // Only include string values, convert others to string
     if (typeof value === "string") {
@@ -241,7 +256,7 @@ export function sanitizeMetadata(metadata: Record<string, any>): Record<string, 
       sanitized[key] = String(value);
     }
   }
-  
+
   return sanitized;
 }
 
@@ -259,12 +274,13 @@ export function validateApiResponse<T>(
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: `Validation error: ${error.errors.map(e => e.message).join(", ")}`,
+        error: `Validation error: ${error.errors.map((e) => e.message).join(", ")}`,
       };
     }
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown validation error",
+      error:
+        error instanceof Error ? error.message : "Unknown validation error",
     };
   }
 }

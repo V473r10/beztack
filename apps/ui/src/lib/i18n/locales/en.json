@@ -1,363 +1,363 @@
 {
-	"account": {
-		"settings": {
-			"profile": {
-				"description": "Manage your account profile.",
-				"email": "Email",
-				"save": "Save Profile",
-				"title": "Profile",
-				"username": "Username"
-			},
-			"title": "Account Settings",
-			"twoFactor": {
-				"backupCodes": "Backup Codes",
-				"backupCodesDescription": "Save these backup codes in a secure place. Don't lose them.",
-				"completeYour2FASetup": "Complete your 2FA setup",
-				"copyBackupCodes": "Copy Backup Codes",
-				"copyBackupCodesError": "Error copying backup codes",
-				"copyBackupCodesSuccess": "Backup codes copied to clipboard",
-				"description": "Manage your two-factor authentication.",
-				"enable": "Enable Two-Factor Authentication",
-				"enter6DigitCode": "Enter 6-digit code",
-				"passwordDialog": {
-					"cancel": "Cancel",
-					"confirm": "Confirm",
-					"confirming": "Confirming...",
-					"confirmPassword": "Confirm Password",
-					"description": "For your security, please enter your current password to {action} Two-Factor Authentication.",
-					"password": "Password",
-					"title": "Confirm Password"
-				},
-				"save": "Save Two-Factor Authentication",
-				"title": "Two-Factor Authentication",
-				"verifyAndComplete": "Verify and Complete",
-				"verifyAuthenticatorApp": "Verify Authenticator App",
-				"verifying": "Verifying...",
-				"viewBackupCodes": "View Backup Codes",
-				"willPrompt": "You will be prompted to configure two-factor authentication using an authentication app (e.g., Google Authenticator, Authy)."
-			}
-		}
-	},
-	"auth": {
-		"signIn": {
-			"button": "Sign In",
-			"description": "Enter your credentials to sign in to your account",
-			"forgotPassword": "Forgot password?",
-			"noAccount": "Don't have an account?",
-			"signUp": "Sign up",
-			"title": "Welcome back",
-			"twoFactor": {
-				"title": "Two-Factor Authentication",
-				"description": "Enter the code from your authenticator app.",
-				"button": "Verify Code",
-				"backToSignIn": "Back to Sign In"
-			},
-			"form": {
-				"email": "Email",
-				"password": "Password",
-				"button": "Sign In",
-				"forgotPassword": "Forgot password?"
-			}
-		},
-		"signUp": {
-			"button": "Sign Up",
-			"description": "Enter your details to create your account",
-			"hasAccount": "Already have an account?",
-			"signIn": "Sign in",
-			"title": "Create an account"
-		}
-	},
-	"pricing": {
-		"features": {
-			"two-factor": "Two-Factor Authentication",
-			"social-login": "Social Login",
-			"passkeys": "Passkey Authentication",
-			"basic-dashboard-access": "Basic Dashboard Access",
-			"email-support": "Email Support",
-			"all-basic": "All Basic Features",
-			"organizations": "Multi-Organization Support",
-			"role-based-access-control": "Role-Based Access Control",
-			"all-pro": "All Pro Features",
-			"advanced-dashboard-access": "Advanced Dashboard Access",
-			"priority-support": "Priority Support & SLA"
-		},
-		"limits": {
-			"users": "Team Members",
-			"organizations": "Organizations",
-			"storage": "Storage",
-			"api-calls": "API Calls/Month"
-		},
-		"permissions": {
-			"read": "Read Access",
-			"write": "Write Access",
-			"admin": "Admin Access",
-			"billing": "Billing Access"
-		},
-		"categories": {
-			"authentication": "Authentication",
-			"limits": "Limits",
-			"support": "Support",
-			"features": "Features"
-		},
-		"unlimited": "Unlimited"
-	},
-	"common": {
-		"footer": "© {{year}} Your Company. All rights reserved.",
-		"more": "More",
-		"workflowStreamline": "Streamline your workflow with our powerful platform.",
-		"yourLogo": "Your Logo"
-	},
-	"dashboard": {
-		"acquisitionNeedsAttention": "Acquisition needs attention",
-		"activeAccounts": "Active Accounts",
-		"chart": {
-			"days30": "30 days",
-			"days7": "7 days",
-			"days90": "90 days",
-			"desktop": "Desktop",
-			"last30Days": "Last 30 days",
-			"last3Months": "Last 3 months",
-			"last7Days": "Last 7 days",
-			"mobile": "Mobile",
-			"showingTotalVisitors": "Showing total visitors for the last",
-			"title": "Area Chart - Interactive",
-			"visitors": "Visitors"
-		},
-		"downThisPeriod": "Down 20% this period",
-		"engagementExceedsTargets": "Engagement exceed targets",
-		"growthRate": "Growth Rate",
-		"meetsGrowthProjections": "Meets growth projections",
-		"newCustomers": "New Customers",
-		"steadyPerformanceIncrease": "Steady performance increase",
-		"strongUserRetention": "Strong user retention",
-		"totalRevenue": "Total Revenue",
-		"trendingUp": "Trending up this month",
-		"visitorsLast6Months": "Visitors for the last 6 months"
-	},
-	"dataTable": {
-		"actions": {
-			"copyId": "Copy section ID",
-			"copySuccess": "Section ID copied to clipboard.",
-			"delete": "Delete",
-			"edit": "Edit",
-			"favorite": "Favorite",
-			"makeCopy": "Make a copy",
-			"open": "Open",
-			"openMenu": "Open menu",
-			"view": "View"
-		},
-		"chart": {
-			"desktop": "Desktop",
-			"mobile": "Mobile",
-			"months": {
-				"april": "April",
-				"february": "February",
-				"january": "January",
-				"june": "June",
-				"march": "March",
-				"may": "May"
-			}
-		},
-		"columns": "Columns",
-		"deleteConfirmation": {
-			"cancel": "Cancel",
-			"confirm": "Confirm",
-			"description": "This action cannot be undone. This will permanently delete the selected sections.",
-			"title": "Are you sure?"
-		},
-		"deleteSelected": "Delete ({{count}}})",
-		"dragReorder": "Drag to reorder",
-		"drawer": {
-			"buttons": {
-				"done": "Done",
-				"submit": "Submit"
-			},
-			"chartDescription": "Showing total visitors for the last 6 months. This is just some random text to test the layout. It spans multiple lines and should wrap around.",
-			"description": "An overview of the section details.",
-			"labels": {
-				"header": "Header",
-				"limit": "Limit",
-				"reviewer": "Reviewer",
-				"status": "Status",
-				"target": "Target",
-				"type": "Type"
-			},
-			"mrr": "Monthly Recurring Revenue",
-			"placeholders": {
-				"selectReviewer": "Select a reviewer",
-				"selectStatus": "Select a status",
-				"selectType": "Select a type"
-			},
-			"tabs": {
-				"performance": "Performance",
-				"view": "View"
-			},
-			"title": "View Details",
-			"titleWithHeader": "View details for {{header}}"
-		},
-		"filterPlaceholder": "Filter sections...",
-		"headers": {
-			"header": "Header",
-			"limit": "Limit",
-			"reviewer": "Reviewer",
-			"sectionType": "Section Type",
-			"status": "Status",
-			"target": "Target"
-		},
-		"noResults": "No results.",
-		"pagination": {
-			"firstPage": "Go to first page",
-			"go": "Go",
-			"goToPage": "Go to page:",
-			"lastPage": "Go to last page",
-			"nextPage": "Go to next page",
-			"of": "of",
-			"page": "Page",
-			"pageInfo": "Page {{page}} of {{total}}",
-			"previousPage": "Go to previous page",
-			"rowsPerPage": "Rows per page",
-			"selectedRows": "{{count}} of {{total}} row(s) selected."
-		},
-		"placeholders": {
-			"assignReviewer": "Assign reviewer",
-			"search": "Search..."
-		},
-		"reviewers": {
-			"eddie": "Eddie Lake",
-			"emily": "Emily Whalen",
-			"jamik": "Jamik Tashpulatov"
-		},
-		"selectAll": "Select all",
-		"selectFocusDocuments": "Select focus documents",
-		"selectKeyPersonnel": "Select key personnel",
-		"selectOutline": "Select outline",
-		"selectPastPerformance": "Select past performance",
-		"selectRow": "Select row",
-		"statuses": {
-			"done": "Done",
-			"inProgress": "In Progress",
-			"notStarted": "Not Started"
-		},
-		"tabs": {
-			"active": "Active",
-			"all": "All",
-			"archived": "Archived"
-		},
-		"toast": {
-			"error": "Error",
-			"reorder": {
-				"error": "Error!",
-				"saving": "Saving...",
-				"success": "Done!"
-			},
-			"saving": "Saving {{header}}",
-			"success": "Done"
-		},
-		"toolbar": {
-			"addSection": "Add Section",
-			"customizeColumns": "Customize Columns"
-		},
-		"trendingUpThisMonth": "Trending up this month",
-		"types": {
-			"approach": "Technical Approach",
-			"capabilities": "Capabilities",
-			"cover": "Cover Page",
-			"design": "Design",
-			"focus": "Focus Documents",
-			"narrative": "Narrative",
-			"summary": "Executive Summary",
-			"toc": "Table of Contents"
-		},
-		"views": {
-			"focusDocuments": "Focus Documents",
-			"keyPersonnel": "Key Personnel",
-			"label": "View",
-			"outline": "Outline",
-			"pastPerformance": "Past Performance",
-			"placeholder": "Select a view"
-		}
-	},
-	"form": {
-		"confirmPassword": {
-			"label": "Confirm Password"
-		},
-		"createAccountButton": "Create Account",
-		"email": {
-			"label": "Email",
-			"placeholder": "name@example.com"
-		},
-		"fullName": {
-			"label": "Full Name",
-			"placeholder": "John Doe"
-		},
-		"password": {
-			"label": "Password",
-			"mustContain": "Password must contain:",
-			"requirements": {
-				"length": "At least 8 characters",
-				"lowercase": "At least one lowercase letter",
-				"number": "At least one number",
-				"special": "At least one special character",
-				"uppercase": "At least one uppercase letter"
-			}
-		}
-	},
-	"misc": {
-		"welcomeToReact": "Welcome to React and react-i18next"
-	},
-	"notifications": {
-		"account": {
-			"createError": "Failed to create account. Please try again.",
-			"createSuccess": "Account created successfully!"
-		}
-	},
-	"sidebar": {
-		"analytics": "Analytics",
-		"dashboard": "Dashboard",
-		"documents": {
-			"dataLibrary": "Data Library",
-			"reports": "Reports",
-			"title": "Documents",
-			"wordAssistant": "Word Assistant"
-		},
-		"lifecycle": "Life Cycle",
-		"name": {
-			"length": "Name must be at least 2 characters."
-		},
-		"password": {
-			"length": "Password must be at least 8 characters",
-			"lowercase": "Must contain at least one lowercase letter",
-			"mismatch": "Passwords don't match",
-			"number": "Must contain at least one number",
-			"special": "Must contain at least one special character",
-			"uppercase": "Must contain at least one uppercase letter"
-		},
-		"projects": "Projects",
-		"secondary": {
-			"getHelp": "Get Help",
-			"search": "Search",
-			"settings": "Settings"
-		},
-		"team": "Team",
-		"userMenu": {
-			"account": "Account",
-			"billing": "Billing",
-			"language": "Language",
-			"notifications": "Notifications",
-			"signOut": "Sign Out"
-		}
-	},
-	"tour": {
-		"welcome": "Welcome to the Tour",
-		"description": "Take a quick tour to learn about the key features and functionality of this application.",
-		"skip": "Skip",
-		"start": "Start Tour",
-		"settingsTour": {
-			"step1": "Here you can manage your two factor authentication settings.",
-			"step2": "Enable two factor authentication to add an extra layer of security to your account."
-		},
-		"homeTour": {
-			"step1": "On the settings page you can manage your account settings such as two factor authentication, info, etc."
-		}
-	}
+  "account": {
+    "settings": {
+      "profile": {
+        "description": "Manage your account profile.",
+        "email": "Email",
+        "save": "Save Profile",
+        "title": "Profile",
+        "username": "Username"
+      },
+      "title": "Account Settings",
+      "twoFactor": {
+        "backupCodes": "Backup Codes",
+        "backupCodesDescription": "Save these backup codes in a secure place. Don't lose them.",
+        "completeYour2FASetup": "Complete your 2FA setup",
+        "copyBackupCodes": "Copy Backup Codes",
+        "copyBackupCodesError": "Error copying backup codes",
+        "copyBackupCodesSuccess": "Backup codes copied to clipboard",
+        "description": "Manage your two-factor authentication.",
+        "enable": "Enable Two-Factor Authentication",
+        "enter6DigitCode": "Enter 6-digit code",
+        "passwordDialog": {
+          "cancel": "Cancel",
+          "confirm": "Confirm",
+          "confirming": "Confirming...",
+          "confirmPassword": "Confirm Password",
+          "description": "For your security, please enter your current password to {action} Two-Factor Authentication.",
+          "password": "Password",
+          "title": "Confirm Password"
+        },
+        "save": "Save Two-Factor Authentication",
+        "title": "Two-Factor Authentication",
+        "verifyAndComplete": "Verify and Complete",
+        "verifyAuthenticatorApp": "Verify Authenticator App",
+        "verifying": "Verifying...",
+        "viewBackupCodes": "View Backup Codes",
+        "willPrompt": "You will be prompted to configure two-factor authentication using an authentication app (e.g., Google Authenticator, Authy)."
+      }
+    }
+  },
+  "auth": {
+    "signIn": {
+      "button": "Sign In",
+      "description": "Enter your credentials to sign in to your account",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "title": "Welcome back",
+      "twoFactor": {
+        "title": "Two-Factor Authentication",
+        "description": "Enter the code from your authenticator app.",
+        "button": "Verify Code",
+        "backToSignIn": "Back to Sign In"
+      },
+      "form": {
+        "email": "Email",
+        "password": "Password",
+        "button": "Sign In",
+        "forgotPassword": "Forgot password?"
+      }
+    },
+    "signUp": {
+      "button": "Sign Up",
+      "description": "Enter your details to create your account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "title": "Create an account"
+    }
+  },
+  "pricing": {
+    "features": {
+      "two-factor": "Two-Factor Authentication",
+      "social-login": "Social Login",
+      "passkeys": "Passkey Authentication",
+      "basic-dashboard-access": "Basic Dashboard Access",
+      "email-support": "Email Support",
+      "all-basic": "All Basic Features",
+      "organizations": "Multi-Organization Support",
+      "role-based-access-control": "Role-Based Access Control",
+      "all-pro": "All Pro Features",
+      "advanced-dashboard-access": "Advanced Dashboard Access",
+      "priority-support": "Priority Support & SLA"
+    },
+    "limits": {
+      "users": "Team Members",
+      "organizations": "Organizations",
+      "storage": "Storage",
+      "api-calls": "API Calls/Month"
+    },
+    "permissions": {
+      "read": "Read Access",
+      "write": "Write Access",
+      "admin": "Admin Access",
+      "billing": "Billing Access"
+    },
+    "categories": {
+      "authentication": "Authentication",
+      "limits": "Limits",
+      "support": "Support",
+      "features": "Features"
+    },
+    "unlimited": "Unlimited"
+  },
+  "common": {
+    "footer": "© {{year}} Your Company. All rights reserved.",
+    "more": "More",
+    "workflowStreamline": "Streamline your workflow with our powerful platform.",
+    "yourLogo": "Your Logo"
+  },
+  "dashboard": {
+    "acquisitionNeedsAttention": "Acquisition needs attention",
+    "activeAccounts": "Active Accounts",
+    "chart": {
+      "days30": "30 days",
+      "days7": "7 days",
+      "days90": "90 days",
+      "desktop": "Desktop",
+      "last30Days": "Last 30 days",
+      "last3Months": "Last 3 months",
+      "last7Days": "Last 7 days",
+      "mobile": "Mobile",
+      "showingTotalVisitors": "Showing total visitors for the last",
+      "title": "Area Chart - Interactive",
+      "visitors": "Visitors"
+    },
+    "downThisPeriod": "Down 20% this period",
+    "engagementExceedsTargets": "Engagement exceed targets",
+    "growthRate": "Growth Rate",
+    "meetsGrowthProjections": "Meets growth projections",
+    "newCustomers": "New Customers",
+    "steadyPerformanceIncrease": "Steady performance increase",
+    "strongUserRetention": "Strong user retention",
+    "totalRevenue": "Total Revenue",
+    "trendingUp": "Trending up this month",
+    "visitorsLast6Months": "Visitors for the last 6 months"
+  },
+  "dataTable": {
+    "actions": {
+      "copyId": "Copy section ID",
+      "copySuccess": "Section ID copied to clipboard.",
+      "delete": "Delete",
+      "edit": "Edit",
+      "favorite": "Favorite",
+      "makeCopy": "Make a copy",
+      "open": "Open",
+      "openMenu": "Open menu",
+      "view": "View"
+    },
+    "chart": {
+      "desktop": "Desktop",
+      "mobile": "Mobile",
+      "months": {
+        "april": "April",
+        "february": "February",
+        "january": "January",
+        "june": "June",
+        "march": "March",
+        "may": "May"
+      }
+    },
+    "columns": "Columns",
+    "deleteConfirmation": {
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "description": "This action cannot be undone. This will permanently delete the selected sections.",
+      "title": "Are you sure?"
+    },
+    "deleteSelected": "Delete ({{count}}})",
+    "dragReorder": "Drag to reorder",
+    "drawer": {
+      "buttons": {
+        "done": "Done",
+        "submit": "Submit"
+      },
+      "chartDescription": "Showing total visitors for the last 6 months. This is just some random text to test the layout. It spans multiple lines and should wrap around.",
+      "description": "An overview of the section details.",
+      "labels": {
+        "header": "Header",
+        "limit": "Limit",
+        "reviewer": "Reviewer",
+        "status": "Status",
+        "target": "Target",
+        "type": "Type"
+      },
+      "mrr": "Monthly Recurring Revenue",
+      "placeholders": {
+        "selectReviewer": "Select a reviewer",
+        "selectStatus": "Select a status",
+        "selectType": "Select a type"
+      },
+      "tabs": {
+        "performance": "Performance",
+        "view": "View"
+      },
+      "title": "View Details",
+      "titleWithHeader": "View details for {{header}}"
+    },
+    "filterPlaceholder": "Filter sections...",
+    "headers": {
+      "header": "Header",
+      "limit": "Limit",
+      "reviewer": "Reviewer",
+      "sectionType": "Section Type",
+      "status": "Status",
+      "target": "Target"
+    },
+    "noResults": "No results.",
+    "pagination": {
+      "firstPage": "Go to first page",
+      "go": "Go",
+      "goToPage": "Go to page:",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "of": "of",
+      "page": "Page",
+      "pageInfo": "Page {{page}} of {{total}}",
+      "previousPage": "Go to previous page",
+      "rowsPerPage": "Rows per page",
+      "selectedRows": "{{count}} of {{total}} row(s) selected."
+    },
+    "placeholders": {
+      "assignReviewer": "Assign reviewer",
+      "search": "Search..."
+    },
+    "reviewers": {
+      "eddie": "Eddie Lake",
+      "emily": "Emily Whalen",
+      "jamik": "Jamik Tashpulatov"
+    },
+    "selectAll": "Select all",
+    "selectFocusDocuments": "Select focus documents",
+    "selectKeyPersonnel": "Select key personnel",
+    "selectOutline": "Select outline",
+    "selectPastPerformance": "Select past performance",
+    "selectRow": "Select row",
+    "statuses": {
+      "done": "Done",
+      "inProgress": "In Progress",
+      "notStarted": "Not Started"
+    },
+    "tabs": {
+      "active": "Active",
+      "all": "All",
+      "archived": "Archived"
+    },
+    "toast": {
+      "error": "Error",
+      "reorder": {
+        "error": "Error!",
+        "saving": "Saving...",
+        "success": "Done!"
+      },
+      "saving": "Saving {{header}}",
+      "success": "Done"
+    },
+    "toolbar": {
+      "addSection": "Add Section",
+      "customizeColumns": "Customize Columns"
+    },
+    "trendingUpThisMonth": "Trending up this month",
+    "types": {
+      "approach": "Technical Approach",
+      "capabilities": "Capabilities",
+      "cover": "Cover Page",
+      "design": "Design",
+      "focus": "Focus Documents",
+      "narrative": "Narrative",
+      "summary": "Executive Summary",
+      "toc": "Table of Contents"
+    },
+    "views": {
+      "focusDocuments": "Focus Documents",
+      "keyPersonnel": "Key Personnel",
+      "label": "View",
+      "outline": "Outline",
+      "pastPerformance": "Past Performance",
+      "placeholder": "Select a view"
+    }
+  },
+  "form": {
+    "confirmPassword": {
+      "label": "Confirm Password"
+    },
+    "createAccountButton": "Create Account",
+    "email": {
+      "label": "Email",
+      "placeholder": "name@example.com"
+    },
+    "fullName": {
+      "label": "Full Name",
+      "placeholder": "John Doe"
+    },
+    "password": {
+      "label": "Password",
+      "mustContain": "Password must contain:",
+      "requirements": {
+        "length": "At least 8 characters",
+        "lowercase": "At least one lowercase letter",
+        "number": "At least one number",
+        "special": "At least one special character",
+        "uppercase": "At least one uppercase letter"
+      }
+    }
+  },
+  "misc": {
+    "welcomeToReact": "Welcome to React and react-i18next"
+  },
+  "notifications": {
+    "account": {
+      "createError": "Failed to create account. Please try again.",
+      "createSuccess": "Account created successfully!"
+    }
+  },
+  "sidebar": {
+    "analytics": "Analytics",
+    "dashboard": "Dashboard",
+    "documents": {
+      "dataLibrary": "Data Library",
+      "reports": "Reports",
+      "title": "Documents",
+      "wordAssistant": "Word Assistant"
+    },
+    "lifecycle": "Life Cycle",
+    "name": {
+      "length": "Name must be at least 2 characters."
+    },
+    "password": {
+      "length": "Password must be at least 8 characters",
+      "lowercase": "Must contain at least one lowercase letter",
+      "mismatch": "Passwords don't match",
+      "number": "Must contain at least one number",
+      "special": "Must contain at least one special character",
+      "uppercase": "Must contain at least one uppercase letter"
+    },
+    "projects": "Projects",
+    "secondary": {
+      "getHelp": "Get Help",
+      "search": "Search",
+      "settings": "Settings"
+    },
+    "team": "Team",
+    "userMenu": {
+      "account": "Account",
+      "billing": "Billing",
+      "language": "Language",
+      "notifications": "Notifications",
+      "signOut": "Sign Out"
+    }
+  },
+  "tour": {
+    "welcome": "Welcome to the Tour",
+    "description": "Take a quick tour to learn about the key features and functionality of this application.",
+    "skip": "Skip",
+    "start": "Start Tour",
+    "settingsTour": {
+      "step1": "Here you can manage your two factor authentication settings.",
+      "step2": "Enable two factor authentication to add an extra layer of security to your account."
+    },
+    "homeTour": {
+      "step1": "On the settings page you can manage your account settings such as two factor authentication, info, etc."
+    }
+  }
 }

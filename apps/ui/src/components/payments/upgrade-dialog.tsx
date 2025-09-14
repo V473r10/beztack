@@ -1,5 +1,9 @@
+import type { MembershipTier } from "@nvn/payments/types";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, Building2, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,16 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Building2, Sparkles, ArrowRight } from "lucide-react";
-import { PricingCard } from "./pricing-card";
-import { MembershipBadge } from "./membership-badge";
-import type { MembershipTier } from "@nvn/payments/types";
-import { useQuery } from "@tanstack/react-query";
-import type { PolarPricingTier } from "@/types/polar-pricing";
 import { usePolarProducts } from "@/hooks/use-polar-products";
+import { cn } from "@/lib/utils";
+import type { PolarPricingTier } from "@/types/polar-pricing";
+import { MembershipBadge } from "./membership-badge";
+import { PricingCard } from "./pricing-card";
+
 // Tier hierarchy helper - now local since tiers are dynamic
 const TIER_HIERARCHY: MembershipTier[] = ["free", "pro", "team", "enterprise"];
 
@@ -43,16 +44,20 @@ export function UpgradeDialog({
   isLoading = false,
   suggestedTier,
 }: UpgradeDialogProps) {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
-  const [selectedTier, setSelectedTier] = useState<string>(suggestedTier || "pro");
-  
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
+    "monthly"
+  );
+  const [selectedTier, setSelectedTier] = useState<string>(
+    suggestedTier || "pro"
+  );
+
   const { data: allTiers = [] } = useQuery<PolarPricingTier[]>({
-    queryKey: ['polar-products'],
+    queryKey: ["polar-products"],
     queryFn: usePolarProducts,
   });
 
   console.log(allTiers);
-  const availableTiers = allTiers.filter(tier => 
+  const availableTiers = allTiers.filter((tier) =>
     isTierHigher(tier.id, currentTier)
   );
 
@@ -69,21 +74,18 @@ export function UpgradeDialog({
 
   if (availableTiers.length === 0) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog onOpenChange={onOpenChange} open={open}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Already at Maximum Tier</DialogTitle>
             <DialogDescription>
-              You're currently on the highest available plan. 
-              Contact our sales team for custom enterprise solutions.
+              You're currently on the highest available plan. Contact our sales
+              team for custom enterprise solutions.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 pt-4">
-            <MembershipBadge tier={currentTier} size="lg" />
-            <Button
-              onClick={() => onOpenChange(false)}
-              className="w-full"
-            >
+            <MembershipBadge size="lg" tier={currentTier} />
+            <Button className="w-full" onClick={() => onOpenChange(false)}>
               Contact Sales
             </Button>
           </div>
@@ -93,8 +95,8 @@ export function UpgradeDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader className="space-y-4">
           <div className="space-y-2">
             <DialogTitle className="text-2xl">Upgrade Your Plan</DialogTitle>
@@ -102,9 +104,9 @@ export function UpgradeDialog({
               Unlock more features and higher limits with a premium plan
             </DialogDescription>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Currently on:</span>
+            <span className="text-muted-foreground text-sm">Currently on:</span>
             <MembershipBadge tier={currentTier} />
           </div>
         </DialogHeader>
@@ -112,18 +114,20 @@ export function UpgradeDialog({
         <div className="space-y-6 pt-4">
           {/* Billing Period Toggle */}
           <div className="flex items-center justify-center">
-            <Tabs 
-              value={billingPeriod} 
-              onValueChange={(value) => setBillingPeriod(value as "monthly" | "yearly")}
+            <Tabs
               className="w-fit"
+              onValueChange={(value) =>
+                setBillingPeriod(value as "monthly" | "yearly")
+              }
+              value={billingPeriod}
             >
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                <TabsTrigger value="yearly" className="relative">
+                <TabsTrigger className="relative" value="yearly">
                   Yearly
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
                     className="ml-2 h-5 px-1.5 text-xs"
+                    variant="secondary"
                   >
                     Save 17%
                   </Badge>
@@ -133,22 +137,25 @@ export function UpgradeDialog({
           </div>
 
           {/* Pricing Cards */}
-          <div className={cn(
-            "grid gap-6",
-            availableTiers.length === 1 && "grid-cols-1 max-w-sm mx-auto",
-            availableTiers.length === 2 && "grid-cols-1 md:grid-cols-2",
-            availableTiers.length >= 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-          )}>
+          <div
+            className={cn(
+              "grid gap-6",
+              availableTiers.length === 1 && "mx-auto max-w-sm grid-cols-1",
+              availableTiers.length === 2 && "grid-cols-1 md:grid-cols-2",
+              availableTiers.length >= 3 &&
+                "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            )}
+          >
             {availableTiers.map((tier) => (
               <PricingCard
-                key={tier.id}
-                tier={tier}
                 billingPeriod={billingPeriod}
                 currentTier={currentTier}
-                isPopular={tier.id === "pro"}
-                onSelect={handleUpgrade}
-                isLoading={isLoading && selectedTier === tier.id}
                 disabled={isLoading}
+                isLoading={isLoading && selectedTier === tier.id}
+                isPopular={tier.id === "pro"}
+                key={tier.id}
+                onSelect={handleUpgrade}
+                tier={tier}
               />
             ))}
           </div>
@@ -159,19 +166,23 @@ export function UpgradeDialog({
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-sm">Recommended Upgrade</span>
+                  <span className="font-medium text-sm">
+                    Recommended Upgrade
+                  </span>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Based on your usage patterns, the {availableTiers.find(t => t.id === suggestedTier)?.name} plan 
-                  would be perfect for your needs.
+                <div className="text-muted-foreground text-sm">
+                  Based on your usage patterns, the{" "}
+                  {availableTiers.find((t) => t.id === suggestedTier)?.name}{" "}
+                  plan would be perfect for your needs.
                 </div>
                 <Button
-                  size="sm"
-                  onClick={() => handleUpgrade(suggestedTier)}
-                  disabled={isLoading}
                   className="w-fit"
+                  disabled={isLoading}
+                  onClick={() => handleUpgrade(suggestedTier)}
+                  size="sm"
                 >
-                  Upgrade to {availableTiers.find(t => t.id === suggestedTier)?.name}
+                  Upgrade to{" "}
+                  {availableTiers.find((t) => t.id === suggestedTier)?.name}
                   <ArrowRight className="ml-1 h-3 w-3" />
                 </Button>
               </div>
@@ -179,24 +190,28 @@ export function UpgradeDialog({
           )}
 
           {/* Enterprise CTA */}
-          {!availableTiers.find(t => t.id === "enterprise") && currentTier !== "enterprise" && (
-            <div className="rounded-lg border bg-muted/30 p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    <span className="font-medium text-sm">Need Enterprise Features?</span>
+          {!availableTiers.find((t) => t.id === "enterprise") &&
+            currentTier !== "enterprise" && (
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      <span className="font-medium text-sm">
+                        Need Enterprise Features?
+                      </span>
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      Custom solutions, dedicated support, and unlimited usage
+                      for large organizations.
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    Custom solutions, dedicated support, and unlimited usage for large organizations.
-                  </div>
+                  <Button size="sm" variant="outline">
+                    Contact Sales
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm">
-                  Contact Sales
-                </Button>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </DialogContent>
     </Dialog>

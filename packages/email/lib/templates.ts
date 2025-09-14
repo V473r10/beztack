@@ -1,5 +1,8 @@
 // Simple HTML email templates
-export const welcomeEmailTemplate = (username: string = 'Usuario', loginUrl: string = 'https://nvn.app/login') => `
+export const welcomeEmailTemplate = (
+  username = "Usuario",
+  loginUrl = "https://nvn.app/login"
+) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -37,7 +40,7 @@ export const welcomeEmailTemplate = (username: string = 'Usuario', loginUrl: str
 </html>
 `;
 
-export const passwordResetTemplate = (username: string = 'Usuario') => `
+export const passwordResetTemplate = (username = "Usuario") => `
 <!DOCTYPE html>
 <html>
 <head>

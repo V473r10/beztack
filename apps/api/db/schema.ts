@@ -1,4 +1,12 @@
-import { pgTable, text, timestamp, boolean, integer, serial, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -86,7 +94,10 @@ export const team = pgTable("team", {
     .notNull()
     .references(() => organization.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const teamMember = pgTable("team_member", {
@@ -106,7 +117,10 @@ export const organization = pgTable("organization", {
   slug: text("slug").unique(),
   logo: text("logo"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
   metadata: text("metadata"),
 });
 
@@ -120,7 +134,10 @@ export const member = pgTable("member", {
     .references(() => user.id, { onDelete: "cascade" }),
   role: text("role").default("member").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const invitation = pgTable("invitation", {
@@ -137,11 +154,14 @@ export const invitation = pgTable("invitation", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const plan = pgTable("plan", {
-  id: text("id").primaryKey()
+  id: text("id").primaryKey(),
 });
 
 export const feature = pgTable("feature", {
@@ -165,19 +185,25 @@ export const limit = pgTable("limit", {
 export const planFeature = pgTable("plan_feature", {
   id: serial("id").primaryKey(),
   planId: uuid("plan_id").notNull(),
-  featureId: integer("feature_id").notNull().references(() => feature.id, { onDelete: "cascade" }),
+  featureId: integer("feature_id")
+    .notNull()
+    .references(() => feature.id, { onDelete: "cascade" }),
 });
 
 export const planPermission = pgTable("plan_permission", {
   id: serial("id").primaryKey(),
   planId: uuid("plan_id").notNull(),
-  permissionId: integer("permission_id").notNull().references(() => permission.id, { onDelete: "cascade" }),
+  permissionId: integer("permission_id")
+    .notNull()
+    .references(() => permission.id, { onDelete: "cascade" }),
 });
 
 export const planLimit = pgTable("plan_limit", {
   id: serial("id").primaryKey(),
   planId: uuid("plan_id").notNull(),
-  limitId: integer("limit_id").notNull().references(() => limit.id, { onDelete: "cascade" }),
+  limitId: integer("limit_id")
+    .notNull()
+    .references(() => limit.id, { onDelete: "cascade" }),
   value: integer("value").notNull(),
 });
 

@@ -1,9 +1,9 @@
-import { useMembership } from "@/contexts/membership-context";
+import { AlertCircle } from "lucide-react";
 import { BillingDashboard } from "@/components/payments/billing-dashboard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { useMembership } from "@/contexts/membership-context";
 
 export default function Billing() {
   const {
@@ -40,11 +40,11 @@ export default function Billing() {
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-96" />
           </div>
-          
+
           {/* Main Content Skeleton */}
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-start">
+              <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <Skeleton className="h-6 w-32" />
                   <Skeleton className="h-4 w-64" />
@@ -62,7 +62,7 @@ export default function Billing() {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Usage Metrics Skeleton */}
           <Card>
             <CardHeader>
@@ -72,7 +72,7 @@ export default function Billing() {
             <CardContent>
               <div className="space-y-6">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="space-y-2">
+                  <div className="space-y-2" key={i}>
                     <div className="flex justify-between">
                       <Skeleton className="h-4 w-24" />
                       <Skeleton className="h-4 w-16" />
@@ -88,7 +88,10 @@ export default function Billing() {
     );
   }
 
-  const handleUpgrade = async (tierId: string, billingPeriod: "monthly" | "yearly") => {
+  const handleUpgrade = async (
+    tierId: string,
+    billingPeriod: "monthly" | "yearly"
+  ) => {
     try {
       await upgradeToTier(tierId, billingPeriod);
     } catch (error) {
@@ -108,7 +111,7 @@ export default function Billing() {
     <div className="container mx-auto px-4 py-8">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Billing & Subscription</h1>
+        <h1 className="mb-2 font-bold text-3xl">Billing & Subscription</h1>
         <p className="text-muted-foreground">
           Manage your subscription, view usage, and access billing history.
         </p>
@@ -116,14 +119,14 @@ export default function Billing() {
 
       {/* Main Dashboard */}
       <BillingDashboard
-        subscriptions={subscriptions}
-        orders={orders}
-        meters={meters}
         currentTier={currentTier}
-        tierConfig={tierConfig}
-        onUpgrade={handleUpgrade}
-        onManageBilling={handleManageBilling}
         isLoading={isLoading}
+        meters={meters}
+        onManageBilling={handleManageBilling}
+        onUpgrade={handleUpgrade}
+        orders={orders}
+        subscriptions={subscriptions}
+        tierConfig={tierConfig}
       />
     </div>
   );

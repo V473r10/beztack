@@ -1,14 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useCallback } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 import type {
+  Benefit,
+  CheckoutSessionParams,
+  CustomerMeter,
+  CustomerPortalState,
   MembershipTier,
   MembershipValidationResult,
-  CustomerPortalState,
-  Subscription,
   Order,
-  Benefit,
-  CustomerMeter,
-  CheckoutSessionParams,
+  Subscription,
   UsageEvent,
 } from "../types/index.ts";
 
@@ -49,7 +49,9 @@ interface AuthClient {
     };
   };
   usage: {
-    ingest: (event: Omit<UsageEvent, "customerId" | "timestamp">) => Promise<{ data: any }>;
+    ingest: (
+      event: Omit<UsageEvent, "customerId" | "timestamp">
+    ) => Promise<{ data: any }>;
     meters: {
       list: (options?: {
         query?: {
@@ -240,13 +242,13 @@ export function useMembershipTier(
   const customerStateQuery = useCustomerState(authClient);
 
   const membershipInfo = customerStateQuery.data
-    ? validationFn?.(customerStateQuery.data) ?? {
+    ? (validationFn?.(customerStateQuery.data) ?? {
         isValid: true,
         tier: "free" as MembershipTier,
         permissions: [],
         limits: {},
         features: [],
-      }
+      })
     : undefined;
 
   return {
@@ -295,7 +297,8 @@ export function useSubscriptionManagement(
 
   return {
     subscriptions: subscriptions.data ?? [],
-    isLoading: subscriptions.isLoading || checkout.isLoading || portal.isLoading,
+    isLoading:
+      subscriptions.isLoading || checkout.isLoading || portal.isLoading,
     error: subscriptions.error,
     upgradeToTier,
     manageSubscription,
@@ -315,12 +318,12 @@ export function useOrganizationSubscription(
     active: true,
   });
 
-  const activeSubscription = subscriptions.data?.find((sub: Subscription) => 
-    sub.metadata.organizationId === organizationId &&
-    sub.status === "active"
+  const activeSubscription = subscriptions.data?.find(
+    (sub: Subscription) =>
+      sub.metadata.organizationId === organizationId && sub.status === "active"
   );
 
-  const tier = activeSubscription?.metadata?.tier as MembershipTier ?? "free";
+  const tier = (activeSubscription?.metadata?.tier as MembershipTier) ?? "free";
 
   return {
     subscription: activeSubscription,

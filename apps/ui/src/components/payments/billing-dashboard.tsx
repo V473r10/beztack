@@ -1,35 +1,41 @@
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  CreditCard,
-  ExternalLink,
-  Receipt,
-  Settings,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  ArrowUpRight,
-  Download,
-  Eye,
-} from "lucide-react";
-import { MembershipBadge, MembershipStatus } from "./membership-badge";
-import { UsageMetrics } from "./usage-metrics";
-import { UpgradeDialog } from "./upgrade-dialog";
 import { formatCurrency, getBillingPortalUrl } from "@nvn/payments/client";
 // Tier configurations now fetched dynamically from API
-import type { 
-  Subscription, 
-  Order, 
-  CustomerMeter, 
+import type {
+  CustomerMeter,
+  MembershipTier,
   MembershipTierConfig,
-  MembershipTier 
+  Order,
+  Subscription,
 } from "@nvn/payments/types";
+import {
+  AlertCircle,
+  ArrowUpRight,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Download,
+  ExternalLink,
+  Eye,
+  Receipt,
+  Settings,
+} from "lucide-react";
+import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import { MembershipBadge, MembershipStatus } from "./membership-badge";
+import { UpgradeDialog } from "./upgrade-dialog";
+import { UsageMetrics } from "./usage-metrics";
 
 export interface BillingDashboardProps {
   subscriptions?: Subscription[];
@@ -49,11 +55,18 @@ interface SubscriptionCardProps {
   onUpgrade?: () => void;
 }
 
-function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCardProps) {
+function SubscriptionCard({
+  subscription,
+  onManage,
+  onUpgrade,
+}: SubscriptionCardProps) {
   const isActive = subscription.status === "active";
   const isCanceled = subscription.status === "canceled";
-  const inGracePeriod = isCanceled && subscription.currentPeriodEnd && new Date(subscription.currentPeriodEnd) > new Date();
-  
+  const inGracePeriod =
+    isCanceled &&
+    subscription.currentPeriodEnd &&
+    new Date(subscription.currentPeriodEnd) > new Date();
+
   const getStatusColor = () => {
     if (isActive) return "default";
     if (inGracePeriod) return "secondary";
@@ -62,7 +75,12 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
 
   const getStatusText = () => {
     if (isActive) return "Active";
-    if (inGracePeriod && subscription.currentPeriodEnd) return "Canceled (Active until " + new Date(subscription.currentPeriodEnd).toLocaleDateString() + ")";
+    if (inGracePeriod && subscription.currentPeriodEnd)
+      return (
+        "Canceled (Active until " +
+        new Date(subscription.currentPeriodEnd).toLocaleDateString() +
+        ")"
+      );
     return "Canceled";
   };
 
@@ -72,70 +90,80 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <CardTitle className="text-lg">
-              {subscription.metadata?.tier ? 
-                `${subscription.metadata.tier.charAt(0).toUpperCase() + subscription.metadata.tier.slice(1)} Plan` :
-                "Subscription"
-              }
+              {subscription.metadata?.tier
+                ? `${subscription.metadata.tier.charAt(0).toUpperCase() + subscription.metadata.tier.slice(1)} Plan`
+                : "Subscription"}
             </CardTitle>
             <CardDescription>
-              {subscription.metadata?.tier ? (
-                // Price information should be fetched from tier API or subscription data
-                `Active subscription`
-              ) : "Unknown subscription"}
+              {subscription.metadata?.tier
+                ? // Price information should be fetched from tier API or subscription data
+                  "Active subscription"
+                : "Unknown subscription"}
             </CardDescription>
           </div>
-          <Badge variant={getStatusColor() as "default" | "secondary" | "destructive" | "outline"}>
+          <Badge
+            variant={
+              getStatusColor() as
+                | "default"
+                | "secondary"
+                | "destructive"
+                | "outline"
+            }
+          >
             {getStatusText()}
           </Badge>
         </div>
-        
+
         {inGracePeriod && (
           <Alert>
             <Clock className="h-4 w-4" />
             <AlertDescription>
-              Your subscription is canceled but remains active until {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : 'N/A'}.
-              You can reactivate it anytime before then.
+              Your subscription is canceled but remains active until{" "}
+              {subscription.currentPeriodEnd
+                ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                : "N/A"}
+              . You can reactivate it anytime before then.
             </AlertDescription>
           </Alert>
         )}
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <div className="text-sm text-muted-foreground">Next billing</div>
+            <div className="text-muted-foreground text-sm">Next billing</div>
             <div className="font-medium">
-              {isActive && subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "—"}
+              {isActive && subscription.currentPeriodEnd
+                ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                : "—"}
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-sm text-muted-foreground">Started</div>
+            <div className="text-muted-foreground text-sm">Started</div>
             <div className="font-medium">
-              {subscription.createdAt ? new Date(subscription.createdAt).toLocaleDateString() : "—"}
+              {subscription.createdAt
+                ? new Date(subscription.createdAt).toLocaleDateString()
+                : "—"}
             </div>
           </div>
         </div>
-        
+
         <Separator />
-        
+
         <div className="flex gap-2">
           {onManage && (
             <Button
-              variant="outline"
-              size="sm"
-              onClick={onManage}
               className="flex-1"
+              onClick={onManage}
+              size="sm"
+              variant="outline"
             >
               <Settings className="mr-1 h-3 w-3" />
               Manage
             </Button>
           )}
           {onUpgrade && (isActive || inGracePeriod) && (
-            <Button
-              size="sm"
-              onClick={onUpgrade}
-              className="flex-1"
-            >
+            <Button className="flex-1" onClick={onUpgrade} size="sm">
               <ArrowUpRight className="mr-1 h-3 w-3" />
               Upgrade
             </Button>
@@ -155,8 +183,8 @@ function OrderHistory({ orders }: OrderHistoryProps) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-8">
-          <Receipt className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">No orders found</p>
+          <Receipt className="mb-2 h-8 w-8 text-muted-foreground" />
+          <p className="text-muted-foreground text-sm">No orders found</p>
         </CardContent>
       </Card>
     );
@@ -168,40 +196,60 @@ function OrderHistory({ orders }: OrderHistoryProps) {
         <Card key={order.id}>
           <CardContent className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
-              <div className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full",
-                order.status === "completed" && "bg-green-100 text-green-600 dark:bg-green-900/20",
-                order.status === "pending" && "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20",
-                (order.status === "canceled" || order.status === "refunded") && "bg-red-100 text-red-600 dark:bg-red-900/20"
-              )}>
-                {order.status === "completed" && <CheckCircle className="h-4 w-4" />}
+              <div
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full",
+                  order.status === "completed" &&
+                    "bg-green-100 text-green-600 dark:bg-green-900/20",
+                  order.status === "pending" &&
+                    "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20",
+                  (order.status === "canceled" ||
+                    order.status === "refunded") &&
+                    "bg-red-100 text-red-600 dark:bg-red-900/20"
+                )}
+              >
+                {order.status === "completed" && (
+                  <CheckCircle className="h-4 w-4" />
+                )}
                 {order.status === "pending" && <Clock className="h-4 w-4" />}
-                {(order.status === "canceled" || order.status === "refunded") && <AlertCircle className="h-4 w-4" />}
+                {(order.status === "canceled" ||
+                  order.status === "refunded") && (
+                  <AlertCircle className="h-4 w-4" />
+                )}
               </div>
-              
+
               <div className="space-y-1">
                 <div className="font-medium">
-                  {order.metadata?.tier ? 
-                    `${order.metadata.tier.charAt(0).toUpperCase() + order.metadata.tier.slice(1)} Plan` :
-                    "Order"
-                  }
+                  {order.metadata?.tier
+                    ? `${order.metadata.tier.charAt(0).toUpperCase() + order.metadata.tier.slice(1)} Plan`
+                    : "Order"}
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'} • {formatCurrency(order.amount)}
+                <div className="text-muted-foreground text-sm">
+                  {order.createdAt
+                    ? new Date(order.createdAt).toLocaleDateString()
+                    : "N/A"}{" "}
+                  • {formatCurrency(order.amount)}
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
-              <Badge 
-                variant={order.status === "completed" ? "default" : order.status === "pending" ? "secondary" : "destructive"}
+              <Badge
+                variant={
+                  order.status === "completed"
+                    ? "default"
+                    : order.status === "pending"
+                      ? "secondary"
+                      : "destructive"
+                }
               >
-                {(order.status || "unknown").charAt(0).toUpperCase() + (order.status || "unknown").slice(1)}
+                {(order.status || "unknown").charAt(0).toUpperCase() +
+                  (order.status || "unknown").slice(1)}
               </Badge>
-              <Button variant="ghost" size="sm">
+              <Button size="sm" variant="ghost">
                 <Eye className="h-3 w-3" />
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button size="sm" variant="ghost">
                 <Download className="h-3 w-3" />
               </Button>
             </div>
@@ -224,12 +272,19 @@ export function BillingDashboard({
   className,
 }: BillingDashboardProps) {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  
-  const activeSubscription = subscriptions.find(sub => 
-    sub.status === "active" || (sub.status === "canceled" && sub.currentPeriodEnd && new Date(sub.currentPeriodEnd) > new Date())
+
+  const activeSubscription = subscriptions.find(
+    (sub) =>
+      sub.status === "active" ||
+      (sub.status === "canceled" &&
+        sub.currentPeriodEnd &&
+        new Date(sub.currentPeriodEnd) > new Date())
   );
 
-  const handleUpgrade = (tierId: string, billingPeriod: "monthly" | "yearly") => {
+  const handleUpgrade = (
+    tierId: string,
+    billingPeriod: "monthly" | "yearly"
+  ) => {
     onUpgrade?.(tierId, billingPeriod);
     setShowUpgradeDialog(false);
   };
@@ -256,28 +311,32 @@ export function BillingDashboard({
                   Manage your subscription and billing preferences
                 </CardDescription>
               </div>
-              <MembershipBadge tier={currentTier} size="lg" />
+              <MembershipBadge size="lg" tier={currentTier} />
             </div>
           </CardHeader>
-          
+
           <CardContent className="space-y-4">
             {activeSubscription ? (
               <MembershipStatus
-                tier={currentTier}
+                expiresAt={
+                  activeSubscription.currentPeriodEnd
+                    ? new Date(activeSubscription.currentPeriodEnd)
+                    : undefined
+                }
                 isActive={activeSubscription.status === "active"}
-                expiresAt={activeSubscription.currentPeriodEnd ? new Date(activeSubscription.currentPeriodEnd) : undefined}
+                tier={currentTier}
               />
             ) : (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 No active subscription
               </div>
             )}
-            
+
             <div className="flex gap-2">
               <Button
-                variant="outline"
-                onClick={handleManageBilling}
                 disabled={isLoading}
+                onClick={handleManageBilling}
+                variant="outline"
               >
                 <CreditCard className="mr-2 h-4 w-4" />
                 Manage Billing
@@ -285,8 +344,8 @@ export function BillingDashboard({
               </Button>
               {currentTier !== "enterprise" && (
                 <Button
-                  onClick={() => setShowUpgradeDialog(true)}
                   disabled={isLoading}
+                  onClick={() => setShowUpgradeDialog(true)}
                 >
                   <ArrowUpRight className="mr-2 h-4 w-4" />
                   Upgrade Plan
@@ -297,7 +356,7 @@ export function BillingDashboard({
         </Card>
 
         {/* Tabs for detailed views */}
-        <Tabs defaultValue="usage" className="space-y-4">
+        <Tabs className="space-y-4" defaultValue="usage">
           <TabsList>
             <TabsTrigger value="usage">Usage & Limits</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
@@ -307,26 +366,26 @@ export function BillingDashboard({
           <TabsContent value="usage">
             <UsageMetrics
               meters={meters}
-              tierConfig={tierConfig}
               onUpgrade={() => setShowUpgradeDialog(true)}
+              tierConfig={tierConfig}
             />
           </TabsContent>
 
-          <TabsContent value="subscriptions" className="space-y-4">
+          <TabsContent className="space-y-4" value="subscriptions">
             {subscriptions.length > 0 ? (
               subscriptions.map((subscription) => (
                 <SubscriptionCard
                   key={subscription.id}
-                  subscription={subscription}
                   onManage={handleManageBilling}
                   onUpgrade={() => setShowUpgradeDialog(true)}
+                  subscription={subscription}
                 />
               ))
             ) : (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8">
-                  <CreditCard className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <CreditCard className="mb-2 h-8 w-8 text-muted-foreground" />
+                  <p className="mb-4 text-muted-foreground text-sm">
                     No active subscriptions
                   </p>
                   <Button onClick={() => setShowUpgradeDialog(true)}>
@@ -345,12 +404,12 @@ export function BillingDashboard({
 
       {/* Upgrade Dialog */}
       <UpgradeDialog
+        currentTier={currentTier}
+        isLoading={isLoading}
+        onOpenChange={setShowUpgradeDialog}
+        onUpgrade={handleUpgrade}
         open={showUpgradeDialog}
         suggestedTier="pro"
-        onOpenChange={setShowUpgradeDialog}
-        currentTier={currentTier}
-        onUpgrade={handleUpgrade}
-        isLoading={isLoading}
       />
     </>
   );

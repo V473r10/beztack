@@ -1,4 +1,3 @@
-
 /**
  * Membership tier levels based on VIT-17 strategy
  */
@@ -16,7 +15,7 @@ export interface MembershipTierConfig {
     readonly yearly: number;
   };
   readonly monthly?: any; // Full Polar product object for monthly billing
-  readonly yearly?: any;  // Full Polar product object for yearly billing
+  readonly yearly?: any; // Full Polar product object for yearly billing
   readonly features: string[];
   readonly limits: Record<string, number>;
   readonly permissions: string[];

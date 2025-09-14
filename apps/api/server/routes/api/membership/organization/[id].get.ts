@@ -1,7 +1,7 @@
-import { defineEventHandler, getRouterParam, createError } from "h3";
+import { eq } from "drizzle-orm";
+import { createError, defineEventHandler, getRouterParam } from "h3";
 import { db } from "@/db/db";
 import { schema } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { auth } from "@/server/utils/auth";
 
 /**
@@ -11,19 +11,19 @@ export default defineEventHandler(async (event) => {
   try {
     // Get the session to verify the user is authenticated
     const session = await auth.api.getSession({ headers: event.headers });
-    
+
     if (!session?.user) {
       throw createError({
         statusCode: 401,
-        statusMessage: 'Authentication required'
+        statusMessage: "Authentication required",
       });
     }
 
-    const organizationId = getRouterParam(event, 'id');
+    const organizationId = getRouterParam(event, "id");
     if (!organizationId) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Organization ID is required'
+        statusMessage: "Organization ID is required",
       });
     }
 
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
     if (organization.length === 0) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Organization not found'
+        statusMessage: "Organization not found",
       });
     }
 
@@ -55,45 +55,44 @@ export default defineEventHandler(async (event) => {
     const membership = await db
       .select()
       .from(schema.member)
-      .where(
-        eq(schema.member.organizationId, organizationId)
-      )
+      .where(eq(schema.member.organizationId, organizationId))
       .where(eq(schema.member.userId, session.user.id))
       .limit(1);
 
     if (membership.length === 0) {
       throw createError({
         statusCode: 403,
-        statusMessage: 'Access denied: You are not a member of this organization'
+        statusMessage:
+          "Access denied: You are not a member of this organization",
       });
     }
 
     const org = organization[0];
     const now = new Date();
-    const isSubscriptionActive = 
-      org.subscriptionStatus === 'active' && 
+    const isSubscriptionActive =
+      org.subscriptionStatus === "active" &&
       (!org.subscriptionValidUntil || org.subscriptionValidUntil > now);
 
     return {
       organizationId: org.id,
       organizationName: org.name,
-      tier: org.subscriptionTier || 'free',
-      status: org.subscriptionStatus || 'inactive',
+      tier: org.subscriptionTier || "free",
+      status: org.subscriptionStatus || "inactive",
       subscriptionId: org.subscriptionId,
       isActive: isSubscriptionActive,
       validUntil: org.subscriptionValidUntil,
       usageMetrics: org.usageMetrics ? JSON.parse(org.usageMetrics) : null,
-      memberRole: membership[0].role
+      memberRole: membership[0].role,
     };
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    
-    console.error('Failed to get organization membership:', error);
+
+    console.error("Failed to get organization membership:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to retrieve organization membership'
+      statusMessage: "Failed to retrieve organization membership",
     });
   }
 });

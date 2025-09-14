@@ -1,11 +1,11 @@
 import {
   Body,
+  Button,
   Container,
   Head,
   Html,
   Preview,
   Text,
-  Button,
 } from "@react-email/components";
 
 interface WelcomeEmailProps {
@@ -24,16 +24,18 @@ export const WelcomeEmail = ({
       <Container style={container}>
         <Text style={title}>¡Bienvenido a nvn, {username}!</Text>
         <Text style={paragraph}>
-          Tu cuenta ha sido creada exitosamente. Ahora podés acceder a todas las funcionalidades de la plataforma.
+          Tu cuenta ha sido creada exitosamente. Ahora podés acceder a todas las
+          funcionalidades de la plataforma.
         </Text>
         <Text style={paragraph}>
           Para comenzar, iniciá sesión con el siguiente enlace:
         </Text>
-        <Button style={button} href={loginUrl}>
+        <Button href={loginUrl} style={button}>
           Iniciar Sesión
         </Button>
         <Text style={paragraph}>
-          Si tenés alguna pregunta, no dudes en contactarnos. ¡Esperamos que disfrutes usando nvn!
+          Si tenés alguna pregunta, no dudes en contactarnos. ¡Esperamos que
+          disfrutes usando nvn!
         </Text>
         <Text style={footer}>
           Saludos,

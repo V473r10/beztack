@@ -3,7 +3,7 @@ import type { MembershipTier } from "./membership.ts";
 /**
  * Subscription status from Polar
  */
-export type SubscriptionStatus = 
+export type SubscriptionStatus =
   | "incomplete"
   | "incomplete_expired"
   | "trialing"

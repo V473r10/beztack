@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
-import type { 
-  Customer, 
-  Order, 
-  Subscription, 
-  MembershipTier 
+import type {
+  Customer,
+  MembershipTier,
+  Order,
+  Subscription,
 } from "../types/index.ts";
 
 /**
@@ -20,8 +20,8 @@ export function verifyWebhookSignature(
       .update(payload, "utf8")
       .digest("hex");
 
-    const normalizedSignature = signature.startsWith("sha256=") 
-      ? signature.slice(7) 
+    const normalizedSignature = signature.startsWith("sha256=")
+      ? signature.slice(7)
       : signature;
 
     return crypto.timingSafeEqual(
@@ -65,10 +65,15 @@ export interface MembershipUpdate {
  * Webhook event handlers
  */
 export class WebhookEventHandler {
-  private membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>;
-  private customHandlers: Map<string, (payload: any) => Promise<void>> = new Map();
+  private membershipUpdateCallback?: (
+    update: MembershipUpdate
+  ) => Promise<void>;
+  private customHandlers: Map<string, (payload: any) => Promise<void>> =
+    new Map();
 
-  constructor(membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>) {
+  constructor(
+    membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>
+  ) {
     this.membershipUpdateCallback = membershipUpdateCallback;
   }
 
@@ -123,7 +128,7 @@ export class WebhookEventHandler {
    * Handle paid order (one-time purchase)
    */
   private async handleOrderPaid(order?: Order): Promise<void> {
-    if (!order?.metadata?.userId || !order.metadata.tier) {
+    if (!(order?.metadata?.userId && order.metadata.tier)) {
       console.log("Order missing userId or tier metadata");
       return;
     }
@@ -142,8 +147,10 @@ export class WebhookEventHandler {
   /**
    * Handle active subscription
    */
-  private async handleSubscriptionActive(subscription?: Subscription): Promise<void> {
-    if (!subscription?.metadata?.userId || !subscription.metadata.tier) {
+  private async handleSubscriptionActive(
+    subscription?: Subscription
+  ): Promise<void> {
+    if (!(subscription?.metadata?.userId && subscription.metadata.tier)) {
       console.log("Subscription missing userId or tier metadata");
       return;
     }
@@ -163,7 +170,9 @@ export class WebhookEventHandler {
   /**
    * Handle canceled subscription
    */
-  private async handleSubscriptionCanceled(subscription?: Subscription): Promise<void> {
+  private async handleSubscriptionCanceled(
+    subscription?: Subscription
+  ): Promise<void> {
     if (!subscription?.metadata?.userId) {
       console.log("Subscription missing userId metadata");
       return;
@@ -184,7 +193,9 @@ export class WebhookEventHandler {
   /**
    * Handle revoked subscription (immediate termination)
    */
-  private async handleSubscriptionRevoked(subscription?: Subscription): Promise<void> {
+  private async handleSubscriptionRevoked(
+    subscription?: Subscription
+  ): Promise<void> {
     if (!subscription?.metadata?.userId) {
       console.log("Subscription missing userId metadata");
       return;
@@ -205,8 +216,10 @@ export class WebhookEventHandler {
   /**
    * Handle past due subscription
    */
-  private async handleSubscriptionPastDue(subscription?: Subscription): Promise<void> {
-    if (!subscription?.metadata?.userId || !subscription.metadata.tier) {
+  private async handleSubscriptionPastDue(
+    subscription?: Subscription
+  ): Promise<void> {
+    if (!(subscription?.metadata?.userId && subscription.metadata.tier)) {
       console.log("Subscription missing userId or tier metadata");
       return;
     }
@@ -233,7 +246,9 @@ export class WebhookEventHandler {
     }
 
     // This is mainly for informational purposes
-    console.log(`Customer ${customer.id} updated for user ${customer.metadata.userId}`);
+    console.log(
+      `Customer ${customer.id} updated for user ${customer.metadata.userId}`
+    );
   }
 
   /**
@@ -260,33 +275,49 @@ export function createWebhookHandler(
 /**
  * Create default webhook handlers for common events
  */
-export function createDefaultWebhookHandlers(customHandlers: Record<string, (payload: any) => Promise<void>> = {}): Record<string, (payload: any) => Promise<void>> {
+export function createDefaultWebhookHandlers(
+  customHandlers: Record<string, (payload: any) => Promise<void>> = {}
+): Record<string, (payload: any) => Promise<void>> {
   return {
-    'order.paid': customHandlers.onOrderPaid || (async (payload) => {
-      console.log('Order paid:', payload);
-    }),
-    'subscription.active': customHandlers.onSubscriptionActive || (async (payload) => {
-      console.log('Subscription activated:', payload);
-    }),
-    'subscription.canceled': customHandlers.onSubscriptionCanceled || (async (payload) => {
-      console.log('Subscription canceled:', payload);
-    }),
-    'subscription.revoked': customHandlers.onSubscriptionRevoked || (async (payload) => {
-      console.log('Subscription revoked:', payload);
-    }),
-    'customer.updated': customHandlers.onCustomerStateChanged || (async (payload) => {
-      console.log('Customer state changed:', payload);
-    }),
-    'benefit.grant.created': customHandlers.onBenefitGrantCreated || (async (payload) => {
-      console.log('Benefit grant created:', payload);
-    }),
-    'benefit.grant.revoked': customHandlers.onBenefitGrantRevoked || (async (payload) => {
-      console.log('Benefit grant revoked:', payload);
-    }),
+    "order.paid":
+      customHandlers.onOrderPaid ||
+      (async (payload) => {
+        console.log("Order paid:", payload);
+      }),
+    "subscription.active":
+      customHandlers.onSubscriptionActive ||
+      (async (payload) => {
+        console.log("Subscription activated:", payload);
+      }),
+    "subscription.canceled":
+      customHandlers.onSubscriptionCanceled ||
+      (async (payload) => {
+        console.log("Subscription canceled:", payload);
+      }),
+    "subscription.revoked":
+      customHandlers.onSubscriptionRevoked ||
+      (async (payload) => {
+        console.log("Subscription revoked:", payload);
+      }),
+    "customer.updated":
+      customHandlers.onCustomerStateChanged ||
+      (async (payload) => {
+        console.log("Customer state changed:", payload);
+      }),
+    "benefit.grant.created":
+      customHandlers.onBenefitGrantCreated ||
+      (async (payload) => {
+        console.log("Benefit grant created:", payload);
+      }),
+    "benefit.grant.revoked":
+      customHandlers.onBenefitGrantRevoked ||
+      (async (payload) => {
+        console.log("Benefit grant revoked:", payload);
+      }),
     // Add any custom handlers
     ...Object.fromEntries(
-      Object.entries(customHandlers).filter(([key]) => !key.startsWith('on'))
-    )
+      Object.entries(customHandlers).filter(([key]) => !key.startsWith("on"))
+    ),
   };
 }
 
@@ -299,10 +330,10 @@ export async function handleWebhookRequest(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Import h3 readBody function dynamically
-    const { readBody, getHeader } = await import('h3');
-    
+    const { readBody, getHeader } = await import("h3");
+
     const body = await readBody(event);
-    const bodyString = typeof body === 'string' ? body : JSON.stringify(body);
+    const bodyString = typeof body === "string" ? body : JSON.stringify(body);
     const signature = getHeader(event, "x-polar-signature") || "";
 
     const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
@@ -316,7 +347,8 @@ export async function handleWebhookRequest(
     }
 
     // Parse payload
-    const payload: PolarWebhookPayload = typeof body === 'string' ? JSON.parse(body) : body;
+    const payload: PolarWebhookPayload =
+      typeof body === "string" ? JSON.parse(body) : body;
 
     // Handle the event with registered handlers
     const handler = handlers[payload.type];
@@ -329,9 +361,9 @@ export async function handleWebhookRequest(
     return { success: true };
   } catch (error) {
     console.error("Webhook handling error:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Unknown error" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }

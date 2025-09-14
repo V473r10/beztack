@@ -1,372 +1,372 @@
 {
-	"account": {
-		"settings": {
-			"profile": {
-				"description": "Gestiona tu información de perfil de cuenta.",
-				"email": "Correo Electrónico",
-				"save": "Guardar Perfil",
-				"title": "Perfil",
-				"username": "Nombre de Usuario"
-			},
-			"title": "Configuración de Cuenta",
-			"twoFactor": {
-				"backupCodes": "Códigos de recuperación",
-				"backupCodesDescription": "Guarda estos códigos de recuperación en un lugar seguro. No los pierdas.",
-				"completeYour2FASetup": "Completar la configuración de la autenticación de dos factores",
-				"copyBackupCodes": "Copiar Códigos de recuperación",
-				"copyBackupCodesError": "Error al copiar los códigos de recuperación",
-				"copyBackupCodesSuccess": "Códigos de recuperación copiados al portapapeles",
-				"description": "Gestiona tu autenticación de dos factores.",
-				"enable": "Habilitar Autenticación de dos factores",
-				"enter6DigitCode": "Introduce el código de 6 dígitos",
-				"passwordDialog": {
-					"cancel": "Cancelar",
-					"confirm": "Confirmar",
-					"confirming": "Confirmando...",
-					"confirmPassword": "Confirmar Contraseña",
-					"description": "Para tu seguridad, por favor ingresa tu contraseña actual para {action} Autenticación de dos factores.",
-					"password": "Contraseña",
-					"title": "Confirmar Contraseña"
-				},
-				"save": "Guardar Autenticación de dos factores",
-				"title": "Autenticación de dos factores",
-				"verifyAndComplete": "Verificar y completar",
-				"verifyAuthenticatorApp": "Verificar la aplicación de autenticador",
-				"verifying": "Verificando...",
-				"viewBackupCodes": "Ver Códigos de recuperación",
-				"willPrompt": "Se te pedirá que configure la autenticación de dos factores usando una aplicación de autenticador (por ejemplo, Google Authenticator, Authy)."
-			}
-		}
-	},
-	"auth": {
-		"signIn": {
-			"button": "Iniciar Sesión",
-			"description": "Ingresa tus credenciales para iniciar sesión en tu cuenta",
-			"forgotPassword": "¿Olvidaste tu contraseña?",
-			"noAccount": "¿No tienes una cuenta?",
-			"signUp": "Regístrate",
-			"title": "Bienvenido",
-			"twoFactor": {
-				"title": "Autenticación de dos factores",
-				"description": "Ingresa el código de autenticación de dos factores",
-				"button": "Verificar",
-				"backToSignIn": "Volver a Iniciar Sesión"
-			},
-			"form": {
-				"email": "Correo Electrónico",
-				"password": "Contraseña",
-				"button": "Iniciar Sesión",
-				"forgotPassword": "¿Olvidaste tu contraseña?"
-			}
-		},
-		"signUp": {
-			"button": "Registrarse",
-			"description": "Ingresa tus datos para crear tu cuenta",
-			"hasAccount": "¿Ya tienes una cuenta?",
-			"signIn": "Iniciar sesión",
-			"title": "Crear una cuenta"
-		}
-	},
-	"pricing": {
-		"features": {
-			"two-factor": "Autenticación de Dos Factores",
-			"social-login": "Inicio de Sesión Social",
-			"passkeys": "Autenticación con Passkeys",
-			"basic-dashboard-access": "Acceso al Panel Básico",
-			"email-support": "Soporte por Email",
-			"all-basic": "Todas las Características Básicas",
-			"organizations": "Soporte Multi-Organización",
-			"role-based-access-control": "Control de Acceso Basado en Roles",
-			"all-pro": "Todas las Características Pro",
-			"advanced-dashboard-access": "Acceso al Panel Avanzado",
-			"priority-support": "Soporte Prioritario y SLA"
-		},
-		"limits": {
-			"users": "Miembros del Equipo",
-			"organizations": "Organizaciones",
-			"storage": "Almacenamiento",
-			"api-calls": "Llamadas API/Mes"
-		},
-		"permissions": {
-			"read": "Acceso de Lectura",
-			"write": "Acceso de Escritura",
-			"admin": "Acceso de Administrador",
-			"billing": "Acceso de Facturación"
-		},
-		"categories": {
-			"authentication": "Autenticación",
-			"limits": "Límites",
-			"support": "Soporte",
-			"features": "Características"
-		},
-		"unlimited": "Ilimitado"
-	},
-	"common": {
-		"footer": "© {{year}} Tu Compañía. Todos los derechos reservados.",
-		"more": "Más",
-		"workflowStreamline": "Optimiza tu flujo de trabajo con nuestra potente plataforma.",
-		"yourLogo": "Tu Logo"
-	},
-	"dashboard": {
-		"acquisitionNeedsAttention": "La adquisición necesita atención",
-		"activeAccounts": "Cuentas Activas",
-		"chart": {
-			"days30": "30 días",
-			"days7": "7 días",
-			"days90": "90 días",
-			"desktop": "Escritorio",
-			"last30Days": "Últimos 30 días",
-			"last3Months": "Últimos 3 meses",
-			"last7Days": "Últimos 7 días",
-			"mobile": "Móvil",
-			"showingTotalVisitors": "Mostrando el total de visitantes de los últimos",
-			"title": "Gráfico de Área - Interactivo",
-			"visitors": "Visitantes"
-		},
-		"downThisPeriod": "Baja del 20% en este período",
-		"engagementExceedsTargets": "El compromiso supera los objetivos",
-		"growthRate": "Tasa de Crecimiento",
-		"meetsGrowthProjections": "Cumple con las proyecciones de crecimiento",
-		"newCustomers": "Nuevos Clientes",
-		"steadyPerformanceIncrease": "Aumento constante del rendimiento",
-		"strongUserRetention": "Fuerte retención de usuarios",
-		"totalRevenue": "Ingresos Totales",
-		"trendingUp": "Tendencia al alza este mes",
-		"visitorsLast6Months": "Visitantes de los últimos 6 meses"
-	},
-	"dataTable": {
-		"actions": {
-			"copyId": "Copiar ID de sección",
-			"copySuccess": "ID de sección copiado al portapapeles.",
-			"delete": "Eliminar",
-			"edit": "Editar",
-			"favorite": "Favorito",
-			"makeCopy": "Hacer una copia",
-			"open": "Abrir",
-			"openMenu": "Abrir menú",
-			"view": "Ver"
-		},
-		"chart": {
-			"desktop": "Escritorio",
-			"mobile": "Móvil",
-			"months": {
-				"april": "Abril",
-				"february": "Febrero",
-				"january": "Enero",
-				"june": "Junio",
-				"march": "Marzo",
-				"may": "Mayo"
-			}
-		},
-		"columns": "Columnas",
-		"deleteConfirmation": {
-			"cancel": "Cancelar",
-			"confirm": "Confirmar",
-			"description": "Esta acción no se puede deshacer. Esto eliminará permanentemente las secciones seleccionadas.",
-			"title": "¿Estás seguro?"
-		},
-		"deleteSelected": "Eliminar ({{count}})",
-		"done": "Hecho",
-		"dragReorder": "Arrastrar para reordenar",
-		"drawer": {
-			"buttons": {
-				"done": "Hecho",
-				"submit": "Enviar"
-			},
-			"chartDescription": "Mostrando el total de visitantes de los últimos 6 meses. Este es solo un texto aleatorio para probar el diseño. Se extiende por varias líneas y debería ajustarse.",
-			"description": "Un resumen de los detalles de la sección.",
-			"labels": {
-				"header": "Encabezado",
-				"limit": "Límite",
-				"reviewer": "Revisor",
-				"status": "Estado",
-				"target": "Objetivo",
-				"type": "Tipo"
-			},
-			"mrr": "Ingresos Mensuales Recurrentes",
-			"placeholders": {
-				"selectReviewer": "Selecciona un revisor",
-				"selectStatus": "Selecciona un estado",
-				"selectType": "Selecciona un tipo"
-			},
-			"tabs": {
-				"performance": "Rendimiento",
-				"view": "Ver"
-			},
-			"title": "Ver Detalles",
-			"titleWithHeader": "Ver detalles de {{header}}"
-		},
-		"filterPlaceholder": "Filtrar secciones...",
-		"headers": {
-			"header": "Encabezado",
-			"limit": "Límite",
-			"reviewer": "Revisor",
-			"sectionType": "Tipo de Sección",
-			"status": "Estado",
-			"target": "Objetivo"
-		},
-		"inProgress": "En Progreso",
-		"noResults": "No hay resultados.",
-		"notStarted": "No Iniciado",
-		"pagination": {
-			"firstPage": "Ir a la primera página",
-			"go": "Ir",
-			"goToPage": "Ir a la página:",
-			"lastPage": "Ir a la última página",
-			"nextPage": "Ir a la página siguiente",
-			"of": "de",
-			"page": "Página",
-			"pageInfo": "Página {{page}} de {{total}}",
-			"previousPage": "Ir a la página anterior",
-			"rowsPerPage": "Filas por página",
-			"selectedRows": "{{count}} de {{total}} fila(s) seleccionada(s)."
-		},
-		"placeholders": {
-			"assignReviewer": "Asignar revisor",
-			"search": "Buscar..."
-		},
-		"reviewers": {
-			"eddie": "Eddie Lake",
-			"emily": "Emily Whalen",
-			"jamik": "Jamik Tashpulatov"
-		},
-		"selectAll": "Seleccionar todo",
-		"selectFocusDocuments": "Seleccionar documentos de enfoque",
-		"selectKeyPersonnel": "Seleccionar personal clave",
-		"selectOutline": "Seleccionar esquema",
-		"selectPastPerformance": "Seleccionar rendimiento pasado",
-		"selectRow": "Seleccionar fila",
-		"statuses": {
-			"done": "Hecho",
-			"inProgress": "En Progreso",
-			"notStarted": "No Iniciado"
-		},
-		"submit": "Enviar",
-		"tabs": {
-			"active": "Activo",
-			"all": "Todos",
-			"archived": "Archivado"
-		},
-		"toast": {
-			"error": "Error",
-			"reorder": {
-				"error": "¡Error!",
-				"saving": "Guardando...",
-				"success": "¡Hecho!"
-			},
-			"saving": "Guardando {{header}}",
-			"success": "Hecho"
-		},
-		"toolbar": {
-			"addSection": "Añadir Sección",
-			"customizeColumns": "Personalizar Columnas"
-		},
-		"trendingUpThisMonth": "Tendencia al alza este mes",
-		"types": {
-			"approach": "Enfoque Técnico",
-			"capabilities": "Capacidades",
-			"cover": "Portada",
-			"design": "Diseño",
-			"focus": "Documentos de Enfoque",
-			"narrative": "Narrativa",
-			"summary": "Resumen Ejecutivo",
-			"toc": "Tabla de Contenidos"
-		},
-		"views": {
-			"focusDocuments": "Documentos de Enfoque",
-			"keyPersonnel": "Personal Clave",
-			"label": "Ver",
-			"outline": "Esquema",
-			"pastPerformance": "Rendimiento Pasado",
-			"placeholder": "Selecciona una vista"
-		}
-	},
-	"form": {
-		"confirmPassword": {
-			"label": "Confirmar Contraseña"
-		},
-		"createAccountButton": "Crear Cuenta",
-		"email": {
-			"label": "Correo Electrónico",
-			"placeholder": "nombre@ejemplo.com"
-		},
-		"fullName": {
-			"label": "Nombre Completo",
-			"placeholder": "John Doe"
-		},
-		"password": {
-			"label": "Contraseña",
-			"mustContain": "La contraseña debe contener:",
-			"requirements": {
-				"length": "Al menos 8 caracteres",
-				"lowercase": "Al menos una letra minúscula",
-				"number": "Al menos un número",
-				"special": "Al menos un carácter especial",
-				"uppercase": "Al menos una letra mayúscula"
-			}
-		}
-	},
-	"misc": {
-		"welcomeToReact": "Bienvenido a React y react-i18next"
-	},
-	"notifications": {
-		"account": {
-			"createError": "Error al crear la cuenta. Por favor, inténtalo de nuevo.",
-			"createSuccess": "¡Cuenta creada con éxito!"
-		}
-	},
-	"sidebar": {
-		"analytics": "Analytics",
-		"dashboard": "Dashboard",
-		"documents": {
-			"dataLibrary": "Biblioteca de Datos",
-			"reports": "Informes",
-			"title": "Documentos",
-			"wordAssistant": "Asistente de Palabras"
-		},
-		"lifecycle": "Ciclo de Vida",
-		"projects": "Proyectos",
-		"secondary": {
-			"getHelp": "Ayuda",
-			"search": "Buscar",
-			"settings": "Configuración"
-		},
-		"team": "Equipo",
-		"userMenu": {
-			"account": "Cuenta",
-			"billing": "Facturación",
-			"language": "Idioma",
-			"notifications": "Notificaciones",
-			"signOut": "Cerrar Sesión"
-		}
-	},
-	"validation": {
-		"email": {
-			"invalid": "Por favor, introduce una dirección de correo electrónico válida."
-		},
-		"name": {
-			"length": "El nombre debe tener al menos 2 caracteres."
-		},
-		"password": {
-			"length": "La contraseña debe tener al menos 8 caracteres",
-			"lowercase": "Debe contener al menos una letra minúscula",
-			"mismatch": "Las contraseñas no coinciden",
-			"number": "Debe contener al menos un número",
-			"special": "Debe contener al menos un carácter especial",
-			"uppercase": "Debe contener al menos una letra mayúscula"
-		}
-	},
-	"tour": {
-		"welcome": "Bienvenido al Tour",
-		"description": "Recorre un tour rápido para aprender sobre las principales características y funcionalidades de esta aplicación.",
-		"skip": "Saltar",
-		"start": "Iniciar Tour",
-		"settingsTour": {
-			"step1": "Aquí puedes gestionar tus configuraciones de autenticación de dos factores.",
-			"step2": "Activa la autenticación de dos factores para agregar una capa adicional de seguridad a tu cuenta."
-		},
-		"homeTour": {
-			"step1": "En la página de configuración puedes gestionar tus configuraciones de autenticación de dos factores, información, etc."
-		}
-	}
+  "account": {
+    "settings": {
+      "profile": {
+        "description": "Gestiona tu información de perfil de cuenta.",
+        "email": "Correo Electrónico",
+        "save": "Guardar Perfil",
+        "title": "Perfil",
+        "username": "Nombre de Usuario"
+      },
+      "title": "Configuración de Cuenta",
+      "twoFactor": {
+        "backupCodes": "Códigos de recuperación",
+        "backupCodesDescription": "Guarda estos códigos de recuperación en un lugar seguro. No los pierdas.",
+        "completeYour2FASetup": "Completar la configuración de la autenticación de dos factores",
+        "copyBackupCodes": "Copiar Códigos de recuperación",
+        "copyBackupCodesError": "Error al copiar los códigos de recuperación",
+        "copyBackupCodesSuccess": "Códigos de recuperación copiados al portapapeles",
+        "description": "Gestiona tu autenticación de dos factores.",
+        "enable": "Habilitar Autenticación de dos factores",
+        "enter6DigitCode": "Introduce el código de 6 dígitos",
+        "passwordDialog": {
+          "cancel": "Cancelar",
+          "confirm": "Confirmar",
+          "confirming": "Confirmando...",
+          "confirmPassword": "Confirmar Contraseña",
+          "description": "Para tu seguridad, por favor ingresa tu contraseña actual para {action} Autenticación de dos factores.",
+          "password": "Contraseña",
+          "title": "Confirmar Contraseña"
+        },
+        "save": "Guardar Autenticación de dos factores",
+        "title": "Autenticación de dos factores",
+        "verifyAndComplete": "Verificar y completar",
+        "verifyAuthenticatorApp": "Verificar la aplicación de autenticador",
+        "verifying": "Verificando...",
+        "viewBackupCodes": "Ver Códigos de recuperación",
+        "willPrompt": "Se te pedirá que configure la autenticación de dos factores usando una aplicación de autenticador (por ejemplo, Google Authenticator, Authy)."
+      }
+    }
+  },
+  "auth": {
+    "signIn": {
+      "button": "Iniciar Sesión",
+      "description": "Ingresa tus credenciales para iniciar sesión en tu cuenta",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿No tienes una cuenta?",
+      "signUp": "Regístrate",
+      "title": "Bienvenido",
+      "twoFactor": {
+        "title": "Autenticación de dos factores",
+        "description": "Ingresa el código de autenticación de dos factores",
+        "button": "Verificar",
+        "backToSignIn": "Volver a Iniciar Sesión"
+      },
+      "form": {
+        "email": "Correo Electrónico",
+        "password": "Contraseña",
+        "button": "Iniciar Sesión",
+        "forgotPassword": "¿Olvidaste tu contraseña?"
+      }
+    },
+    "signUp": {
+      "button": "Registrarse",
+      "description": "Ingresa tus datos para crear tu cuenta",
+      "hasAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Iniciar sesión",
+      "title": "Crear una cuenta"
+    }
+  },
+  "pricing": {
+    "features": {
+      "two-factor": "Autenticación de Dos Factores",
+      "social-login": "Inicio de Sesión Social",
+      "passkeys": "Autenticación con Passkeys",
+      "basic-dashboard-access": "Acceso al Panel Básico",
+      "email-support": "Soporte por Email",
+      "all-basic": "Todas las Características Básicas",
+      "organizations": "Soporte Multi-Organización",
+      "role-based-access-control": "Control de Acceso Basado en Roles",
+      "all-pro": "Todas las Características Pro",
+      "advanced-dashboard-access": "Acceso al Panel Avanzado",
+      "priority-support": "Soporte Prioritario y SLA"
+    },
+    "limits": {
+      "users": "Miembros del Equipo",
+      "organizations": "Organizaciones",
+      "storage": "Almacenamiento",
+      "api-calls": "Llamadas API/Mes"
+    },
+    "permissions": {
+      "read": "Acceso de Lectura",
+      "write": "Acceso de Escritura",
+      "admin": "Acceso de Administrador",
+      "billing": "Acceso de Facturación"
+    },
+    "categories": {
+      "authentication": "Autenticación",
+      "limits": "Límites",
+      "support": "Soporte",
+      "features": "Características"
+    },
+    "unlimited": "Ilimitado"
+  },
+  "common": {
+    "footer": "© {{year}} Tu Compañía. Todos los derechos reservados.",
+    "more": "Más",
+    "workflowStreamline": "Optimiza tu flujo de trabajo con nuestra potente plataforma.",
+    "yourLogo": "Tu Logo"
+  },
+  "dashboard": {
+    "acquisitionNeedsAttention": "La adquisición necesita atención",
+    "activeAccounts": "Cuentas Activas",
+    "chart": {
+      "days30": "30 días",
+      "days7": "7 días",
+      "days90": "90 días",
+      "desktop": "Escritorio",
+      "last30Days": "Últimos 30 días",
+      "last3Months": "Últimos 3 meses",
+      "last7Days": "Últimos 7 días",
+      "mobile": "Móvil",
+      "showingTotalVisitors": "Mostrando el total de visitantes de los últimos",
+      "title": "Gráfico de Área - Interactivo",
+      "visitors": "Visitantes"
+    },
+    "downThisPeriod": "Baja del 20% en este período",
+    "engagementExceedsTargets": "El compromiso supera los objetivos",
+    "growthRate": "Tasa de Crecimiento",
+    "meetsGrowthProjections": "Cumple con las proyecciones de crecimiento",
+    "newCustomers": "Nuevos Clientes",
+    "steadyPerformanceIncrease": "Aumento constante del rendimiento",
+    "strongUserRetention": "Fuerte retención de usuarios",
+    "totalRevenue": "Ingresos Totales",
+    "trendingUp": "Tendencia al alza este mes",
+    "visitorsLast6Months": "Visitantes de los últimos 6 meses"
+  },
+  "dataTable": {
+    "actions": {
+      "copyId": "Copiar ID de sección",
+      "copySuccess": "ID de sección copiado al portapapeles.",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "favorite": "Favorito",
+      "makeCopy": "Hacer una copia",
+      "open": "Abrir",
+      "openMenu": "Abrir menú",
+      "view": "Ver"
+    },
+    "chart": {
+      "desktop": "Escritorio",
+      "mobile": "Móvil",
+      "months": {
+        "april": "Abril",
+        "february": "Febrero",
+        "january": "Enero",
+        "june": "Junio",
+        "march": "Marzo",
+        "may": "Mayo"
+      }
+    },
+    "columns": "Columnas",
+    "deleteConfirmation": {
+      "cancel": "Cancelar",
+      "confirm": "Confirmar",
+      "description": "Esta acción no se puede deshacer. Esto eliminará permanentemente las secciones seleccionadas.",
+      "title": "¿Estás seguro?"
+    },
+    "deleteSelected": "Eliminar ({{count}})",
+    "done": "Hecho",
+    "dragReorder": "Arrastrar para reordenar",
+    "drawer": {
+      "buttons": {
+        "done": "Hecho",
+        "submit": "Enviar"
+      },
+      "chartDescription": "Mostrando el total de visitantes de los últimos 6 meses. Este es solo un texto aleatorio para probar el diseño. Se extiende por varias líneas y debería ajustarse.",
+      "description": "Un resumen de los detalles de la sección.",
+      "labels": {
+        "header": "Encabezado",
+        "limit": "Límite",
+        "reviewer": "Revisor",
+        "status": "Estado",
+        "target": "Objetivo",
+        "type": "Tipo"
+      },
+      "mrr": "Ingresos Mensuales Recurrentes",
+      "placeholders": {
+        "selectReviewer": "Selecciona un revisor",
+        "selectStatus": "Selecciona un estado",
+        "selectType": "Selecciona un tipo"
+      },
+      "tabs": {
+        "performance": "Rendimiento",
+        "view": "Ver"
+      },
+      "title": "Ver Detalles",
+      "titleWithHeader": "Ver detalles de {{header}}"
+    },
+    "filterPlaceholder": "Filtrar secciones...",
+    "headers": {
+      "header": "Encabezado",
+      "limit": "Límite",
+      "reviewer": "Revisor",
+      "sectionType": "Tipo de Sección",
+      "status": "Estado",
+      "target": "Objetivo"
+    },
+    "inProgress": "En Progreso",
+    "noResults": "No hay resultados.",
+    "notStarted": "No Iniciado",
+    "pagination": {
+      "firstPage": "Ir a la primera página",
+      "go": "Ir",
+      "goToPage": "Ir a la página:",
+      "lastPage": "Ir a la última página",
+      "nextPage": "Ir a la página siguiente",
+      "of": "de",
+      "page": "Página",
+      "pageInfo": "Página {{page}} de {{total}}",
+      "previousPage": "Ir a la página anterior",
+      "rowsPerPage": "Filas por página",
+      "selectedRows": "{{count}} de {{total}} fila(s) seleccionada(s)."
+    },
+    "placeholders": {
+      "assignReviewer": "Asignar revisor",
+      "search": "Buscar..."
+    },
+    "reviewers": {
+      "eddie": "Eddie Lake",
+      "emily": "Emily Whalen",
+      "jamik": "Jamik Tashpulatov"
+    },
+    "selectAll": "Seleccionar todo",
+    "selectFocusDocuments": "Seleccionar documentos de enfoque",
+    "selectKeyPersonnel": "Seleccionar personal clave",
+    "selectOutline": "Seleccionar esquema",
+    "selectPastPerformance": "Seleccionar rendimiento pasado",
+    "selectRow": "Seleccionar fila",
+    "statuses": {
+      "done": "Hecho",
+      "inProgress": "En Progreso",
+      "notStarted": "No Iniciado"
+    },
+    "submit": "Enviar",
+    "tabs": {
+      "active": "Activo",
+      "all": "Todos",
+      "archived": "Archivado"
+    },
+    "toast": {
+      "error": "Error",
+      "reorder": {
+        "error": "¡Error!",
+        "saving": "Guardando...",
+        "success": "¡Hecho!"
+      },
+      "saving": "Guardando {{header}}",
+      "success": "Hecho"
+    },
+    "toolbar": {
+      "addSection": "Añadir Sección",
+      "customizeColumns": "Personalizar Columnas"
+    },
+    "trendingUpThisMonth": "Tendencia al alza este mes",
+    "types": {
+      "approach": "Enfoque Técnico",
+      "capabilities": "Capacidades",
+      "cover": "Portada",
+      "design": "Diseño",
+      "focus": "Documentos de Enfoque",
+      "narrative": "Narrativa",
+      "summary": "Resumen Ejecutivo",
+      "toc": "Tabla de Contenidos"
+    },
+    "views": {
+      "focusDocuments": "Documentos de Enfoque",
+      "keyPersonnel": "Personal Clave",
+      "label": "Ver",
+      "outline": "Esquema",
+      "pastPerformance": "Rendimiento Pasado",
+      "placeholder": "Selecciona una vista"
+    }
+  },
+  "form": {
+    "confirmPassword": {
+      "label": "Confirmar Contraseña"
+    },
+    "createAccountButton": "Crear Cuenta",
+    "email": {
+      "label": "Correo Electrónico",
+      "placeholder": "nombre@ejemplo.com"
+    },
+    "fullName": {
+      "label": "Nombre Completo",
+      "placeholder": "John Doe"
+    },
+    "password": {
+      "label": "Contraseña",
+      "mustContain": "La contraseña debe contener:",
+      "requirements": {
+        "length": "Al menos 8 caracteres",
+        "lowercase": "Al menos una letra minúscula",
+        "number": "Al menos un número",
+        "special": "Al menos un carácter especial",
+        "uppercase": "Al menos una letra mayúscula"
+      }
+    }
+  },
+  "misc": {
+    "welcomeToReact": "Bienvenido a React y react-i18next"
+  },
+  "notifications": {
+    "account": {
+      "createError": "Error al crear la cuenta. Por favor, inténtalo de nuevo.",
+      "createSuccess": "¡Cuenta creada con éxito!"
+    }
+  },
+  "sidebar": {
+    "analytics": "Analytics",
+    "dashboard": "Dashboard",
+    "documents": {
+      "dataLibrary": "Biblioteca de Datos",
+      "reports": "Informes",
+      "title": "Documentos",
+      "wordAssistant": "Asistente de Palabras"
+    },
+    "lifecycle": "Ciclo de Vida",
+    "projects": "Proyectos",
+    "secondary": {
+      "getHelp": "Ayuda",
+      "search": "Buscar",
+      "settings": "Configuración"
+    },
+    "team": "Equipo",
+    "userMenu": {
+      "account": "Cuenta",
+      "billing": "Facturación",
+      "language": "Idioma",
+      "notifications": "Notificaciones",
+      "signOut": "Cerrar Sesión"
+    }
+  },
+  "validation": {
+    "email": {
+      "invalid": "Por favor, introduce una dirección de correo electrónico válida."
+    },
+    "name": {
+      "length": "El nombre debe tener al menos 2 caracteres."
+    },
+    "password": {
+      "length": "La contraseña debe tener al menos 8 caracteres",
+      "lowercase": "Debe contener al menos una letra minúscula",
+      "mismatch": "Las contraseñas no coinciden",
+      "number": "Debe contener al menos un número",
+      "special": "Debe contener al menos un carácter especial",
+      "uppercase": "Debe contener al menos una letra mayúscula"
+    }
+  },
+  "tour": {
+    "welcome": "Bienvenido al Tour",
+    "description": "Recorre un tour rápido para aprender sobre las principales características y funcionalidades de esta aplicación.",
+    "skip": "Saltar",
+    "start": "Iniciar Tour",
+    "settingsTour": {
+      "step1": "Aquí puedes gestionar tus configuraciones de autenticación de dos factores.",
+      "step2": "Activa la autenticación de dos factores para agregar una capa adicional de seguridad a tu cuenta."
+    },
+    "homeTour": {
+      "step1": "En la página de configuración puedes gestionar tus configuraciones de autenticación de dos factores, información, etc."
+    }
+  }
 }

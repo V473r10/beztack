@@ -1,11 +1,11 @@
 import {
   Body,
+  Button,
   Container,
   Head,
   Html,
   Preview,
   Text,
-  Button,
 } from "@react-email/components";
 
 interface PasswordResetEmailProps {
@@ -23,23 +23,23 @@ export const PasswordResetEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Text style={title}>Restablecimiento de Contraseña</Text>
+        <Text style={paragraph}>Hola {username},</Text>
         <Text style={paragraph}>
-          Hola {username},
-        </Text>
-        <Text style={paragraph}>
-          Recibimos una solicitud para restablecer la contraseña de tu cuenta en nvn.
+          Recibimos una solicitud para restablecer la contraseña de tu cuenta en
+          nvn.
         </Text>
         <Text style={paragraph}>
           Hacé clic en el siguiente enlace para crear una nueva contraseña:
         </Text>
-        <Button style={button} href={resetUrl}>
+        <Button href={resetUrl} style={button}>
           Restablecer Contraseña
         </Button>
         <Text style={paragraph}>
           Este enlace expirará en 24 horas por motivos de seguridad.
         </Text>
         <Text style={paragraph}>
-          Si no solicitaste este restablecimiento, podés ignorar este email. Tu contraseña permanecerá sin cambios.
+          Si no solicitaste este restablecimiento, podés ignorar este email. Tu
+          contraseña permanecerá sin cambios.
         </Text>
         <Text style={footer}>
           Saludos,

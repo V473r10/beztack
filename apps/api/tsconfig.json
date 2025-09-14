@@ -24,7 +24,7 @@
     "noUnusedLocals": true,
     // "noUnusedParameters": true,
 
-     // Libs & paths
+    // Libs & paths
     "lib": ["ESNext", "DOM"],
     "baseUrl": ".",
     "paths": {

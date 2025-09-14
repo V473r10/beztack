@@ -8,14 +8,20 @@ import { Polar } from "@polar-sh/sdk";
 /**
  * Create configured Polar client
  */
-export function createPolarClient(config?: { accessToken?: string; server?: "production" | "sandbox" }): Polar {
+export function createPolarClient(config?: {
+  accessToken?: string;
+  server?: "production" | "sandbox";
+}): Polar {
   const accessToken = config?.accessToken || process.env.POLAR_ACCESS_TOKEN;
-  const server = config?.server || (process.env.POLAR_SERVER as "production" | "sandbox") || "sandbox";
-  
+  const server =
+    config?.server ||
+    (process.env.POLAR_SERVER as "production" | "sandbox") ||
+    "sandbox";
+
   if (!accessToken) {
     throw new Error("POLAR_ACCESS_TOKEN is required");
   }
-  
+
   return new Polar({
     accessToken,
     server,
@@ -27,11 +33,14 @@ export function createPolarClient(config?: { accessToken?: string; server?: "pro
  */
 export class PolarApiService {
   private client: Polar;
-  
-  constructor(config?: { accessToken?: string; server?: "production" | "sandbox" }) {
+
+  constructor(config?: {
+    accessToken?: string;
+    server?: "production" | "sandbox";
+  }) {
     this.client = createPolarClient(config);
   }
-  
+
   /**
    * Get organization information
    */
@@ -39,18 +48,18 @@ export class PolarApiService {
     const response = await this.client.organizations.get({ id: orgId });
     return (response as any).result || response;
   }
-  
+
   /**
    * List all products for an organization
    */
   async getProducts(orgId: string): Promise<any[]> {
-    const response = await this.client.products.list({ 
+    const response = await this.client.products.list({
       organizationId: orgId,
-      isArchived: false 
+      isArchived: false,
     });
     return response.result?.items || [];
   }
-  
+
   /**
    * Get specific product by ID
    */
@@ -58,7 +67,7 @@ export class PolarApiService {
     const response = await this.client.products.get({ id: productId });
     return (response as any).result || response;
   }
-  
+
   /**
    * Create a customer
    */
@@ -74,7 +83,7 @@ export class PolarApiService {
     });
     return (response as any).result || response;
   }
-  
+
   /**
    * Get customer by ID
    */
@@ -82,22 +91,25 @@ export class PolarApiService {
     const response = await this.client.customers.get({ id: customerId });
     return (response as any).result || response;
   }
-  
+
   /**
    * Update customer
    */
-  async updateCustomer(customerId: string, data: {
-    name?: string;
-    email?: string;
-    metadata?: Record<string, any>;
-  }): Promise<any> {
+  async updateCustomer(
+    customerId: string,
+    data: {
+      name?: string;
+      email?: string;
+      metadata?: Record<string, any>;
+    }
+  ): Promise<any> {
     const response = await this.client.customers.update({
       id: customerId,
-      customerUpdate: data
+      customerUpdate: data,
     });
     return (response as any).result || response;
   }
-  
+
   /**
    * List customer subscriptions
    */
@@ -107,7 +119,7 @@ export class PolarApiService {
     });
     return response.result?.items || [];
   }
-  
+
   /**
    * Create a checkout session
    */
@@ -115,7 +127,7 @@ export class PolarApiService {
     const response = await this.client.checkouts.create(data);
     return (response as any).result || response;
   }
-  
+
   /**
    * Get checkout session
    */
@@ -123,7 +135,7 @@ export class PolarApiService {
     const response = await this.client.checkouts.get({ id: checkoutId });
     return (response as any).result || response;
   }
-  
+
   /**
    * Create custom checkout link for a product
    */
@@ -139,16 +151,16 @@ export class PolarApiService {
       successUrl: data.successUrl || process.env.POLAR_SUCCESS_URL,
       metadata: data.metadata,
     };
-    
+
     if (data.customerId) {
       checkoutData.customerId = data.customerId;
     } else if (data.customerEmail) {
       checkoutData.customerEmail = data.customerEmail;
     }
-    
+
     return this.createCheckout(checkoutData);
   }
-  
+
   /**
    * Get customer benefits/entitlements
    */
@@ -173,11 +185,11 @@ export const polarApi = new PolarApiService();
 export async function validatePolarConnection(): Promise<boolean> {
   try {
     const client = createPolarClient();
-    // Try to make a simple API call to validate connection  
+    // Try to make a simple API call to validate connection
     await client.organizations.list({ limit: 1 });
     return true;
   } catch (error) {
-    console.error('Polar connection validation failed:', error);
+    console.error("Polar connection validation failed:", error);
     return false;
   }
 }
@@ -187,19 +199,19 @@ export async function validatePolarConnection(): Promise<boolean> {
  */
 export async function getOrganizationProducts(orgId: string) {
   const products = await polarApi.getProducts(orgId);
-  
+
   // Map products to tiers based on environment variables
   const tierMapping = {
-    [process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID!]: 'basic',
-    [process.env.POLAR_BASIC_YEARLY_PRODUCT_ID!]: 'basic',
-    [process.env.POLAR_PRO_MONTHLY_PRODUCT_ID!]: 'pro',
-    [process.env.POLAR_PRO_YEARLY_PRODUCT_ID!]: 'pro',
-    [process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID!]: 'ultimate',
-    [process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID!]: 'ultimate',
+    [process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID!]: "basic",
+    [process.env.POLAR_BASIC_YEARLY_PRODUCT_ID!]: "basic",
+    [process.env.POLAR_PRO_MONTHLY_PRODUCT_ID!]: "pro",
+    [process.env.POLAR_PRO_YEARLY_PRODUCT_ID!]: "pro",
+    [process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID!]: "ultimate",
+    [process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID!]: "ultimate",
   };
-  
-  return products.map(product => ({
+
+  return products.map((product) => ({
     ...product,
-    tier: tierMapping[product.id] || 'unknown'
+    tier: tierMapping[product.id] || "unknown",
   }));
 }

@@ -11,6 +11,6 @@ export const MyEmail = () => {
       </Button>
     </Html>
   );
-}
+};
 
 export default MyEmail;

@@ -1,12 +1,12 @@
 import {
   Body,
+  Button,
   Container,
   Head,
+  Hr,
   Html,
   Preview,
   Text,
-  Button,
-  Hr,
 } from "@react-email/components";
 
 interface SubscriptionConfirmationEmailProps {
@@ -30,13 +30,12 @@ export const SubscriptionConfirmationEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Text style={title}>¡Suscripción Confirmada!</Text>
+        <Text style={paragraph}>Hola {username},</Text>
         <Text style={paragraph}>
-          Hola {username},
+          ¡Gracias por suscribirte al plan <strong>{planName}</strong> de nvn!
+          Tu suscripción está ahora activa.
         </Text>
-        <Text style={paragraph}>
-          ¡Gracias por suscribirte al plan <strong>{planName}</strong> de nvn! Tu suscripción está ahora activa.
-        </Text>
-        
+
         <div style={detailsContainer}>
           <Text style={detailsTitle}>Detalles de la Suscripción:</Text>
           <Text style={detailsItem}>
@@ -53,17 +52,19 @@ export const SubscriptionConfirmationEmail = ({
         <Hr style={hr} />
 
         <Text style={paragraph}>
-          Ahora tenés acceso a todas las funcionalidades premium de tu plan. Podés gestionar tu suscripción desde tu panel de control:
+          Ahora tenés acceso a todas las funcionalidades premium de tu plan.
+          Podés gestionar tu suscripción desde tu panel de control:
         </Text>
-        
-        <Button style={button} href={dashboardUrl}>
+
+        <Button href={dashboardUrl} style={button}>
           Ver Panel de Control
         </Button>
 
         <Text style={paragraph}>
-          Si tenés alguna pregunta sobre tu suscripción, no dudes en contactarnos.
+          Si tenés alguna pregunta sobre tu suscripción, no dudes en
+          contactarnos.
         </Text>
-        
+
         <Text style={footer}>
           Saludos,
           <br />

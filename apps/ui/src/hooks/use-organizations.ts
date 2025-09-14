@@ -1,18 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import type {
+  CreateOrganizationData,
+  CreateTeamData,
+  InviteMemberData,
   Organization,
-  OrganizationMember,
   OrganizationInvitation,
+  OrganizationMember,
   Team,
   TeamMember,
-  CreateOrganizationData,
-  UpdateOrganizationData,
-  InviteMemberData,
   UpdateMemberRoleData,
-  CreateTeamData,
+  UpdateOrganizationData,
 } from "@/lib/organization-types";
-import { toast } from "sonner";
 
 // Organization queries
 export function useOrganizations() {
@@ -74,7 +74,7 @@ export function useOrganizationInvitations(organizationId?: string) {
       }
       // Map API response to our interface
       const apiData = response.data as any[];
-      return apiData.map(inv => ({
+      return apiData.map((inv) => ({
         ...inv,
         invitedBy: inv.inviterId,
         createdAt: inv.createdAt || new Date(),
@@ -94,7 +94,7 @@ export function useUserInvitations() {
       }
       // Map API response to our interface
       const apiData = response.data as any[];
-      return apiData.map(inv => ({
+      return apiData.map((inv) => ({
         ...inv,
         invitedBy: inv.inviterId,
         createdAt: inv.createdAt || new Date(),
@@ -144,7 +144,7 @@ export function useTeamMembers(teamId?: string) {
 // Organization mutations
 export function useCreateOrganization() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: CreateOrganizationData) => {
       const response = await authClient.organization.create({
@@ -166,16 +166,24 @@ export function useCreateOrganization() {
       toast.success(`Organization "${data.name}" created successfully`);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to create organization");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create organization"
+      );
     },
   });
 }
 
 export function useUpdateOrganization() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ organizationId, data }: { organizationId: string; data: UpdateOrganizationData }) => {
+    mutationFn: async ({
+      organizationId,
+      data,
+    }: {
+      organizationId: string;
+      data: UpdateOrganizationData;
+    }) => {
       const response = await authClient.organization.update({
         data,
         organizationId,
@@ -195,14 +203,16 @@ export function useUpdateOrganization() {
       toast.success("Organization updated successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to update organization");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update organization"
+      );
     },
   });
 }
 
 export function useDeleteOrganization() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (organizationId: string) => {
       const response = await authClient.organization.delete({
@@ -216,14 +226,16 @@ export function useDeleteOrganization() {
       toast.success("Organization deleted successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to delete organization");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete organization"
+      );
     },
   });
 }
 
 export function useSetActiveOrganization() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (organizationId: string) => {
       const response = await authClient.organization.setActive({
@@ -236,7 +248,11 @@ export function useSetActiveOrganization() {
       toast.success("Active organization changed");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to change active organization");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to change active organization"
+      );
     },
   });
 }
@@ -244,9 +260,15 @@ export function useSetActiveOrganization() {
 // Member mutations
 export function useInviteMember() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ organizationId, data }: { organizationId: string; data: InviteMemberData }) => {
+    mutationFn: async ({
+      organizationId,
+      data,
+    }: {
+      organizationId: string;
+      data: InviteMemberData;
+    }) => {
       const response = await authClient.organization.inviteMember({
         organizationId,
         email: data.email,
@@ -256,20 +278,32 @@ export function useInviteMember() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["organizationInvitations", variables.organizationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["organizationInvitations", variables.organizationId],
+      });
       toast.success(`Invitation sent to ${variables.data.email}`);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to send invitation");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send invitation"
+      );
     },
   });
 }
 
 export function useUpdateMemberRole() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ organizationId, userId, data }: { organizationId: string; userId: string; data: UpdateMemberRoleData }) => {
+    mutationFn: async ({
+      organizationId,
+      userId,
+      data,
+    }: {
+      organizationId: string;
+      userId: string;
+      data: UpdateMemberRoleData;
+    }) => {
       const response = await authClient.organization.updateMemberRole({
         organizationId,
         memberId: userId,
@@ -278,20 +312,30 @@ export function useUpdateMemberRole() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["organizationMembers", variables.organizationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["organizationMembers", variables.organizationId],
+      });
       toast.success("Member role updated successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to update member role");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update member role"
+      );
     },
   });
 }
 
 export function useRemoveMember() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ organizationId, userId }: { organizationId: string; userId: string }) => {
+    mutationFn: async ({
+      organizationId,
+      userId,
+    }: {
+      organizationId: string;
+      userId: string;
+    }) => {
       const response = await authClient.organization.removeMember({
         memberIdOrEmail: userId,
         organizationId,
@@ -299,18 +343,22 @@ export function useRemoveMember() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["organizationMembers", variables.organizationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["organizationMembers", variables.organizationId],
+      });
       toast.success("Member removed successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to remove member");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to remove member"
+      );
     },
   });
 }
 
 export function useLeaveOrganization() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (organizationId: string) => {
       const response = await authClient.organization.leave({
@@ -324,7 +372,9 @@ export function useLeaveOrganization() {
       toast.success("Left organization successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to leave organization");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to leave organization"
+      );
     },
   });
 }
@@ -332,7 +382,7 @@ export function useLeaveOrganization() {
 // Invitation mutations
 export function useAcceptInvitation() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (invitationId: string) => {
       const response = await authClient.organization.acceptInvitation({
@@ -346,14 +396,16 @@ export function useAcceptInvitation() {
       toast.success("Invitation accepted successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to accept invitation");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to accept invitation"
+      );
     },
   });
 }
 
 export function useRejectInvitation() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (invitationId: string) => {
       const response = await authClient.organization.rejectInvitation({
@@ -366,27 +418,39 @@ export function useRejectInvitation() {
       toast.success("Invitation rejected");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to reject invitation");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to reject invitation"
+      );
     },
   });
 }
 
 export function useCancelInvitation() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ organizationId: _organizationId, invitationId }: { organizationId: string; invitationId: string }) => {
+    mutationFn: async ({
+      organizationId: _organizationId,
+      invitationId,
+    }: {
+      organizationId: string;
+      invitationId: string;
+    }) => {
       const response = await authClient.organization.cancelInvitation({
         invitationId,
       });
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["organizationInvitations", variables.organizationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["organizationInvitations", variables.organizationId],
+      });
       toast.success("Invitation cancelled");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to cancel invitation");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to cancel invitation"
+      );
     },
   });
 }
@@ -394,9 +458,15 @@ export function useCancelInvitation() {
 // Team mutations
 export function useCreateTeam() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ organizationId, data }: { organizationId: string; data: CreateTeamData }) => {
+    mutationFn: async ({
+      organizationId,
+      data,
+    }: {
+      organizationId: string;
+      data: CreateTeamData;
+    }) => {
       const response = await authClient.organization.createTeam({
         organizationId,
         name: data.name,
@@ -407,41 +477,63 @@ export function useCreateTeam() {
       return response.data as Team;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["teams", variables.organizationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["teams", variables.organizationId],
+      });
       toast.success(`Team "${data.name}" created successfully`);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to create team");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create team"
+      );
     },
   });
 }
 
 export function useDeleteTeam() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ organizationId: _organizationId, teamId }: { organizationId: string; teamId: string }) => {
+    mutationFn: async ({
+      organizationId: _organizationId,
+      teamId,
+    }: {
+      organizationId: string;
+      teamId: string;
+    }) => {
       const response = await authClient.organization.removeTeam({
         teamId,
       });
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["teams", variables.organizationId] });
-      queryClient.invalidateQueries({ queryKey: ["teamMembers", variables.teamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["teams", variables.organizationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["teamMembers", variables.teamId],
+      });
       toast.success("Team deleted successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to delete team");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete team"
+      );
     },
   });
 }
 
 export function useAddTeamMember() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
+    mutationFn: async ({
+      teamId,
+      userId,
+    }: {
+      teamId: string;
+      userId: string;
+    }) => {
       const response = await authClient.organization.addTeamMember({
         teamId,
         userId,
@@ -449,20 +541,30 @@ export function useAddTeamMember() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["teamMembers", variables.teamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["teamMembers", variables.teamId],
+      });
       toast.success("Member added to team successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to add team member");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add team member"
+      );
     },
   });
 }
 
 export function useRemoveTeamMember() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
+    mutationFn: async ({
+      teamId,
+      userId,
+    }: {
+      teamId: string;
+      userId: string;
+    }) => {
       const response = await authClient.organization.removeTeamMember({
         teamId,
         userId,
@@ -470,11 +572,15 @@ export function useRemoveTeamMember() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["teamMembers", variables.teamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["teamMembers", variables.teamId],
+      });
       toast.success("Member removed from team successfully");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to remove team member");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to remove team member"
+      );
     },
   });
 }

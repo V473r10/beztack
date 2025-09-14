@@ -1,1 +1,4 @@
-export declare const extractTextFromImage: (imagePath: string, lang?: string) => Promise<string>;
+export declare const extractTextFromImage: (
+  imagePath: string,
+  lang?: string
+) => Promise<string>;

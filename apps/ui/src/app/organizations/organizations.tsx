@@ -1,23 +1,29 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  OrganizationList,
-  OrganizationSettings,
-  MemberList,
-  PendingInvitations,
+import { Building2, Plus, Users } from "lucide-react";
+import { useState } from "react";
+import {
   CreateOrganizationDialog,
   InviteMemberDialog,
-  UserInvitations
+  MemberList,
+  OrganizationList,
+  OrganizationSettings,
+  PendingInvitations,
+  UserInvitations,
 } from "@/components/organizations";
-import { 
-  useActiveOrganization, 
-  useOrganizations,
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  useActiveOrganization,
   useOrganizationMembers,
+  useOrganizations,
 } from "@/hooks/use-organizations";
 import { authClient } from "@/lib/auth-client";
-import { Building2, Users, Plus } from "lucide-react";
-import { useState } from "react";
 
 export default function OrganizationsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -29,11 +35,15 @@ export default function OrganizationsPage() {
   const { data: members = [] } = useOrganizationMembers(activeOrganization?.id);
 
   // Get current user's role in the active organization
-  const currentUserMember = members.find(member => member.userId === session?.user?.id);
+  const currentUserMember = members.find(
+    (member) => member.userId === session?.user?.id
+  );
   const currentUserRole = currentUserMember?.role || "member";
 
-  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
-  const canEditOrganization = currentUserRole === "owner" || currentUserRole === "admin";
+  const canManageMembers =
+    currentUserRole === "owner" || currentUserRole === "admin";
+  const canEditOrganization =
+    currentUserRole === "owner" || currentUserRole === "admin";
   const canDeleteOrganization = currentUserRole === "owner";
 
   const handleCreateOrganization = () => {
@@ -45,11 +55,11 @@ export default function OrganizationsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto space-y-6 py-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Organizations</h1>
+          <h1 className="font-bold text-3xl">Organizations</h1>
           <p className="text-muted-foreground">
             Manage your organizations and team members.
           </p>
@@ -64,7 +74,11 @@ export default function OrganizationsPage() {
       <UserInvitations />
 
       {activeOrganization ? (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          className="space-y-6"
+          onValueChange={setActiveTab}
+          value={activeTab}
+        >
           <div className="flex items-center justify-between">
             <TabsList className="grid w-full max-w-md grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -74,7 +88,7 @@ export default function OrganizationsPage() {
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent className="space-y-6" value="overview">
             {/* Active Organization Info */}
             <Card>
               <CardHeader>
@@ -91,24 +105,33 @@ export default function OrganizationsPage() {
                   <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
                     {activeOrganization.logo ? (
                       <img
-                        src={activeOrganization.logo}
                         alt={activeOrganization.name}
                         className="h-16 w-16 rounded-lg object-cover"
+                        src={activeOrganization.logo}
                       />
                     ) : (
                       <Building2 className="h-8 w-8 text-muted-foreground" />
                     )}
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-xl font-semibold">{activeOrganization.name}</h3>
-                    <p className="text-muted-foreground">@{activeOrganization.slug}</p>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <h3 className="font-semibold text-xl">
+                      {activeOrganization.name}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      @{activeOrganization.slug}
+                    </p>
+                    <div className="flex items-center space-x-4 text-muted-foreground text-sm">
                       <div className="flex items-center space-x-1">
                         <Users className="h-4 w-4" />
-                        <span>{members.length} member{members.length !== 1 ? 's' : ''}</span>
+                        <span>
+                          {members.length} member
+                          {members.length !== 1 ? "s" : ""}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <span>Your role: <strong>{currentUserRole}</strong></span>
+                        <span>
+                          Your role: <strong>{currentUserRole}</strong>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -132,28 +155,30 @@ export default function OrganizationsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="members" className="space-y-6">
+          <TabsContent className="space-y-6" value="members">
             <MemberList
-              organizationId={activeOrganization.id}
-              currentUserRole={currentUserRole}
               currentUserId={session?.user?.id}
-              onInviteMembers={canManageMembers ? handleInviteMembers : undefined}
-            />
-          </TabsContent>
-
-          <TabsContent value="invitations" className="space-y-6">
-            <PendingInvitations
+              currentUserRole={currentUserRole}
+              onInviteMembers={
+                canManageMembers ? handleInviteMembers : undefined
+              }
               organizationId={activeOrganization.id}
-              canCancelInvitations={canManageMembers}
             />
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
+          <TabsContent className="space-y-6" value="invitations">
+            <PendingInvitations
+              canCancelInvitations={canManageMembers}
+              organizationId={activeOrganization.id}
+            />
+          </TabsContent>
+
+          <TabsContent className="space-y-6" value="settings">
             <OrganizationSettings
+              canDelete={canDeleteOrganization}
+              canEdit={canEditOrganization}
               organization={activeOrganization}
               userRole={currentUserRole}
-              canEdit={canEditOrganization}
-              canDelete={canDeleteOrganization}
             />
           </TabsContent>
         </Tabs>
@@ -174,11 +199,13 @@ export default function OrganizationsPage() {
         /* No organizations */
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
-            <CardTitle className="text-xl mb-2">Get Started with Organizations</CardTitle>
-            <CardDescription className="text-center mb-6 max-w-md">
-              Organizations help you collaborate with your team. Create your first organization 
-              or wait to be invited to join an existing one.
+            <Building2 className="mb-4 h-16 w-16 text-muted-foreground" />
+            <CardTitle className="mb-2 text-xl">
+              Get Started with Organizations
+            </CardTitle>
+            <CardDescription className="mb-6 max-w-md text-center">
+              Organizations help you collaborate with your team. Create your
+              first organization or wait to be invited to join an existing one.
             </CardDescription>
             <Button onClick={handleCreateOrganization}>
               <Plus className="mr-2 h-4 w-4" />
@@ -189,15 +216,15 @@ export default function OrganizationsPage() {
       )}
 
       {/* Dialogs */}
-      <CreateOrganizationDialog 
-        open={showCreateDialog} 
+      <CreateOrganizationDialog
         onOpenChange={setShowCreateDialog}
+        open={showCreateDialog}
       />
-      
+
       {activeOrganization && (
         <InviteMemberDialog
-          open={showInviteDialog}
           onOpenChange={setShowInviteDialog}
+          open={showInviteDialog}
           organizationId={activeOrganization.id}
         />
       )}

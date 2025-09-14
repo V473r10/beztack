@@ -1,6 +1,6 @@
-import { createError, EventHandler, H3Event } from "h3";
+import { createError, type EventHandler, type H3Event } from "h3";
 import { auth } from "./auth";
- 
+
 /**
  * Middleware used to require authentication for a route.
  *
@@ -8,9 +8,9 @@ import { auth } from "./auth";
  */
 export const requireAuth: EventHandler = async (event: H3Event) => {
   const headers = event.headers;
- 
+
   const session = await auth.api.getSession({
-    headers: headers,
+    headers,
   });
   if (!session)
     throw createError({

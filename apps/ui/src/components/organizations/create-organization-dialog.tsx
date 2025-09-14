@@ -1,3 +1,5 @@
+import { Loader2 } from "lucide-react";
+import { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,18 +12,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import { useCreateOrganization } from "@/hooks/use-organizations";
-import { createOrganizationSchema, type CreateOrganizationData } from "@/lib/organization-types";
-import { Loader2 } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import {
+  type CreateOrganizationData,
+  createOrganizationSchema,
+} from "@/lib/organization-types";
 
 interface CreateOrganizationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateOrganizationDialog({ 
-  open, 
-  onOpenChange 
+export function CreateOrganizationDialog({
+  open,
+  onOpenChange,
 }: CreateOrganizationDialogProps) {
   const createOrganization = useCreateOrganization();
 
@@ -44,18 +47,21 @@ export function CreateOrganizationDialog({
   });
 
   // Auto-generate slug from name
-  const handleNameChange = useCallback((name: string) => {
-    form.setFieldValue("name", name);
-    if (name && !form.getFieldValue("slug")) {
-      const slug = name
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .trim();
-      form.setFieldValue("slug", slug);
-    }
-  }, [form]);
+  const handleNameChange = useCallback(
+    (name: string) => {
+      form.setFieldValue("name", name);
+      if (name && !form.getFieldValue("slug")) {
+        const slug = name
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+          .trim();
+        form.setFieldValue("slug", slug);
+      }
+    },
+    [form]
+  );
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -74,7 +80,7 @@ export function CreateOrganizationDialog({
   }, [open, form]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create Organization</DialogTitle>
@@ -83,18 +89,18 @@ export function CreateOrganizationDialog({
           </DialogDescription>
         </DialogHeader>
         <form.AppForm>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <form.AppField name="name">
               {(field) => (
                 <field.FormItem>
                   <field.FormLabel>Organization Name</field.FormLabel>
                   <field.FormControl>
                     <Input
-                      placeholder="Enter organization name"
                       disabled={createOrganization.isPending}
-                      value={field.state.value}
-                      onChange={(e) => handleNameChange(e.target.value)}
                       onBlur={field.handleBlur}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      placeholder="Enter organization name"
+                      value={field.state.value}
                     />
                   </field.FormControl>
                   <field.FormMessage />
@@ -108,15 +114,16 @@ export function CreateOrganizationDialog({
                   <field.FormLabel>Organization Slug</field.FormLabel>
                   <field.FormControl>
                     <Input
-                      placeholder="organization-slug"
                       disabled={createOrganization.isPending}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
                       onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="organization-slug"
+                      value={field.state.value}
                     />
                   </field.FormControl>
                   <field.FormDescription>
-                    This will be used in URLs. Only lowercase letters, numbers, and hyphens allowed.
+                    This will be used in URLs. Only lowercase letters, numbers,
+                    and hyphens allowed.
                   </field.FormDescription>
                   <field.FormMessage />
                 </field.FormItem>
@@ -129,12 +136,12 @@ export function CreateOrganizationDialog({
                   <field.FormLabel>Logo URL (Optional)</field.FormLabel>
                   <field.FormControl>
                     <Input
+                      disabled={createOrganization.isPending}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="https://example.com/logo.png"
                       type="url"
-                      disabled={createOrganization.isPending}
                       value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
                     />
                   </field.FormControl>
                   <field.FormMessage />
@@ -144,17 +151,14 @@ export function CreateOrganizationDialog({
 
             <DialogFooter>
               <Button
+                disabled={createOrganization.isPending}
+                onClick={() => onOpenChange(false)}
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={createOrganization.isPending}
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={createOrganization.isPending}
-              >
+              <Button disabled={createOrganization.isPending} type="submit">
                 {createOrganization.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}

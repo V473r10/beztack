@@ -1,3 +1,23 @@
+import {
+  Crown,
+  Edit,
+  MoreHorizontal,
+  Plus,
+  Shield,
+  User,
+  UserMinus,
+} from "lucide-react";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -24,31 +45,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { 
-  useOrganizationMembers, 
+  useOrganizationMembers,
   useRemoveMember,
   useUpdateMemberRole,
 } from "@/hooks/use-organizations";
-import { ROLE_LABELS, type OrganizationMember, type OrganizationRole } from "@/lib/organization-types";
-import { MoreHorizontal, Crown, Shield, User, UserMinus, Edit, Plus } from "lucide-react";
-import { useState } from "react";
+import {
+  type OrganizationMember,
+  type OrganizationRole,
+  ROLE_LABELS,
+} from "@/lib/organization-types";
+
 // Simple date formatting utility
 const formatDate = (date: Date | string) => {
   return new Date(date).toLocaleDateString("en-US", {
     month: "short",
-    day: "numeric", 
-    year: "numeric"
+    day: "numeric",
+    year: "numeric",
   });
 };
 
@@ -60,21 +73,27 @@ interface MemberListProps {
   onEditMember?: (member: OrganizationMember) => void;
 }
 
-export function MemberList({ 
-  organizationId, 
+export function MemberList({
+  organizationId,
   currentUserRole = "member",
   currentUserId,
   onInviteMembers,
-  onEditMember
+  onEditMember,
 }: MemberListProps) {
-  const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | null>(null);
-  const [memberToUpdate, setMemberToUpdate] = useState<{ member: OrganizationMember; newRole: string } | null>(null);
-  
-  const { data: members = [], isLoading } = useOrganizationMembers(organizationId);
+  const [memberToRemove, setMemberToRemove] =
+    useState<OrganizationMember | null>(null);
+  const [memberToUpdate, setMemberToUpdate] = useState<{
+    member: OrganizationMember;
+    newRole: string;
+  } | null>(null);
+
+  const { data: members = [], isLoading } =
+    useOrganizationMembers(organizationId);
   const removeMember = useRemoveMember();
   const updateMemberRole = useUpdateMemberRole();
 
-  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
+  const canManageMembers =
+    currentUserRole === "owner" || currentUserRole === "admin";
   const isOwner = currentUserRole === "owner";
 
   const getRoleIcon = (role: string) => {
@@ -111,15 +130,18 @@ export function MemberList({
     return canManageMembers;
   };
 
-  const handleUpdateRole = async (member: OrganizationMember, newRole: string) => {
+  const handleUpdateRole = async (
+    member: OrganizationMember,
+    newRole: string
+  ) => {
     if (newRole === member.role) return;
-    
+
     setMemberToUpdate({ member, newRole });
   };
 
   const confirmUpdateRole = async () => {
     if (!memberToUpdate) return;
-    
+
     try {
       await updateMemberRole.mutateAsync({
         organizationId,
@@ -138,7 +160,7 @@ export function MemberList({
 
   const confirmRemoveMember = async () => {
     if (!memberToRemove) return;
-    
+
     try {
       await removeMember.mutateAsync({
         organizationId,
@@ -156,7 +178,7 @@ export function MemberList({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <Skeleton className="h-6 w-32 mb-2" />
+              <Skeleton className="mb-2 h-6 w-32" />
               <Skeleton className="h-4 w-48" />
             </div>
             <Skeleton className="h-9 w-32" />
@@ -165,9 +187,9 @@ export function MemberList({
         <CardContent>
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4" key={i}>
                 <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2 flex-1">
+                <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-32" />
                   <Skeleton className="h-3 w-48" />
                 </div>
@@ -219,36 +241,40 @@ export function MemberList({
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={member.user?.image} />
                           <AvatarFallback>
-                            {member.user?.name?.charAt(0) || member.email.charAt(0)}
+                            {member.user?.name?.charAt(0) ||
+                              member.email.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">
                             {member.user?.name || "Invited User"}
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-muted-foreground text-sm">
                             {member.email}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
+                        className="flex w-fit items-center space-x-1"
                         variant={getRoleBadgeVariant(member.role)}
-                        className="flex items-center space-x-1 w-fit"
                       >
                         {getRoleIcon(member.role)}
-                        <span>{ROLE_LABELS[member.role as OrganizationRole] || member.role}</span>
+                        <span>
+                          {ROLE_LABELS[member.role as OrganizationRole] ||
+                            member.role}
+                        </span>
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-muted-foreground text-sm">
                       {formatDate(member.createdAt)}
                     </TableCell>
                     <TableCell>
                       {canEditMember(member) || canRemoveMember(member) ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button className="h-8 w-8 p-0" variant="ghost">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -256,32 +282,37 @@ export function MemberList({
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             {canEditMember(member) && (
                               <>
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => onEditMember?.(member)}
                                 >
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit Role
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                {(["member", "admin", "owner"] as const).map((role) => (
-                                  role !== member.role && (
-                                    <DropdownMenuItem
-                                      key={role}
-                                      onClick={() => handleUpdateRole(member, role)}
-                                    >
-                                      {getRoleIcon(role)}
-                                      <span className="ml-2">Make {ROLE_LABELS[role]}</span>
-                                    </DropdownMenuItem>
-                                  )
-                                ))}
+                                {(["member", "admin", "owner"] as const).map(
+                                  (role) =>
+                                    role !== member.role && (
+                                      <DropdownMenuItem
+                                        key={role}
+                                        onClick={() =>
+                                          handleUpdateRole(member, role)
+                                        }
+                                      >
+                                        {getRoleIcon(role)}
+                                        <span className="ml-2">
+                                          Make {ROLE_LABELS[role]}
+                                        </span>
+                                      </DropdownMenuItem>
+                                    )
+                                )}
                               </>
                             )}
                             {canRemoveMember(member) && (
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={() => handleRemoveMember(member)}
                                   className="text-destructive focus:text-destructive"
+                                  onClick={() => handleRemoveMember(member)}
                                 >
                                   <UserMinus className="mr-2 h-4 w-4" />
                                   Remove Member
@@ -303,21 +334,26 @@ export function MemberList({
       </Card>
 
       {/* Remove Member Confirmation Dialog */}
-      <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+      <AlertDialog
+        onOpenChange={(open) => !open && setMemberToRemove(null)}
+        open={!!memberToRemove}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Member</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove {memberToRemove?.user?.name || memberToRemove?.email} 
-              from this organization? They will lose access to all organization resources.
+              Are you sure you want to remove{" "}
+              {memberToRemove?.user?.name || memberToRemove?.email}
+              from this organization? They will lose access to all organization
+              resources.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmRemoveMember}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={removeMember.isPending}
+              onClick={confirmRemoveMember}
             >
               Remove Member
             </AlertDialogAction>
@@ -326,20 +362,27 @@ export function MemberList({
       </AlertDialog>
 
       {/* Update Role Confirmation Dialog */}
-      <AlertDialog open={!!memberToUpdate} onOpenChange={(open) => !open && setMemberToUpdate(null)}>
+      <AlertDialog
+        onOpenChange={(open) => !open && setMemberToUpdate(null)}
+        open={!!memberToUpdate}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Update Member Role</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to change {memberToUpdate?.member.user?.name || memberToUpdate?.member.email}'s 
-              role from {ROLE_LABELS[memberToUpdate?.member.role as OrganizationRole]} to {ROLE_LABELS[memberToUpdate?.newRole as OrganizationRole]}?
+              Are you sure you want to change{" "}
+              {memberToUpdate?.member.user?.name ||
+                memberToUpdate?.member.email}
+              's role from{" "}
+              {ROLE_LABELS[memberToUpdate?.member.role as OrganizationRole]} to{" "}
+              {ROLE_LABELS[memberToUpdate?.newRole as OrganizationRole]}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmUpdateRole}
               disabled={updateMemberRole.isPending}
+              onClick={confirmUpdateRole}
             >
               Update Role
             </AlertDialogAction>

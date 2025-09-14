@@ -1,12 +1,12 @@
 // Phase 1: Core Organization Components
-export { OrganizationSwitcher } from "./organization-switcher";
-export { CreateOrganizationDialog } from "./create-organization-dialog";
-export { OrganizationList } from "./organization-list";
-export { OrganizationSettings } from "./organization-settings";
 
+export { CreateOrganizationDialog } from "./create-organization-dialog";
+export { InviteMemberDialog } from "./invite-member-dialog";
 // Phase 2: Member Management Components
 export { MemberList } from "./member-list";
-export { InviteMemberDialog } from "./invite-member-dialog";
+export { OrganizationList } from "./organization-list";
+export { OrganizationSettings } from "./organization-settings";
+export { OrganizationSwitcher } from "./organization-switcher";
 export { PendingInvitations } from "./pending-invitations";
 
 // Phase 3: Invitation Flow Components

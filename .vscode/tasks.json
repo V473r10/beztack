@@ -5,7 +5,11 @@
       "label": "🚀 Start UI with Debug",
       "type": "shell",
       "command": "google-chrome",
-      "args": ["--remote-debugging-port=9222", "--user-data-dir=${workspaceFolder}/.vscode/chrome-debug", "http://localhost:5173"],
+      "args": [
+        "--remote-debugging-port=9222",
+        "--user-data-dir=${workspaceFolder}/.vscode/chrome-debug",
+        "http://localhost:5173"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -16,7 +20,7 @@
       "dependsOn": "Start Vite Process"
     },
     {
-      "label": "Start Vite Process", 
+      "label": "Start Vite Process",
       "type": "shell",
       "command": "pnpm",
       "args": ["dev"],
@@ -49,7 +53,7 @@
     {
       "label": "🔧 Start API with Debug",
       "type": "shell",
-      "command": "pnpm", 
+      "command": "pnpm",
       "args": ["dev"],
       "options": {
         "cwd": "${workspaceFolder}/apps/api",
@@ -60,7 +64,7 @@
       "group": "build",
       "presentation": {
         "echo": true,
-        "reveal": "always", 
+        "reveal": "always",
         "focus": false,
         "panel": "shared"
       },
@@ -84,7 +88,12 @@
       "label": "🧹 Clear Vite Cache & Restart Debug",
       "type": "shell",
       "command": "rm",
-      "args": ["-rf", "node_modules/.vite", "node_modules/.tmp", ".vscode/chrome-debug-profile"],
+      "args": [
+        "-rf",
+        "node_modules/.vite",
+        "node_modules/.tmp",
+        ".vscode/chrome-debug-profile"
+      ],
       "options": {
         "cwd": "${workspaceFolder}/apps/ui"
       },
@@ -97,20 +106,14 @@
       }
     },
     {
-      "label": "🔄 Reset Full Stack Debug Environment", 
+      "label": "🔄 Reset Full Stack Debug Environment",
       "dependsOrder": "sequence",
-      "dependsOn": [
-        "🧹 Clear Vite Cache & Restart Debug",
-        "Start Vite Process"
-      ]
+      "dependsOn": ["🧹 Clear Vite Cache & Restart Debug", "Start Vite Process"]
     },
     {
       "label": "🚀 Auto Start Full Stack",
       "dependsOrder": "parallel",
-      "dependsOn": [
-        "🚀 Start UI with Debug",
-        "🔧 Start API with Debug"
-      ]
+      "dependsOn": ["🚀 Start UI with Debug", "🔧 Start API with Debug"]
     }
   ]
 }

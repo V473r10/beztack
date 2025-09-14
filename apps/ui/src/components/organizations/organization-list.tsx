@@ -1,3 +1,4 @@
+import { Building2, Crown, Settings, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,9 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useOrganizations, useActiveOrganization, useSetActiveOrganization } from "@/hooks/use-organizations";
+import {
+  useActiveOrganization,
+  useOrganizations,
+  useSetActiveOrganization,
+} from "@/hooks/use-organizations";
 import type { Organization } from "@/lib/organization-types";
-import { Building2, Crown, Users, Settings } from "lucide-react";
 
 interface OrganizationListProps {
   onSelectOrganization?: (organization: Organization) => void;
@@ -18,10 +22,10 @@ interface OrganizationListProps {
   showActions?: boolean;
 }
 
-export function OrganizationList({ 
+export function OrganizationList({
   onSelectOrganization,
   onManageOrganization,
-  showActions = true
+  showActions = true,
 }: OrganizationListProps) {
   const { data: organizations = [], isLoading } = useOrganizations();
   const { data: activeOrganization } = useActiveOrganization();
@@ -50,7 +54,7 @@ export function OrganizationList({
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <Skeleton className="h-4 w-16" />
                 <div className="flex space-x-2">
                   <Skeleton className="h-8 w-20" />
@@ -68,10 +72,11 @@ export function OrganizationList({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-          <CardTitle className="text-lg mb-2">No Organizations Found</CardTitle>
-          <CardDescription className="text-center mb-4">
-            You're not a member of any organizations yet. Create one or ask to be invited.
+          <Building2 className="mb-4 h-12 w-12 text-muted-foreground" />
+          <CardTitle className="mb-2 text-lg">No Organizations Found</CardTitle>
+          <CardDescription className="mb-4 text-center">
+            You're not a member of any organizations yet. Create one or ask to
+            be invited.
           </CardDescription>
         </CardContent>
       </Card>
@@ -88,9 +93,9 @@ export function OrganizationList({
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
                   {organization.logo ? (
                     <img
-                      src={organization.logo}
                       alt={organization.name}
                       className="h-12 w-12 rounded-lg object-cover"
+                      src={organization.logo}
                     />
                   ) : (
                     <Building2 className="h-6 w-6 text-muted-foreground" />
@@ -102,7 +107,10 @@ export function OrganizationList({
                 </div>
               </div>
               {activeOrganization?.id === organization.id && (
-                <Badge variant="secondary" className="flex items-center space-x-1">
+                <Badge
+                  className="flex items-center space-x-1"
+                  variant="secondary"
+                >
                   <Crown className="h-3 w-3" />
                   <span>Active</span>
                 </Badge>
@@ -111,8 +119,8 @@ export function OrganizationList({
           </CardHeader>
           {showActions && (
             <CardContent>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 text-muted-foreground text-sm">
                   <div className="flex items-center space-x-1">
                     <Users className="h-4 w-4" />
                     <span>Members</span>
@@ -121,19 +129,21 @@ export function OrganizationList({
                 <div className="flex space-x-2">
                   {activeOrganization?.id !== organization.id && (
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSelectOrganization(organization)}
                       disabled={setActiveOrganization.isPending}
+                      onClick={() => handleSelectOrganization(organization)}
+                      size="sm"
+                      variant="outline"
                     >
-                      {setActiveOrganization.isPending ? "Switching..." : "Switch To"}
+                      {setActiveOrganization.isPending
+                        ? "Switching..."
+                        : "Switch To"}
                     </Button>
                   )}
                   {onManageOrganization && (
                     <Button
-                      variant="ghost"
-                      size="sm"
                       onClick={() => onManageOrganization(organization)}
+                      size="sm"
+                      variant="ghost"
                     >
                       <Settings className="h-4 w-4" />
                     </Button>

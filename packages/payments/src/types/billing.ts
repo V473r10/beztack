@@ -19,7 +19,12 @@ export interface Customer {
 /**
  * Order status from Polar
  */
-export type OrderStatus = "pending" | "processing" | "completed" | "canceled" | "refunded";
+export type OrderStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "canceled"
+  | "refunded";
 
 /**
  * Order data from Polar

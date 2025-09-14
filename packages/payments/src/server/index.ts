@@ -1,36 +1,35 @@
 // Polar configuration
+
+// Direct Polar API integration
 export {
-  type PolarClientConfig,
-  type PolarPluginConfig,
-  type WebhookHandlers,
+  createPolarClient,
+  getOrganizationProducts,
+  PolarApiService,
+  polarApi,
+  validatePolarConnection,
+} from "./polar-api.ts";
+export {
   createPolarPlugin,
   getPolarConfigFromEnv,
+  type PolarClientConfig,
+  type PolarPluginConfig,
   setupPolarForBetterAuth,
+  type WebhookHandlers,
 } from "./polar-config.ts";
-
-// Webhook handling
-export {
-  type PolarWebhookPayload,
-  type MembershipUpdate,
-  WebhookEventHandler,
-  createWebhookHandler,
-  createDefaultWebhookHandlers,
-  verifyWebhookSignature,
-  handleWebhookRequest,
-} from "./webhooks.ts";
 
 // Server-side tier configuration
 export {
   getServerTierConfig,
-  getTierProductId,
   getServerTierInfo,
+  getTierProductId,
 } from "./tier-config.ts";
-
-// Direct Polar API integration
+// Webhook handling
 export {
-  PolarApiService,
-  createPolarClient,
-  polarApi,
-  validatePolarConnection,
-  getOrganizationProducts,
-} from "./polar-api.ts";
+  createDefaultWebhookHandlers,
+  createWebhookHandler,
+  handleWebhookRequest,
+  type MembershipUpdate,
+  type PolarWebhookPayload,
+  verifyWebhookSignature,
+  WebhookEventHandler,
+} from "./webhooks.ts";

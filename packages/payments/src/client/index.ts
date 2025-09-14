@@ -1,16 +1,16 @@
 // React hooks for payment and subscription management
 export {
-  useCustomerState,
-  useCustomerSubscriptions,
-  useCustomerOrders,
+  useBillingPortal,
+  useCheckout,
   useCustomerBenefits,
   useCustomerMeters,
-  useCheckout,
-  useBillingPortal,
-  useUsageTracking,
+  useCustomerOrders,
+  useCustomerState,
+  useCustomerSubscriptions,
   useMembershipTier,
-  useSubscriptionManagement,
   useOrganizationSubscription,
+  useSubscriptionManagement,
+  useUsageTracking,
 } from "./hooks.ts";
 
 /**
@@ -29,17 +29,17 @@ export function getCheckoutUrl(
   }
 ): string {
   const params = new URLSearchParams();
-  
+
   params.set("slug", tier);
-  
+
   if (options?.organizationId) {
     params.set("organizationId", options.organizationId);
   }
-  
+
   if (options?.successUrl) {
     params.set("successUrl", options.successUrl);
   }
-  
+
   if (options?.cancelUrl) {
     params.set("cancelUrl", options.cancelUrl);
   }
@@ -52,7 +52,7 @@ export function getCheckoutUrl(
  */
 export function getBillingPortalUrl(returnUrl?: string): string {
   const params = new URLSearchParams();
-  
+
   if (returnUrl) {
     params.set("returnUrl", returnUrl);
   }
@@ -65,8 +65,8 @@ export function getBillingPortalUrl(returnUrl?: string): string {
  */
 export function formatCurrency(
   amount: number,
-  currency: string = "USD",
-  locale: string = "en-US"
+  currency = "USD",
+  locale = "en-US"
 ): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
@@ -103,9 +103,11 @@ export function calculateYearlySavings(
 /**
  * Check if subscription is in grace period
  */
-export function isSubscriptionInGracePeriod(
-  subscription: { status: string; currentPeriodEnd: Date; canceledAt?: Date }
-): boolean {
+export function isSubscriptionInGracePeriod(subscription: {
+  status: string;
+  currentPeriodEnd: Date;
+  canceledAt?: Date;
+}): boolean {
   if (subscription.status !== "canceled" || !subscription.canceledAt) {
     return false;
   }
@@ -117,9 +119,10 @@ export function isSubscriptionInGracePeriod(
 /**
  * Get subscription renewal date
  */
-export function getSubscriptionRenewalDate(
-  subscription: { currentPeriodEnd: Date; status: string }
-): Date | null {
+export function getSubscriptionRenewalDate(subscription: {
+  currentPeriodEnd: Date;
+  status: string;
+}): Date | null {
   if (subscription.status === "active") {
     return subscription.currentPeriodEnd;
   }
@@ -129,8 +132,13 @@ export function getSubscriptionRenewalDate(
 /**
  * Check if customer has specific benefit
  */
-export function hasBenefit(benefits: Array<{ type: string; isGranted: boolean }>, benefitType: string): boolean {
-  return benefits.some(benefit => benefit.type === benefitType && benefit.isGranted);
+export function hasBenefit(
+  benefits: Array<{ type: string; isGranted: boolean }>,
+  benefitType: string
+): boolean {
+  return benefits.some(
+    (benefit) => benefit.type === benefitType && benefit.isGranted
+  );
 }
 
 /**
@@ -153,7 +161,7 @@ export function getUsagePercentage(
 export function isUsageNearLimit(
   meter: { currentBalance: number; consumedUnits: number },
   limit?: number,
-  warningThreshold: number = 80
+  warningThreshold = 80
 ): boolean {
   const percentage = getUsagePercentage(meter, limit);
   return percentage !== null && percentage >= warningThreshold;

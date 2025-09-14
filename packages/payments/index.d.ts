@@ -25,7 +25,12 @@ export { setupPolarForBetterAuth } from "./src/server/polar-config.ts";
 /**
  * Main validation functions (commonly used)
  */
-export { hasPermission, validateMembership, validateMembershipTier, validateTierChange, } from "./src/utils/index.ts";
+export {
+  hasPermission,
+  validateMembership,
+  validateMembershipTier,
+  validateTierChange,
+} from "./src/utils/index.ts";
 /**
  * Package version
  */
@@ -34,8 +39,8 @@ export declare const VERSION = "1.0.0";
  * Package metadata
  */
 export declare const PACKAGE_INFO: {
-    readonly name: "@nvn/payments";
-    readonly version: "1.0.0";
-    readonly description: "Polar payment integration for nvn monorepo";
-    readonly author: "nvn Team";
+  readonly name: "@nvn/payments";
+  readonly version: "1.0.0";
+  readonly description: "Polar payment integration for nvn monorepo";
+  readonly author: "nvn Team";
 };

@@ -1,9 +1,15 @@
 import { createPolarClient } from "@nvn/payments/server";
+import { eq } from "drizzle-orm";
 import { defineEventHandler } from "h3";
 import { db } from "@/db/db";
-import { eq } from "drizzle-orm";
-import { planFeature, planLimit, planPermission, feature, permission, limit } from "@/db/schema";
-
+import {
+  feature,
+  limit,
+  permission,
+  planFeature,
+  planLimit,
+  planPermission,
+} from "@/db/schema";
 
 interface ProductTier {
   id: string;
@@ -14,7 +20,7 @@ interface ProductTier {
     yearly: number;
   };
   monthly?: any; // Full Polar product object
-  yearly?: any;  // Full Polar product object
+  yearly?: any; // Full Polar product object
   features: string[];
   limits: Record<string, number>;
   permissions: string[];
@@ -25,33 +31,36 @@ export default defineEventHandler(async (event) => {
 
   const products = await polar.products.list({
     organizationId: process.env.POLAR_ORGANIZATION_ID,
-    isArchived: false
+    isArchived: false,
   });
 
   // Group products by tier name (basic, pro, ultimate, etc.)
   const productsByTier: Record<string, ProductTier> = {};
 
   // First pass: group products by tier
-  for (const product of products.result.items.sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const product of products.result.items.sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )) {
     // Extract tier name from product name (e.g., "Basic - Monthly" -> "basic")
-    const tierName = product.name.split(' - ')[0].toLowerCase();
-    const isMonthly = product.recurringInterval === 'month';
-    const isYearly = product.recurringInterval === 'year';
+    const tierName = product.name.split(" - ")[0].toLowerCase();
+    const isMonthly = product.recurringInterval === "month";
+    const isYearly = product.recurringInterval === "year";
 
     if (!productsByTier[tierName]) {
       productsByTier[tierName] = {
         id: tierName,
-        name: product.name.split(' - ')[0], // "Basic", "Pro", "Ultimate"
-        description: product.description || `${product.name.split(' - ')[0]} tier`,
+        name: product.name.split(" - ")[0], // "Basic", "Pro", "Ultimate"
+        description:
+          product.description || `${product.name.split(" - ")[0]} tier`,
         price: { monthly: 0, yearly: 0 },
         features: [],
         limits: {},
-        permissions: []
+        permissions: [],
       };
     }
 
     const priceAmount = (product.prices[0] as any)?.priceAmount || 0;
-    
+
     if (isMonthly) {
       // Include the complete product object for monthly
       productsByTier[tierName].monthly = {
@@ -71,8 +80,8 @@ export default defineEventHandler(async (event) => {
 
   // Second pass: fetch database details for each product
   for (const product of products.result.items) {
-    const tierName = product.name.split(' - ')[0].toLowerCase();
-    
+    const tierName = product.name.split(" - ")[0].toLowerCase();
+
     // Get features for this plan
     const planFeatures = await db
       .select({
@@ -102,13 +111,19 @@ export default defineEventHandler(async (event) => {
       .where(eq(planLimit.planId, product.id));
 
     // Update the tier with database values (only once per tier)
-    if (productsByTier[tierName] && productsByTier[tierName].features.length === 0) {
-      productsByTier[tierName].features = planFeatures.map(f => f.name);
-      productsByTier[tierName].permissions = planPermissions.map(p => p.name);
-      productsByTier[tierName].limits = planLimits.reduce((acc, l) => {
-        acc[l.name] = l.value;
-        return acc;
-      }, {} as Record<string, number>);
+    if (
+      productsByTier[tierName] &&
+      productsByTier[tierName].features.length === 0
+    ) {
+      productsByTier[tierName].features = planFeatures.map((f) => f.name);
+      productsByTier[tierName].permissions = planPermissions.map((p) => p.name);
+      productsByTier[tierName].limits = planLimits.reduce(
+        (acc, l) => {
+          acc[l.name] = l.value;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
     }
   }
 

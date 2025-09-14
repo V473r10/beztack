@@ -1,3 +1,5 @@
+import { Building2, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -21,12 +23,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useOrganizations, useActiveOrganization, useSetActiveOrganization } from "@/hooks/use-organizations";
-import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Plus, Settings, Building2 } from "lucide-react";
-import { useState } from "react";
-import { CreateOrganizationDialog } from "./create-organization-dialog";
+import {
+  useActiveOrganization,
+  useOrganizations,
+  useSetActiveOrganization,
+} from "@/hooks/use-organizations";
 import type { Organization } from "@/lib/organization-types";
+import { cn } from "@/lib/utils";
+import { CreateOrganizationDialog } from "./create-organization-dialog";
 
 interface OrganizationSwitcherProps {
   className?: string;
@@ -34,16 +38,18 @@ interface OrganizationSwitcherProps {
   onManageOrganizations?: () => void;
 }
 
-export function OrganizationSwitcher({ 
+export function OrganizationSwitcher({
   className,
   onCreateOrganization,
-  onManageOrganizations
+  onManageOrganizations,
 }: OrganizationSwitcherProps) {
   const [open, setOpen] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  
-  const { data: organizations = [], isLoading: isLoadingOrganizations } = useOrganizations();
-  const { data: activeOrganization, isLoading: isLoadingActive } = useActiveOrganization();
+
+  const { data: organizations = [], isLoading: isLoadingOrganizations } =
+    useOrganizations();
+  const { data: activeOrganization, isLoading: isLoadingActive } =
+    useActiveOrganization();
   const setActiveOrganization = useSetActiveOrganization();
 
   const handleSelectOrganization = (organization: Organization) => {
@@ -72,8 +78,8 @@ export function OrganizationSwitcher({
   if (isLoadingOrganizations || isLoadingActive) {
     return (
       <div className={cn("flex items-center space-x-2", className)}>
-        <div className="h-8 w-8 animate-pulse bg-muted rounded" />
-        <div className="h-4 w-32 animate-pulse bg-muted rounded" />
+        <div className="h-8 w-8 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
       </div>
     );
   }
@@ -82,16 +88,16 @@ export function OrganizationSwitcher({
     return (
       <div className={cn("flex items-center space-x-2", className)}>
         <Button
-          variant="outline"
-          onClick={handleCreateClick}
           className="justify-start"
+          onClick={handleCreateClick}
+          variant="outline"
         >
           <Plus className="mr-2 h-4 w-4" />
           Create Organization
         </Button>
-        <CreateOrganizationDialog 
-          open={showCreateDialog} 
+        <CreateOrganizationDialog
           onOpenChange={setShowCreateDialog}
+          open={showCreateDialog}
         />
       </div>
     );
@@ -99,14 +105,14 @@ export function OrganizationSwitcher({
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
-            role="combobox"
             aria-expanded={open}
             aria-label="Select organization"
             className={cn("w-[200px] justify-between", className)}
+            role="combobox"
+            variant="outline"
           >
             <div className="flex items-center space-x-2">
               <div className="flex h-5 w-5 items-center justify-center rounded bg-muted">
@@ -127,17 +133,17 @@ export function OrganizationSwitcher({
               <CommandGroup heading="Organizations">
                 {organizations.map((organization) => (
                   <CommandItem
+                    className="text-sm"
                     key={organization.id}
                     onSelect={() => handleSelectOrganization(organization)}
-                    className="text-sm"
                   >
                     <div className="flex items-center space-x-2">
                       <div className="flex h-5 w-5 items-center justify-center rounded bg-muted">
                         {organization.logo ? (
                           <img
-                            src={organization.logo}
                             alt={organization.name}
                             className="h-5 w-5 rounded"
+                            src={organization.logo}
                           />
                         ) : (
                           <Building2 className="h-3 w-3" />
@@ -173,10 +179,10 @@ export function OrganizationSwitcher({
           </Command>
         </PopoverContent>
       </Popover>
-      
-      <CreateOrganizationDialog 
-        open={showCreateDialog} 
+
+      <CreateOrganizationDialog
         onOpenChange={setShowCreateDialog}
+        open={showCreateDialog}
       />
     </>
   );

@@ -1,8 +1,7 @@
-import { requireAuth } from "@/server/utils/require-auth";
 import { createError, eventHandler } from "h3";
-
 import os from "os";
 import process from "process";
+import { requireAuth } from "@/server/utils/require-auth";
 
 export default eventHandler(async (event) => {
   // Require authentication and admin role
@@ -35,40 +34,52 @@ export default eventHandler(async (event) => {
           label: "Memory Usage",
           value: Math.round(memoryUsage),
           unit: "%",
-          status: memoryUsage > 80 ? "critical" : memoryUsage > 60 ? "warning" : "good"
+          status:
+            memoryUsage > 80
+              ? "critical"
+              : memoryUsage > 60
+                ? "warning"
+                : "good",
         },
         {
           label: "CPU Load",
           value: Math.round(Math.min(cpuUsage, 100)),
           unit: "%",
-          status: cpuUsage > 80 ? "critical" : cpuUsage > 60 ? "warning" : "good"
+          status:
+            cpuUsage > 80 ? "critical" : cpuUsage > 60 ? "warning" : "good",
         },
         {
           label: "Disk Usage",
           value: Math.round(diskUsage),
           unit: "%",
-          status: diskUsage > 80 ? "critical" : diskUsage > 60 ? "warning" : "good"
+          status:
+            diskUsage > 80 ? "critical" : diskUsage > 60 ? "warning" : "good",
         },
         {
           label: "Network Latency",
           value: Math.round(networkLatency),
           unit: "ms",
-          status: networkLatency > 100 ? "critical" : networkLatency > 50 ? "warning" : "good"
-        }
+          status:
+            networkLatency > 100
+              ? "critical"
+              : networkLatency > 50
+                ? "warning"
+                : "good",
+        },
       ],
       systemInfo: {
         uptime: `${uptimeHours}h`,
         processMemory: `${processMemoryMB}MB`,
         nodeVersion: process.version,
         platform: `${os.type()} ${os.release()}`,
-        cpuCount: os.cpus().length
+        cpuCount: os.cpus().length,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     throw createError({
       statusCode: 500,
-      statusMessage: "Failed to retrieve system metrics"
+      statusMessage: "Failed to retrieve system metrics",
     });
   }
 });

@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Crown, Users, Building2, Sparkles } from "lucide-react";
 import type { MembershipTier } from "@nvn/payments/types";
+import { Building2, Crown, Sparkles, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export interface MembershipBadgeProps {
   tier: MembershipTier;
@@ -22,12 +22,13 @@ const tierColors = {
   free: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 border-blue-200",
   pro: "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 border-purple-200",
   team: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200",
-  enterprise: "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
+  enterprise:
+    "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
 };
 
 const tierNames = {
   free: "Free",
-  pro: "Pro", 
+  pro: "Pro",
   team: "Team",
   enterprise: "Enterprise",
 };
@@ -41,7 +42,7 @@ export function MembershipBadge({
 }: MembershipBadgeProps) {
   const Icon = tierIcons[tier];
   const tierName = tierNames[tier];
-  
+
   if (!tierName) {
     return null;
   }
@@ -62,17 +63,15 @@ export function MembershipBadge({
 
   return (
     <Badge
-      variant={variant}
       className={cn(
         sizeClasses[size],
         customStyle,
         "inline-flex items-center gap-1.5 font-medium",
         className
       )}
+      variant={variant}
     >
-      {showIcon && Icon && (
-        <Icon className={iconSizes[size]} />
-      )}
+      {showIcon && Icon && <Icon className={iconSizes[size]} />}
       {tierName}
     </Badge>
   );
@@ -92,7 +91,7 @@ export function MembershipStatus({
   className,
 }: MembershipStatusProps) {
   const tierName = tierNames[tier];
-  
+
   if (!tierName) {
     return null;
   }
@@ -113,11 +112,11 @@ export function MembershipStatus({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <MembershipBadge tier={tier} />
-      <Badge variant={getStatusColor() as any} className="h-5 px-2 text-xs">
+      <Badge className="h-5 px-2 text-xs" variant={getStatusColor() as any}>
         {getStatusText()}
       </Badge>
       {expiresAt && isActive && expiresAt > new Date() && (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           Renews {expiresAt.toLocaleDateString()}
         </span>
       )}

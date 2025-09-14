@@ -1,3 +1,18 @@
+import { AlertTriangle, Loader2, LogOut, Trash2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,26 +25,15 @@ import { Input } from "@/components/ui/input";
 // import { Separator } from "@/components/ui/separator";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  useUpdateOrganization,
   useDeleteOrganization,
   useLeaveOrganization,
+  useUpdateOrganization,
 } from "@/hooks/use-organizations";
-import { updateOrganizationSchema, type UpdateOrganizationData, type Organization } from "@/lib/organization-types";
-import { Loader2, Trash2, LogOut, AlertTriangle } from "lucide-react";
-import { useCallback, useState } from "react";
-import { useNavigate } from "react-router";
-import { Badge } from "@/components/ui/badge";
+import {
+  type Organization,
+  type UpdateOrganizationData,
+  updateOrganizationSchema,
+} from "@/lib/organization-types";
 
 interface OrganizationSettingsProps {
   organization: Organization;
@@ -38,7 +42,7 @@ interface OrganizationSettingsProps {
   canDelete?: boolean;
 }
 
-export function OrganizationSettings({ 
+export function OrganizationSettings({
   organization,
   userRole = "member",
   canEdit = false,
@@ -46,7 +50,7 @@ export function OrganizationSettings({
 }: OrganizationSettingsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
-  
+
   const updateOrganization = useUpdateOrganization();
   const deleteOrganization = useDeleteOrganization();
   const leaveOrganization = useLeaveOrganization();
@@ -116,14 +120,12 @@ export function OrganizationSettings({
               Update your organization's basic information.
             </CardDescription>
           </div>
-          <Badge variant={isOwner ? "default" : "secondary"}>
-            {userRole}
-          </Badge>
+          <Badge variant={isOwner ? "default" : "secondary"}>{userRole}</Badge>
         </CardHeader>
         <CardContent>
           {isEditing ? (
             <form.AppForm>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <form.AppField name="name">
                   {(field) => (
                     <field.FormItem>
@@ -131,9 +133,9 @@ export function OrganizationSettings({
                       <field.FormControl>
                         <Input
                           disabled={updateOrganization.isPending}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          value={field.state.value}
                         />
                       </field.FormControl>
                       <field.FormMessage />
@@ -147,12 +149,12 @@ export function OrganizationSettings({
                       <field.FormLabel>Logo URL</field.FormLabel>
                       <field.FormControl>
                         <Input
-                          type="url"
-                          placeholder="https://example.com/logo.png"
                           disabled={updateOrganization.isPending}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="https://example.com/logo.png"
+                          type="url"
+                          value={field.state.value}
                         />
                       </field.FormControl>
                       <field.FormMessage />
@@ -162,17 +164,14 @@ export function OrganizationSettings({
 
                 <div className="flex justify-end space-x-2">
                   <Button
+                    disabled={updateOrganization.isPending}
+                    onClick={handleCancel}
                     type="button"
                     variant="outline"
-                    onClick={handleCancel}
-                    disabled={updateOrganization.isPending}
                   >
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={updateOrganization.isPending}
-                  >
+                  <Button disabled={updateOrganization.isPending} type="submit">
                     {updateOrganization.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
@@ -185,23 +184,27 @@ export function OrganizationSettings({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Name</label>
-                  <p className="text-sm text-muted-foreground">{organization.name}</p>
+                  <label className="font-medium text-sm">Name</label>
+                  <p className="text-muted-foreground text-sm">
+                    {organization.name}
+                  </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Slug</label>
-                  <p className="text-sm text-muted-foreground">@{organization.slug}</p>
+                  <label className="font-medium text-sm">Slug</label>
+                  <p className="text-muted-foreground text-sm">
+                    @{organization.slug}
+                  </p>
                 </div>
               </div>
-              
+
               {organization.logo && (
                 <div>
-                  <label className="text-sm font-medium">Logo</label>
+                  <label className="font-medium text-sm">Logo</label>
                   <div className="mt-2">
                     <img
-                      src={organization.logo}
                       alt={organization.name}
                       className="h-16 w-16 rounded-lg object-cover"
+                      src={organization.logo}
                     />
                   </div>
                 </div>
@@ -230,16 +233,16 @@ export function OrganizationSettings({
         <CardContent className="space-y-4">
           {/* Leave Organization */}
           {!isOwner && (
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-1">
-                <h4 className="text-sm font-medium">Leave Organization</h4>
-                <p className="text-sm text-muted-foreground">
+                <h4 className="font-medium text-sm">Leave Organization</h4>
+                <p className="text-muted-foreground text-sm">
                   You will lose access to all organization resources.
                 </p>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button size="sm" variant="outline">
                     <LogOut className="mr-2 h-4 w-4" />
                     Leave
                   </Button>
@@ -251,16 +254,17 @@ export function OrganizationSettings({
                       <span>Leave Organization</span>
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to leave "{organization.name}"? You will lose access to all
-                      organization resources and will need to be invited again to rejoin.
+                      Are you sure you want to leave "{organization.name}"? You
+                      will lose access to all organization resources and will
+                      need to be invited again to rejoin.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={handleLeaveOrganization}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       disabled={leaveOrganization.isPending}
+                      onClick={handleLeaveOrganization}
                     >
                       {leaveOrganization.isPending && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -275,16 +279,19 @@ export function OrganizationSettings({
 
           {/* Delete Organization */}
           {canDelete && isOwner && (
-            <div className="flex items-center justify-between p-4 border border-destructive rounded-lg bg-destructive/5">
+            <div className="flex items-center justify-between rounded-lg border border-destructive bg-destructive/5 p-4">
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-destructive">Delete Organization</h4>
-                <p className="text-sm text-muted-foreground">
-                  Permanently delete this organization and all its data. This action cannot be undone.
+                <h4 className="font-medium text-destructive text-sm">
+                  Delete Organization
+                </h4>
+                <p className="text-muted-foreground text-sm">
+                  Permanently delete this organization and all its data. This
+                  action cannot be undone.
                 </p>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
+                  <Button size="sm" variant="destructive">
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete
                   </Button>
@@ -296,16 +303,17 @@ export function OrganizationSettings({
                       <span>Delete Organization</span>
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the "{organization.name}"
-                      organization and remove all of its members, teams, and data.
+                      This action cannot be undone. This will permanently delete
+                      the "{organization.name}" organization and remove all of
+                      its members, teams, and data.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={handleDeleteOrganization}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       disabled={deleteOrganization.isPending}
+                      onClick={handleDeleteOrganization}
                     >
                       {deleteOrganization.isPending && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

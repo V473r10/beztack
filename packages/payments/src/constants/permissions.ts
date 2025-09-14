@@ -4,7 +4,7 @@
 export const PERMISSIONS = {
   // Authentication permissions
   AUTH_BASIC: "auth:basic",
-  AUTH_2FA: "auth:2fa", 
+  AUTH_2FA: "auth:2fa",
   AUTH_PASSKEYS: "auth:passkeys",
 
   // Dashboard permissions
@@ -48,37 +48,15 @@ export const PERMISSION_CATEGORIES = {
     PERMISSIONS.AUTH_2FA,
     PERMISSIONS.AUTH_PASSKEYS,
   ],
-  DASHBOARD: [
-    PERMISSIONS.DASHBOARD_VIEW,
-    PERMISSIONS.DASHBOARD_ANALYTICS,
-  ],
-  PROFILE: [
-    PERMISSIONS.PROFILE_MANAGE,
-  ],
-  API: [
-    PERMISSIONS.API_ACCESS,
-  ],
-  DATA: [
-    PERMISSIONS.DATA_EXPORT,
-  ],
-  ORGANIZATION: [
-    PERMISSIONS.ORG_MANAGE,
-    PERMISSIONS.ORG_INVITE,
-  ],
-  TEAM: [
-    PERMISSIONS.TEAM_MANAGE,
-    PERMISSIONS.TEAM_ANALYTICS,
-  ],
-  ENTERPRISE: [
-    PERMISSIONS.ENTERPRISE_FEATURES,
-    PERMISSIONS.ENTERPRISE_SUPPORT,
-  ],
-  AUDIT: [
-    PERMISSIONS.AUDIT_VIEW,
-  ],
-  SECURITY: [
-    PERMISSIONS.SECURITY_ADVANCED,
-  ],
+  DASHBOARD: [PERMISSIONS.DASHBOARD_VIEW, PERMISSIONS.DASHBOARD_ANALYTICS],
+  PROFILE: [PERMISSIONS.PROFILE_MANAGE],
+  API: [PERMISSIONS.API_ACCESS],
+  DATA: [PERMISSIONS.DATA_EXPORT],
+  ORGANIZATION: [PERMISSIONS.ORG_MANAGE, PERMISSIONS.ORG_INVITE],
+  TEAM: [PERMISSIONS.TEAM_MANAGE, PERMISSIONS.TEAM_ANALYTICS],
+  ENTERPRISE: [PERMISSIONS.ENTERPRISE_FEATURES, PERMISSIONS.ENTERPRISE_SUPPORT],
+  AUDIT: [PERMISSIONS.AUDIT_VIEW],
+  SECURITY: [PERMISSIONS.SECURITY_ADVANCED],
 } as const;
 
 /**
@@ -113,20 +91,28 @@ export function getAllPermissions(): readonly string[] {
 /**
  * Get permissions by category
  */
-export function getPermissionsByCategory(category: keyof typeof PERMISSION_CATEGORIES): readonly string[] {
+export function getPermissionsByCategory(
+  category: keyof typeof PERMISSION_CATEGORIES
+): readonly string[] {
   return PERMISSION_CATEGORIES[category];
 }
 
 /**
  * Check if a permission is valid
  */
-export function isValidPermission(permission: string): permission is typeof PERMISSIONS[keyof typeof PERMISSIONS] {
+export function isValidPermission(
+  permission: string
+): permission is (typeof PERMISSIONS)[keyof typeof PERMISSIONS] {
   return Object.values(PERMISSIONS).includes(permission as any);
 }
 
 /**
  * Get permission description
  */
-export function getPermissionDescription(permission: string): string | undefined {
-  return PERMISSION_DESCRIPTIONS[permission as keyof typeof PERMISSION_DESCRIPTIONS];
+export function getPermissionDescription(
+  permission: string
+): string | undefined {
+  return PERMISSION_DESCRIPTIONS[
+    permission as keyof typeof PERMISSION_DESCRIPTIONS
+  ];
 }
