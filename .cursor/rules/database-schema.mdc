@@ -1,0 +1,68 @@
+---
+globs: apps/api/db/**/*.ts
+---
+
+# Database & Drizzle ORM Patterns
+
+## Schema Definition
+- Define tables in [apps/api/db/schema.ts](mdc:apps/api/db/schema.ts)
+- Use proper PostgreSQL column types
+- Implement foreign key relationships with cascade options
+- Use timestamps with proper defaults and update triggers
+
+## Table Patterns
+```typescript
+// User table example
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// Foreign key relationship
+export const member = pgTable("member", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+```
+
+## Database Connection
+- Use the connection setup in [apps/api/db/db.ts](mdc:apps/api/db/db.ts)
+- Configure connection string from environment variables
+- Use proper connection pooling
+- Handle connection errors gracefully
+
+## Migration Workflow
+- Use `pnpm migrate` to generate and apply schema changes
+- Always test migrations in development first
+- Use proper migration naming conventions
+- Backup data before major schema changes
+
+## Query Patterns
+- Use Drizzle ORM query builder for type safety
+- Implement proper joins and relationships
+- Use transactions for multi-table operations
+- Implement proper error handling for database operations
+
+## Schema Export
+- Export schema object for Better Auth drizzle adapter
+- Include all tables in the schema export
+- Use consistent naming conventions
+- Document complex relationships
+
+## Indexing Strategy
+- Add indexes for frequently queried columns
+- Use composite indexes for multi-column queries
+- Consider unique constraints where appropriate
+- Monitor query performance and optimize as needed

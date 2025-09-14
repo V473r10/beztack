@@ -1,13 +1,11 @@
-import { useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Home, CreditCard } from "lucide-react";
 import { MembershipBadge } from "@/components/payments/membership-badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useMembership } from "@/contexts/membership-context";
-// Tier configurations now fetched dynamically from API
+import { CheckCircle, CreditCard, Home } from "lucide-react";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { formatCurrency } from "@nvn/payments/client";
 import type { MembershipTier } from "@nvn/payments/types";
 

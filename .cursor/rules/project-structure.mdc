@@ -1,0 +1,48 @@
+---
+alwaysApply: true
+---
+
+# Project Structure & Architecture
+
+This is an Nx monorepo using pnpm as the package manager. The project contains:
+
+## Workspace Structure
+- `apps/ui/` - React frontend application using Vite
+- `apps/api/` - Nitro server application with PostgreSQL and Drizzle ORM
+- `packages/ai/` - AI SDK wrapper with Amazon Bedrock integration
+- `packages/ocr/` - OCR utilities using Tesseract.js
+- `packages/payments/` - Polar payment integration with Better Auth
+- `packages/email/` - React Email templates with Resend integration
+
+## Key Technologies
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Radix UI, TanStack Query
+- **Backend**: Nitro (Universal JS server), PostgreSQL, Drizzle ORM, Better Auth
+- **Monorepo**: Nx workspace with pnpm package manager
+- **Payments**: Polar integration with membership tiers and billing
+- **Authentication**: Better Auth with 2FA, organizations, and admin features
+
+## Development Commands
+```bash
+# Start all services
+pnpm dev
+
+# Start specific apps
+nx dev ui          # React frontend
+nx dev api         # Nitro backend
+
+# Database operations
+pnpm migrate       # Run database migrations
+
+# Package management
+pnpm add <package> --filter @nvn/ui
+pnpm add <package> --filter @nvn/api
+```
+
+## File Organization
+- Server utilities: [apps/api/server/utils/](mdc:apps/api/server/utils/)
+- React hooks: [apps/ui/src/hooks/](mdc:apps/ui/src/hooks/)
+- Shared components: [apps/ui/src/components/](mdc:apps/ui/src/components/)
+- Database schema: [apps/api/db/schema.ts](mdc:apps/api/db/schema.ts)
+- Shared packages: [packages/](mdc:packages/)
+
+Always prefer editing existing files over creating new ones unless absolutely necessary.

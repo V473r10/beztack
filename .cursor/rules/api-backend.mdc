@@ -1,0 +1,70 @@
+---
+globs: apps/api/**/*.ts
+---
+
+# Nitro API Backend Patterns
+
+## Server Architecture
+- Structure server code in [apps/api/server/](mdc:apps/api/server/)
+- Create reusable utilities in [apps/api/server/utils/](mdc:apps/api/server/utils/)
+- Implement middleware for cross-cutting concerns
+- Use proper error handling and logging
+
+## API Route Patterns
+```typescript
+// GET route example
+export default defineEventHandler(async (event) => {
+  try {
+    const data = await getDataFromDatabase();
+    return { success: true, data };
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal Server Error'
+    });
+  }
+});
+
+// POST route with validation
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event);
+  const validatedData = schema.parse(body);
+  
+  // Process data
+  return { success: true };
+});
+```
+
+## Database Operations
+- Write efficient database queries using Drizzle ORM
+- Follow the schema defined in [apps/api/db/schema.ts](mdc:apps/api/db/schema.ts)
+- Implement proper transaction handling
+- Use connection pooling and migration strategies
+- Use `pnpm migrate` workflow for schema changes
+
+## Authentication & Security
+- Integrate Better Auth for user authentication and session management
+- Implement proper middleware for route protection
+- Use input validation and security headers
+- Follow security best practices for data sanitization
+- Prevent SQL injection with parameterized queries
+
+## Error Handling
+- Use proper HTTP status codes
+- Implement consistent error response format
+- Log errors appropriately for debugging
+- Handle validation errors gracefully
+- Use try-catch blocks for async operations
+
+## CORS Configuration
+- Configure CORS properly in [apps/api/server/plugins/cors.ts](mdc:apps/api/server/plugins/cors.ts)
+- Allow appropriate origins and methods
+- Handle preflight OPTIONS requests
+- Set proper headers for credentials
+
+## Performance Optimization
+- Implement proper caching strategies
+- Use database indexing appropriately
+- Consider connection pooling
+- Use request batching when possible
+- Implement proper async/await patterns

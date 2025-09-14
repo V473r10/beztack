@@ -1,0 +1,81 @@
+---
+globs: packages/**/*.ts
+---
+
+# Shared Packages & Monorepo Patterns
+
+## Package Structure
+- Each package should have its own `package.json` with proper exports
+- Use TypeScript with strict configuration
+- Implement proper build and development scripts
+- Use workspace references for internal dependencies
+
+## Package Configuration
+```json
+{
+  "name": "@nvn/package-name",
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "types": "./index.ts"
+    },
+    "./server": {
+      "import": "./src/server/index.ts",
+      "types": "./src/server/index.ts"
+    }
+  }
+}
+```
+
+## TypeScript Configuration
+- Use composite projects for build optimization
+- Target ESNext with strict mode enabled
+- Use bundler module resolution
+- Enable proper type checking and error reporting
+
+## Package Patterns
+
+### AI Package ([packages/ai/](mdc:packages/ai/))
+- AWS Bedrock integration wrapper
+- Export pre-configured AI SDK
+- Provide type-safe interfaces
+- Handle authentication and configuration
+
+### OCR Package ([packages/ocr/](mdc:packages/ocr/))
+- Tesseract.js integration
+- Image processing utilities
+- Text extraction functions
+- Error handling for OCR operations
+
+### Payments Package ([packages/payments/](mdc:packages/payments/))
+- Polar payment integration
+- Better Auth integration
+- Membership tier management
+- Server and client utilities
+- Type definitions for billing and subscriptions
+
+### Email Package ([packages/email/](mdc:packages/email/))
+- React Email templates
+- Resend integration
+- Email sending utilities
+- Template management
+
+## Export Patterns
+- Use named exports for utilities and functions
+- Use default exports for main package functionality
+- Implement proper re-exports for sub-modules
+- Use type-only exports when appropriate
+
+## Dependency Management
+- Use peer dependencies for external libraries
+- Minimize internal dependencies
+- Use workspace references for internal packages
+- Keep dependencies up to date and secure
+
+## Build Configuration
+- Use TypeScript build with proper output
+- Generate declaration files
+- Use proper source maps
+- Implement watch mode for development

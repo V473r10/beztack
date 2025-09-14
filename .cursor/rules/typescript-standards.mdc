@@ -1,0 +1,56 @@
+---
+globs: *.ts,*.tsx
+---
+
+# TypeScript Standards
+
+## Configuration
+- Uses strict mode with comprehensive type checking
+- Node.js-style module resolution (`nodenext`)
+- Composite project references for monorepo optimization
+- Target: ES2022 with ESNext features
+
+## Code Quality Standards
+- Use TypeScript strict mode with comprehensive type definitions
+- Follow the project's ESLint and Biome configurations
+- Write self-documenting code with clear variable and function names
+- Implement proper error handling with meaningful error messages
+- Add input validation using Zod schemas where appropriate
+
+## Type Patterns
+```typescript
+// Use proper interface definitions
+interface ComponentProps {
+  title: string;
+  optional?: boolean;
+  children?: React.ReactNode;
+}
+
+// Use type guards for runtime type checking
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+// Use generic constraints appropriately
+function processData<T extends Record<string, unknown>>(data: T): T {
+  return data;
+}
+```
+
+## Import/Export Patterns
+- Use named exports for utilities and components
+- Use default exports for page components and main modules
+- Group imports: external libraries, internal packages, relative imports
+- Use type-only imports when appropriate: `import type { Type } from 'module'`
+
+## Error Handling
+- Always handle errors explicitly with try-catch blocks
+- Use proper error types and custom error classes
+- Provide meaningful error messages for debugging
+- Use Result/Either patterns for operations that can fail
+
+## Performance Considerations
+- Use `React.memo` for expensive components
+- Implement proper dependency arrays in hooks
+- Use `useCallback` and `useMemo` judiciously
+- Avoid unnecessary re-renders with proper state management

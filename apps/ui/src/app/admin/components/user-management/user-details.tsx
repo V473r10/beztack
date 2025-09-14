@@ -19,10 +19,9 @@ import { toast } from "sonner";
 interface UserDetailsProps {
 	user: AdminUser;
 	onEdit: () => void;
-	onRefresh?: () => void;
 }
 
-export function UserDetails({ user, onEdit, onRefresh: _onRefresh }: UserDetailsProps) {
+export function UserDetails({ user, onEdit }: UserDetailsProps) {
 	const status = getUserStatus(user);
 	const roles = getUserRoles(user);
 

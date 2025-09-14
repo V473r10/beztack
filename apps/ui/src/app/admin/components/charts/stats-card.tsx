@@ -11,7 +11,6 @@ interface StatsCardProps {
     value: number;
     label: string;
   };
-  delay?: number;
   className?: string;
 }
 
@@ -21,7 +20,6 @@ export function StatsCard({
   value, 
   icon, 
   trend, 
-  delay: _delay = 0,
   className 
 }: StatsCardProps) {
   return (

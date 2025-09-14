@@ -1,0 +1,68 @@
+---
+globs: *.tsx,*.jsx
+---
+
+# React Component Patterns
+
+## Component Structure
+- Use functional components with hooks
+- Follow the component naming convention: PascalCase
+- Export components as default exports for pages, named exports for reusable components
+- Use proper TypeScript interfaces for props
+
+## Component Organization
+```typescript
+// Component file structure
+import React from 'react';
+import { ComponentProps } from './types';
+import { cn } from '@/lib/utils';
+
+interface MyComponentProps {
+  title: string;
+  className?: string;
+}
+
+export function MyComponent({ title, className }: MyComponentProps) {
+  return (
+    <div className={cn("base-styles", className)}>
+      <h1>{title}</h1>
+    </div>
+  );
+}
+```
+
+## State Management
+- Use React Query for server state management
+- Use local state with useState for component-specific state
+- Use context for global state that needs to be shared
+- Implement proper loading and error states
+
+## Form Handling
+- Use TanStack Form for complex forms with validation
+- Use React Hook Form for simpler forms
+- Implement proper validation with Zod schemas
+- Handle form submission with proper error handling
+
+## Styling Patterns
+- Use Tailwind CSS classes with the `cn` utility function
+- Follow the design system patterns from shadcn/ui
+- Use CSS variables for theming
+- Implement responsive design with mobile-first approach
+
+## Hooks Patterns
+- Create custom hooks for reusable logic
+- Use proper dependency arrays in useEffect
+- Implement cleanup functions for side effects
+- Use useCallback and useMemo for performance optimization
+
+## Context Usage
+- Use context for global state that doesn't change frequently
+- Implement proper TypeScript types for context values
+- Use context providers at the appropriate level in the component tree
+- Avoid prop drilling with context
+
+## Component Composition
+- Use composition over inheritance
+- Implement proper children patterns
+- Use render props or compound components when appropriate
+- Follow the single responsibility principle

@@ -72,7 +72,6 @@ export default function UsersPage() {
 						<UserDetails 
 							user={selectedUser}
 							onEdit={() => handleEditUser(selectedUser)}
-							onRefresh={handleRefresh}
 						/>
 					)}
 				</>

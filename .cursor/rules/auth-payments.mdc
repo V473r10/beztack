@@ -1,0 +1,71 @@
+---
+globs: **/*auth*.ts,**/*payment*.ts,**/*polar*.ts
+---
+
+# Authentication & Payments Integration
+
+## Better Auth Configuration
+- Configure authentication in [apps/api/server/utils/auth.ts](mdc:apps/api/server/utils/auth.ts)
+- Use Drizzle adapter with PostgreSQL
+- Implement proper plugins: twoFactor, admin, organization
+- Configure trusted origins and CORS
+
+## Authentication Patterns
+```typescript
+// Server-side auth configuration
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { provider: "pg", schema: schema }),
+  emailAndPassword: { 
+    enabled: true,
+    requireEmailVerification: false,
+  },
+  plugins: [
+    twoFactor({ issuer: "nvn" }),
+    admin(),
+    organization({
+      requireEmailVerificationOnInvitation: false,
+      teams: { enabled: true, maximumTeams: 50 }
+    }),
+    // Polar integration
+    ...(polarPlugin ? [polarPlugin] : [])
+  ],
+});
+```
+
+## Client-Side Auth
+- Use Better Auth React client
+- Implement proper session management
+- Handle authentication state with React Query
+- Use protected routes for authenticated pages
+
+## Polar Payment Integration
+- Configure Polar plugin with environment variables
+- Implement webhook handling for payment events
+- Use proper error handling for payment failures
+- Handle subscription lifecycle events
+
+## Membership Tiers
+- **Free**: Basic auth, 1GB storage, 1K API calls
+- **Pro**: 2FA, passkeys, 10GB storage, 10K API calls ($29/mo)
+- **Team**: Organizations, teams, 100GB storage, 50K API calls ($99/mo)
+- **Enterprise**: Custom limits, priority support, custom features
+
+## Payment Components
+- Use components from [apps/ui/src/components/payments/](mdc:apps/ui/src/components/payments/)
+- Implement proper loading and error states
+- Handle subscription upgrades and downgrades
+- Display usage metrics and billing information
+
+## Security Considerations
+- Validate all payment webhooks
+- Use proper API keys and secrets
+- Implement rate limiting for payment endpoints
+- Handle sensitive data with proper encryption
+- Use HTTPS for all payment-related communications
+
+## Error Handling
+- Handle payment failures gracefully
+- Provide clear error messages to users
+- Log payment events for debugging
+- Implement retry logic for transient failures
+- Use proper HTTP status codes for API responses

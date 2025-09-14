@@ -159,28 +159,24 @@ export default function AdminAnalytics() {
 						description="Registered users"
 						value={userStats.totalUsers.toLocaleString()}
 						icon={<IconUsers className="h-5 w-5" />}
-						delay={0.1}
 					/>
 					<StatsCard
 						title="Active Users"
 						description="Currently active"
 						value={userStats.activeUsers.toLocaleString()}
 						icon={<IconActivity className="h-5 w-5" />}
-						delay={0.2}
 					/>
 					<StatsCard
 						title="New This Week"
 						description="Recent signups"
 						value={userStats.recentSignups.toLocaleString()}
 						icon={<IconTrendingUp className="h-5 w-5" />}
-						delay={0.3}
 					/>
 					<StatsCard
 						title="Banned Users"
 						description="Restricted accounts"
 						value={userStats.bannedUsers.toLocaleString()}
 						icon={<IconShield className="h-5 w-5" />}
-						delay={0.4}
 					/>
 				</div>
 			)}

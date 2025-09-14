@@ -35,6 +35,9 @@
   ],
   "references": [
     {
+      "path": "../../packages/payments"
+    },
+    {
       "path": "../../packages/ocr"
     },
     {
