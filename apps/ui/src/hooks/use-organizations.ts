@@ -283,7 +283,7 @@ export function useInviteMember() {
       const response = await authClient.organization.inviteMember({
         organizationId,
         email: data.email,
-        role: data.role as string,
+        role: data.role,
         teamId: data.teamId,
       });
       return response.data;
@@ -318,7 +318,7 @@ export function useUpdateMemberRole() {
       const response = await authClient.organization.updateMemberRole({
         organizationId,
         memberId: userId,
-        role: data.role as string,
+        role: data.role,
       });
       return response.data;
     },

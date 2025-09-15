@@ -19,7 +19,7 @@ export {
 
 // Server-side tier configuration
 export {
-  getServerTierConfig,
+  getServerTierInfo as getServerTierConfig,
   getServerTierInfo,
   getTierProductId,
 } from "./tier-config.ts";

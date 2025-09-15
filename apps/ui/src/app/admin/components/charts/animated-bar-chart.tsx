@@ -21,7 +21,7 @@ type AnimatedBarChartProps = {
 
 // Constants for chart styling
 const BAR_CORNER_RADIUS = 4;
-const BAR_BORDER_RADIUS = [BAR_CORNER_RADIUS, BAR_CORNER_RADIUS, 0, 0] as const;
+const BAR_BORDER_RADIUS: [number, number, number, number] = [BAR_CORNER_RADIUS, BAR_CORNER_RADIUS, 0, 0];
 
 export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
   return (
@@ -118,11 +118,11 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
                       }}
                     >
                       {payload[0].value}
-                      {data.unit || "%"}
+                      {payload[0].payload.unit || "%"}
                     </p>
-                    {data.status && (
+                    {payload[0].payload.status && (
                       <p className="text-muted-foreground text-xs capitalize">
-                        {data.status}
+                        {payload[0].payload.status}
                       </p>
                     )}
                   </motion.div>
@@ -151,7 +151,7 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
               return (
                 <Cell
                   fill={fillColor}
-                  key={entry.id || entry.name || `fallback-${index}`}
+                  key={entry.label || `fallback-${index}`}
                 />
               );
             })}

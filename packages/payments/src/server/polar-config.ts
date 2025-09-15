@@ -136,7 +136,7 @@ export function createPolarPlugin(
   config: PolarPluginConfig & {
     products?: Array<{ productId: string; slug: string }>;
   }
-) {
+): any {
   const products = config.products || [];
 
   return polar({
@@ -144,13 +144,13 @@ export function createPolarPlugin(
     createCustomerOnSignUp: config.createCustomerOnSignUp ?? true,
     getCustomerCreateParams:
       config.getCustomerCreateParams ??
-      (async ({ user }) => ({
+      (async ({ user }: { user: any }) => ({
         metadata: {
           userId: user.id,
           email: user.email,
           name: user.name,
         },
-      })),
+      })) as any,
     use: [
       checkout({
         products,
@@ -164,7 +164,7 @@ export function createPolarPlugin(
             webhooks({
               secret: config.webhookSecret,
               ...config.webhookHandlers,
-            }),
+            } as any),
           ]
         : []),
     ],
@@ -181,25 +181,25 @@ function getDefaultWebhookHandlers(): WebhookHandlers {
 
     onOrderPaid: (payload) => {
       const order = payload.order;
-      if (order?.metadata?.userId && order?.metadata?.tier) {
+      if ((order as any)?.metadata?.userId && (order as any)?.metadata?.tier) {
         // TODO: Activate membership for user
-        const _tier = order.metadata.tier as MembershipTier;
+        const _tier = (order as any).metadata.tier as MembershipTier;
       }
       return Promise.resolve();
     },
 
     onSubscriptionActive: (payload) => {
       const subscription = payload.subscription;
-      if (subscription?.metadata?.userId && subscription?.metadata?.tier) {
+      if ((subscription as any)?.metadata?.userId && (subscription as any)?.metadata?.tier) {
         // TODO: Update user membership status to active
-        const _tier = subscription.metadata.tier as MembershipTier;
+        const _tier = (subscription as any).metadata.tier as MembershipTier;
       }
       return Promise.resolve();
     },
 
     onSubscriptionCanceled: (payload) => {
       const subscription = payload.subscription;
-      if (subscription?.metadata?.userId) {
+      if ((subscription as any)?.metadata?.userId) {
         // TODO: Handle subscription cancellation
       }
       return Promise.resolve();
@@ -207,7 +207,7 @@ function getDefaultWebhookHandlers(): WebhookHandlers {
 
     onSubscriptionRevoked: (payload) => {
       const subscription = payload.subscription;
-      if (subscription?.metadata?.userId) {
+      if ((subscription as any)?.metadata?.userId) {
         // TODO: Handle subscription revocation
       }
       return Promise.resolve();

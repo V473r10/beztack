@@ -136,7 +136,7 @@ export function InviteMemberDialog({
                   <field.FormControl>
                     <Select
                       disabled={inviteMember.isPending}
-                      onValueChange={field.handleChange}
+                      onValueChange={(value) => field.handleChange(value as "admin" | "member" | "owner")}
                       value={field.state.value}
                     >
                       <SelectTrigger>

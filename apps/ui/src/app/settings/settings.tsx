@@ -312,7 +312,7 @@ export function Settings() {
         payload: {
           username: userQuery.data.name || "",
           email: userQuery.data.email || "",
-          twoFactorEnabled: userQuery.data.twoFactorEnabled,
+          twoFactorEnabled: userQuery.data.twoFactorEnabled ?? false,
         },
       });
     }

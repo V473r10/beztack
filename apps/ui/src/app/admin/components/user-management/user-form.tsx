@@ -143,6 +143,9 @@ export function UserForm({
   });
 
   const handleUserUpdate = (data: UserFormData) => {
+    if (!user) {
+      return;
+    }
     const updates: Partial<AdminUser> = {};
     if (data.email !== user.email) {
       updates.email = data.email;

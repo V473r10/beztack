@@ -127,11 +127,11 @@ function SelectItem({
       {...props}
     >
       <span className="absolute right-2 flex size-3.5 items-center justify-center">
-        <SelectItemPrimitiveIndicator>
+        <SelectItemIndicatorPrimitive>
           <CheckIcon className="size-4" />
-        </SelectItemPrimitiveIndicator>
+        </SelectItemIndicatorPrimitive>
       </span>
-      <SelectItemPrimitiveText>{children}</SelectItemPrimitiveText>
+      <SelectItemTextPrimitive>{children}</SelectItemTextPrimitive>
     </SelectItemPrimitive>
   );
 }

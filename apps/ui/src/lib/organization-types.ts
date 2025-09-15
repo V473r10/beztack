@@ -90,12 +90,16 @@ export const updateOrganizationSchema = z.object({
 
 export const inviteMemberSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  role: z.string().min(1, "Please select a role"),
+  role: z.enum(["admin", "member", "owner"], {
+    message: "Please select a role",
+  }),
   teamId: z.string().optional(),
 });
 
 export const updateMemberRoleSchema = z.object({
-  role: z.string().min(1, "Please select a role"),
+  role: z.enum(["admin", "member", "owner"], {
+    message: "Please select a role",
+  }),
 });
 
 export const createTeamSchema = z.object({

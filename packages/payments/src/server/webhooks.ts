@@ -366,9 +366,9 @@ export async function handleWebhookRequest(
     // Import h3 readBody function dynamically
     const { readBody, getHeader } = await import("h3");
 
-    const body = await readBody(event);
+    const body = await readBody(event as any);
     const bodyString = typeof body === "string" ? body : JSON.stringify(body);
-    const signature = getHeader(event, "x-polar-signature") || "";
+    const signature = getHeader(event as any, "x-polar-signature") || "";
 
     const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
     if (!webhookSecret) {

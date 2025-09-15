@@ -143,9 +143,9 @@ function MenubarCheckboxItem({
       {...props}
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
-        <MenubarItemPrimitiveIndicator>
+        <MenubarItemIndicatorPrimitive>
           <CheckIcon className="size-4" />
-        </MenubarItemPrimitiveIndicator>
+        </MenubarItemIndicatorPrimitive>
       </span>
       {children}
     </MenubarCheckboxItemPrimitive>
@@ -167,9 +167,9 @@ function MenubarRadioItem({
       {...props}
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
-        <MenubarItemPrimitiveIndicator>
+        <MenubarItemIndicatorPrimitive>
           <CircleIcon className="size-2 fill-current" />
-        </MenubarItemPrimitiveIndicator>
+        </MenubarItemIndicatorPrimitive>
       </span>
       {children}
     </MenubarRadioItemPrimitive>
@@ -236,11 +236,11 @@ function MenubarSubTrigger({
   inset,
   children,
   ...props
-}: React.ComponentProps<typeof MenubarSubPrimitiveTrigger> & {
+}: React.ComponentProps<typeof MenubarSubTriggerPrimitive> & {
   inset?: boolean;
 }) {
   return (
-    <MenubarSubPrimitiveTrigger
+    <MenubarSubTriggerPrimitive
       className={cn(
         "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[inset]:pl-8 data-[state=open]:text-accent-foreground",
         className
@@ -251,16 +251,16 @@ function MenubarSubTrigger({
     >
       {children}
       <ChevronRightIcon className="ml-auto h-4 w-4" />
-    </MenubarSubPrimitiveTrigger>
+    </MenubarSubTriggerPrimitive>
   );
 }
 
 function MenubarSubContent({
   className,
   ...props
-}: React.ComponentProps<typeof MenubarSubPrimitiveContent>) {
+}: React.ComponentProps<typeof MenubarSubContentPrimitive>) {
   return (
-    <MenubarSubPrimitiveContent
+    <MenubarSubContentPrimitive
       className={cn(
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--radix-menubar-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=closed]:animate-out data-[state=open]:animate-in",
         className

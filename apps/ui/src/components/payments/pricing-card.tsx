@@ -5,6 +5,7 @@ import {
   Crown,
   Database,
   FileText,
+  Infinity as InfinityIcon,
   Sparkles,
   Users,
   Zap,
@@ -66,28 +67,6 @@ function getTierStyling(tierId: string) {
   return baseClasses;
 }
 
-// Helper function to format limit values
-function _formatLimitValue(key: string, value: number) {
-  if (value === -1) {
-    return "Unlimited";
-  }
-
-  if (key === "storage") {
-    return `${value} GB`;
-  }
-  if (key === "requests") {
-    return value.toLocaleString();
-  }
-  if (key === "uploads") {
-    return value.toLocaleString();
-  }
-  return value.toString();
-}
-
-// Helper function to get limit icon
-function _getLimitIcon(key: string) {
-  return limitIcons[key as keyof typeof limitIcons] || FileText;
-}
 
 export function PricingCard({
   tier,
@@ -265,7 +244,7 @@ export function PricingCard({
                             )}
                           >
                             {isUnlimited ? (
-                              <Infinity className="h-4 w-4" />
+                              <InfinityIcon className="h-4 w-4" />
                             ) : (
                               <IconComponent className="h-4 w-4" />
                             )}

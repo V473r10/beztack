@@ -155,7 +155,7 @@ export function MemberList({
       await updateMemberRole.mutateAsync({
         organizationId,
         userId: memberToUpdate.member.userId,
-        data: { role: memberToUpdate.newRole },
+        data: { role: memberToUpdate.newRole as "admin" | "member" | "owner" },
       });
       setMemberToUpdate(null);
     } catch (_error) {

@@ -127,7 +127,7 @@ export const usageMetricsSchema = z.object({
  */
 export const webhookPayloadSchema = z.object({
   type: z.string().min(1, "Webhook type is required"),
-  data: z.record(z.unknown()),
+  data: z.record(z.string(), z.unknown()),
 });
 
 /**
@@ -179,8 +179,8 @@ export function validateTierChange(
     };
   }
 
-  const fromConfig = MEMBERSHIP_TIERS[fromTier];
-  const toConfig = MEMBERSHIP_TIERS[toTier];
+  const fromConfig = MEMBERSHIP_TIERS[fromTier.toUpperCase() as keyof typeof MEMBERSHIP_TIERS];
+  const toConfig = MEMBERSHIP_TIERS[toTier.toUpperCase() as keyof typeof MEMBERSHIP_TIERS];
 
   if (!(fromConfig && toConfig)) {
     return {
@@ -276,7 +276,7 @@ export function validateApiResponse<T>(
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: `Validation error: ${error.errors.map((e) => e.message).join(", ")}`,
+        error: `Validation error: ${error.issues.map((e: z.ZodIssue) => e.message).join(", ")}`,
       };
     }
     return {

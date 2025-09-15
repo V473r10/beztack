@@ -120,7 +120,7 @@ export class PolarApiService {
    */
   async getOrganization(orgId: string): Promise<PolarOrganization> {
     const response = await this.client.organizations.get({ id: orgId });
-    return (response as PolarApiResponse<PolarOrganization>).result || response;
+    return (response as PolarApiResponse<PolarOrganization>).result || (response as any);
   }
 
   /**
@@ -131,7 +131,7 @@ export class PolarApiService {
       organizationId: orgId,
       isArchived: false,
     });
-    return response.result?.items || [];
+    return (response.result?.items || []) as any;
   }
 
   /**
@@ -139,7 +139,7 @@ export class PolarApiService {
    */
   async getProduct(productId: string): Promise<PolarProduct> {
     const response = await this.client.products.get({ id: productId });
-    return (response as PolarApiResponse<PolarProduct>).result || response;
+    return (response as PolarApiResponse<PolarProduct>).result || (response as any);
   }
 
   /**
@@ -149,9 +149,9 @@ export class PolarApiService {
     const response = await this.client.customers.create({
       email: data.email,
       name: data.name,
-      metadata: data.metadata,
+      metadata: data.metadata as { [k: string]: string | number | boolean; } | undefined,
     });
-    return (response as PolarApiResponse<PolarCustomer>).result || response;
+    return (response as PolarApiResponse<PolarCustomer>).result || (response as any);
   }
 
   /**
@@ -159,7 +159,7 @@ export class PolarApiService {
    */
   async getCustomer(customerId: string): Promise<PolarCustomer> {
     const response = await this.client.customers.get({ id: customerId });
-    return (response as PolarApiResponse<PolarCustomer>).result || response;
+    return (response as PolarApiResponse<PolarCustomer>).result || (response as any);
   }
 
   /**
@@ -171,9 +171,9 @@ export class PolarApiService {
   ): Promise<PolarCustomer> {
     const response = await this.client.customers.update({
       id: customerId,
-      customerUpdate: data,
+      customerUpdate: data as any,
     });
-    return (response as PolarApiResponse<PolarCustomer>).result || response;
+    return (response as PolarApiResponse<PolarCustomer>).result || (response as any);
   }
 
   /**
@@ -185,15 +185,15 @@ export class PolarApiService {
     const response = await this.client.subscriptions.list({
       customerId,
     });
-    return response.result?.items || [];
+    return (response.result?.items || []) as any;
   }
 
   /**
    * Create a checkout session
    */
   async createCheckout(data: CheckoutCreateData): Promise<PolarCheckout> {
-    const response = await this.client.checkouts.create(data);
-    return (response as PolarApiResponse<PolarCheckout>).result || response;
+    const response = await this.client.checkouts.create(data as any);
+    return (response as PolarApiResponse<PolarCheckout>).result || (response as any);
   }
 
   /**
@@ -201,7 +201,7 @@ export class PolarApiService {
    */
   async getCheckout(checkoutId: string): Promise<PolarCheckout> {
     const response = await this.client.checkouts.get({ id: checkoutId });
-    return (response as PolarApiResponse<PolarCheckout>).result || response;
+    return (response as PolarApiResponse<PolarCheckout>).result || (response as any);
   }
 
   /**

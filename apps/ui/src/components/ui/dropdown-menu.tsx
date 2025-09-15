@@ -115,9 +115,9 @@ function DropdownMenuCheckboxItem({
       {...props}
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
-        <DropdownMenuItemPrimitiveIndicator>
+        <DropdownMenuItemIndicatorPrimitive>
           <CheckIcon className="size-4" />
-        </DropdownMenuItemPrimitiveIndicator>
+        </DropdownMenuItemIndicatorPrimitive>
       </span>
       {children}
     </DropdownMenuCheckboxItemPrimitive>
@@ -150,9 +150,9 @@ function DropdownMenuRadioItem({
       {...props}
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
-        <DropdownMenuItemPrimitiveIndicator>
+        <DropdownMenuItemIndicatorPrimitive>
           <CircleIcon className="size-2 fill-current" />
-        </DropdownMenuItemPrimitiveIndicator>
+        </DropdownMenuItemIndicatorPrimitive>
       </span>
       {children}
     </DropdownMenuRadioItemPrimitive>
@@ -219,11 +219,11 @@ function DropdownMenuSubTrigger({
   inset,
   children,
   ...props
-}: React.ComponentProps<typeof DropdownMenuSubPrimitiveTrigger> & {
+}: React.ComponentProps<typeof DropdownMenuSubTriggerPrimitive> & {
   inset?: boolean;
 }) {
   return (
-    <DropdownMenuSubPrimitiveTrigger
+    <DropdownMenuSubTriggerPrimitive
       className={cn(
         "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[inset]:pl-8 data-[state=open]:text-accent-foreground",
         className
@@ -234,16 +234,16 @@ function DropdownMenuSubTrigger({
     >
       {children}
       <ChevronRightIcon className="ml-auto size-4" />
-    </DropdownMenuSubPrimitiveTrigger>
+    </DropdownMenuSubTriggerPrimitive>
   );
 }
 
 function DropdownMenuSubContent({
   className,
   ...props
-}: React.ComponentProps<typeof DropdownMenuSubPrimitiveContent>) {
+}: React.ComponentProps<typeof DropdownMenuSubContentPrimitive>) {
   return (
-    <DropdownMenuSubPrimitiveContent
+    <DropdownMenuSubContentPrimitive
       className={cn(
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=closed]:animate-out data-[state=open]:animate-in",
         className
