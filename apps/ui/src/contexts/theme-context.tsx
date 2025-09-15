@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { extractFonts, loadThemeCSS } from "@/lib/css-parser";
 
+// Regular expressions used for CSS parsing
+const ROOT_CSS_REGEX = /:root\s*\{([^}]+)\}/;
+const CSS_VARIABLE_REGEX = /--([^:]+):\s*([^;]+);/g;
+
 type Theme = "dark" | "light" | "system";
 export type ColorTheme = string;
 
@@ -27,6 +31,69 @@ const initialState: ThemeProviderState = {
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+
+// Helper functions to reduce cognitive complexity
+function createThemeLink(colorTheme: ColorTheme): HTMLLinkElement {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = `/src/styles/themes/${colorTheme}.css`;
+  link.id = `theme-${colorTheme}`;
+  return link;
+}
+
+function parseVariablesFromCSS(cssContent: string): Record<string, string> {
+  const variables: Record<string, string> = {};
+  const rootMatch = cssContent.match(ROOT_CSS_REGEX);
+
+  if (rootMatch) {
+    const rootContent = rootMatch[1];
+    let match: RegExpExecArray | null = CSS_VARIABLE_REGEX.exec(rootContent);
+
+    while (match !== null) {
+      const varName = match[1].trim();
+      const varValue = match[2].trim();
+      variables[varName] = varValue;
+      match = CSS_VARIABLE_REGEX.exec(rootContent);
+    }
+  }
+
+  return variables;
+}
+
+function createFontLink(
+  colorTheme: ColorTheme,
+  googleFontsUrl: string
+): HTMLLinkElement {
+  const fontLink = document.createElement("link");
+  fontLink.rel = "stylesheet";
+  fontLink.href = googleFontsUrl;
+  fontLink.id = `theme-fonts-${colorTheme}`;
+  return fontLink;
+}
+
+function removeExistingElement(id: string): void {
+  const existingElement = document.getElementById(id);
+  if (existingElement) {
+    document.head.removeChild(existingElement);
+  }
+}
+
+async function loadCustomFonts(colorTheme: ColorTheme): Promise<void> {
+  const response = await fetch(`/src/styles/themes/${colorTheme}.css`);
+  if (!response.ok) {
+    return;
+  }
+
+  const cssContent = await response.text();
+  const variables = parseVariablesFromCSS(cssContent);
+  const { googleFontsUrl } = extractFonts(variables);
+
+  if (googleFontsUrl) {
+    removeExistingElement(`theme-fonts-${colorTheme}`);
+    const fontLink = createFontLink(colorTheme, googleFontsUrl);
+    document.head.appendChild(fontLink);
+  }
+}
 
 export function ThemeProvider({
   children,
@@ -78,87 +145,40 @@ export function ThemeProvider({
 
     const loadThemeAssets = async () => {
       // Load CSS
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = `/src/styles/themes/${colorTheme}.css`;
-      link.id = `theme-${colorTheme}`;
-      document.head.appendChild(link);
+      const themeLink = createThemeLink(colorTheme);
+      document.head.appendChild(themeLink);
 
       // Load custom fonts if needed
       try {
         const parsedTheme = await loadThemeCSS(colorTheme);
         if (parsedTheme?.fonts) {
-          // Parse CSS to get font info with Google Fonts URL
-          const response = await fetch(`/src/styles/themes/${colorTheme}.css`);
-          if (response.ok) {
-            const cssContent = await response.text();
-            const variables: Record<string, string> = {};
-            const rootMatch = cssContent.match(/:root\s*\{([^}]+)\}/);
-            if (rootMatch) {
-              const rootContent = rootMatch[1];
-              const variableRegex = /--([^:]+):\s*([^;]+);/g;
-              let match: RegExpExecArray | null =
-                variableRegex.exec(rootContent);
-              while (match !== null) {
-                const varName = match[1].trim();
-                const varValue = match[2].trim();
-                variables[varName] = varValue;
-                match = variableRegex.exec(rootContent);
-              }
-            }
-
-            const { googleFontsUrl } = extractFonts(variables);
-
-            if (googleFontsUrl) {
-              // Remove existing Google Fonts link for this theme
-              const existingFontLink = document.getElementById(
-                `theme-fonts-${colorTheme}`
-              );
-              if (existingFontLink) {
-                document.head.removeChild(existingFontLink);
-              }
-
-              // Add new Google Fonts link
-              const fontLink = document.createElement("link");
-              fontLink.rel = "stylesheet";
-              fontLink.href = googleFontsUrl;
-              fontLink.id = `theme-fonts-${colorTheme}`;
-              document.head.appendChild(fontLink);
-            }
-          }
+          await loadCustomFonts(colorTheme);
         }
-      } catch (_error) {}
+      } catch {
+        // Silently handle theme loading errors to prevent breaking the UI
+        // The theme will fall back to default styling
+      }
     };
 
     loadThemeAssets();
 
     return () => {
-      // Clean up CSS
-      const existingLink = document.getElementById(`theme-${colorTheme}`);
-      if (existingLink) {
-        document.head.removeChild(existingLink);
-      }
-
-      // Clean up fonts
-      const existingFontLink = document.getElementById(
-        `theme-fonts-${colorTheme}`
-      );
-      if (existingFontLink) {
-        document.head.removeChild(existingFontLink);
-      }
+      // Clean up CSS and fonts
+      removeExistingElement(`theme-${colorTheme}`);
+      removeExistingElement(`theme-fonts-${colorTheme}`);
     };
   }, [colorTheme]);
 
   const value = {
     theme,
     colorTheme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
+    setTheme: (newTheme: Theme) => {
+      localStorage.setItem(storageKey, newTheme);
+      setTheme(newTheme);
     },
-    setColorTheme: (colorTheme: ColorTheme) => {
-      localStorage.setItem(colorStorageKey, colorTheme);
-      setColorTheme(colorTheme);
+    setColorTheme: (newColorTheme: ColorTheme) => {
+      localStorage.setItem(colorStorageKey, newColorTheme);
+      setColorTheme(newColorTheme);
     },
   };
 

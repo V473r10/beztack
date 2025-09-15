@@ -27,7 +27,7 @@ export type CreateUserData = {
   password: string;
   name: string;
   role?: "user" | "admin" | ("user" | "admin")[];
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 };
 
 export type ListUsersQuery = {

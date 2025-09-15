@@ -1,5 +1,10 @@
-import * as React from "react";
-import * as RechartsPrimitive from "recharts";
+import React from "react";
+import {
+  ResponsiveContainer as RechartsPrimitiveResponsiveContainer,
+  Tooltip as RechartsPrimitiveTooltip,
+  Legend as RechartsPrimitiveLegend,
+  type LegendProps as RechartsPrimitiveLegendProps,
+} from "recharts";
 
 import { cn } from "@/lib/utils";
 
@@ -41,7 +46,7 @@ function ChartContainer({
 }: React.ComponentProps<"div"> & {
   config: ChartConfig;
   children: React.ComponentProps<
-    typeof RechartsPrimitive.ResponsiveContainer
+    typeof RechartsPrimitiveResponsiveContainer
   >["children"];
 }) {
   const uniqueId = React.useId();
@@ -59,9 +64,9 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle config={config} id={chartId} />
-        <RechartsPrimitive.ResponsiveContainer>
+        <RechartsPrimitiveResponsiveContainer>
           {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        </RechartsPrimitiveResponsiveContainer>
       </div>
     </ChartContext.Provider>
   );
@@ -100,7 +105,7 @@ ${colorConfig
   );
 };
 
-const ChartTooltip = RechartsPrimitive.Tooltip;
+const ChartTooltip = RechartsPrimitiveTooltip;
 
 function ChartTooltipContent({
   active,
@@ -116,7 +121,7 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+}: React.ComponentProps<typeof RechartsPrimitiveTooltip> &
   React.ComponentProps<"div"> & {
     hideLabel?: boolean;
     hideIndicator?: boolean;
@@ -246,7 +251,7 @@ function ChartTooltipContent({
   );
 }
 
-const ChartLegend = RechartsPrimitive.Legend;
+const ChartLegend = RechartsPrimitiveLegend;
 
 function ChartLegendContent({
   className,
@@ -255,7 +260,7 @@ function ChartLegendContent({
   verticalAlign = "bottom",
   nameKey,
 }: React.ComponentProps<"div"> &
-  Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+  Pick<RechartsPrimitiveLegendProps, "payload" | "verticalAlign"> & {
     hideIcon?: boolean;
     nameKey?: string;
   }) {

@@ -54,8 +54,11 @@ export function useOrganizationMembers(organizationId?: string) {
         throw new Error("Failed to fetch organization members");
       }
       // Handle the actual API response structure
-      const apiData = response.data as any;
-      return (apiData.members || apiData) as OrganizationMember[];
+      const apiData = response.data as Record<string, unknown>;
+      return (
+        (apiData.members as OrganizationMember[]) ||
+        (apiData as unknown as OrganizationMember[])
+      );
     },
     enabled: !!organizationId,
   });
@@ -77,11 +80,11 @@ export function useOrganizationInvitations(organizationId?: string) {
         throw new Error("Failed to fetch organization invitations");
       }
       // Map API response to our interface
-      const apiData = response.data as any[];
+      const apiData = response.data as Record<string, unknown>[];
       return apiData.map((inv) => ({
         ...inv,
-        invitedBy: inv.inviterId,
-        createdAt: inv.createdAt || new Date(),
+        invitedBy: (inv.inviterId as string) || "",
+        createdAt: (inv.createdAt as Date) || new Date(),
       })) as OrganizationInvitation[];
     },
     enabled: !!organizationId,
@@ -97,11 +100,11 @@ export function useUserInvitations() {
         throw new Error("Failed to fetch user invitations");
       }
       // Map API response to our interface
-      const apiData = response.data as any[];
+      const apiData = response.data as Record<string, unknown>[];
       return apiData.map((inv) => ({
         ...inv,
-        invitedBy: inv.inviterId,
-        createdAt: inv.createdAt || new Date(),
+        invitedBy: (inv.inviterId as string) || "",
+        createdAt: (inv.createdAt as Date) || new Date(),
       })) as OrganizationInvitation[];
     },
   });
@@ -163,10 +166,10 @@ export function useCreateOrganization() {
       if (!response.data) {
         throw new Error("Failed to create organization");
       }
-      const orgData = response.data as any;
+      const orgData = response.data as Record<string, unknown>;
       return {
         ...orgData,
-        updatedAt: orgData.updatedAt || orgData.createdAt,
+        updatedAt: (orgData.updatedAt as Date) || (orgData.createdAt as Date),
       } as Organization;
     },
     onSuccess: (data) => {
@@ -199,10 +202,10 @@ export function useUpdateOrganization() {
       if (!response.data) {
         throw new Error("Failed to update organization");
       }
-      const orgData = response.data as any;
+      const orgData = response.data as Record<string, unknown>;
       return {
         ...orgData,
-        updatedAt: orgData.updatedAt || orgData.createdAt,
+        updatedAt: (orgData.updatedAt as Date) || (orgData.createdAt as Date),
       } as Organization;
     },
     onSuccess: () => {
@@ -280,7 +283,7 @@ export function useInviteMember() {
       const response = await authClient.organization.inviteMember({
         organizationId,
         email: data.email,
-        role: data.role as any,
+        role: data.role as string,
         teamId: data.teamId,
       });
       return response.data;
@@ -315,7 +318,7 @@ export function useUpdateMemberRole() {
       const response = await authClient.organization.updateMemberRole({
         organizationId,
         memberId: userId,
-        role: data.role as any,
+        role: data.role as string,
       });
       return response.data;
     },

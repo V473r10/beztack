@@ -5,7 +5,6 @@ import {
   Crown,
   Database,
   FileText,
-  Infinity as InfinityIcon,
   Sparkles,
   Users,
   Zap,
@@ -68,7 +67,7 @@ function getTierStyling(tierId: string) {
 }
 
 // Helper function to format limit values
-function formatLimitValue(key: string, value: number) {
+function _formatLimitValue(key: string, value: number) {
   if (value === -1) {
     return "Unlimited";
   }
@@ -86,7 +85,7 @@ function formatLimitValue(key: string, value: number) {
 }
 
 // Helper function to get limit icon
-function getLimitIcon(key: string) {
+function _getLimitIcon(key: string) {
   return limitIcons[key as keyof typeof limitIcons] || FileText;
 }
 

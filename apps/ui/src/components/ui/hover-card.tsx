@@ -1,19 +1,24 @@
-import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
-import type * as React from "react";
+import {
+  Root as HoverCardRootPrimitive,
+  Trigger as HoverCardTriggerPrimitive,
+  Portal as HoverCardPortalPrimitive,
+  Content as HoverCardContentPrimitive,
+} from "@radix-ui/react-hover-card";
+import type React from "react";
 
 import { cn } from "@/lib/utils";
 
 function HoverCard({
   ...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
-  return <HoverCardPrimitive.Root data-slot="hover-card" {...props} />;
+}: React.ComponentProps<typeof HoverCardRootPrimitive>) {
+  return <HoverCardRootPrimitive data-slot="hover-card" {...props} />;
 }
 
 function HoverCardTrigger({
   ...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Trigger>) {
+}: React.ComponentProps<typeof HoverCardTriggerPrimitive>) {
   return (
-    <HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
+    <HoverCardTriggerPrimitive data-slot="hover-card-trigger" {...props} />
   );
 }
 
@@ -22,10 +27,10 @@ function HoverCardContent({
   align = "center",
   sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Content>) {
+}: React.ComponentProps<typeof HoverCardContentPrimitive>) {
   return (
-    <HoverCardPrimitive.Portal data-slot="hover-card-portal">
-      <HoverCardPrimitive.Content
+    <HoverCardPortalPrimitive data-slot="hover-card-portal">
+      <HoverCardContentPrimitive
         align={align}
         className={cn(
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-64 origin-(--radix-hover-card-content-transform-origin) rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in",
@@ -35,7 +40,7 @@ function HoverCardContent({
         sideOffset={sideOffset}
         {...props}
       />
-    </HoverCardPrimitive.Portal>
+    </HoverCardPortalPrimitive>
   );
 }
 

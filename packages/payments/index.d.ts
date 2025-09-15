@@ -4,7 +4,7 @@
  * This package provides a complete payment and subscription management
  * solution integrated with Polar and Better Auth.
  */
-/** biome-ignore-all lint/performance/noBarrelFile: <explanation> */
+/** biome-ignore-all lint/performance/noBarrelFile: main exports */
 export * from "./src/constants/index.ts";
 export type * from "./src/types/index.ts";
 export * from "./src/utils/index.ts";

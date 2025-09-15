@@ -103,7 +103,9 @@ export function getPermissionsByCategory(
 export function isValidPermission(
   permission: string
 ): permission is (typeof PERMISSIONS)[keyof typeof PERMISSIONS] {
-  return Object.values(PERMISSIONS).includes(permission as any);
+  return Object.values(PERMISSIONS).includes(
+    permission as keyof typeof PERMISSIONS
+  );
 }
 
 /**

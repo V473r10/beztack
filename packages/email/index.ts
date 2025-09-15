@@ -1,6 +1,2 @@
-import type { SendEmailUnifiedProps } from "./lib/send";
-import { sendEmail } from "./lib/send";
-
-export { sendEmail };
-
-export type { SendEmailUnifiedProps };
+export type { SendEmailUnifiedProps } from "./lib/send";
+export { sendEmail } from "./lib/send";

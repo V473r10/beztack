@@ -57,6 +57,15 @@ const PADDING = 16;
 const CONTENT_WIDTH = 300;
 const CONTENT_HEIGHT = 200;
 
+// Animation constants
+const ANIMATION_DURATION = 0.8;
+const OPACITY_DURATION = 0.4;
+// Easing curve constants
+const EASE_CURVE_START = 0.16;
+const EASE_CURVE_MID = 0.3;
+const EASE_CURVE = [EASE_CURVE_START, 1, EASE_CURVE_MID, 1] as const;
+const BOUNCE_OFFSET = -4;
+
 function getElementPosition(id: string) {
   const element = document.getElementById(id);
   if (!element) {
@@ -81,23 +90,22 @@ function calculateContentPosition(
   let left = elementPos.left;
   let top = elementPos.top;
 
-  switch (position) {
-    case "top":
-      top = elementPos.top - CONTENT_HEIGHT - PADDING;
-      left = elementPos.left + elementPos.width / 2 - CONTENT_WIDTH / 2;
-      break;
-    case "bottom":
-      top = elementPos.top + elementPos.height + PADDING;
-      left = elementPos.left + elementPos.width / 2 - CONTENT_WIDTH / 2;
-      break;
-    case "left":
-      left = elementPos.left - CONTENT_WIDTH - PADDING;
-      top = elementPos.top + elementPos.height / 2 - CONTENT_HEIGHT / 2;
-      break;
-    case "right":
-      left = elementPos.left + elementPos.width + PADDING;
-      top = elementPos.top + elementPos.height / 2 - CONTENT_HEIGHT / 2;
-      break;
+  if (position === "top") {
+    top = elementPos.top - CONTENT_HEIGHT - PADDING;
+    left = elementPos.left + elementPos.width / 2 - CONTENT_WIDTH / 2;
+  } else if (position === "bottom") {
+    top = elementPos.top + elementPos.height + PADDING;
+    left = elementPos.left + elementPos.width / 2 - CONTENT_WIDTH / 2;
+  } else if (position === "left") {
+    left = elementPos.left - CONTENT_WIDTH - PADDING;
+    top = elementPos.top + elementPos.height / 2 - CONTENT_HEIGHT / 2;
+  } else if (position === "right") {
+    left = elementPos.left + elementPos.width + PADDING;
+    top = elementPos.top + elementPos.height / 2 - CONTENT_HEIGHT / 2;
+  } else {
+    // Default to bottom position
+    top = elementPos.top + elementPos.height + PADDING;
+    left = elementPos.left + elementPos.width / 2 - CONTENT_WIDTH / 2;
   }
 
   return {
@@ -150,7 +158,11 @@ export function TourProvider({
     };
   }, [updateElementPosition]);
 
-  const nextStep = useCallback(async () => {
+  const setIsTourCompleted = useCallback((completed: boolean) => {
+    setIsCompleted(completed);
+  }, []);
+
+  const nextStep = useCallback(() => {
     setCurrentStep((prev) => {
       if (prev >= steps.length - 1) {
         return -1;
@@ -213,10 +225,6 @@ export function TourProvider({
       window.removeEventListener("click", handleClick);
     };
   }, [handleClick]);
-
-  const setIsTourCompleted = useCallback((completed: boolean) => {
-    setIsCompleted(completed);
-  }, []);
 
   return (
     <TourContext.Provider
@@ -301,9 +309,9 @@ export function TourProvider({
                 ).width,
               }}
               transition={{
-                duration: 0.8,
-                ease: [0.16, 1, 0.3, 1],
-                opacity: { duration: 0.4 },
+                duration: ANIMATION_DURATION,
+                ease: EASE_CURVE,
+                opacity: { duration: OPACITY_DURATION },
               }}
             >
               <div className="absolute top-4 right-4 text-muted-foreground text-xs">
@@ -328,19 +336,19 @@ export function TourProvider({
                   </motion.div>
                   <div className="mt-4 flex justify-between">
                     {currentStep > 0 && (
-                      // biome-ignore lint/a11y/useButtonType: <explanation>
                       <button
                         className="text-muted-foreground text-sm hover:text-foreground"
                         disabled={currentStep === 0}
                         onClick={previousStep}
+                        type="button"
                       >
                         Previous
                       </button>
                     )}
-                    {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
                     <button
                       className="ml-auto font-medium text-primary text-sm hover:text-primary/90"
                       onClick={nextStep}
+                      type="button"
                     >
                       {currentStep === steps.length - 1 ? "Finish" : "Next"}
                     </button>
@@ -376,7 +384,7 @@ export function TourAlertDialog({
   if (isTourCompleted || steps.length === 0 || currentStep > -1) {
     return null;
   }
-  const handleSkip = async () => {
+  const handleSkip = () => {
     localStorage.setItem("home_tour_completed", "true");
     localStorage.setItem("settings_tour_completed", "true");
     setIsOpen(false);
@@ -391,7 +399,7 @@ export function TourAlertDialog({
               animate={{
                 scale: 1,
                 filter: "blur(0px)",
-                y: [0, -4, 0],
+                y: [0, BOUNCE_OFFSET, 0],
                 rotate: [-2, 2, -2],
               }}
               initial={{ scale: 0.7, filter: "blur(10px)" }}

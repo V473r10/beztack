@@ -13,6 +13,20 @@ import { createContext, useCallback, useContext } from "react";
 // import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
 import { toast } from "sonner";
 
+// Time constants
+const MILLISECONDS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+const FIVE_MINUTES = 5;
+const TWO_MINUTES = 2;
+
+// Query stale time constants
+const CUSTOMER_STATE_STALE_TIME =
+  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * FIVE_MINUTES; // 5 minutes
+const SUBSCRIPTIONS_STALE_TIME =
+  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * TWO_MINUTES; // 2 minutes
+const ORDERS_STALE_TIME =
+  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * FIVE_MINUTES; // 5 minutes
+
 export type MembershipContextValue = {
   // Current membership state
   currentTier: MembershipTier;
@@ -63,7 +77,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // Mock data queries for now until server-side Polar integration is complete
   const customerStateQuery = useQuery({
     queryKey: ["customer", "state"],
-    queryFn: async () => {
+    queryFn: () => {
       // Mock customer state
       return {
         customerId: "mock-customer",
@@ -73,47 +87,47 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         meters: [],
       };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: CUSTOMER_STATE_STALE_TIME,
   });
 
   // Fetch subscriptions
   const subscriptionsQuery = useQuery({
     queryKey: ["customer", "subscriptions"],
-    queryFn: async (): Promise<Subscription[]> => {
+    queryFn: (): Promise<Subscription[]> => {
       // Mock subscriptions - replace with actual API call when server is ready
-      return [];
+      return Promise.resolve([]);
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: SUBSCRIPTIONS_STALE_TIME,
   });
 
   // Fetch orders
   const ordersQuery = useQuery({
     queryKey: ["customer", "orders"],
-    queryFn: async (): Promise<Order[]> => {
+    queryFn: (): Promise<Order[]> => {
       // Mock orders - replace with actual API call when server is ready
-      return [];
+      return Promise.resolve([]);
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: ORDERS_STALE_TIME,
   });
 
   // Fetch meters
   const metersQuery = useQuery({
     queryKey: ["customer", "meters"],
-    queryFn: async (): Promise<CustomerMeter[]> => {
+    queryFn: (): Promise<CustomerMeter[]> => {
       // Mock meters - replace with actual API call when server is ready
-      return [];
+      return Promise.resolve([]);
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: SUBSCRIPTIONS_STALE_TIME, // 2 minutes
   });
 
   // Fetch benefits
   const benefitsQuery = useQuery({
     queryKey: ["customer", "benefits"],
-    queryFn: async (): Promise<Benefit[]> => {
+    queryFn: (): Promise<Benefit[]> => {
       // Mock benefits - replace with actual API call when server is ready
-      return [];
+      return Promise.resolve([]);
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: CUSTOMER_STATE_STALE_TIME, // 5 minutes
   });
 
   // Checkout mutation
@@ -121,7 +135,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     mutationFn: async (params: {
       productId: string;
       billingPeriod: "monthly" | "yearly";
-      metadata?: any;
+      metadata?: Record<string, unknown>;
     }) => {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/polar/checkout`,
@@ -165,10 +179,11 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   // Billing portal mutation
   const billingPortalMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: () => {
       toast.success(
         "Mock billing portal opened (replace with actual implementation)"
       );
+      return Promise.resolve();
     },
     onSuccess: () => {
       toast.success("Opening billing portal...");
@@ -208,7 +223,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       const data = await response.json();
       return data as MembershipTierConfig[];
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: CUSTOMER_STATE_STALE_TIME, // Cache for 5 minutes
   });
 
   const tierConfig =

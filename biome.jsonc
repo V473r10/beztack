@@ -12,6 +12,9 @@
       "performance": {
         "noBarrelFile": "off",
         "noImgElement": "off"
+      },
+      "suspicious": {
+        "noUnknownAtRules": "off"
       }
     }
   },
@@ -25,5 +28,8 @@
         }
       }
     }
-  ]
+  ],
+  "files": {
+    "includes": ["!**/components/ui/*.tsx"]
+  }
 }

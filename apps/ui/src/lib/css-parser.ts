@@ -18,26 +18,84 @@ export type ParsedTheme = {
   radius?: string;
 };
 
+// Regular expressions for CSS parsing
+const ROOT_CSS_REGEX = /:root\s*\{([^}]+)\}/;
+const CSS_VARIABLE_REGEX = /--([^:]+):\s*([^;]+);/g;
+
 // Extract CSS variables from theme CSS content
 export function parseCSSVariables(cssContent: string): Record<string, string> {
   const variables: Record<string, string> = {};
 
   // Match CSS variables in :root selector
-  const rootMatch = cssContent.match(/:root\s*\{([^}]+)\}/);
+  const rootMatch = cssContent.match(ROOT_CSS_REGEX);
   if (rootMatch) {
     const rootContent = rootMatch[1];
-    const variableRegex = /--([^:]+):\s*([^;]+);/g;
 
-    let match: RegExpExecArray | null = variableRegex.exec(rootContent);
+    let match: RegExpExecArray | null = CSS_VARIABLE_REGEX.exec(rootContent);
     while (match !== null) {
       const varName = match[1].trim();
       const varValue = match[2].trim();
       variables[varName] = varValue;
-      match = variableRegex.exec(rootContent);
+      match = CSS_VARIABLE_REGEX.exec(rootContent);
     }
   }
 
   return variables;
+}
+
+// Common Google Fonts that we should auto-import
+const KNOWN_GOOGLE_FONTS = [
+  "Inter",
+  "Roboto",
+  "Open Sans",
+  "Lato",
+  "Montserrat",
+  "Source Sans Pro",
+  "Raleway",
+  "Poppins",
+  "Nunito",
+  "Ubuntu",
+  "Playfair Display",
+  "Merriweather",
+  "Lora",
+  "PT Serif",
+  "Crimson Text",
+  "Source Code Pro",
+  "Fira Code",
+  "JetBrains Mono",
+  "Monaco",
+  "Consolas",
+  "Oxanium",
+  "Space Grotesk",
+  "DM Sans",
+  "Work Sans",
+  "Manrope",
+  "Plus Jakarta Sans",
+];
+
+// Helper function to extract Google Fonts from a font family string
+function addGoogleFontsFromFamily(
+  fontFamily: string,
+  googleFonts: string[]
+): void {
+  for (const font of KNOWN_GOOGLE_FONTS) {
+    if (fontFamily.includes(font) && !googleFonts.includes(font)) {
+      googleFonts.push(font);
+    }
+  }
+}
+
+// Helper function to generate Google Fonts URL
+function generateGoogleFontsUrl(googleFonts: string[]): string {
+  const fontParams = googleFonts
+    .map((font) => {
+      // Default weights for better display - use semicolons for Google Fonts API
+      const weights = "300;400;500;600;700";
+      return `family=${encodeURIComponent(font)}:wght@${weights}`;
+    })
+    .join("&");
+
+  return `https://fonts.googleapis.com/css2?${fontParams}&display=swap`;
 }
 
 // Extract font families and create Google Fonts imports
@@ -48,85 +106,25 @@ export function extractFonts(variables: Record<string, string>): {
   const fonts: ParsedThemeFonts = {};
   const googleFonts: string[] = [];
 
-  // Common Google Fonts that we should auto-import
-  const knownGoogleFonts = [
-    "Inter",
-    "Roboto",
-    "Open Sans",
-    "Lato",
-    "Montserrat",
-    "Source Sans Pro",
-    "Raleway",
-    "Poppins",
-    "Nunito",
-    "Ubuntu",
-    "Playfair Display",
-    "Merriweather",
-    "Lora",
-    "PT Serif",
-    "Crimson Text",
-    "Source Code Pro",
-    "Fira Code",
-    "JetBrains Mono",
-    "Monaco",
-    "Consolas",
-    "Oxanium",
-    "Space Grotesk",
-    "DM Sans",
-    "Work Sans",
-    "Manrope",
-    "Plus Jakarta Sans",
-  ];
-
   // Extract font families
   if (variables["font-sans"]) {
     fonts.sans = variables["font-sans"];
-    // Check if it contains a Google Font
-    for (const font of knownGoogleFonts) {
-      if (
-        variables["font-sans"].includes(font) &&
-        !googleFonts.includes(font)
-      ) {
-        googleFonts.push(font);
-      }
-    }
+    addGoogleFontsFromFamily(variables["font-sans"], googleFonts);
   }
 
   if (variables["font-serif"]) {
     fonts.serif = variables["font-serif"];
-    for (const font of knownGoogleFonts) {
-      if (
-        variables["font-serif"].includes(font) &&
-        !googleFonts.includes(font)
-      ) {
-        googleFonts.push(font);
-      }
-    }
+    addGoogleFontsFromFamily(variables["font-serif"], googleFonts);
   }
 
   if (variables["font-mono"]) {
     fonts.mono = variables["font-mono"];
-    for (const font of knownGoogleFonts) {
-      if (
-        variables["font-mono"].includes(font) &&
-        !googleFonts.includes(font)
-      ) {
-        googleFonts.push(font);
-      }
-    }
+    addGoogleFontsFromFamily(variables["font-mono"], googleFonts);
   }
 
   // Generate Google Fonts URL if needed
   if (googleFonts.length > 0) {
-    const fontParams = googleFonts
-      .map((font) => {
-        // Default weights for better display - use semicolons for Google Fonts API
-        const weights = "300;400;500;600;700";
-        return `family=${encodeURIComponent(font)}:wght@${weights}`;
-      })
-      .join("&");
-
-    const googleFontsUrl = `https://fonts.googleapis.com/css2?${fontParams}&display=swap`;
+    const googleFontsUrl = generateGoogleFontsUrl(googleFonts);
     return { fonts, googleFontsUrl };
   }
 

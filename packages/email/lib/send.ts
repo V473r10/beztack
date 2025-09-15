@@ -9,6 +9,40 @@ import type {
   SendEmailUnifiedProps,
 } from "./interfaces";
 
+// Email validation regex at top level
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Email data types
+type WelcomeEmailData = {
+  username: string;
+  loginUrl: string;
+};
+
+type PasswordResetEmailData = {
+  username: string;
+  resetUrl: string;
+};
+
+type SubscriptionConfirmationEmailData = {
+  username: string;
+  planName: string;
+  amount: string;
+  billingPeriod: string;
+  dashboardUrl: string;
+};
+
+type CustomEmailData = {
+  subject: string;
+  message: string;
+  username?: string;
+};
+
+type EmailTemplateData =
+  | WelcomeEmailData
+  | PasswordResetEmailData
+  | SubscriptionConfirmationEmailData
+  | CustomEmailData;
+
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -24,11 +58,10 @@ export const send = async (props: SendEmailProps): Promise<EmailResult> => {
     }
 
     // Validate email addresses
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const recipients = Array.isArray(props.to) ? props.to : [props.to];
 
     for (const email of recipients) {
-      if (!emailRegex.test(email)) {
+      if (!EMAIL_REGEX.test(email)) {
         throw new Error(`Invalid email address: ${email}`);
       }
     }
@@ -80,11 +113,11 @@ export const sendWithReact = async (
       throw new Error("RESEND_FROM_EMAIL environment variable is required");
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Validate email addresses using top-level regex
     const recipients = Array.isArray(props.to) ? props.to : [props.to];
 
     for (const email of recipients) {
-      if (!emailRegex.test(email)) {
+      if (!EMAIL_REGEX.test(email)) {
         throw new Error(`Invalid email address: ${email}`);
       }
     }
@@ -170,7 +203,7 @@ export const sendEmail = async (
 };
 
 // Internal helper functions
-async function getReactTemplate(type: EmailType, data: any) {
+async function getReactTemplate(type: EmailType, data: EmailTemplateData) {
   const React = await import("react");
 
   switch (type) {
@@ -205,7 +238,10 @@ async function getReactTemplate(type: EmailType, data: any) {
   }
 }
 
-async function getHTMLTemplate(type: EmailType, data: any): Promise<string> {
+async function getHTMLTemplate(
+  type: EmailType,
+  data: EmailTemplateData
+): Promise<string> {
   switch (type) {
     case "welcome": {
       const { welcomeEmailTemplate } = await import("../lib/templates");
@@ -227,7 +263,7 @@ async function getHTMLTemplate(type: EmailType, data: any): Promise<string> {
   }
 }
 
-function getEmailSubject(type: EmailType, data: any): string {
+function getEmailSubject(type: EmailType, data: EmailTemplateData): string {
   switch (type) {
     case "welcome":
       return "¡Bienvenido a nvn!";

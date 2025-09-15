@@ -76,6 +76,11 @@ export function formatCurrency(
   }).format(amount);
 }
 
+// Constants for calculations
+const MONTHS_PER_YEAR = 12;
+const PERCENTAGE_MULTIPLIER = 100;
+const MAX_PERCENTAGE = 100;
+
 /**
  * Calculate savings for yearly billing
  */
@@ -88,9 +93,10 @@ export function calculateYearlySavings(
   formattedAmount: string;
   formattedPercentage: string;
 } {
-  const annualMonthlyPrice = monthlyPrice * 12;
+  const annualMonthlyPrice = monthlyPrice * MONTHS_PER_YEAR;
   const savingsAmount = annualMonthlyPrice - yearlyPrice;
-  const savingsPercentage = (savingsAmount / annualMonthlyPrice) * 100;
+  const savingsPercentage =
+    (savingsAmount / annualMonthlyPrice) * PERCENTAGE_MULTIPLIER;
 
   return {
     amount: savingsAmount,
@@ -152,7 +158,10 @@ export function getUsagePercentage(
     return null; // Unlimited usage
   }
 
-  return Math.min((meter.consumedUnits / limit) * 100, 100);
+  return Math.min(
+    (meter.consumedUnits / limit) * PERCENTAGE_MULTIPLIER,
+    MAX_PERCENTAGE
+  );
 }
 
 /**

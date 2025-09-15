@@ -12,11 +12,11 @@ import type { MembershipTier } from "../types/index.ts";
 /**
  * Webhook payload types for better type safety
  */
-export interface WebhookPayload {
+export type WebhookPayload = {
   type: string;
   id: string;
   created_at: string;
-}
+};
 
 export interface CustomerStateChangedPayload extends WebhookPayload {
   customer: {

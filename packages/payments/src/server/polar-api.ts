@@ -5,6 +5,80 @@ import { Polar } from "@polar-sh/sdk";
  * Provides methods for interacting with Polar's API beyond what Better Auth plugins offer
  */
 
+// Types for Polar API responses
+type PolarOrganization = {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type PolarProduct = {
+  id: string;
+  name: string;
+  description?: string;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type PolarApiResponse<T> = {
+  result?: T;
+  data?: T;
+};
+
+type PolarCustomer = {
+  id: string;
+  email: string;
+  name?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+type PolarSubscription = {
+  id: string;
+  customer_id: string;
+  product_id: string;
+  status: string;
+  current_period_start: string;
+  current_period_end: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type PolarCheckout = {
+  id: string;
+  url: string;
+  status: string;
+  product_id?: string;
+  customer_id?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type CustomerCreateData = {
+  email: string;
+  name?: string;
+  metadata?: Record<string, unknown>;
+};
+
+type CustomerUpdateData = {
+  name?: string;
+  email?: string;
+  metadata?: Record<string, unknown>;
+};
+
+type CheckoutCreateData = {
+  product_id?: string;
+  product_price_id?: string;
+  customer_id?: string;
+  success_url?: string;
+  cancel_url?: string;
+  metadata?: Record<string, unknown>;
+};
+
 /**
  * Create configured Polar client
  */
@@ -44,15 +118,15 @@ export class PolarApiService {
   /**
    * Get organization information
    */
-  async getOrganization(orgId: string): Promise<any> {
+  async getOrganization(orgId: string): Promise<PolarOrganization> {
     const response = await this.client.organizations.get({ id: orgId });
-    return (response as any).result || response;
+    return (response as PolarApiResponse<PolarOrganization>).result || response;
   }
 
   /**
    * List all products for an organization
    */
-  async getProducts(orgId: string): Promise<any[]> {
+  async getProducts(orgId: string): Promise<PolarProduct[]> {
     const response = await this.client.products.list({
       organizationId: orgId,
       isArchived: false,
@@ -63,33 +137,29 @@ export class PolarApiService {
   /**
    * Get specific product by ID
    */
-  async getProduct(productId: string): Promise<any> {
+  async getProduct(productId: string): Promise<PolarProduct> {
     const response = await this.client.products.get({ id: productId });
-    return (response as any).result || response;
+    return (response as PolarApiResponse<PolarProduct>).result || response;
   }
 
   /**
    * Create a customer
    */
-  async createCustomer(data: {
-    email: string;
-    name?: string;
-    metadata?: Record<string, any>;
-  }): Promise<any> {
+  async createCustomer(data: CustomerCreateData): Promise<PolarCustomer> {
     const response = await this.client.customers.create({
       email: data.email,
       name: data.name,
       metadata: data.metadata,
     });
-    return (response as any).result || response;
+    return (response as PolarApiResponse<PolarCustomer>).result || response;
   }
 
   /**
    * Get customer by ID
    */
-  async getCustomer(customerId: string): Promise<any> {
+  async getCustomer(customerId: string): Promise<PolarCustomer> {
     const response = await this.client.customers.get({ id: customerId });
-    return (response as any).result || response;
+    return (response as PolarApiResponse<PolarCustomer>).result || response;
   }
 
   /**
@@ -97,23 +167,21 @@ export class PolarApiService {
    */
   async updateCustomer(
     customerId: string,
-    data: {
-      name?: string;
-      email?: string;
-      metadata?: Record<string, any>;
-    }
-  ): Promise<any> {
+    data: CustomerUpdateData
+  ): Promise<PolarCustomer> {
     const response = await this.client.customers.update({
       id: customerId,
       customerUpdate: data,
     });
-    return (response as any).result || response;
+    return (response as PolarApiResponse<PolarCustomer>).result || response;
   }
 
   /**
    * List customer subscriptions
    */
-  async getCustomerSubscriptions(customerId: string): Promise<any[]> {
+  async getCustomerSubscriptions(
+    customerId: string
+  ): Promise<PolarSubscription[]> {
     const response = await this.client.subscriptions.list({
       customerId,
     });
@@ -123,39 +191,37 @@ export class PolarApiService {
   /**
    * Create a checkout session
    */
-  async createCheckout(data: any): Promise<any> {
+  async createCheckout(data: CheckoutCreateData): Promise<PolarCheckout> {
     const response = await this.client.checkouts.create(data);
-    return (response as any).result || response;
+    return (response as PolarApiResponse<PolarCheckout>).result || response;
   }
 
   /**
    * Get checkout session
    */
-  async getCheckout(checkoutId: string): Promise<any> {
+  async getCheckout(checkoutId: string): Promise<PolarCheckout> {
     const response = await this.client.checkouts.get({ id: checkoutId });
-    return (response as any).result || response;
+    return (response as PolarApiResponse<PolarCheckout>).result || response;
   }
 
   /**
    * Create custom checkout link for a product
    */
-  async createProductCheckout(data: {
+  createProductCheckout(data: {
     productId: string;
     customerId?: string;
     customerEmail?: string;
     successUrl?: string;
-    metadata?: Record<string, any>;
-  }): Promise<any> {
-    const checkoutData: any = {
-      productId: data.productId,
-      successUrl: data.successUrl || process.env.POLAR_SUCCESS_URL,
+    metadata?: Record<string, unknown>;
+  }): Promise<PolarCheckout> {
+    const checkoutData: CheckoutCreateData = {
+      product_id: data.productId,
+      success_url: data.successUrl || process.env.POLAR_SUCCESS_URL,
       metadata: data.metadata,
     };
 
     if (data.customerId) {
-      checkoutData.customerId = data.customerId;
-    } else if (data.customerEmail) {
-      checkoutData.customerEmail = data.customerEmail;
+      checkoutData.customer_id = data.customerId;
     }
 
     return this.createCheckout(checkoutData);
@@ -200,14 +266,26 @@ export async function getOrganizationProducts(orgId: string) {
   const products = await polarApi.getProducts(orgId);
 
   // Map products to tiers based on environment variables
-  const tierMapping = {
-    [process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID!]: "basic",
-    [process.env.POLAR_BASIC_YEARLY_PRODUCT_ID!]: "basic",
-    [process.env.POLAR_PRO_MONTHLY_PRODUCT_ID!]: "pro",
-    [process.env.POLAR_PRO_YEARLY_PRODUCT_ID!]: "pro",
-    [process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID!]: "ultimate",
-    [process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID!]: "ultimate",
-  };
+  const tierMapping: Record<string, string> = {};
+
+  if (process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID) {
+    tierMapping[process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID] = "basic";
+  }
+  if (process.env.POLAR_BASIC_YEARLY_PRODUCT_ID) {
+    tierMapping[process.env.POLAR_BASIC_YEARLY_PRODUCT_ID] = "basic";
+  }
+  if (process.env.POLAR_PRO_MONTHLY_PRODUCT_ID) {
+    tierMapping[process.env.POLAR_PRO_MONTHLY_PRODUCT_ID] = "pro";
+  }
+  if (process.env.POLAR_PRO_YEARLY_PRODUCT_ID) {
+    tierMapping[process.env.POLAR_PRO_YEARLY_PRODUCT_ID] = "pro";
+  }
+  if (process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID) {
+    tierMapping[process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID] = "ultimate";
+  }
+  if (process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID) {
+    tierMapping[process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID] = "ultimate";
+  }
 
   return products.map((product) => ({
     ...product,

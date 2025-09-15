@@ -1,7 +1,12 @@
 "use client";
 
-import * as SliderPrimitive from "@radix-ui/react-slider";
-import * as React from "react";
+import {
+  Root as SliderRootPrimitive,
+  Track as SliderTrackPrimitive,
+  Range as SliderRangePrimitive,
+  Thumb as SliderThumbPrimitive,
+} from "@radix-ui/react-slider";
+import React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -12,7 +17,7 @@ function Slider({
   min = 0,
   max = 100,
   ...props
-}: React.ComponentProps<typeof SliderPrimitive.Root>) {
+}: React.ComponentProps<typeof SliderRootPrimitive>) {
   const _values = React.useMemo(
     () =>
       Array.isArray(value)
@@ -24,7 +29,7 @@ function Slider({
   );
 
   return (
-    <SliderPrimitive.Root
+    <SliderRootPrimitive
       className={cn(
         "relative flex w-full touch-none select-none items-center data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col data-[disabled]:opacity-50",
         className
@@ -36,27 +41,27 @@ function Slider({
       value={value}
       {...props}
     >
-      <SliderPrimitive.Track
+      <SliderTrackPrimitive
         className={cn(
           "relative grow overflow-hidden rounded-full bg-muted data-[orientation=horizontal]:h-1.5 data-[orientation=vertical]:h-full data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-1.5"
         )}
         data-slot="slider-track"
       >
-        <SliderPrimitive.Range
+        <SliderRangePrimitive
           className={cn(
             "absolute bg-primary data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
           )}
           data-slot="slider-range"
         />
-      </SliderPrimitive.Track>
+      </SliderTrackPrimitive>
       {Array.from({ length: _values.length }, (_, index) => (
-        <SliderPrimitive.Thumb
+        <SliderThumbPrimitive
           className="block size-4 shrink-0 rounded-full border border-primary bg-background shadow-sm ring-ring/50 transition-[color,box-shadow] hover:ring-4 focus-visible:outline-hidden focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50"
           data-slot="slider-thumb"
           key={index}
         />
       ))}
-    </SliderPrimitive.Root>
+    </SliderRootPrimitive>
   );
 }
 

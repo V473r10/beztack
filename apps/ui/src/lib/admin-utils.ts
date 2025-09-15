@@ -86,6 +86,16 @@ export function formatDate(date: Date | string): string {
   });
 }
 
+// Time calculation constants
+const MILLISECONDS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+const MINUTES_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
+
+const MILLISECONDS_PER_MINUTE = MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE;
+const MILLISECONDS_PER_HOUR = MILLISECONDS_PER_MINUTE * MINUTES_PER_HOUR;
+const MILLISECONDS_PER_DAY = MILLISECONDS_PER_HOUR * HOURS_PER_DAY;
+
 /**
  * Format relative time (e.g., "2 days ago")
  */
@@ -93,9 +103,9 @@ export function formatRelativeTime(date: Date | string): string {
   const d = new Date(date);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffDays = Math.floor(diffMs / MILLISECONDS_PER_DAY);
+  const diffHours = Math.floor(diffMs / MILLISECONDS_PER_HOUR);
+  const diffMinutes = Math.floor(diffMs / MILLISECONDS_PER_MINUTE);
 
   if (diffDays > 0) {
     return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;

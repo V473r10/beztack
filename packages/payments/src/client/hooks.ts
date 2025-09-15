@@ -51,7 +51,7 @@ type AuthClient = {
   usage: {
     ingest: (
       event: Omit<UsageEvent, "customerId" | "timestamp">
-    ) => Promise<{ data: any }>;
+    ) => Promise<{ data: { id: string; status: string } }>;
     meters: {
       list: (options?: {
         query?: {

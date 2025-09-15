@@ -1,12 +1,16 @@
 import { z } from "zod";
 
+// Constants for validation
+const MIN_LENGTH = 2;
+const MAX_SLUG_LENGTH = 50;
+
 // Organization types based on Better Auth organization plugin
 export type Organization = {
   id: string;
   name: string;
   slug: string;
   logo?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -62,11 +66,13 @@ export type TeamMember = {
 
 // Validation schemas
 export const createOrganizationSchema = z.object({
-  name: z.string().min(2, "Organization name must be at least 2 characters"),
+  name: z
+    .string()
+    .min(MIN_LENGTH, "Organization name must be at least 2 characters"),
   slug: z
     .string()
-    .min(2, "Slug must be at least 2 characters")
-    .max(50, "Slug must be less than 50 characters")
+    .min(MIN_LENGTH, "Slug must be at least 2 characters")
+    .max(MAX_SLUG_LENGTH, "Slug must be less than 50 characters")
     .regex(
       /^[a-z0-9-]+$/,
       "Slug can only contain lowercase letters, numbers, and hyphens"
@@ -77,7 +83,7 @@ export const createOrganizationSchema = z.object({
 export const updateOrganizationSchema = z.object({
   name: z
     .string()
-    .min(2, "Organization name must be at least 2 characters")
+    .min(MIN_LENGTH, "Organization name must be at least 2 characters")
     .optional(),
   logo: z.string().url().optional().or(z.literal("")),
 });

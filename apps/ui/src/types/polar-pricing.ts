@@ -22,7 +22,7 @@ export type PolarProduct = {
   recurringInterval: string;
   metadata?: {
     frequency?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   prices: Array<{
     id: string;
@@ -30,5 +30,9 @@ export type PolarProduct = {
     priceCurrency: string;
     recurringInterval: string;
   }>;
-  benefits?: any[];
+  benefits?: Array<{
+    id: string;
+    name: string;
+    description?: string;
+  }>;
 };

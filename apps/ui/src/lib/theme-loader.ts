@@ -266,7 +266,10 @@ export async function loadThemeInfo(themeName: string): Promise<ThemeInfo> {
         radius: parsedTheme.radius,
       };
     }
-  } catch (_error) {}
+  } catch {
+    // Silently fail theme parsing and use fallback preview
+    // This prevents UI breakage when theme files are malformed
+  }
 
   // Fallback to default preview if parsing fails
   return {

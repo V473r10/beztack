@@ -24,7 +24,11 @@ export type SendEmailPropsWithReact = {
 
 export type EmailResult = {
   success: boolean;
-  data?: any;
+  data?: {
+    id?: string;
+    message?: string;
+    [key: string]: unknown;
+  };
   error?: string;
 };
 
