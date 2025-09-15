@@ -13,6 +13,32 @@ import type {
 } from "../types/index.ts";
 
 /**
+ * Time constants
+ */
+const TIME_CONSTANTS = {
+  MILLISECONDS_PER_SECOND: 1000,
+  SECONDS_PER_MINUTE: 60,
+  SHORT_CACHE_MINUTES: 2,
+  MEDIUM_CACHE_MINUTES: 5,
+} as const;
+
+/**
+ * Cache time constants for React Query
+ */
+const CACHE_TIME = {
+  /** 2 minutes for frequently changing data */
+  SHORT:
+    TIME_CONSTANTS.MILLISECONDS_PER_SECOND *
+    TIME_CONSTANTS.SECONDS_PER_MINUTE *
+    TIME_CONSTANTS.SHORT_CACHE_MINUTES,
+  /** 5 minutes for relatively stable data */
+  MEDIUM:
+    TIME_CONSTANTS.MILLISECONDS_PER_SECOND *
+    TIME_CONSTANTS.SECONDS_PER_MINUTE *
+    TIME_CONSTANTS.MEDIUM_CACHE_MINUTES,
+} as const;
+
+/**
  * Auth client interface (to be provided by Better Auth)
  */
 type AuthClient = {
@@ -73,7 +99,7 @@ export function useCustomerState(authClient: AuthClient) {
       const { data } = await authClient.customer.state();
       return data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: CACHE_TIME.MEDIUM, // 5 minutes
   });
 }
 
@@ -101,7 +127,7 @@ export function useCustomerSubscriptions(
       });
       return data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE_TIME.SHORT, // 2 minutes
   });
 }
 
@@ -127,7 +153,7 @@ export function useCustomerOrders(
       });
       return data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: CACHE_TIME.MEDIUM, // 5 minutes
   });
 }
 
@@ -146,7 +172,7 @@ export function useCustomerBenefits(authClient: AuthClient, limit?: number) {
       });
       return data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: CACHE_TIME.MEDIUM, // 5 minutes
   });
 }
 
@@ -165,7 +191,7 @@ export function useCustomerMeters(authClient: AuthClient, limit?: number) {
       });
       return data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE_TIME.SHORT, // 2 minutes
   });
 }
 
