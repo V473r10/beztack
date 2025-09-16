@@ -8,8 +8,10 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
+type ChartDataPoint = Record<string, string | number>;
+
 type PingingDotChartProps = {
-  data: any[];
+  data: ChartDataPoint[];
   config: ChartConfig;
   xAxisKey: string;
   yAxisKey: string;
@@ -120,7 +122,13 @@ const CustomizedDot = (props: React.SVGProps<SVGCircleElement>) => {
   );
 };
 
-const ActiveDot = (props: any) => {
+interface ActiveDotProps {
+  cx?: number;
+  cy?: number;
+  stroke?: string;
+}
+
+const ActiveDot = (props: ActiveDotProps) => {
   const { cx, cy, stroke } = props;
 
   return (

@@ -158,7 +158,7 @@ export function MemberList({
         data: { role: memberToUpdate.newRole as "admin" | "member" | "owner" },
       });
       setMemberToUpdate(null);
-    } catch (_error) {
+    } catch {
       // Error handling is done in the mutation
     }
   };
@@ -178,7 +178,7 @@ export function MemberList({
         userId: memberToRemove.userId,
       });
       setMemberToRemove(null);
-    } catch (_error) {
+    } catch {
       // Error handling is done in the mutation
     }
   };
@@ -197,7 +197,7 @@ export function MemberList({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, _i) => (
+            {Array.from({ length: 5 }).map(() => (
               <div
                 className="flex items-center space-x-4"
                 key={`member-skeleton-${crypto.randomUUID()}`}

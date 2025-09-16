@@ -319,13 +319,7 @@ export function Settings() {
   }, [userQuery.data]);
 
   const profileMutation = useMutation({
-    mutationFn: async ({
-      username: _,
-      email: __,
-    }: {
-      username: string;
-      email: string;
-    }) => {
+    mutationFn: async () => {
       // TODO: Implement actual profile update API call
       await new Promise((resolve) =>
         setTimeout(resolve, SIMULATED_API_DELAY_MS)

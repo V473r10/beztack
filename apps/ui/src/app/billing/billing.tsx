@@ -100,7 +100,7 @@ export default function Billing() {
   ) => {
     try {
       await upgradeToTier(tierId, billingPeriod);
-    } catch (_upgradeError) {
+    } catch {
       // Error is handled by the upgradeToTier function's internal error handling
     }
   };
@@ -108,7 +108,7 @@ export default function Billing() {
   const handleManageBilling = async () => {
     try {
       await openBillingPortal(window.location.href);
-    } catch (_billingError) {
+    } catch {
       // Error is handled by the openBillingPortal function's internal error handling
     }
   };

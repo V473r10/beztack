@@ -203,7 +203,7 @@ const processAllCategories = (data: {
 };
 
 // Feature schema for DataTable
-const _featureSchema = z.object({
+export const featureSchema = z.object({
   id: z.number(),
   category: z.string(),
   feature: z.string(),
@@ -212,7 +212,7 @@ const _featureSchema = z.object({
   ultimate: z.boolean().or(z.string()),
 });
 
-type FeatureRow = z.infer<typeof _featureSchema>;
+export type FeatureRow = z.infer<typeof featureSchema>;
 
 // Feature cell component to render boolean/string values appropriately
 function FeatureCell({ value }: { value: boolean | string }) {

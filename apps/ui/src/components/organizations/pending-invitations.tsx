@@ -166,7 +166,7 @@ export function PendingInvitations({
         invitationId: invitationToCancel.id,
       });
       setInvitationToCancel(null);
-    } catch (_error) {
+    } catch {
       // Error handling is done in the mutation
     }
   };
@@ -180,7 +180,7 @@ export function PendingInvitations({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, _i) => (
+            {Array.from({ length: 3 }).map(() => (
               <div
                 className="flex items-center justify-between rounded border p-4"
                 key={`invitation-skeleton-${crypto.randomUUID()}`}

@@ -95,7 +95,7 @@ async function fetchSystemMetrics(): Promise<SystemMetric[]> {
 
     // Return empty array if no metrics found
     return [];
-  } catch (_error) {
+  } catch {
     // Fallback to simulated data if API fails
     return [
       { label: "Memory Usage", value: 67, unit: "%", status: "good" as const },

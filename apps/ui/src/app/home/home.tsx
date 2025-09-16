@@ -32,7 +32,7 @@ export default function Page() {
     }, TOUR_OPEN_DELAY);
 
     return () => clearTimeout(timer);
-  }, [setSteps, isTourCompleted]);
+  }, [setSteps, isTourCompleted, steps]);
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

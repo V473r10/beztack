@@ -187,7 +187,7 @@ export function PricingCard({
         <div className="space-y-3">
           <div className="font-medium text-sm">Features included:</div>
           <ul className="space-y-2">
-            {(tier.features || []).map((feature: string, _index: number) => (
+            {(tier.features || []).map((feature: string) => (
               <li
                 className="flex items-start gap-3 text-sm"
                 key={`${tier.id}-feature-${feature}-${crypto.randomUUID()}`}

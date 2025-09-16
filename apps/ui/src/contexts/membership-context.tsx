@@ -172,7 +172,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     onSuccess: () => {
       toast.success("Redirecting to checkout...");
     },
-    onError: (_error) => {
+    onError: () => {
       toast.error("Failed to start checkout process");
     },
   });
@@ -188,7 +188,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     onSuccess: () => {
       toast.success("Opening billing portal...");
     },
-    onError: (_error) => {
+    onError: () => {
       toast.error("Failed to open billing portal");
     },
   });
@@ -267,7 +267,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     async (returnUrl?: string) => {
       try {
         await billingPortalMutation.mutateAsync();
-      } catch (_error) {
+      } catch {
         // Fallback to direct URL
         window.open(getBillingPortalUrl(returnUrl), "_blank");
       }

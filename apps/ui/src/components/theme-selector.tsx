@@ -9,7 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { type ColorTheme, useTheme } from "@/contexts/theme-context";
+import type { ColorTheme } from "@/contexts/theme-types";
+import { useTheme } from "@/hooks/use-theme";
 import { getAllThemes, type ThemeInfo } from "@/lib/theme-loader";
 
 export function ThemeSelector() {
@@ -35,7 +36,7 @@ export function ThemeSelector() {
         setLoading(true);
         const availableThemes = await getAllThemes();
         setThemes(availableThemes);
-      } catch (_error) {
+      } catch {
         // TODO: Handle theme loading error
         // Silently handle theme loading errors
       } finally {

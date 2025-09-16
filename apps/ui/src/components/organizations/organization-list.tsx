@@ -42,7 +42,7 @@ export function OrganizationList({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, _i) => (
+        {Array.from({ length: 3 }).map(() => (
           <Card key={`skeleton-${crypto.randomUUID()}`}>
             <CardHeader>
               <div className="flex items-center space-x-4">

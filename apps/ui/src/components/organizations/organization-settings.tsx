@@ -68,7 +68,7 @@ export function OrganizationSettings({
           data: value,
         });
         setIsEditing(false);
-      } catch (_error) {
+      } catch {
         // Error handling is done in the mutation
       }
     },
@@ -92,7 +92,7 @@ export function OrganizationSettings({
     try {
       await deleteOrganization.mutateAsync(organization.id);
       navigate("/");
-    } catch (_error) {
+    } catch {
       // Error handling is done in the mutation
     }
   };
@@ -101,7 +101,7 @@ export function OrganizationSettings({
     try {
       await leaveOrganization.mutateAsync(organization.id);
       navigate("/");
-    } catch (_error) {
+    } catch {
       // Error handling is done in the mutation
     }
   };
