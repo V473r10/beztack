@@ -40,7 +40,7 @@ export function CreateOrganizationDialog({
         await createOrganization.mutateAsync(value);
         onOpenChange(false);
         form.reset();
-      } catch (_error) {
+      } catch {
         // Error handling is done in the mutation
       }
     },

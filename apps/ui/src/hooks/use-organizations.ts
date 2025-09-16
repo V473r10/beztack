@@ -440,13 +440,7 @@ export function useCancelInvitation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      organizationId: _organizationId,
-      invitationId,
-    }: {
-      organizationId: string;
-      invitationId: string;
-    }) => {
+    mutationFn: async ({ invitationId }: { invitationId: string }) => {
       const response = await authClient.organization.cancelInvitation({
         invitationId,
       });
@@ -454,7 +448,7 @@ export function useCancelInvitation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["organizationInvitations", variables.organizationId],
+        queryKey: ["organizationInvitations", variables.invitationId],
       });
       toast.success("Invitation cancelled");
     },
@@ -471,15 +465,8 @@ export function useCreateTeam() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      organizationId,
-      data,
-    }: {
-      organizationId: string;
-      data: CreateTeamData;
-    }) => {
+    mutationFn: async ({ data }: { data: CreateTeamData }) => {
       const response = await authClient.organization.createTeam({
-        organizationId,
         name: data.name,
       });
       if (!response.data) {
@@ -487,9 +474,9 @@ export function useCreateTeam() {
       }
       return response.data as Team;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["teams", variables.organizationId],
+        queryKey: ["teams", data.id],
       });
       toast.success(`Team "${data.name}" created successfully`);
     },
@@ -505,13 +492,7 @@ export function useDeleteTeam() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      organizationId: _organizationId,
-      teamId,
-    }: {
-      organizationId: string;
-      teamId: string;
-    }) => {
+    mutationFn: async ({ teamId }: { teamId: string }) => {
       const response = await authClient.organization.removeTeam({
         teamId,
       });
@@ -519,7 +500,7 @@ export function useDeleteTeam() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["teams", variables.organizationId],
+        queryKey: ["teams", variables.teamId],
       });
       queryClient.invalidateQueries({
         queryKey: ["teamMembers", variables.teamId],

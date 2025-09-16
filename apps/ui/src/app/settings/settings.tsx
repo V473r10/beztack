@@ -320,8 +320,8 @@ export function Settings() {
 
   const profileMutation = useMutation({
     mutationFn: async ({
-      username: _username,
-      email: _email,
+      username: _,
+      email: __,
     }: {
       username: string;
       email: string;
