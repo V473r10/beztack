@@ -8,7 +8,8 @@
     "dev": "nx run-many -t dev",
     "lint": "nx lint",
     "test": "nx test",
-    "migrate": "nx run api:migrate"
+    "migrate": "nx run api:migrate",
+    "push": "nx run api:push"
   },
   "private": true,
   "devDependencies": {
