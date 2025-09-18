@@ -162,7 +162,6 @@ export function PendingInvitations({
 
     try {
       await cancelInvitation.mutateAsync({
-        organizationId,
         invitationId: invitationToCancel.id,
       });
       setInvitationToCancel(null);
