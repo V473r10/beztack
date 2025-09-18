@@ -43,8 +43,6 @@ const CACHE_STALE_TIME_MINUTES = 5;
 const USER_QUERY_STALE_TIME =
   MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * CACHE_STALE_TIME_MINUTES;
 
-// API simulation constants
-const SIMULATED_API_DELAY_MS = 500;
 
 // TOTP constants
 const TOTP_CODE_LENGTH = 6;
@@ -130,15 +128,42 @@ export function Settings() {
   }, [userQuery.data]);
 
   const profileMutation = useMutation({
-    mutationFn: async () => {
-      // TODO: Implement actual profile update API call
-      await new Promise((resolve) =>
-        setTimeout(resolve, SIMULATED_API_DELAY_MS)
-      ); // Simulated API call
-      return { success: true };
+    mutationFn: async (profileData: { username: string; email: string }) => {
+      const currentUser = userQuery.data;
+      
+      // Handle name update
+      const nameUpdateResult = await authClient.updateUser({
+        name: profileData.username, // Better Auth uses 'name' instead of 'username'
+      });
+      
+      if (nameUpdateResult.error) {
+        throw new Error(nameUpdateResult.error.message || "Failed to update profile");
+      }
+      
+      // Handle email change separately if email has changed
+      if (currentUser?.email !== profileData.email) {
+        const emailChangeResult = await authClient.changeEmail({
+          newEmail: profileData.email,
+          callbackURL: "/settings", // Redirect back to settings after verification
+        });
+        
+        if (emailChangeResult.error) {
+          throw new Error(emailChangeResult.error.message || "Failed to change email");
+        }
+        
+        // Show different success message for email changes
+        toast.success("Profile updated! Please check your email to verify the new address.");
+        return { nameUpdated: true, emailChangeRequested: true };
+      }
+      
+      return { nameUpdated: true, emailChangeRequested: false };
     },
-    onSuccess: () => {
-      toast.success("Profile settings saved!");
+    onSuccess: (data) => {
+      // Only show generic success message if email wasn't changed 
+      // (email changes show their own message in mutationFn)
+      if (!data?.emailChangeRequested) {
+        toast.success("Profile settings saved!");
+      }
       queryClient.invalidateQueries({ queryKey: ["user-session"] });
     },
     onError: (error) => {

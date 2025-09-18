@@ -16,7 +16,7 @@ import Pricing from "./app/billing/pricing.tsx";
 import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
 import OrganizationsPage from "./app/organizations/organizations.tsx";
-import Settings from "./app/settings/settings.tsx";
+import { Settings } from "./app/settings/settings.tsx";
 import { AdminRoute } from "./components/admin-route.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
 import { ProtectedRoute } from "./components/protected-route.tsx";
