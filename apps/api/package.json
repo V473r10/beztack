@@ -4,6 +4,8 @@
   "scripts": {
     "build": "nitro build",
     "dev": "nitro dev",
+    "vercel-build": "pnpm build",
+    "start": "node .output/server/index.mjs",
     "migrate": "pnpm dlx @better-auth/cli generate --output ./db/schema.ts --config ./server/utils/auth.ts -y & pnpm dlx bun drizzle-kit push",
     "push": "pnpm dlx bun drizzle-kit push"
   },

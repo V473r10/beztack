@@ -25,7 +25,22 @@ export default defineNitroConfig({
     jsxImportSource: "react",
   },
   rollupConfig: {
-    external: [],
+    external: [
+      // Don't externalize these packages - bundle them instead
+      // This prevents ESM resolution issues in Vercel
+    ],
     plugins: [],
+  },
+  // Bundle all dependencies to avoid ESM resolution issues in Vercel
+  bundledDependencies: [
+    "@polar-sh/sdk",
+    "@polar-sh/better-auth",
+    "better-auth",
+  ],
+  // Ensure proper node compatibility
+  node: true,
+  // Build configuration for serverless environments
+  nitro: {
+    bundleAnalyze: process.env.BUNDLE_ANALYZE === "true",
   },
 });
