@@ -9,6 +9,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:4173", // Vite preview
   "https://localhost:5173", // HTTPS local development
   "https://vitro-ui.vercel.app",
+  "https://acervus-ui.vercel.app",
 ];
 
 /**
