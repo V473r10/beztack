@@ -216,7 +216,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const tierConfigsQuery = useQuery({
     queryKey: ["tierConfigs"],
     queryFn: async (): Promise<MembershipTierConfig[]> => {
-      const response = await fetch("/api/polar/products");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/polar/products`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch tier configurations");
       }
