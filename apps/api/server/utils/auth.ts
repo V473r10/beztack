@@ -51,6 +51,7 @@ export const auth = betterAuth({
     "http://localhost:5173",
     "http://localhost:5174",
     "https://nvn.vercel.app",
+    "https://acervus-ui.vercel.app",
   ],
   plugins: [
     twoFactor({
