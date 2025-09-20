@@ -96,15 +96,17 @@ export function getPolarProducts() {
 
   if (process.env.POLAR_PRO_MONTHLY_PRODUCT_ID) {
     products.push({
-      productId: process.env.POLAR_PRO_MONTHLY_PRODUCT_ID,
-      slug: "pro",
+      id: process.env.POLAR_PRO_MONTHLY_PRODUCT_ID,
+      tier: "pro",
+      type: "monthly",
     });
   }
 
   if (process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID) {
     products.push({
-      productId: process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
-      slug: "ultimate",
+      id: process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
+      tier: "ultimate",
+      type: "monthly",
     });
   }
 

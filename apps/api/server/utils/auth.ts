@@ -1,5 +1,6 @@
 import { sendEmail } from "@nvn/email";
-import { setupPolarForBetterAuth } from "@nvn/payments/server";
+import { checkout, polar, portal, usage } from "@polar-sh/better-auth";
+import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
@@ -11,34 +12,10 @@ import {
 import { db } from "@/db/db";
 import { schema } from "@/db/schema";
 
-// Setup Polar configuration with proper validation
-function getPolarPlugin() {
-  // Check required environment variables
-  const hasAccessToken = !!process.env.POLAR_ACCESS_TOKEN;
-  const hasWebhookSecret = !!process.env.POLAR_WEBHOOK_SECRET;
-
-  if (!hasAccessToken) {
-    return null;
-  }
-
-  if (!hasWebhookSecret) {
-    // Continue without webhooks
-  }
-
-  try {
-    const polarPlugin = setupPolarForBetterAuth();
-
-    if (polarPlugin) {
-      return polarPlugin;
-    }
-
-    return null;
-  } catch (_error) {
-    return null;
-  }
-}
-
-const polarPlugin = getPolarPlugin();
+const polarClient = new Polar({
+  accessToken: process.env.POLAR_ACCESS_TOKEN,
+  server: "sandbox",
+});
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema }),
@@ -78,8 +55,44 @@ export const auth = betterAuth({
         allowRemovingAllTeams: false, // Prevent removing the last team
       },
     }),
-    // Integrate Polar plugin if available
-    ...(polarPlugin !== null ? [polarPlugin] : []),
+    polar({
+      client: polarClient,
+      createCustomerOnSignUp: true,
+      use: [
+        checkout({
+          products: [
+            {
+              productId: process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID || "",
+              slug: "basic-monthly",
+            },
+            {
+              productId: process.env.POLAR_BASIC_YEARLY_PRODUCT_ID || "",
+              slug: "basic-yearly",
+            },
+            {
+              productId: process.env.POLAR_PRO_MONTHLY_PRODUCT_ID || "",
+              slug: "pro-monthly",
+            },
+            {
+              productId: process.env.POLAR_PRO_YEARLY_PRODUCT_ID || "",
+              slug: "pro-yearly",
+            },
+            {
+              productId: process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID || "",
+              slug: "ultimate-monthly",
+            },
+            {
+              productId: process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID || "",
+              slug: "ultimate-yearly",
+            },
+          ],
+          successUrl: process.env.POLAR_SUCCESS_URL,
+          authenticatedUsersOnly: true,
+        }),
+        portal(),
+        usage(),
+      ],
+    }),
   ],
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
