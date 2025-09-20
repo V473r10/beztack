@@ -21,8 +21,10 @@ export default defineNitroConfig({
     openAPI: true,
   },
   esbuild: {
-    jsx: "automatic",
-    jsxImportSource: "react",
+    options: {
+      jsx: "automatic",
+      jsxImportSource: "react",
+    },
   },
   rollupConfig: {
     external: [
@@ -31,16 +33,15 @@ export default defineNitroConfig({
     ],
     plugins: [],
   },
-  // Bundle all dependencies to avoid ESM resolution issues in Vercel
-  bundledDependencies: [
-    "@polar-sh/sdk",
-    "@polar-sh/better-auth",
-    "better-auth",
-  ],
   // Ensure proper node compatibility
   node: true,
-  // Build configuration for serverless environments
-  nitro: {
-    bundleAnalyze: process.env.BUNDLE_ANALYZE === "true",
+  // Additional build configuration for better dependency handling
+  externals: {
+    // Inline these dependencies to avoid ESM resolution issues
+    inline: [
+      "@polar-sh/sdk",
+      "@polar-sh/better-auth", 
+      "better-auth",
+    ],
   },
 });
