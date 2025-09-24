@@ -116,7 +116,7 @@ export const auth = betterAuth({
       sessionToken: {
         attributes: {
           secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-          sameSite: "lax", // Allow cookies to be sent with navigation
+          sameSite: "none", // Allow cookies to be sent in cross-site contexts
           httpOnly: true, // Prevent XSS attacks
         },
       },
