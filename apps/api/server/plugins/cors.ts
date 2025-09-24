@@ -11,8 +11,8 @@ const ALLOWED_ORIGINS = [
   "https://vitro-ui.vercel.app",
   "https://acervus-ui.vercel.app",
   "https://acervus-api.vercel.app", // Allow API domain for proxy requests
-  "acervus-api.codedicated.com",
-  "acervus-ui.codedicated.com",
+  "https://acervus-api.codedicated.com",
+  "https://acervus-ui.codedicated.com",
 ];
 
 /**
