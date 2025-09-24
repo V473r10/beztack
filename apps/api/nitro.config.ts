@@ -42,6 +42,8 @@ export default defineNitroConfig({
       "@polar-sh/sdk",
       "@polar-sh/better-auth", 
       "better-auth",
+      "zod",
+      "zod-to-json-schema",
     ],
   },
 });
