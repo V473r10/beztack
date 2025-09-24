@@ -10,6 +10,7 @@ const ALLOWED_ORIGINS = [
   "https://localhost:5173", // HTTPS local development
   "https://vitro-ui.vercel.app",
   "https://acervus-ui.vercel.app",
+  "https://acervus-api.vercel.app", // Allow API domain for proxy requests
 ];
 
 /**

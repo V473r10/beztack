@@ -29,6 +29,7 @@ export const auth = betterAuth({
     "http://localhost:5174",
     "https://nvn.vercel.app",
     "https://acervus-ui.vercel.app",
+    "https://acervus-api.vercel.app", // Add API domain as trusted origin
   ],
   plugins: [
     twoFactor({
@@ -109,9 +110,16 @@ export const auth = betterAuth({
     }),
   },
   advanced: {
-    crossSubDomainCookies: {
-      enabled: true,
-      domain: "acervus-ui.vercel.app",
+    // Remove crossSubDomainCookies as it won't work with separate Vercel apps
+    // The proxy solution handles this instead
+    cookies: {
+      sessionToken: {
+        attributes: {
+          secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+          sameSite: "lax", // Allow cookies to be sent with navigation
+          httpOnly: true, // Prevent XSS attacks
+        },
+      },
     },
   },
 });
