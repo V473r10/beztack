@@ -1,12 +1,6 @@
-import { formatCurrency, getBillingPortalUrl } from "@nvn/payments/client";
-// Tier configurations now fetched dynamically from API
-import type {
-  CustomerMeter,
-  MembershipTier,
-  MembershipTierConfig,
-  Order,
-  Subscription,
-} from "@nvn/payments/types";
+import type { CustomerMeter } from "@polar-sh/sdk/models/components/customermeter.js";
+import type { Order } from "@polar-sh/sdk/models/components/order.js";
+import type { Subscription } from "@polar-sh/sdk/models/components/subscription.js";
 import {
   AlertCircle,
   ArrowUpRight,
@@ -20,6 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +28,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 import { MembershipBadge, MembershipStatus } from "./membership-badge";
+import { formatCurrency } from "./pricing-card";
 import { UpgradeDialog } from "./upgrade-dialog";
 import { UsageMetrics } from "./usage-metrics";
 
@@ -98,7 +95,7 @@ function SubscriptionCard({
           <div className="space-y-1">
             <CardTitle className="text-lg">
               {subscription.metadata?.tier
-                ? `${subscription.metadata.tier.charAt(0).toUpperCase() + subscription.metadata.tier.slice(1)} Plan`
+                ? `${subscription.metadata.tier.toString().charAt(0).toUpperCase() + subscription.metadata.tier.toString().slice(1)} Plan`
                 : "Subscription"}
             </CardTitle>
             <CardDescription>
@@ -251,14 +248,14 @@ function OrderHistory({ orders }: OrderHistoryProps) {
               <div className="space-y-1">
                 <div className="font-medium">
                   {order.metadata?.tier
-                    ? `${order.metadata.tier.charAt(0).toUpperCase() + order.metadata.tier.slice(1)} Plan`
+                    ? `${order.metadata.tier.toString().charAt(0).toUpperCase() + order.metadata.tier.toString().slice(1)} Plan`
                     : "Order"}
                 </div>
                 <div className="text-muted-foreground text-sm">
                   {order.createdAt
                     ? new Date(order.createdAt).toLocaleDateString()
                     : "N/A"}{" "}
-                  • {formatCurrency(order.amount)}
+                  • {formatCurrency(order.totalAmount)}
                 </div>
               </div>
             </div>
@@ -315,8 +312,7 @@ export function BillingDashboard({
     if (onManageBilling) {
       onManageBilling();
     } else {
-      // Fallback to Polar billing portal
-      window.open(getBillingPortalUrl(), "_blank");
+      toast("There was an error managing your billing");
     }
   };
 
@@ -364,7 +360,7 @@ export function BillingDashboard({
                 Manage Billing
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
-              {currentTier !== "enterprise" && (
+              {currentTier !== "ultimate" && (
                 <Button
                   disabled={isLoading}
                   onClick={() => setShowUpgradeDialog(true)}

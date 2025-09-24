@@ -1,9 +1,8 @@
-import { formatCurrency } from "@nvn/payments/client";
-import type { MembershipTier } from "@nvn/payments/types";
 import { CheckCircle, CreditCard, Home } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { MembershipBadge } from "@/components/payments/membership-badge";
+import { formatCurrency } from "@/components/payments/pricing-card";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useMembership } from "@/contexts/membership-context";
+import type { MembershipTier } from "@/types/membership";
 
 const MAX_FEATURES_DISPLAY = 6;
 

@@ -1,10 +1,9 @@
 import crypto from "node:crypto";
-import type {
-  Customer,
-  MembershipTier,
-  Order,
-  Subscription,
-} from "../types/index.ts";
+import type { Customer } from "@polar-sh/sdk/models/components/customer.js";
+import type { Order } from "@polar-sh/sdk/models/components/order.js";
+import type { Subscription } from "@polar-sh/sdk/models/components/subscription.js";
+import type { EventHandlerRequest, H3Event } from "h3";
+import type { MembershipTier } from "@/server/utils/membership";
 
 const SHA256_PREFIX_LENGTH = 7;
 
@@ -174,10 +173,10 @@ export class WebhookEventHandler {
     }
 
     const update: MembershipUpdate = {
-      userId: order.metadata.userId,
+      userId: order.metadata.userId.toString(),
       tier: order.metadata.tier as MembershipTier,
       status: "active",
-      organizationId: order.metadata.organizationId,
+      organizationId: order.metadata.organizationId?.toString(),
       // One-time purchases don't have expiration
     };
 
@@ -195,12 +194,14 @@ export class WebhookEventHandler {
     }
 
     const update: MembershipUpdate = {
-      userId: subscription.metadata.userId,
+      userId: subscription.metadata.userId.toString(),
       tier: subscription.metadata.tier as MembershipTier,
       status: "active",
       subscriptionId: subscription.id,
-      organizationId: subscription.metadata.organizationId,
-      validUntil: subscription.currentPeriodEnd,
+      organizationId: subscription.metadata.organizationId?.toString(),
+      validUntil: subscription.currentPeriodEnd
+        ? new Date(subscription.currentPeriodEnd)
+        : undefined,
     };
 
     await this.updateMembership(update);
@@ -217,12 +218,14 @@ export class WebhookEventHandler {
     }
 
     const update: MembershipUpdate = {
-      userId: subscription.metadata.userId,
+      userId: subscription.metadata.userId.toString(),
       tier: "free", // Downgrade to free tier
       status: "canceled",
       subscriptionId: subscription.id,
-      organizationId: subscription.metadata.organizationId,
-      validUntil: subscription.currentPeriodEnd, // Grace period until end of billing period
+      organizationId: subscription.metadata.organizationId?.toString(),
+      validUntil: subscription.currentPeriodEnd
+        ? new Date(subscription.currentPeriodEnd)
+        : undefined, // Grace period until end of billing period
     };
 
     await this.updateMembership(update);
@@ -239,11 +242,11 @@ export class WebhookEventHandler {
     }
 
     const update: MembershipUpdate = {
-      userId: subscription.metadata.userId,
+      userId: subscription.metadata.userId.toString(),
       tier: "free", // Immediate downgrade to free tier
       status: "inactive",
       subscriptionId: subscription.id,
-      organizationId: subscription.metadata.organizationId,
+      organizationId: subscription.metadata.organizationId?.toString(),
       validUntil: new Date(), // Immediate termination
     };
 
@@ -261,12 +264,14 @@ export class WebhookEventHandler {
     }
 
     const update: MembershipUpdate = {
-      userId: subscription.metadata.userId,
+      userId: subscription.metadata.userId.toString(),
       tier: subscription.metadata.tier as MembershipTier,
       status: "past_due",
       subscriptionId: subscription.id,
-      organizationId: subscription.metadata.organizationId,
-      validUntil: subscription.currentPeriodEnd,
+      organizationId: subscription.metadata.organizationId?.toString(),
+      validUntil: subscription.currentPeriodEnd
+        ? new Date(subscription.currentPeriodEnd)
+        : undefined,
     };
 
     await this.updateMembership(update);
@@ -366,9 +371,15 @@ export async function handleWebhookRequest(
     // Import h3 readBody function dynamically
     const { readBody, getHeader } = await import("h3");
 
-    const body = await readBody(event as any);
+    const body = await readBody(
+      event as unknown as H3Event<EventHandlerRequest>
+    );
     const bodyString = typeof body === "string" ? body : JSON.stringify(body);
-    const signature = getHeader(event as any, "x-polar-signature") || "";
+    const signature =
+      getHeader(
+        event as unknown as H3Event<EventHandlerRequest>,
+        "x-polar-signature"
+      ) || "";
 
     const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
     if (!webhookSecret) {

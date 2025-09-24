@@ -1,7 +1,9 @@
+import { Polar } from "@polar-sh/sdk";
+import type { Benefit } from "@polar-sh/sdk/models/components/benefit.js";
+import type { Customer } from "@polar-sh/sdk/models/components/customer.js";
 import type { Session, User } from "better-auth/types";
 import type { EventHandlerRequest, H3Event } from "h3";
 import { createError } from "h3";
-import { createConfiguredPolarClient } from "./polar";
 
 export type MembershipTier = "free" | "pro" | "enterprise";
 
@@ -9,14 +11,31 @@ export type MembershipInfo = {
   tier: MembershipTier;
   hasActiveSubscription: boolean;
   subscriptionId?: string;
-  benefits: string[];
+  benefits: Benefit[];
   organizationId?: string;
   expiresAt?: Date;
 };
 
-export interface AuthenticatedUser extends User {
-  session: Session;
+// Extend Session type to include organization plugin fields
+type ExtendedSession = Session & {
+  activeOrganizationId?: string | null;
+  activeTeamId?: string | null;
+};
+
+export interface AuthenticatedUser {
+  // User properties (flattened from User type)
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  // Additional properties
+  session: ExtendedSession;
   membership?: MembershipInfo;
+  // Keep user object for backward compatibility
+  user: User;
 }
 
 /**
@@ -28,8 +47,18 @@ export async function requireAuth(
   // Import auth lazily to avoid circular dependency
   const { auth } = await import("./auth");
 
+  // Convert Node.js IncomingHttpHeaders to Web API Headers
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(event.node.req.headers)) {
+    if (value) {
+      // Handle both string and string[] values
+      const headerValue = Array.isArray(value) ? value.join(", ") : value;
+      headers.set(key, headerValue);
+    }
+  }
+
   const session = await auth.api.getSession({
-    headers: event.node.req.headers,
+    headers,
   });
 
   if (!session) {
@@ -39,7 +68,13 @@ export async function requireAuth(
     });
   }
 
-  return session;
+  // Structure the response to match AuthenticatedUser interface
+  // The session object contains both user and session data
+  return {
+    ...session.user,
+    session: session.session as ExtendedSession,
+    user: session.user,
+  };
 }
 
 /**
@@ -49,9 +84,12 @@ export async function getMembershipInfo(
   userId: string,
   organizationId?: string
 ): Promise<MembershipInfo> {
-  const polarClient = createConfiguredPolarClient();
+  const polar = new Polar({
+    accessToken: process.env.POLAR_ACCESS_TOKEN,
+    server: process.env.POLAR_SERVER as "production" | "sandbox",
+  });
 
-  if (!polarClient) {
+  if (!polar) {
     // Return free tier if Polar is not configured
     return {
       tier: "free",
@@ -63,11 +101,11 @@ export async function getMembershipInfo(
   try {
     // Get customer state from Polar
     // This would use the user ID as the external_id for the Polar customer
-    const customerState = await polarClient.customers.get({
+    const customer: Customer = await polar.customers.get({
       id: userId, // or find by external_id
     });
 
-    if (!customerState) {
+    if (!customer) {
       return {
         tier: "free",
         hasActiveSubscription: false,
@@ -75,9 +113,14 @@ export async function getMembershipInfo(
       };
     }
 
+    const subscriptions = await polar.subscriptions.list({
+      organizationId,
+      customerId: customer.id,
+    });
+
     // Check for active subscriptions
     const activeSubscriptions =
-      customerState.subscriptions?.filter(
+      subscriptions.result.items.filter(
         (sub) =>
           sub.status === "active" &&
           (!organizationId || sub.metadata?.referenceId === organizationId)
@@ -102,14 +145,19 @@ export async function getMembershipInfo(
         tier = "pro";
       }
 
-      if (subscription.current_period_end) {
-        expiresAt = new Date(subscription.current_period_end);
+      if (subscription.currentPeriodEnd) {
+        expiresAt = new Date(subscription.currentPeriodEnd);
       }
     }
 
+    const productsSubscribedTo = subscriptions.result.items.map(
+      (sub) => sub.product
+    );
+
     // Extract benefits from Polar customer state
-    const benefits =
-      customerState.benefits?.map((benefit) => benefit.type) || [];
+    const benefits: Benefit[] = productsSubscribedTo.flatMap(
+      (product) => product?.benefits || []
+    );
 
     return {
       tier,
@@ -141,7 +189,10 @@ export async function requireMembership(
   // Get organization context if available from session
   const organizationId = user.session.activeOrganizationId;
 
-  const membership = await getMembershipInfo(user.user.id, organizationId);
+  const membership = await getMembershipInfo(
+    user.user.id,
+    organizationId || undefined
+  );
 
   // Check if user meets the required tier
   if (!hasAccessToTier(membership.tier, requiredTier)) {
@@ -189,7 +240,7 @@ export function hasBenefit(
   membership: MembershipInfo,
   benefitType: string
 ): boolean {
-  return membership.benefits.includes(benefitType);
+  return membership.benefits.some((benefit) => benefit.type === benefitType);
 }
 
 /**
@@ -201,7 +252,10 @@ export async function requireBenefit(
 ): Promise<AuthenticatedUser> {
   const user = await requireAuth(event);
   const organizationId = user.session.activeOrganizationId;
-  const membership = await getMembershipInfo(user.user.id, organizationId);
+  const membership = await getMembershipInfo(
+    user.user.id,
+    organizationId || undefined
+  );
 
   if (!hasBenefit(membership, benefitType)) {
     throw createError({

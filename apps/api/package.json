@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@nvn/email": "workspace:*",
-    "@nvn/payments": "workspace:*",
     "@polar-sh/better-auth": "^1.1.0",
     "@polar-sh/sdk": "^0.34.15",
     "@types/react": "^19.1.12",

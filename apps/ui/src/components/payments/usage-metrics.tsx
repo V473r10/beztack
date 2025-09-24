@@ -1,5 +1,6 @@
 // import { getUsagePercentage, isUsageNearLimit } from "@nvn/payments/client";
-import type { CustomerMeter, MembershipTierConfig } from "@nvn/payments/types";
+
+import type { CustomerMeter } from "@polar-sh/sdk/models/components/customermeter.js";
 import {
   AlertCircle,
   ArrowUpRight,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import type { MembershipTierConfig } from "@/types/membership";
 
 // Constants
 const PERCENTAGE_MAX = 100;
@@ -179,7 +181,7 @@ export function UsageMetrics({
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Usage Metrics</CardTitle>
-          {tierConfig.id !== "enterprise" &&
+          {tierConfig.id !== "ultimate" &&
             (hasNearLimitUsage || hasOverLimitUsage) && (
               <Badge
                 className="text-xs"
@@ -208,7 +210,7 @@ export function UsageMetrics({
           ))}
         </div>
 
-        {tierConfig.id !== "enterprise" &&
+        {tierConfig.id !== "ultimate" &&
           (hasNearLimitUsage || hasOverLimitUsage) &&
           onUpgrade && (
             <div
@@ -245,7 +247,7 @@ export function UsageMetrics({
             </div>
           )}
 
-        {tierConfig.id === "enterprise" && (
+        {tierConfig.id === "ultimate" && (
           <div className="rounded-lg border border-muted bg-muted/30 p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Database className="h-4 w-4" />

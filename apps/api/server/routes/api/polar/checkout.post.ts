@@ -1,4 +1,4 @@
-import { createPolarClient } from "@nvn/payments/server";
+import { Polar } from "@polar-sh/sdk";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 
@@ -17,31 +17,6 @@ type PolarApiError = {
     detail?: string;
   };
 };
-
-type ParsedCheckoutData = z.infer<typeof checkoutRequestSchema>;
-
-// Helper function to build checkout data
-function buildCheckoutData(parsed: ParsedCheckoutData) {
-  return {
-    products: [parsed.productId], // Required: array of product IDs
-    success_url:
-      parsed.successUrl ||
-      `${process.env.FRONTEND_URL}/dashboard?checkout=success`,
-    ...(parsed.customerEmail && { customer_email: parsed.customerEmail }),
-    ...(parsed.customerName && { customer_name: parsed.customerName }),
-    ...(parsed.metadata && { metadata: parsed.metadata }),
-    ...(parsed.customFieldData && {
-      custom_field_data: parsed.customFieldData,
-    }),
-    ...(parsed.allowDiscountCodes !== undefined && {
-      allow_discount_codes: parsed.allowDiscountCodes,
-    }),
-    ...(parsed.requireBillingAddress !== undefined && {
-      require_billing_address: parsed.requireBillingAddress,
-    }),
-    ...(parsed.amount && { amount: parsed.amount }),
-  };
-}
 
 // Helper function to handle Polar API errors
 function handlePolarApiError(error: unknown) {
@@ -76,14 +51,18 @@ const checkoutRequestSchema = z.object({
   successUrl: z.string().url().optional(),
   customerEmail: z.string().email().optional(),
   customerName: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
-  customFieldData: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+  customFieldData: z.record(z.string(), z.any()).optional(),
   allowDiscountCodes: z.boolean().optional(),
   requireBillingAddress: z.boolean().optional(),
   amount: z.number().min(MIN_AMOUNT_CENTS).max(MAX_AMOUNT_CENTS).optional(),
 });
 
 export default defineEventHandler(async (event) => {
+  const polar = new Polar({
+    accessToken: process.env.POLAR_ACCESS_TOKEN,
+    server: process.env.POLAR_SERVER as "production" | "sandbox",
+  });
   if (event.node.req.method !== "POST") {
     throw createError({
       statusCode: 405,
@@ -95,9 +74,9 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     const parsed = checkoutRequestSchema.parse(body);
 
-    const polar = createPolarClient();
-    const checkoutData = buildCheckoutData(parsed);
-    const checkout = await polar.checkouts.create(checkoutData);
+    const checkout = await polar.checkouts.create({
+      products: [parsed.productId],
+    });
 
     return {
       success: true,
@@ -109,7 +88,7 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         statusMessage: "Invalid request data",
-        data: error.errors,
+        data: error.message,
       });
     }
 

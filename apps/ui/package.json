@@ -17,7 +17,6 @@
     "@hookform/resolvers": "^5.0.1",
     "@nvn/ai": "workspace:*",
     "@nvn/ocr": "workspace:*",
-    "@nvn/payments": "workspace:*",
     "@polar-sh/better-auth": "^1.1.4",
     "@polar-sh/sdk": "^0.34.17",
     "@radix-ui/react-accordion": "^1.2.10",

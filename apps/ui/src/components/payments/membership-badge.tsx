@@ -1,7 +1,7 @@
-import type { MembershipTier } from "@nvn/payments/types";
 import { Building2, Crown, Sparkles, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { MembershipTier } from "@/types/membership";
 
 export type MembershipBadgeProps = {
   tier: MembershipTier;
@@ -13,24 +13,25 @@ export type MembershipBadgeProps = {
 
 const tierIcons = {
   free: Sparkles,
+  basic: Users,
   pro: Crown,
-  team: Users,
-  enterprise: Building2,
+  ultimate: Building2,
 };
 
 const tierColors = {
   free: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 border-blue-200",
+  basic:
+    "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200",
   pro: "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 border-purple-200",
-  team: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200",
-  enterprise:
+  ultimate:
     "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
 };
 
 const tierNames = {
   free: "Free",
+  basic: "Basic",
   pro: "Pro",
-  team: "Team",
-  enterprise: "Enterprise",
+  ultimate: "Ultimate",
 };
 
 export function MembershipBadge({

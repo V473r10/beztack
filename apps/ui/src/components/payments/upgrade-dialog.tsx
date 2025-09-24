@@ -1,4 +1,3 @@
-import type { MembershipTier } from "@nvn/payments/types";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Building2, Sparkles } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +13,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePolarProducts } from "@/hooks/use-polar-products";
 import { cn } from "@/lib/utils";
+import type { MembershipTier } from "@/types/membership";
 import type { PolarPricingTier } from "@/types/polar-pricing";
 import { MembershipBadge } from "./membership-badge";
 import { PricingCard } from "./pricing-card";
@@ -22,7 +22,7 @@ import { PricingCard } from "./pricing-card";
 const MIN_TIERS_FOR_THREE_COLUMN = 3;
 
 // Tier hierarchy helper - now local since tiers are dynamic
-const TIER_HIERARCHY: MembershipTier[] = ["free", "pro", "team", "enterprise"];
+const TIER_HIERARCHY: MembershipTier[] = ["free", "basic", "pro", "ultimate"];
 
 const isTierHigher = (tierA: string, tierB: string): boolean => {
   const indexA = TIER_HIERARCHY.indexOf(tierA as MembershipTier);
@@ -191,8 +191,8 @@ export function UpgradeDialog({
           )}
 
           {/* Enterprise CTA */}
-          {!availableTiers.find((t) => t.id === "enterprise") &&
-            currentTier !== "enterprise" && (
+          {!availableTiers.find((t) => t.id === "ultimate") &&
+            currentTier !== "ultimate" && (
               <div className="rounded-lg border bg-muted/30 p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">

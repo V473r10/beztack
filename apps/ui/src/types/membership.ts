@@ -14,7 +14,7 @@ type PolarProduct = {
 /**
  * Membership tier levels based on VIT-17 strategy
  */
-export type MembershipTier = "free" | "pro" | "team" | "enterprise";
+export type MembershipTier = "free" | "basic" | "pro" | "ultimate";
 
 /**
  * Membership tier configuration from Polar API
@@ -43,7 +43,7 @@ export type UserMembership = {
   readonly status: "active" | "inactive" | "canceled" | "past_due";
   readonly subscriptionId?: string;
   readonly customerId?: string;
-  readonly organizationId?: string; // For team/enterprise tiers
+  readonly organizationId?: string; // For basic/ultimate tiers
   readonly validUntil?: Date;
   readonly createdAt: Date;
   readonly updatedAt: Date;

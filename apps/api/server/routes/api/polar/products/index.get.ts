@@ -1,4 +1,4 @@
-import { createPolarClient } from "@nvn/payments/server";
+import { Polar } from "@polar-sh/sdk";
 import { eq } from "drizzle-orm";
 import { defineEventHandler } from "h3";
 import { db } from "@/db/db";
@@ -27,7 +27,10 @@ type ProductTier = {
 };
 
 export default defineEventHandler(async (_event) => {
-  const polar = createPolarClient();
+  const polar = new Polar({
+    accessToken: process.env.POLAR_ACCESS_TOKEN,
+    server: process.env.POLAR_SERVER as "production" | "sandbox",
+  });
 
   const products = await polar.products.list({
     organizationId: process.env.POLAR_ORGANIZATION_ID,

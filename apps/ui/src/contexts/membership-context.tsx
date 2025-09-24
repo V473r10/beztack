@@ -1,17 +1,13 @@
-import { getBillingPortalUrl } from "@nvn/payments/client";
-import type {
-  Benefit,
-  CustomerMeter,
-  MembershipTier,
-  MembershipTierConfig,
-  Order,
-  Subscription,
-} from "@nvn/payments/types";
+import type { Benefit } from "@polar-sh/sdk/models/components/benefit.js";
+import type { CustomerMeter } from "@polar-sh/sdk/models/components/customermeter.js";
+import type { Order } from "@polar-sh/sdk/models/components/order.js";
+import type { Subscription } from "@polar-sh/sdk/models/components/subscription.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { createContext, useCallback, useContext } from "react";
 // import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
 import { toast } from "sonner";
+import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 
 // Time constants
 const MILLISECONDS_PER_SECOND = 1000;
@@ -265,17 +261,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     [checkoutMutation]
   );
 
-  const openBillingPortal = useCallback(
-    async (returnUrl?: string) => {
-      try {
-        await billingPortalMutation.mutateAsync();
-      } catch {
-        // Fallback to direct URL
-        window.open(getBillingPortalUrl(returnUrl), "_blank");
-      }
-    },
-    [billingPortalMutation]
-  );
+  const openBillingPortal = useCallback(async () => {
+    await billingPortalMutation.mutateAsync();
+  }, [billingPortalMutation]);
 
   const refreshMembership = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["customer"] });
@@ -322,7 +310,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     [tierConfig]
   );
 
-  const canUpgrade = currentTier !== "enterprise";
+  const canUpgrade = currentTier !== "ultimate";
 
   const value: MembershipContextValue = {
     currentTier,

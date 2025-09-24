@@ -1,11 +1,8 @@
-import {
-  createDefaultWebhookHandlers,
-  handleWebhookRequest,
-} from "@nvn/payments/server";
 import { eq } from "drizzle-orm";
 import { createError, defineEventHandler } from "h3";
 import { db } from "@/db/db";
 import { schema } from "@/db/schema";
+import { createDefaultWebhookHandlers, handleWebhookRequest } from "@/lib/webhooks";
 
 // Constants
 const DEFAULT_SUBSCRIPTION_DAYS = 30;
@@ -83,33 +80,31 @@ async function handleUserOrderPaid(
 
 // Helper function to handle subscription activation
 async function handleSubscriptionActivation(
-  payload: {
-    data: {
-      metadata?: { referenceId?: string; userId?: string; tier?: string };
-      id: string;
-      customer_id: string;
-      current_period_end?: string;
-    };
+  subscription: {
+    metadata?: { referenceId?: string; userId?: string; tier?: string };
+    id: string;
+    customer_id?: string;
+    current_period_end?: string;
   },
   isOrganization: boolean
 ) {
   const targetId = isOrganization
-    ? payload.data.metadata?.referenceId
-    : payload.data.metadata?.userId;
+    ? subscription.metadata?.referenceId
+    : subscription.metadata?.userId;
 
   if (!targetId) {
     return;
   }
 
   const tierName =
-    payload.data.metadata?.tier || (isOrganization ? "team" : "pro");
+    subscription.metadata?.tier || (isOrganization ? "team" : "pro");
   const updates = {
     subscriptionTier: tierName,
     subscriptionStatus: "active" as const,
-    subscriptionId: payload.data.id,
-    polarCustomerId: payload.data.customer_id,
-    subscriptionValidUntil: payload.data.current_period_end
-      ? new Date(payload.data.current_period_end)
+    subscriptionId: subscription.id,
+    polarCustomerId: subscription.customer_id,
+    subscriptionValidUntil: subscription.current_period_end
+      ? new Date(subscription.current_period_end)
       : null,
   };
 
@@ -122,17 +117,15 @@ async function handleSubscriptionActivation(
 
 // Helper function to handle subscription cancellation
 async function handleSubscriptionCancellation(
-  payload: {
-    data: {
-      metadata?: { referenceId?: string; userId?: string };
-      current_period_end?: string;
-    };
+  subscription: {
+    metadata?: { referenceId?: string; userId?: string };
+    current_period_end?: string;
   },
   isOrganization: boolean
 ) {
   const targetId = isOrganization
-    ? payload.data.metadata?.referenceId
-    : payload.data.metadata?.userId;
+    ? subscription.metadata?.referenceId
+    : subscription.metadata?.userId;
 
   if (!targetId) {
     return;
@@ -140,8 +133,8 @@ async function handleSubscriptionCancellation(
 
   const updates = {
     subscriptionStatus: "canceled" as const,
-    subscriptionValidUntil: payload.data.current_period_end
-      ? new Date(payload.data.current_period_end)
+    subscriptionValidUntil: subscription.current_period_end
+      ? new Date(subscription.current_period_end)
       : new Date(),
   };
 
@@ -179,24 +172,22 @@ function buildActiveSubscriptionUpdates(
 // Helper function to handle user customer state change
 async function handleUserCustomerStateChange(
   userId: string,
-  payload: {
-    data: {
+  customer: {
+    id: string;
+    subscriptions?: Array<{
+      status: string;
+      metadata?: { tier?: string };
       id: string;
-      subscriptions?: Array<{
-        status: string;
-        metadata?: { tier?: string };
-        id: string;
-        current_period_end?: string;
-      }>;
-    };
+      current_period_end?: string;
+    }>;
   }
 ) {
-  const activeSubscription = payload.data.subscriptions?.find(
+  const activeSubscription = customer.subscriptions?.find(
     (sub) => sub.status === "active"
   );
 
   const updates = buildActiveSubscriptionUpdates(
-    payload.data.id,
+    customer.id,
     activeSubscription,
     "pro"
   );
@@ -207,24 +198,22 @@ async function handleUserCustomerStateChange(
 // Helper function to handle organization customer state change
 async function handleOrganizationCustomerStateChange(
   organizationId: string,
-  payload: {
-    data: {
+  customer: {
+    id: string;
+    subscriptions?: Array<{
+      status: string;
+      metadata?: { tier?: string };
       id: string;
-      subscriptions?: Array<{
-        status: string;
-        metadata?: { tier?: string };
-        id: string;
-        current_period_end?: string;
-      }>;
-    };
+      current_period_end?: string;
+    }>;
   }
 ) {
-  const activeSubscription = payload.data.subscriptions?.find(
+  const activeSubscription = customer.subscriptions?.find(
     (sub) => sub.status === "active"
   );
 
   const updates = buildActiveSubscriptionUpdates(
-    payload.data.id,
+    customer.id,
     activeSubscription,
     "team"
   );
@@ -237,23 +226,32 @@ export default defineEventHandler(async (event) => {
     // Create webhook handlers with proper database integration
     const webhookHandlers = createDefaultWebhookHandlers({
       onOrderPaid: async (payload) => {
+        // Extract order from payload
+        const order = payload.order;
+        if (!order) {
+          return;
+        }
+        if (!order.metadata) {
+          return;
+        }
+
         // Handle organization-level subscription
-        if (payload.data.metadata?.referenceId) {
-          const organizationId = payload.data.metadata.referenceId;
-          const tierName = payload.data.metadata?.tier || "pro";
+        if (order.metadata.referenceId) {
+          const organizationId = String(order.metadata.referenceId);
+          const tierName = String(order.metadata.tier || "pro");
           const customerInfo = {
-            customerId: payload.data.customer_id,
+            customerId: order.customerId || "",
             tier: tierName,
           };
           await handleOrganizationOrderPaid(organizationId, customerInfo);
         }
 
         // Handle individual user subscription
-        if (payload.data.metadata?.userId) {
-          const userId = payload.data.metadata.userId;
-          const tierName = payload.data.metadata?.tier || "pro";
+        if (order.metadata.userId) {
+          const userId = String(order.metadata.userId);
+          const tierName = String(order.metadata.tier || "pro");
           const customerInfo = {
-            customerId: payload.data.customer_id,
+            customerId: order.customerId || "",
             tier: tierName,
           };
           await handleUserOrderPaid(userId, customerInfo);
@@ -261,42 +259,74 @@ export default defineEventHandler(async (event) => {
       },
 
       onSubscriptionActive: async (payload) => {
+        // Extract subscription from payload
+        const subscription = payload.subscription;
+        if (!subscription) {
+          return;
+        }
+        if (!subscription.metadata) {
+          return;
+        }
+
         // Handle organization-level subscription activation
-        if (payload.data.metadata?.referenceId) {
-          await handleSubscriptionActivation(payload, true);
+        if (subscription.metadata.referenceId) {
+          await handleSubscriptionActivation(subscription, true);
         }
 
         // Handle individual user subscription activation
-        if (payload.data.metadata?.userId) {
-          await handleSubscriptionActivation(payload, false);
+        if (subscription.metadata.userId) {
+          await handleSubscriptionActivation(subscription, false);
         }
       },
 
       onSubscriptionCanceled: async (payload) => {
+        // Extract subscription from payload
+        const subscription = payload.subscription;
+        if (!subscription) {
+          return;
+        }
+        if (!subscription.metadata) {
+          return;
+        }
+
         // Handle organization-level subscription cancellation
-        if (payload.data.metadata?.referenceId) {
-          await handleSubscriptionCancellation(payload, true);
+        if (subscription.metadata.referenceId) {
+          await handleSubscriptionCancellation(subscription, true);
         }
 
         // Handle individual user subscription cancellation
-        if (payload.data.metadata?.userId) {
-          await handleSubscriptionCancellation(payload, false);
+        if (subscription.metadata.userId) {
+          await handleSubscriptionCancellation(subscription, false);
         }
       },
 
       onCustomerStateChanged: async (payload) => {
+        // Extract customer from payload
+        const customer = payload.customer;
+        if (!customer) {
+          return;
+        }
+        if (!customer.metadata) {
+          return;
+        }
+
         // Update user/customer data in database
         // Find user by Polar customer metadata (userId or external_id)
-        const userId =
-          payload.data.metadata?.userId || payload.data.metadata?.external_id;
-        const organizationId = payload.data.metadata?.referenceId;
+        let userId: string | undefined;
+        if (customer.metadata.userId) {
+          userId = String(customer.metadata.userId);
+        } else if (customer.metadata.external_id) {
+          userId = String(customer.metadata.external_id);
+        }
+        
+        const organizationId = customer.metadata.referenceId ? String(customer.metadata.referenceId) : undefined;
 
         if (userId) {
-          await handleUserCustomerStateChange(userId, payload);
+          await handleUserCustomerStateChange(userId, customer);
         }
 
         if (organizationId) {
-          await handleOrganizationCustomerStateChange(organizationId, payload);
+          await handleOrganizationCustomerStateChange(organizationId, customer);
         }
       },
 

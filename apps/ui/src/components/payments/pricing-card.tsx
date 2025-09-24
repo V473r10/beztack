@@ -1,4 +1,3 @@
-import { calculateYearlySavings, formatCurrency } from "@nvn/payments/client";
 import {
   Building2,
   Check,
@@ -66,7 +65,6 @@ function getTierStyling(tierId: string) {
   }
   return baseClasses;
 }
-
 
 export function PricingCard({
   tier,
@@ -316,3 +314,40 @@ export function PricingCard({
     </Card>
   );
 }
+
+const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
+  const MONTHS_IN_YEAR = 12;
+  const PERCENTAGE_MULTIPLIER = 100;
+
+  if (monthlyPrice <= 0 || yearlyPrice <= 0) {
+    return null;
+  }
+
+  const monthlyYearlyTotal = monthlyPrice * MONTHS_IN_YEAR;
+  const savingsAmount = Math.max(0, monthlyYearlyTotal - yearlyPrice);
+
+  if (savingsAmount === 0) {
+    return null;
+  }
+
+  const savingsPercentage =
+    (savingsAmount / monthlyYearlyTotal) * PERCENTAGE_MULTIPLIER;
+
+  return {
+    formattedPercentage: `${savingsPercentage.toFixed(1)}%`,
+    formattedAmount: formatCurrency(savingsAmount),
+  };
+};
+
+export const formatCurrency = (amount: number, currency = "USD"): string => {
+  const CENTS_TO_DOLLARS = 100;
+
+  const dollars = amount / CENTS_TO_DOLLARS;
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: dollars % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(dollars);
+};
