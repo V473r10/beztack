@@ -108,4 +108,10 @@ export const auth = betterAuth({
       }
     }),
   },
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: "acervus-ui.vercel.app",
+    },
+  },
 });
