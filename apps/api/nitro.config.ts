@@ -20,6 +20,9 @@ export default defineNitroConfig({
   experimental: {
     openAPI: true,
   },
+  openAPI: {
+    production: "prerender",
+  },
   esbuild: {
     options: {
       jsx: "automatic",
@@ -40,7 +43,7 @@ export default defineNitroConfig({
     // Inline these dependencies to avoid ESM resolution issues
     inline: [
       "@polar-sh/sdk",
-      "@polar-sh/better-auth", 
+      "@polar-sh/better-auth",
       "better-auth",
       "zod",
       "zod-to-json-schema",
