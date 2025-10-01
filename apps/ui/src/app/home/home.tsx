@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 import { DataTable } from "@/components/data-table";
@@ -13,13 +13,16 @@ export default function Page() {
   const { t } = useTranslation();
   const { setSteps, isTourCompleted } = useTour();
   const [openTour, setOpenTour] = useState(false);
-  const steps: TourStep[] = [
-    {
-      content: <div className="p-2">{t("tour.homeTour.step1")}</div>,
-      selectorId: TOUR_STEP_IDS.SETTINGS_BUTTON,
-      position: "right",
-    },
-  ];
+  const steps: TourStep[] = useMemo(
+    () => [
+      {
+        content: <div className="p-2">{t("tour.homeTour.step1")}</div>,
+        selectorId: TOUR_STEP_IDS.SETTINGS_BUTTON,
+        position: "right",
+      },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     if (localStorage.getItem("home_tour_completed") === "true") {
