@@ -174,9 +174,9 @@ export async function loadThemeCSS(
     };
   }
 
-  // In a Vite environment, we can't directly read files from the public folder
-  // Instead, we'll make a fetch request to the theme CSS file
-  const response = await fetch(`/src/styles/themes/${themeName}.css`);
+  // Fetch theme CSS from public folder
+  // Vite serves files from public/ at the root URL
+  const response = await fetch(`/themes/${themeName}.css`);
   if (!response.ok) {
     return null;
   }
