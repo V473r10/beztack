@@ -8,7 +8,6 @@ import type {
 import {
   createThemeLink,
   loadCustomFonts,
-  removeExistingElement,
 } from "./theme-utils";
 import { ThemeProviderContext } from "./theme-provider-context";
 
@@ -56,6 +55,12 @@ export function ThemeProvider({
 
   // Load color theme CSS and fonts dynamically
   useEffect(() => {
+    // Clean up any previously loaded theme CSS and fonts
+    const existingThemeLinks = document.querySelectorAll('[id^="theme-"]');
+    for (const link of existingThemeLinks) {
+      link.remove();
+    }
+
     if (colorTheme === "default") {
       return;
     }
@@ -78,12 +83,6 @@ export function ThemeProvider({
     };
 
     loadThemeAssets();
-
-    return () => {
-      // Clean up CSS and fonts
-      removeExistingElement(`theme-${colorTheme}`);
-      removeExistingElement(`theme-fonts-${colorTheme}`);
-    };
   }, [colorTheme]);
 
   const value = {

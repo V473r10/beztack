@@ -5,7 +5,7 @@ import { ROOT_CSS_REGEX, CSS_VARIABLE_REGEX, type ColorTheme } from "./theme-typ
 export function createThemeLink(colorTheme: ColorTheme): HTMLLinkElement {
   const link = document.createElement("link");
   link.rel = "stylesheet";
-  link.href = `/src/styles/themes/${colorTheme}.css`;
+  link.href = `/themes/${colorTheme}.css`;
   link.id = `theme-${colorTheme}`;
   return link;
 }
@@ -48,7 +48,7 @@ export function removeExistingElement(id: string): void {
 }
 
 export async function loadCustomFonts(colorTheme: ColorTheme): Promise<void> {
-  const response = await fetch(`/src/styles/themes/${colorTheme}.css`);
+  const response = await fetch(`/themes/${colorTheme}.css`);
   if (!response.ok) {
     return;
   }
