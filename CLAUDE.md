@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-nvn is an Nx workspace monorepo using pnpm as the package manager. The project contains:
+beztack is an Nx workspace monorepo using pnpm as the package manager. The project contains:
 - **Frontend**: React application with Vite, Tailwind CSS, and Radix UI components
 - **Backend**: Nitro server with PostgreSQL database using Drizzle ORM
 - **Shared packages**: AI utilities (AWS Bedrock integration), OCR functionality, and payment processing with Polar
@@ -44,8 +44,8 @@ nx run api:migrate
 pnpm install
 
 # Add dependencies to specific workspace
-pnpm add <package> --filter @nvn/ui
-pnpm add <package> --filter @nvn/api
+pnpm add <package> --filter @beztack/ui
+pnpm add <package> --filter @beztack/api
 ```
 
 ## Architecture
@@ -56,7 +56,7 @@ pnpm add <package> --filter @nvn/api
 - `packages/ai/` - AI SDK wrapper with Amazon Bedrock integration
 - `packages/ocr/` - OCR utilities using Tesseract.js
 
-### Frontend (`@nvn/ui`)
+### Frontend (`@beztack/ui`)
 - **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS v4
@@ -66,17 +66,17 @@ pnpm add <package> --filter @nvn/api
 - **Routing**: React Router v7
 - **Authentication**: Better Auth integration
 
-### Backend (`@nvn/api`)
+### Backend (`@beztack/api`)
 - **Framework**: Nitro (Universal JavaScript server)
 - **Database**: PostgreSQL with Drizzle ORM
 - **Authentication**: Better Auth
 - **Configuration**: Server source in `apps/api/server/`
 
 ### Shared Packages
-- `@nvn/ai` - Exports AI SDK with pre-configured Amazon Bedrock provider
-- `@nvn/ocr` - Text extraction from images using Tesseract.js
-- `@nvn/payments` - Polar payment integration with Better Auth, membership tiers, and billing management
-- `@nvn/email` - React Email templates with Resend integration for transactional emails
+- `@beztack/ai` - Exports AI SDK with pre-configured Amazon Bedrock provider
+- `@beztack/ocr` - Text extraction from images using Tesseract.js
+- `@beztack/payments` - Polar payment integration with Better Auth, membership tiers, and billing management
+- `@beztack/email` - React Email templates with Resend integration for transactional emails
 
 ## Development Guidelines
 
@@ -98,7 +98,7 @@ pnpm add <package> --filter @nvn/api
 
 ## Polar Payment Integration
 
-The project includes comprehensive Polar payment integration through the `@nvn/payments` package, providing developer-first monetization capabilities.
+The project includes comprehensive Polar payment integration through the `@beztack/payments` package, providing developer-first monetization capabilities.
 
 ### Configuration
 
@@ -135,7 +135,7 @@ The API automatically includes Polar integration when environment variables are 
 
 ```typescript
 // In apps/api/server/utils/auth.ts
-import { setupPolarForBetterAuth } from "@nvn/payments";
+import { setupPolarForBetterAuth } from "@beztack/payments";
 
 export const auth = betterAuth({
   plugins: [
@@ -175,7 +175,7 @@ The integration works in sandbox mode by default and gracefully handles missing 
 
 ## Email Integration with React Email & Resend
 
-The project includes a comprehensive email system through the `@nvn/email` package, providing React-based email templates with Resend delivery.
+The project includes a comprehensive email system through the `@beztack/email` package, providing React-based email templates with Resend delivery.
 
 ### Configuration
 
@@ -185,7 +185,7 @@ Set up environment variables in `.env`:
 # Resend Email Integration
 RESEND_API_KEY=re_your_api_key_here
 RESEND_FROM_EMAIL=hello@yourdomain.com
-RESEND_FROM_NAME=nvn  # Optional, defaults to 'nvn'
+RESEND_FROM_NAME=beztack  # Optional, defaults to 'beztack'
 ```
 
 ### Available Email Templates
@@ -205,7 +205,7 @@ POST /api/email/welcome
 {
   "to": "user@example.com",
   "username": "John Doe",
-  "loginUrl": "https://nvn.app/login"
+  "loginUrl": "https://beztack.app/login"
 }
 
 # Password reset email  
@@ -213,7 +213,7 @@ POST /api/email/password-reset
 {
   "to": "user@example.com",
   "username": "John Doe",
-  "resetUrl": "https://nvn.app/reset?token=abc123"
+  "resetUrl": "https://beztack.app/reset?token=abc123"
 }
 
 # Subscription confirmation
@@ -224,7 +224,7 @@ POST /api/email/subscription-confirmation
   "planName": "Pro",
   "amount": "$29",
   "billingPeriod": "mes",
-  "dashboardUrl": "https://nvn.app/billing"
+  "dashboardUrl": "https://beztack.app/billing"
 }
 ```
 

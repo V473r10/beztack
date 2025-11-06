@@ -1,6 +1,6 @@
 "use client";
 
-import { extractTextFromImage } from "@nvn/ocr";
+import { extractTextFromImage } from "@beztack/ocr";
 import {
   Camera,
   Copy,

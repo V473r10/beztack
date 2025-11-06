@@ -15,14 +15,14 @@ type WelcomeEmailProps = {
 
 export const WelcomeEmail = ({
   username = "User",
-  loginUrl = "https://nvn.app/login",
+  loginUrl = "https://beztack.app/login",
 }: WelcomeEmailProps) => (
   <Html>
     <Head />
-    <Preview>¡Bienvenido a nvn! Comenzá a usar tu cuenta ahora.</Preview>
+    <Preview>¡Bienvenido a beztack! Comenzá a usar tu cuenta ahora.</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Text style={title}>¡Bienvenido a nvn, {username}!</Text>
+        <Text style={title}>¡Bienvenido a beztack, {username}!</Text>
         <Text style={paragraph}>
           Tu cuenta ha sido creada exitosamente. Ahora podés acceder a todas las
           funcionalidades de la plataforma.
@@ -35,12 +35,12 @@ export const WelcomeEmail = ({
         </Button>
         <Text style={paragraph}>
           Si tenés alguna pregunta, no dudes en contactarnos. ¡Esperamos que
-          disfrutes usando nvn!
+          disfrutes usando beztack!
         </Text>
         <Text style={footer}>
           Saludos,
           <br />
-          El equipo de nvn
+          El equipo de beztack
         </Text>
       </Container>
     </Body>

@@ -466,7 +466,7 @@ export default function Pricing() {
           <CardContent className="p-8">
             <h2 className="mb-4 font-bold text-2xl">Ready to get started?</h2>
             <p className="mb-6 text-lg opacity-90">
-              Join thousands of teams already using nvn to secure their
+              Join thousands of teams already using beztack to secure their
               applications.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">

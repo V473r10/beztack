@@ -1,4 +1,4 @@
-import { sendEmail } from "@nvn/email";
+import { sendEmail } from "@beztack/email";
 import { createError, defineEventHandler, readBody } from "h3";
 
 type WelcomeEmailRequest = {

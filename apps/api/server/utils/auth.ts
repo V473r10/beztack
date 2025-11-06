@@ -1,4 +1,4 @@
-import { sendEmail } from "@nvn/email";
+import { sendEmail } from "@beztack/email";
 import { checkout, polar, portal, usage } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
@@ -27,7 +27,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:5173",
     "http://localhost:5174",
-    "https://nvn.vercel.app",
+    "https://beztack.vercel.app",
     "https://beztack-ui.vercel.app",
     "https://beztack-api.vercel.app", // Add API domain as trusted origin
     "https://beztack-api.codedicated.com",
@@ -35,7 +35,7 @@ export const auth = betterAuth({
   ],
   plugins: [
     twoFactor({
-      issuer: "nvn",
+      issuer: "beztack",
     }),
     admin(),
     organization({

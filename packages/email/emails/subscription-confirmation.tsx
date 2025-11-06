@@ -22,18 +22,18 @@ export const SubscriptionConfirmationEmail = ({
   planName = "Pro",
   amount = "$29",
   billingPeriod = "mes",
-  dashboardUrl = "https://nvn.app/billing",
+  dashboardUrl = "https://beztack.app/billing",
 }: SubscriptionConfirmationEmailProps) => (
   <Html>
     <Head />
-    <Preview>Confirmación de suscripción a nvn {planName}</Preview>
+    <Preview>Confirmación de suscripción a beztack {planName}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Text style={title}>¡Suscripción Confirmada!</Text>
         <Text style={paragraph}>Hola {username},</Text>
         <Text style={paragraph}>
-          ¡Gracias por suscribirte al plan <strong>{planName}</strong> de nvn!
-          Tu suscripción está ahora activa.
+          ¡Gracias por suscribirte al plan <strong>{planName}</strong> de
+          beztack! Tu suscripción está ahora activa.
         </Text>
 
         <div style={detailsContainer}>
@@ -68,7 +68,7 @@ export const SubscriptionConfirmationEmail = ({
         <Text style={footer}>
           Saludos,
           <br />
-          El equipo de nvn
+          El equipo de beztack
         </Text>
       </Container>
     </Body>

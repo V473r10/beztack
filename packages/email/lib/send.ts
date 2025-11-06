@@ -155,7 +155,7 @@ export const send = async (props: SendEmailProps): Promise<EmailResult> => {
     validateEnvironment();
     validateEmailAddresses(props.to);
 
-    const fromName = process.env.RESEND_FROM_NAME || "nvn";
+    const fromName = process.env.RESEND_FROM_NAME || "beztack";
     const fromEmail = process.env.RESEND_FROM_EMAIL;
     const defaultFrom = `${fromName} <${fromEmail}>`;
 
@@ -236,7 +236,7 @@ export const sendWithReact = async (
     validateEnvironment();
     validateEmailAddresses(props.to);
 
-    const fromName = process.env.RESEND_FROM_NAME || "nvn";
+    const fromName = process.env.RESEND_FROM_NAME || "beztack";
     const fromEmail = process.env.RESEND_FROM_EMAIL;
     const defaultFrom = `${fromName} <${fromEmail}>`;
 
@@ -400,9 +400,9 @@ function getEmailSubject(type: EmailType, data: EmailTemplateData): string {
   // biome-ignore lint/nursery/noUnnecessaryConditions: false positive
   switch (type) {
     case "welcome":
-      return "¡Bienvenido a nvn!";
+      return "¡Bienvenido a beztack!";
     case "password-reset":
-      return "Restablece tu contraseña - nvn";
+      return "Restablece tu contraseña - beztack";
     case "subscription-confirmation": {
       if (isSubscriptionConfirmationEmailData(data)) {
         return `Confirmación de suscripción - Plan ${data.planName}`;
@@ -410,6 +410,6 @@ function getEmailSubject(type: EmailType, data: EmailTemplateData): string {
       return "Confirmación de suscripción - Plan Premium";
     }
     default:
-      return "Email from nvn";
+      return "Email from beztack";
   }
 }

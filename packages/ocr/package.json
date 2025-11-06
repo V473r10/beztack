@@ -1,5 +1,5 @@
 {
-  "name": "@nvn/ocr",
+  "name": "@beztack/ocr",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {

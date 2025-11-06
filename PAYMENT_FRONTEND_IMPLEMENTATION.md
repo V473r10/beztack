@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a comprehensive overview of the frontend payment integration implemented for the nvn React application using the `@nvn/payments` package and integrating with the existing UI architecture.
+This document provides a comprehensive overview of the frontend payment integration implemented for the beztack React application using the `@beztack/payments` package and integrating with the existing UI architecture.
 
 ## 🏗️ Architecture Implementation
 
@@ -287,4 +287,4 @@ apps/ui/src/
     └── auth-client.ts (updated)
 ```
 
-This implementation provides a complete, production-ready frontend payment system that integrates seamlessly with the existing nvn application architecture while maintaining high standards for user experience, performance, and maintainability.
+This implementation provides a complete, production-ready frontend payment system that integrates seamlessly with the existing beztack application architecture while maintaining high standards for user experience, performance, and maintainability.

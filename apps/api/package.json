@@ -1,5 +1,5 @@
 {
-  "name": "@nvn/api",
+  "name": "@beztack/api",
   "private": true,
   "scripts": {
     "build": "nitro build",
@@ -18,7 +18,7 @@
     "tsx": "^4.20.5"
   },
   "dependencies": {
-    "@nvn/email": "workspace:*",
+    "@beztack/email": "workspace:*",
     "@polar-sh/better-auth": "^1.1.0",
     "@polar-sh/sdk": "^0.34.15",
     "@types/react": "^19.1.12",

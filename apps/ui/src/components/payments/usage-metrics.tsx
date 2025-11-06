@@ -1,4 +1,4 @@
-// import { getUsagePercentage, isUsageNearLimit } from "@nvn/payments/client";
+// import { getUsagePercentage, isUsageNearLimit } from "@beztack/payments/client";
 
 import type { CustomerMeter } from "@polar-sh/sdk/models/components/customermeter.js";
 import {

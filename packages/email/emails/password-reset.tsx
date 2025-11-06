@@ -15,18 +15,18 @@ type PasswordResetEmailProps = {
 
 export const PasswordResetEmail = ({
   username = "User",
-  resetUrl = "https://nvn.app/reset-password",
+  resetUrl = "https://beztack.app/reset-password",
 }: PasswordResetEmailProps) => (
   <Html>
     <Head />
-    <Preview>Restablecé tu contraseña de nvn</Preview>
+    <Preview>Restablecé tu contraseña de beztack</Preview>
     <Body style={main}>
       <Container style={container}>
         <Text style={title}>Restablecimiento de Contraseña</Text>
         <Text style={paragraph}>Hola {username},</Text>
         <Text style={paragraph}>
           Recibimos una solicitud para restablecer la contraseña de tu cuenta en
-          nvn.
+          beztack.
         </Text>
         <Text style={paragraph}>
           Hacé clic en el siguiente enlace para crear una nueva contraseña:
@@ -44,7 +44,7 @@ export const PasswordResetEmail = ({
         <Text style={footer}>
           Saludos,
           <br />
-          El equipo de nvn
+          El equipo de beztack
         </Text>
       </Container>
     </Body>

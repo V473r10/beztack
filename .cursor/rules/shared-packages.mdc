@@ -13,7 +13,7 @@ globs: packages/**/*.ts
 ## Package Configuration
 ```json
 {
-  "name": "@nvn/package-name",
+  "name": "@beztack/package-name",
   "type": "module",
   "main": "index.ts",
   "exports": {

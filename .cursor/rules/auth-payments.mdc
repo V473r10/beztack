@@ -20,7 +20,7 @@ export const auth = betterAuth({
     requireEmailVerification: false,
   },
   plugins: [
-    twoFactor({ issuer: "nvn" }),
+    twoFactor({ issuer: "beztack" }),
     admin(),
     organization({
       requireEmailVerificationOnInvitation: false,

@@ -203,7 +203,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <Link to="/">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="font-semibold text-base">nvn</span>
+                <span className="font-semibold text-base">beztack</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

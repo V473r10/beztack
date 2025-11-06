@@ -34,8 +34,8 @@ nx dev api         # Nitro backend
 pnpm migrate       # Run database migrations
 
 # Package management
-pnpm add <package> --filter @nvn/ui
-pnpm add <package> --filter @nvn/api
+pnpm add <package> --filter @beztack/ui
+pnpm add <package> --filter @beztack/api
 ```
 
 ## File Organization
