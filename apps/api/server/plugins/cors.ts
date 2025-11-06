@@ -8,11 +8,10 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:4173", // Vite preview
   "https://localhost:5173", // HTTPS local development
-  "https://vitro-ui.vercel.app",
-  "https://acervus-ui.vercel.app",
-  "https://acervus-api.vercel.app", // Allow API domain for proxy requests
-  "https://acervus-api.codedicated.com",
-  "https://acervus-ui.codedicated.com",
+  "https://beztack-ui.vercel.app",
+  "https://beztack-api.vercel.app", // Allow API domain for proxy requests
+  "https://beztack-api.codedicated.com",
+  "https://beztack-ui.codedicated.com",
 ];
 
 /**

@@ -28,10 +28,10 @@ export const auth = betterAuth({
     "http://localhost:5173",
     "http://localhost:5174",
     "https://nvn.vercel.app",
-    "https://acervus-ui.vercel.app",
-    "https://acervus-api.vercel.app", // Add API domain as trusted origin
-    "https://acervus-api.codedicated.com",
-    "https://acervus-ui.codedicated.com",
+    "https://beztack-ui.vercel.app",
+    "https://beztack-api.vercel.app", // Add API domain as trusted origin
+    "https://beztack-api.codedicated.com",
+    "https://beztack-ui.codedicated.com",
   ],
   plugins: [
     twoFactor({
