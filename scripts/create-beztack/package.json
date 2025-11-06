@@ -27,10 +27,10 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "pnpm install && tsdown",
     "dev": "tsdown --watch",
     "test": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "pnpm install && tsc --noEmit",
     "release": "bumpp && npm publish"
   },
   "devDependencies": {
