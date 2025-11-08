@@ -30,16 +30,15 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
+        working-directory: scripts/create-beztack
         run: pnpm i
 
       - name: Build
+        working-directory: scripts/create-beztack
         run: pnpm run build
 
       - name: Publish to NPM
+        working-directory: scripts/create-beztack
         run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - run: npx changelogithub
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
