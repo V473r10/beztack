@@ -30,7 +30,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        working-directory: scripts/create-beztack
         run: pnpm i
 
       - name: Build
