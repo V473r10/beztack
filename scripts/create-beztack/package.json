@@ -1,7 +1,7 @@
 {
   "name": "create-beztack",
   "version": "0.0.1",
-  "description": "Create a new Beztack project.",
+  "description": "Scaffold a new Beztack monorepo project",
   "type": "module",
   "license": "MIT",
   "homepage": "https://beztack.com",
@@ -13,6 +13,9 @@
     "url": "git+https://github.com/v473r10/beztack.git"
   },
   "author": "Facundo Valerio <oss@facundovalerio.com>",
+  "bin": {
+    "create-beztack": "./dist/index.js"
+  },
   "files": [
     "dist"
   ],
@@ -27,11 +30,25 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm install && tsdown",
+    "build": "tsdown && node ./scripts/postbuild.js",
     "dev": "tsdown --watch",
+    "start": "pnpm run build && node dist/index.js",
     "test": "vitest",
-    "typecheck": "pnpm install && tsc --noEmit",
-    "release": "bumpp && npm publish"
+    "typecheck": "tsc --noEmit",
+    "prepare": "pnpm run build",
+    "release": "bumpp && npm publish --access public"
+  },
+  "keywords": [
+    "beztack",
+    "monorepo",
+    "template",
+    "scaffold",
+    "nx",
+    "pnpm"
+  ],
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",
@@ -39,5 +56,8 @@
     "tsdown": "^0.11.9",
     "typescript": "^5.8.3",
     "vitest": "^3.1.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
