@@ -17,6 +17,10 @@ const polarClient = new Polar({
   server: "sandbox",
 });
 
+// Determine project name: in development use APP_NAME from env (defaults to "beztack" in .env.example),
+// in new projects this falls back to the template placeholder and will be replaced by the initializer
+const projectName = process.env.APP_NAME || "{{project-name}}";
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema }),
   emailAndPassword: {
@@ -27,15 +31,15 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:5173",
     "http://localhost:5174",
-    "https://beztack.vercel.app",
-    "https://beztack-ui.vercel.app",
-    "https://beztack-api.vercel.app", // Add API domain as trusted origin
-    "https://beztack-api.codedicated.com",
-    "https://beztack-ui.codedicated.com",
+    `https://${projectName}.vercel.app`,
+    `https://${projectName}-ui.vercel.app`,
+    `https://${projectName}-api.vercel.app`, // Add API domain as trusted origin
+    `https://${projectName}-api.codedicated.com`,
+    `https://${projectName}-ui.codedicated.com`,
   ],
   plugins: [
     twoFactor({
-      issuer: "beztack",
+      issuer: process.env.APP_NAME || "{{project-name}}",
     }),
     admin(),
     organization({

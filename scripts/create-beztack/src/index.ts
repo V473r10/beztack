@@ -171,10 +171,15 @@ async function copyDir(options: CopyDirOptions) {
 			// Process file content for template variables
 			let content = await readFile(srcPath, "utf-8");
 
-			// Replace template variables
+			// Replace template variables in all files
 			content = content
 				.replace(/{{project-name}}/g, config.name)
 				.replace(/{{description}}/g, config.description || "");
+
+			// For .env.example, also replace APP_NAME value
+			if (entry.name === ".env.example") {
+				content = content.replace(/APP_NAME=beztack/g, `APP_NAME=${config.name}`);
+			}
 
 			await writeFile(destPath, content, "utf-8");
 		}
