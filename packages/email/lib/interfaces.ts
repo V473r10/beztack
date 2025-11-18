@@ -4,7 +4,8 @@ import type { ReactElement } from "react";
 export type EmailType =
   | "welcome"
   | "password-reset"
-  | "subscription-confirmation";
+  | "subscription-confirmation"
+  | "organization-invitation";
 
 export type SendEmailProps = {
   to: string | string[];
@@ -43,5 +44,9 @@ export type SendEmailUnifiedProps = {
     amount?: string;
     billingPeriod?: string;
     dashboardUrl?: string;
+    invitedByUsername?: string;
+    invitedByEmail?: string;
+    organizationName?: string;
+    invitationUrl?: string;
   };
 };

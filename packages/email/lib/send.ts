@@ -39,6 +39,13 @@ type SubscriptionConfirmationEmailData = {
   dashboardUrl: string;
 };
 
+type OrganizationInvitationEmailData = {
+  invitedByUsername: string;
+  invitedByEmail: string;
+  organizationName: string;
+  invitationUrl: string;
+};
+
 type CustomEmailData = {
   subject: string;
   message: string;
@@ -49,6 +56,7 @@ type EmailTemplateData =
   | WelcomeEmailData
   | PasswordResetEmailData
   | SubscriptionConfirmationEmailData
+  | OrganizationInvitationEmailData
   | CustomEmailData;
 
 // Type guards for EmailTemplateData
@@ -66,6 +74,12 @@ function isSubscriptionConfirmationEmailData(
   data: EmailTemplateData
 ): data is SubscriptionConfirmationEmailData {
   return "planName" in data && "amount" in data;
+}
+
+function isOrganizationInvitationEmailData(
+  data: EmailTemplateData
+): data is OrganizationInvitationEmailData {
+  return "invitationUrl" in data && "organizationName" in data;
 }
 
 // Helper functions for validating specific email types
@@ -129,6 +143,31 @@ function validateSubscriptionData(
   };
 }
 
+function validateOrganizationInvitationData(
+  data: Record<string, unknown>
+): OrganizationInvitationEmailData {
+  const { invitedByUsername, invitedByEmail, organizationName, invitationUrl } =
+    data;
+  if (!invitedByUsername) {
+    throw new Error("Organization invitation email requires invitedByUsername");
+  }
+  if (!invitedByEmail) {
+    throw new Error("Organization invitation email requires invitedByEmail");
+  }
+  if (!organizationName) {
+    throw new Error("Organization invitation email requires organizationName");
+  }
+  if (!invitationUrl) {
+    throw new Error("Organization invitation email requires invitationUrl");
+  }
+  return {
+    invitedByUsername: String(invitedByUsername),
+    invitedByEmail: String(invitedByEmail),
+    organizationName: String(organizationName),
+    invitationUrl: String(invitationUrl),
+  };
+}
+
 // Helper function to ensure required properties are present
 function validateEmailData(
   type: EmailType,
@@ -142,6 +181,8 @@ function validateEmailData(
       return validatePasswordResetData(data);
     case "subscription-confirmation":
       return validateSubscriptionData(data);
+    case "organization-invitation":
+      return validateOrganizationInvitationData(data);
     default:
       throw new Error(`Unknown email type: ${type}`);
   }
@@ -354,6 +395,22 @@ async function getReactTemplate(type: EmailType, data: EmailTemplateData) {
         dashboardUrl: data.dashboardUrl,
       });
     }
+    case "organization-invitation": {
+      if (!isOrganizationInvitationEmailData(data)) {
+        throw new Error(
+          "Invalid data for organization invitation email template"
+        );
+      }
+      const { OrganizationInvitationEmail } = await import(
+        "../emails/organization-invitation"
+      );
+      return React.createElement(OrganizationInvitationEmail, {
+        invitedByUsername: data.invitedByUsername,
+        invitedByEmail: data.invitedByEmail,
+        organizationName: data.organizationName,
+        invitationUrl: data.invitationUrl,
+      });
+    }
     default:
       throw new Error(`Unknown email type: ${type}`);
   }
@@ -391,6 +448,29 @@ async function getHTMLTemplate(
       );
       return welcomeTemplate(data.username);
     }
+    case "organization-invitation": {
+      if (!isOrganizationInvitationEmailData(data)) {
+        throw new Error(
+          "Invalid data for organization invitation email template"
+        );
+      }
+      // Simple HTML fallback for organization invitation
+      return `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Invitación a ${data.organizationName}</title>
+          </head>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1>Invitación a ${data.organizationName}</h1>
+            <p>${data.invitedByUsername} (${data.invitedByEmail}) te ha invitado a unirte a <strong>${data.organizationName}</strong>.</p>
+            <p><a href="${data.invitationUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Aceptar Invitación</a></p>
+            <p style="color: #666; font-size: 14px;">Si no esperabas esta invitación, puedes ignorar este email.</p>
+          </body>
+        </html>
+      `;
+    }
     default:
       throw new Error(`Unknown email type: ${type}`);
   }
@@ -408,6 +488,12 @@ function getEmailSubject(type: EmailType, data: EmailTemplateData): string {
         return `Confirmación de suscripción - Plan ${data.planName}`;
       }
       return "Confirmación de suscripción - Plan Premium";
+    }
+    case "organization-invitation": {
+      if (isOrganizationInvitationEmailData(data)) {
+        return `Invitación a ${data.organizationName}`;
+      }
+      return "Invitación a organización";
     }
     default:
       return "Email from beztack";

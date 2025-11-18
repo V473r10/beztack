@@ -44,8 +44,25 @@ export const auth = betterAuth({
     admin(),
     organization({
       requireEmailVerificationOnInvitation: false, // Start with false for development
-      async sendInvitationEmail(_data) {
-        // TODO: Implement invitation email sending
+      async sendInvitationEmail(data) {
+        // Construct invitation acceptance URL
+        const baseUrl =
+          process.env.NODE_ENV === "production"
+            ? `https://${projectName}.vercel.app`
+            : "http://localhost:5173";
+        const invitationUrl = `${baseUrl}/accept-invitation/${data.id}`;
+
+        // Send invitation email
+        await sendEmail({
+          type: "organization-invitation",
+          to: data.email,
+          data: {
+            invitedByUsername: data.inviter.user.name,
+            invitedByEmail: data.inviter.user.email,
+            organizationName: data.organization.name,
+            invitationUrl,
+          },
+        });
       },
       organizationDeletion: {
         disabled: false,
