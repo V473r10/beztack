@@ -136,26 +136,34 @@ export function InviteMemberDialog({
                   <field.FormControl>
                     <Select
                       disabled={inviteMember.isPending}
-                      onValueChange={(value) => field.handleChange(value as "admin" | "member" | "owner")}
+                      onValueChange={(value) =>
+                        field.handleChange(
+                          value as "admin" | "member" | "owner"
+                        )
+                      }
                       value={field.state.value}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="!h-auto !min-h-[3.5rem] w-full py-3">
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(ROLE_LABELS).map(([role, label]) => (
-                          <SelectItem key={role} value={role}>
-                            <div className="flex items-center space-x-2">
-                              {getRoleIcon(role)}
+                          <SelectItem className="py-3" key={role} value={role}>
+                            <div className="flex items-start gap-3 text-left">
+                              <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-muted">
+                                {getRoleIcon(role)}
+                              </div>
                               <div>
-                                <div className="font-medium">{label}</div>
-                                <div className="text-muted-foreground text-sm">
+                                <p className="font-medium leading-tight">
+                                  {label}
+                                </p>
+                                <p className="text-muted-foreground text-sm leading-snug">
                                   {
                                     ROLE_DESCRIPTIONS[
                                       role as keyof typeof ROLE_DESCRIPTIONS
                                     ]
                                   }
-                                </div>
+                                </p>
                               </div>
                             </div>
                           </SelectItem>
@@ -179,11 +187,10 @@ export function InviteMemberDialog({
                         onValueChange={field.handleChange}
                         value={field.state.value}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="!h-auto w-full py-3">
                           <SelectValue placeholder="Select a team (optional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No team</SelectItem>
                           {teams.map((team) => (
                             <SelectItem key={team.id} value={team.id}>
                               {team.name}
