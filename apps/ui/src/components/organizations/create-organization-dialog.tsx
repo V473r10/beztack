@@ -46,21 +46,34 @@ export function CreateOrganizationDialog({
     },
   });
 
-  // Auto-generate slug from name
+  // Transform text to kebab-case
+  const toKebabCase = useCallback((text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }, []);
+
+  // Auto-generate slug from name in real-time
   const handleNameChange = useCallback(
     (name: string) => {
       form.setFieldValue("name", name);
-      if (name && !form.getFieldValue("slug")) {
-        const slug = name
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, "")
-          .replace(/\s+/g, "-")
-          .replace(/-+/g, "-")
-          .trim();
-        form.setFieldValue("slug", slug);
-      }
+      const slug = toKebabCase(name);
+      form.setFieldValue("slug", slug);
     },
-    [form]
+    [form, toKebabCase]
+  );
+
+  // Transform slug input to kebab-case
+  const handleSlugChange = useCallback(
+    (slug: string) => {
+      const kebabSlug = toKebabCase(slug);
+      form.setFieldValue("slug", kebabSlug);
+    },
+    [form, toKebabCase]
   );
 
   const handleSubmit = useCallback(
@@ -116,7 +129,7 @@ export function CreateOrganizationDialog({
                     <Input
                       disabled={createOrganization.isPending}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={(e) => handleSlugChange(e.target.value)}
                       placeholder="organization-slug"
                       value={field.state.value}
                     />
