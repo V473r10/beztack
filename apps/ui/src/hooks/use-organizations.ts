@@ -95,17 +95,21 @@ export function useUserInvitations() {
   return useQuery({
     queryKey: ["userInvitations"],
     queryFn: async () => {
-      const response = await authClient.organization.listInvitations();
-      if (!response.data) {
+      // Use custom endpoint to get invitations for the current user
+      const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const response = await fetch(`${baseURL}/api/invitations/me`, {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
         throw new Error("Failed to fetch user invitations");
       }
-      // Map API response to our interface
-      const apiData = response.data as Record<string, unknown>[];
-      return apiData.map((inv) => ({
-        ...inv,
-        invitedBy: (inv.inviterId as string) || "",
-        createdAt: (inv.createdAt as Date) || new Date(),
-      })) as OrganizationInvitation[];
+
+      const data = await response.json();
+      return data as OrganizationInvitation[];
     },
   });
 }
