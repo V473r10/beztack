@@ -7,6 +7,7 @@ export type SettingsAction =
   | { type: "OPEN_PASSWORD_DIALOG"; action: "enable" | "disable" }
   | { type: "CLOSE_PASSWORD_DIALOG" }
   | { type: "SET_PASSWORD"; value: string }
+  | { type: "SET_DIALOG_TOTP_CODE"; value: string }
   | { type: "START_SUBMITTING" }
   | { type: "STOP_SUBMITTING" }
   | { type: "SET_2FA_ENABLED"; enabled: boolean }

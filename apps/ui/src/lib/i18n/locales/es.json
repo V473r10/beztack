@@ -26,7 +26,8 @@
           "confirmPassword": "Confirmar Contraseña",
           "description": "Para tu seguridad, por favor ingresa tu contraseña actual para {action} Autenticación de dos factores.",
           "password": "Contraseña",
-          "title": "Confirmar Contraseña"
+          "title": "Confirmar Contraseña",
+          "totpCode": "Código TOTP"
         },
         "save": "Guardar Autenticación de dos factores",
         "title": "Autenticación de dos factores",

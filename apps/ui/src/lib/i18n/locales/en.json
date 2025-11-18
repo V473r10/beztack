@@ -26,7 +26,8 @@
           "confirmPassword": "Confirm Password",
           "description": "For your security, please enter your current password to {action} Two-Factor Authentication.",
           "password": "Password",
-          "title": "Confirm Password"
+          "title": "Confirm Password",
+          "totpCode": "TOTP Code"
         },
         "save": "Save Two-Factor Authentication",
         "title": "Two-Factor Authentication",

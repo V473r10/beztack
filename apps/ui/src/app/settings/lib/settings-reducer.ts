@@ -42,6 +42,7 @@ export function settingsReducer(
           ...state.twoFactor,
           isPasswordDialogOpen: false,
           passwordInput: "",
+          dialogTotpCode: "",
           action: null,
         },
       };
@@ -51,6 +52,14 @@ export function settingsReducer(
         twoFactor: {
           ...state.twoFactor,
           passwordInput: action.value,
+        },
+      };
+    case "SET_DIALOG_TOTP_CODE":
+      return {
+        ...state,
+        twoFactor: {
+          ...state.twoFactor,
+          dialogTotpCode: action.value,
         },
       };
     case "START_SUBMITTING":

@@ -18,6 +18,7 @@ export const INITIAL_SETTINGS_STATE = {
     isEnabled: false,
     isPasswordDialogOpen: false,
     passwordInput: "",
+    dialogTotpCode: "",
     action: null as "enable" | "disable" | null,
     isSubmitting: false,
     totpURI: null as string | null,

@@ -2,14 +2,20 @@ import { useCallback, useEffect, useReducer } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ThemeSelector } from "@/components/theme-selector";
+import { PasswordConfirmDialog } from "./components/password-confirm-dialog";
 import { ProfileCard } from "./components/profile-card";
 import { TwoFactorCard } from "./components/two-factor-card";
-import { PasswordConfirmDialog } from "./components/password-confirm-dialog";
-import { useUserSession } from "./hooks/use-user-session";
 import { useProfileMutation } from "./hooks/use-profile-mutation";
-import { useTwoFactorMutation, useTotpVerification } from "./hooks/use-two-factor";
 import { useSettingsTour } from "./hooks/use-settings-tour";
-import { copyBackupCodesToClipboard, downloadBackupCodes } from "./lib/backup-codes";
+import {
+  useTotpVerification,
+  useTwoFactorMutation,
+} from "./hooks/use-two-factor";
+import { useUserSession } from "./hooks/use-user-session";
+import {
+  copyBackupCodesToClipboard,
+  downloadBackupCodes,
+} from "./lib/backup-codes";
 import { INITIAL_SETTINGS_STATE, TOTP_CODE_LENGTH } from "./lib/constants";
 import { settingsReducer } from "./lib/settings-reducer";
 
@@ -22,7 +28,10 @@ export function Settings() {
 
   // Mutations
   const profileMutation = useProfileMutation(userQuery.data?.email);
-  const twoFactorMutation = useTwoFactorMutation(dispatch, state.twoFactor.action);
+  const twoFactorMutation = useTwoFactorMutation(
+    dispatch,
+    state.twoFactor.action
+  );
   const totpVerificationMutation = useTotpVerification(dispatch);
 
   // Tour initialization
@@ -64,11 +73,25 @@ export function Settings() {
       return;
     }
 
+    if (
+      state.twoFactor.action === "disable" &&
+      state.twoFactor.dialogTotpCode.length !== TOTP_CODE_LENGTH
+    ) {
+      toast.error("TOTP code is required to disable 2FA.");
+      return;
+    }
+
     twoFactorMutation.mutate({
       action: state.twoFactor.action,
       password: state.twoFactor.passwordInput,
+      totpCode: state.twoFactor.dialogTotpCode || undefined,
     });
-  }, [twoFactorMutation, state.twoFactor.action, state.twoFactor.passwordInput]);
+  }, [
+    twoFactorMutation,
+    state.twoFactor.action,
+    state.twoFactor.passwordInput,
+    state.twoFactor.dialogTotpCode,
+  ]);
 
   const handleTotpVerification = useCallback(() => {
     if (state.twoFactor.totpCode.length !== TOTP_CODE_LENGTH) {
@@ -123,9 +146,7 @@ export function Settings() {
         onCopyBackupCodes={handleCopyBackupCodes}
         onDownloadBackupCodes={handleDownloadBackupCodes}
         onToggle={handleTwoFactorToggle}
-        onTotpCodeChange={(value) =>
-          dispatch({ type: "SET_TOTP_CODE", value })
-        }
+        onTotpCodeChange={(value) => dispatch({ type: "SET_TOTP_CODE", value })}
         onVerifyTotp={handleTotpVerification}
         showSetup={state.twoFactor.showTotpVerification}
         totpCode={state.twoFactor.totpCode}
@@ -137,11 +158,13 @@ export function Settings() {
         isSubmitting={state.twoFactor.isSubmitting}
         onCancel={() => dispatch({ type: "CLOSE_PASSWORD_DIALOG" })}
         onConfirm={handlePasswordConfirm}
-        onPasswordChange={(value) =>
-          dispatch({ type: "SET_PASSWORD", value })
+        onPasswordChange={(value) => dispatch({ type: "SET_PASSWORD", value })}
+        onTotpCodeChange={(value) =>
+          dispatch({ type: "SET_DIALOG_TOTP_CODE", value })
         }
         open={state.twoFactor.isPasswordDialogOpen}
         password={state.twoFactor.passwordInput}
+        totpCode={state.twoFactor.dialogTotpCode}
       />
     </div>
   );

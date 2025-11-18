@@ -11,6 +11,7 @@ type TwoFactorEnableSuccessData = {
 type TwoFactorMutationParams = {
   action: "enable" | "disable";
   password: string;
+  totpCode?: string;
 };
 
 export function useTwoFactorMutation(
@@ -18,7 +19,28 @@ export function useTwoFactorMutation(
   currentAction: "enable" | "disable" | null
 ) {
   return useMutation({
-    mutationFn: async ({ action, password }: TwoFactorMutationParams) => {
+    mutationFn: async ({
+      action,
+      password,
+      totpCode,
+    }: TwoFactorMutationParams) => {
+      // When disabling 2FA, verify TOTP code first
+      if (action === "disable") {
+        if (!totpCode) {
+          throw new Error("TOTP code is required to disable 2FA");
+        }
+
+        // Verify TOTP code before disabling
+        const verifyResponse = await authClient.twoFactor.verifyTotp({
+          code: totpCode,
+        });
+
+        if (verifyResponse.error) {
+          throw new Error(verifyResponse.error.message || "Invalid TOTP code");
+        }
+      }
+
+      // Proceed with enable/disable
       const response =
         action === "enable"
           ? await authClient.twoFactor.enable({ password })
@@ -44,7 +66,9 @@ export function useTwoFactorMutation(
           backupCodes: enableData.backupCodes,
         });
         dispatch({ type: "SHOW_TOTP_VERIFICATION" });
-        toast.success("Scan QR, save codes, then enter verification code below.");
+        toast.success(
+          "Scan QR, save codes, then enter verification code below."
+        );
       } else {
         dispatch({ type: "SET_2FA_ENABLED", enabled: false });
         dispatch({ type: "CLEAR_2FA_SETUP_DATA" });
@@ -93,7 +117,9 @@ export function useTotpVerification(dispatch: React.Dispatch<SettingsAction>) {
       queryClient.invalidateQueries({ queryKey: ["user-session"] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Invalid verification code. Please try again.");
+      toast.error(
+        error.message || "Invalid verification code. Please try again."
+      );
       dispatch({ type: "SET_TOTP_CODE", value: "" });
     },
     onSettled: () => {

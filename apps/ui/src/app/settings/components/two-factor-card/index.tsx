@@ -9,8 +9,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
-import { SetupSection } from "./setup-section";
 import { EnabledBadge } from "./enabled-badge";
+import { SetupSection } from "./setup-section";
 
 type TwoFactorCardProps = {
   isEnabled: boolean;

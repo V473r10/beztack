@@ -7,6 +7,7 @@ export type SettingsState = {
     isEnabled: boolean;
     isPasswordDialogOpen: boolean;
     passwordInput: string;
+    dialogTotpCode: string;
     action: "enable" | "disable" | null;
     isSubmitting: boolean;
     totpURI: string | null;

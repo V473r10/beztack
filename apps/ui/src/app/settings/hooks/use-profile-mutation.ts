@@ -16,14 +16,18 @@ export function useProfileMutation(currentEmail?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (profileData: ProfileData): Promise<ProfileUpdateResult> => {
+    mutationFn: async (
+      profileData: ProfileData
+    ): Promise<ProfileUpdateResult> => {
       // Handle name update
       const nameUpdateResult = await authClient.updateUser({
         name: profileData.username,
       });
 
       if (nameUpdateResult.error) {
-        throw new Error(nameUpdateResult.error.message || "Failed to update profile");
+        throw new Error(
+          nameUpdateResult.error.message || "Failed to update profile"
+        );
       }
 
       // Handle email change separately if email has changed
@@ -34,10 +38,14 @@ export function useProfileMutation(currentEmail?: string) {
         });
 
         if (emailChangeResult.error) {
-          throw new Error(emailChangeResult.error.message || "Failed to change email");
+          throw new Error(
+            emailChangeResult.error.message || "Failed to change email"
+          );
         }
 
-        toast.success("Profile updated! Please check your email to verify the new address.");
+        toast.success(
+          "Profile updated! Please check your email to verify the new address."
+        );
         return { nameUpdated: true, emailChangeRequested: true };
       }
 
