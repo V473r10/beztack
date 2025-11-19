@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "email dev --port 3001"
+    "dev": "email dev --port 3005"
   },
   "keywords": [],
   "author": "",
