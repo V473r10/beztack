@@ -1,90 +1,90 @@
 ---
-title: Primeros Pasos
-description: Configuración del entorno de desarrollo
+title: Getting Started
+description: Setting up your development environment
 ---
 
-Esta guía te ayudará a configurar el proyecto Beztack en tu máquina local.
+This guide will help you set up the Beztack project on your local machine.
 
-## Prerrequisitos
+## Prerequisites
 
-Asegúrate de tener instalado:
+Make sure you have installed:
 
-- [Node.js](https://nodejs.org/) (versión LTS recomendada)
-- [pnpm](https://pnpm.io/) (gestor de paquetes)
+- [Node.js](https://nodejs.org/) (LTS version recommended)
+- [pnpm](https://pnpm.io/) (package manager)
 - [Git](https://git-scm.com/)
 
-## Crear un Nuevo Proyecto
+## Create a New Project
 
-Puedes crear un nuevo proyecto Beztack usando el comando `create-beztack`:
+You can create a new Beztack project using the `create-beztack` command:
 
 ```bash
 pnpm create beztack
 ```
 
-El script te guiará a través de algunos pasos de configuración:
-- **Nombre del proyecto**: El nombre de tu nuevo proyecto (minúsculas con guiones)
-- **Descripción del proyecto**: Una breve descripción de tu proyecto
-- **¿Inicializar repositorio Git?**: Elige si deseas inicializar un nuevo repositorio Git
-- **¿Instalar dependencias?**: Elige si deseas instalar automáticamente las dependencias usando `pnpm install`
+The script will walk you through a few setup steps:
+- **Project name**: The name for your new project (lowercase with dashes)
+- **Project description**: A short description of your project
+- **Initialize Git repo?**: Choose if you want to set up a new Git repository
+- **Install dependencies?**: Choose if you want to automatically install dependencies using `pnpm install`
 
-## Configuración Inicial
+## Initial Setup
 
-Una vez creado el proyecto, navega al directorio y configura tu entorno:
+Once the project is created, navigate to the directory and set up your environment:
 
-### 1. Configurar Variables de Entorno
+### 1. Set Up Environment Variables
 
-Copia el archivo `.env.example` a `.env`:
+Copy the `.env.example` file to `.env`:
 
 ```bash
-cd tu-proyecto
+cd your-project
 cp .env.example .env
 ```
 
-### 2. Configurar las Variables Requeridas
+### 2. Configure Required Variables
 
-Abre el archivo `.env` y configura las siguientes variables:
+Open the `.env` file and set up the following variables:
 
-- `BETTER_AUTH_SECRET`: Clave secreta para Better Auth
-- `BETTER_AUTH_URL`: La URL base de tu aplicación
-- `DATABASE_URL`: Cadena de conexión para tu base de datos PostgreSQL
+- `BETTER_AUTH_SECRET`: Secret key for Better Auth
+- `BETTER_AUTH_URL`: Your application's base URL
+- `DATABASE_URL`: Connection string for your PostgreSQL database
 
-### 3. Inicializar la Base de Datos
+### 3. Initialize the Database
 
-Ejecuta las migraciones de la base de datos:
+Run database migrations:
 
 ```bash
 pnpm run migrate
 ```
 
-## Desarrollo
+## Development
 
-Para iniciar el servidor de desarrollo (UI + API):
+To start the dev server (UI + API):
 
 ```bash
 pnpm run dev
 ```
 
-Esto iniciará:
-- **UI** en http://localhost:5173
-- **API** en http://localhost:3000
+This will start:
+- **UI** at http://localhost:5173
+- **API** at http://localhost:3000
 
-### Comandos Adicionales con Nx
+### Additional Nx Commands
 
-Beztack utiliza Nx para la ejecución de tareas. Puedes ejecutar aplicaciones individuales:
+Beztack uses Nx for task execution. You can run individual apps:
 
 - **UI:** `npx nx serve ui`
 - **API:** `npx nx serve api`
-- **Docs:** `npx nx serve docs` (Por defecto en http://localhost:3001)
+- **Docs:** `npx nx serve docs` (Defaults to http://localhost:3001)
 
-### Construcción para Producción
+### Production Build
 
-Para construir todos los proyectos:
+To build all projects:
 
 ```bash
 pnpm run build
 ```
 
-O construir proyectos específicos:
+Or build specific projects:
 
 ```bash
 npx nx build ui

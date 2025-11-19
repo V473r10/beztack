@@ -1,42 +1,42 @@
 ---
-title: Arquitectura
-description: Estructura y componentes del sistema
+title: Architecture
+description: System structure and components
 ---
 
-Beztack está estructurado como un monorepo utilizando **Nx**, lo que permite compartir código eficientemente entre el frontend y el backend.
+Beztack is structured as a monorepo using **Nx**, which lets us efficiently share code between the frontend and backend.
 
-## Estructura de Directorios
+## Directory Structure
 
 ```txt
 /
-├── apps/               # Aplicaciones desplegables
+├── apps/               # Deployable applications
 │   ├── api/            # Backend (Nitro server)
-│   ├── docs/           # Documentación (Fumadocs)
-│   ├── landing/        # Página de aterrizaje
+│   ├── docs/           # Documentation (Fumadocs)
+│   ├── landing/        # Landing page
 │   └── ui/             # Frontend (React + Vite)
-├── packages/           # Librerías compartidas
-│   ├── api-types/      # Tipos compartidos entre API y UI
-│   └── payments/       # Lógica de pagos (MercadoPago/Polar)
-└── tools/              # Herramientas de configuración y scripts
+├── packages/           # Shared libraries
+│   ├── api-types/      # Shared types between API and UI
+│   └── payments/       # Payment logic (MercadoPago/Polar)
+└── tools/              # Configuration tools and scripts
 ```
 
-## Aplicaciones
+## Applications
 
 ### UI (`apps/ui`)
-Una aplicación **React** construida con **Vite**.
-- **Estilos:** TailwindCSS.
-- **Estado:** React Query / Context API.
-- **Autenticación:** Cliente de Better Auth.
+A **React** app built with **Vite**.
+- **Styling:** TailwindCSS.
+- **State:** React Query / Context API.
+- **Auth:** Better Auth client.
 
 ### API (`apps/api`)
-Un servidor **Nitro** (el motor detrás de Nuxt) que provee una API REST rápida y ligera.
-- **Rutas:** Basadas en sistema de archivos en `server/api`.
-- **Base de Datos:** Drizzle ORM (si aplica) o conexión directa.
-- **Autenticación:** Better Auth Server.
+A **Nitro** server (the engine behind Nuxt) that provides a fast and lightweight REST API.
+- **Routes:** File-based routing in `server/api`.
+- **Database:** Drizzle ORM (if applicable) or direct connection.
+- **Auth:** Better Auth Server.
 
-## Paquetes Compartidos
+## Shared Packages
 
-El código reutilizable se encuentra en `packages/` para mantener las aplicaciones limpias y DRY (Don't Repeat Yourself).
+Reusable code lives in `packages/` to keep apps clean and DRY (Don't Repeat Yourself).
 
-- **`packages/api-types`**: Contiene las definiciones de TypeScript de la API. Esto permite que el frontend tenga autocompletado y seguridad de tipos al consumir el backend.
-- **`packages/payments`**: Abstracción sobre los proveedores de pago (MercadoPago, Polar), permitiendo cambiar o actualizar la lógica de cobros sin afectar el resto del sistema.
+- **`packages/api-types`**: Contains TypeScript definitions for the API. This gives the frontend autocomplete and type safety when consuming the backend.
+- **`packages/payments`**: Abstraction over payment providers (MercadoPago, Polar), letting you swap or update billing logic without affecting the rest of the system.
