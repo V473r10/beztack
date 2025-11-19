@@ -1,0 +1,579 @@
+---
+title: Polar
+description: Sistema de pagos y suscripciones con Polar
+---
+
+Beztack utiliza [Polar](https://polar.sh/) como infraestructura de pagos y suscripciones, integrado perfectamente con Better Auth para proporcionar un flujo de autenticación + pagos sin fricciones.
+
+## ¿Por qué Polar?
+
+Polar fue elegido por:
+
+- **Developer First**: Diseñado pensando en desarrolladores
+- **Integración Nativa**: Plugin oficial para Better Auth
+- **Subscripciones**: Soporte completo para SaaS
+- **Usage-Based Billing**: Facturación basada en uso
+- **Customer Portal**: Portal de gestión para clientes
+- **Multi-tenancy**: Soporte para organizaciones
+- **Webhooks**: Sistema robusto de notificaciones
+- **Sandboxing**: Ambiente de pruebas completo
+
+## Configuración Inicial
+
+### 1. Crear Cuenta en Polar
+
+1. Ve a [Polar.sh](https://polar.sh) y crea una cuenta
+2. Crea una organización
+3. Usa el ambiente **Sandbox** para desarrollo
+
+### 2. Variables de Entorno
+
+Configura las siguientes variables en tu archivo `.env`:
+
+```bash
+# Polar Configuration
+POLAR_ACCESS_TOKEN=polar_at_xxxxxxxxxxxxx
+POLAR_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
+
+# Product IDs (obtener desde Polar Dashboard)
+POLAR_BASIC_MONTHLY_PRODUCT_ID=prod_xxxxx
+POLAR_BASIC_YEARLY_PRODUCT_ID=prod_xxxxx
+POLAR_PRO_MONTHLY_PRODUCT_ID=prod_xxxxx
+POLAR_PRO_YEARLY_PRODUCT_ID=prod_xxxxx
+POLAR_ULTIMATE_MONTHLY_PRODUCT_ID=prod_xxxxx
+POLAR_ULTIMATE_YEARLY_PRODUCT_ID=prod_xxxxx
+
+# URLs
+POLAR_SUCCESS_URL=http://localhost:5173/success
+```
+
+### 3. Obtener Access Token
+
+1. Ve a **Organization Settings** en Polar
+2. Navega a **Access Tokens**
+3. Crea un nuevo token con los permisos necesarios
+4. Copia el token a tu `.env`
+
+### 4. Configurar Webhook
+
+1. Ve a **Organization Settings** → **Webhooks**
+2. Crea un nuevo webhook endpoint: `https://tu-dominio.com/polar/webhooks`
+3. Copia el **Webhook Secret** a tu `.env`
+
+## Configuración en Better Auth
+
+### Servidor (Backend)
+
+La configuración del plugin Polar se encuentra en `apps/api/server/utils/auth.ts`:
+
+```typescript
+import { betterAuth } from "better-auth";
+import { polar, checkout, portal, usage } from "@polar-sh/better-auth";
+import { Polar } from "@polar-sh/sdk";
+
+const polarClient = new Polar({
+  accessToken: process.env.POLAR_ACCESS_TOKEN,
+  server: "sandbox", // "production" para producción
+});
+
+export const auth = betterAuth({
+  // ... configuración de Better Auth
+  plugins: [
+    polar({
+      client: polarClient,
+      createCustomerOnSignUp: true,
+      use: [
+        checkout({
+          products: [
+            {
+              productId: process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID,
+              slug: "basic-monthly",
+            },
+            {
+              productId: process.env.POLAR_PRO_MONTHLY_PRODUCT_ID,
+              slug: "pro-monthly",
+            },
+          ],
+          successUrl: process.env.POLAR_SUCCESS_URL,
+          authenticatedUsersOnly: true,
+        }),
+        portal(),
+        usage(),
+      ],
+    }),
+  ],
+});
+```
+
+### Cliente (Frontend)
+
+En `apps/ui/src/lib/auth-client.ts`:
+
+```typescript
+import { createAuthClient } from "better-auth/react";
+import { polarClient } from "@polar-sh/better-auth";
+
+export const authClient = createAuthClient({
+  baseURL: import.meta.env.VITE_API_URL,
+  plugins: [
+    polarClient(), // ← Agregar plugin de Polar
+  ],
+});
+```
+
+## Crear Productos en Polar
+
+### 1. Desde el Dashboard
+
+1. Ve a **Products** en tu Polar Dashboard
+2. Click en **Create Product**
+3. Completa la información:
+   - Nombre del producto (ej: "Pro Monthly")
+   - Descripción
+   - Precio
+   - Tipo de facturación (one-time o recurring)
+   - Beneficios incluidos
+
+### 2. Configurar Beneficios
+
+Los beneficios determinan qué funcionalidades tiene acceso el usuario:
+
+1. Ve a **Benefits** en Polar
+2. Crea beneficios como:
+   - `unlimited_storage`
+   - `priority_support`
+   - `advanced_analytics`
+3. Asocia beneficios a productos
+
+## Checkout (Pagos)
+
+### Iniciar Checkout Básico
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+// Opción 1: Usar slug del producto
+await authClient.checkout({
+  slug: "pro-monthly",
+});
+
+// Opción 2: Usar ID del producto directamente
+await authClient.checkout({
+  products: ["prod_xxxxxxxxxxxxx"],
+});
+```
+
+### Checkout con Organización
+
+Para asociar una compra a una organización:
+
+```typescript
+// Obtener organización activa
+const { data: organizations } = await authClient.organization.list();
+const organizationId = organizations?.[0]?.id;
+
+// Iniciar checkout con referenceId
+await authClient.checkout({
+  slug: "pro-monthly",
+  referenceId: organizationId, // ← Importante para multi-tenancy
+});
+```
+
+### Página de Éxito
+
+Después de completar el checkout, el usuario es redirigido a `successUrl`:
+
+```typescript
+// app/success/page.tsx
+import { useSearchParams } from "next/navigation";
+
+export default function SuccessPage() {
+  const searchParams = useSearchParams();
+  const checkoutId = searchParams.get("checkout_id");
+  
+  return (
+    <div>
+      <h1>¡Pago Exitoso!</h1>
+      <p>ID de Checkout: {checkoutId}</p>
+    </div>
+  );
+}
+```
+
+## Customer Portal
+
+El Customer Portal permite a los usuarios gestionar sus suscripciones, órdenes y beneficios.
+
+### Redirigir al Portal
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+// Redirigir al portal de Polar
+await authClient.customer.portal();
+```
+
+### Obtener Estado del Cliente
+
+```typescript
+// Obtener toda la información del cliente
+const { data: customerState } = await authClient.customer.state();
+
+// customerState contiene:
+// - Datos del cliente
+// - Suscripciones activas
+// - Beneficios otorgados
+// - Medidores de uso activos
+```
+
+### Listar Beneficios
+
+```typescript
+const { data: benefits } = await authClient.customer.benefits.list({
+  query: {
+    page: 1,
+    limit: 10,
+  },
+});
+
+// Verificar si tiene un beneficio específico
+const hasPrioritySupport = benefits?.items.some(
+  (benefit) => benefit.type === "priority_support"
+);
+```
+
+### Listar Órdenes
+
+```typescript
+const { data: orders } = await authClient.customer.orders.list({
+  query: {
+    page: 1,
+    limit: 10,
+    productBillingType: "recurring", // "one_time" para compras únicas
+  },
+});
+```
+
+### Listar Suscripciones
+
+```typescript
+const { data: subscriptions } = await authClient.customer.subscriptions.list({
+  query: {
+    page: 1,
+    limit: 10,
+    active: true,
+  },
+});
+```
+
+### Suscripciones de Organización
+
+Para verificar si una organización tiene una suscripción activa:
+
+```typescript
+const organizationId = "org-123";
+
+const { data: subscriptions } = await authClient.customer.subscriptions.list({
+  query: {
+    page: 1,
+    limit: 10,
+    active: true,
+    referenceId: organizationId, // ← Filtrar por organización
+  },
+});
+
+const hasActiveSubscription = subscriptions?.items.length > 0;
+```
+
+## Usage-Based Billing
+
+Polar soporta facturación basada en uso mediante eventos y medidores.
+
+### Registrar Eventos
+
+```typescript
+// Registrar un evento de uso
+await authClient.usage.ingest({
+  event: "file-uploads",
+  metadata: {
+    uploadedFiles: 12,
+    fileSize: 1024000, // bytes
+  },
+});
+```
+
+### Listar Medidores del Cliente
+
+```typescript
+const { data: customerMeters } = await authClient.usage.meters.list({
+  query: {
+    page: 1,
+    limit: 10,
+  },
+});
+
+// customerMeters contiene:
+// - Unidades consumidas
+// - Unidades acreditadas
+// - Balance actual
+```
+
+### Configurar Medidores en Polar
+
+1. Ve a **Meters** en el Polar Dashboard
+2. Crea un medidor (ej: "API Requests")
+3. Define las reglas de agregación
+4. Asocia el medidor a un precio en el producto
+
+## Verificar Membresías en el Servidor
+
+Beztack incluye utilidades para verificar membresías en el servidor.
+
+### Usar `requireAuth` con Membership
+
+```typescript
+import { requireAuth } from "~/utils/membership";
+
+export default defineEventHandler(async (event) => {
+  const user = await requireAuth(event);
+  
+  // user.membership contiene:
+  // - tier: "free" | "pro" | "enterprise"
+  // - hasActiveSubscription: boolean
+  // - benefits: Benefit[]
+  // - organizationId?: string
+  
+  if (user.membership?.tier === "free") {
+    throw createError({
+      statusCode: 403,
+      message: "Esta funcionalidad requiere una suscripción Pro",
+    });
+  }
+  
+  // Lógica del endpoint
+});
+```
+
+### Verificar Beneficios Específicos
+
+```typescript
+const user = await requireAuth(event);
+
+const hasFeature = user.membership?.benefits.some(
+  (benefit) => benefit.type === "advanced_analytics"
+);
+
+if (!hasFeature) {
+  throw createError({
+    statusCode: 403,
+    message: "No tienes acceso a esta funcionalidad",
+  });
+}
+```
+
+## Webhooks
+
+Los webhooks de Polar se configuran automáticamente en `/polar/webhooks`.
+
+### Manejar Eventos
+
+Puedes agregar manejadores personalizados en `apps/api/server/utils/auth.ts`:
+
+```typescript
+import { webhooks } from "@polar-sh/better-auth";
+
+polar({
+  client: polarClient,
+  use: [
+    webhooks({
+      secret: process.env.POLAR_WEBHOOK_SECRET,
+      
+      // Cuando se paga una orden
+      onOrderPaid: async (payload) => {
+        console.log("Order paid:", payload);
+        // Activar funcionalidad
+        // Enviar email de confirmación
+      },
+      
+      // Cuando se actualiza una suscripción
+      onSubscriptionUpdated: async (payload) => {
+        console.log("Subscription updated:", payload);
+        // Actualizar permisos
+      },
+      
+      // Cuando se cancela una suscripción
+      onSubscriptionCanceled: async (payload) => {
+        console.log("Subscription canceled:", payload);
+        // Revocar acceso
+        // Enviar email de cancelación
+      },
+      
+      // Catch-all para todos los eventos
+      onPayload: async (payload) => {
+        console.log("Webhook received:", payload.event_type);
+      },
+    }),
+  ],
+});
+```
+
+### Eventos Disponibles
+
+Polar soporta más de 25 tipos de webhooks:
+
+- `onCheckoutCreated`, `onCheckoutUpdated`
+- `onOrderCreated`, `onOrderPaid`, `onOrderRefunded`
+- `onSubscriptionCreated`, `onSubscriptionUpdated`, `onSubscriptionActive`
+- `onSubscriptionCanceled`, `onSubscriptionRevoked`
+- `onProductCreated`, `onProductUpdated`
+- `onBenefitCreated`, `onBenefitUpdated`
+- `onBenefitGrantCreated`, `onBenefitGrantRevoked`
+- `onCustomerCreated`, `onCustomerUpdated`, `onCustomerDeleted`
+- `onCustomerStateChanged`
+
+## Componentes de UI
+
+Beztack incluye componentes React para mostrar información de Polar.
+
+### Billing Dashboard
+
+```typescript
+import { BillingDashboard } from "@/components/payments/billing-dashboard";
+
+export default function BillingPage() {
+  return <BillingDashboard />;
+}
+```
+
+### Usage Metrics
+
+```typescript
+import { UsageMetrics } from "@/components/payments/usage-metrics";
+
+export default function UsagePage() {
+  return <UsageMetrics />;
+}
+```
+
+### Membership Context
+
+Para acceder a la información de membresía en cualquier componente:
+
+```typescript
+import { useMembership } from "@/contexts/membership-context";
+
+export function FeatureGuard({ children }) {
+  const { membership, loading } = useMembership();
+  
+  if (loading) return <Spinner />;
+  
+  if (membership?.tier === "free") {
+    return <UpgradeBanner />;
+  }
+  
+  return children;
+}
+```
+
+## Testing en Sandbox
+
+### Tarjetas de Prueba
+
+Polar proporciona tarjetas de prueba para sandbox:
+
+- **Exitosa**: `4242 4242 4242 4242`
+- **Rechazada**: `4000 0000 0000 0002`
+- Cualquier fecha futura y CVC válido
+
+### Diferencias Sandbox vs Producción
+
+- Los tokens y productos son completamente separados
+- No se procesan pagos reales en sandbox
+- Usa diferentes URLs de webhook
+- Cambia `server: "sandbox"` a `server: "production"`
+
+## Mejores Prácticas
+
+### 1. Siempre Usar ReferenceId para Organizaciones
+
+```typescript
+await authClient.checkout({
+  slug: "pro-monthly",
+  referenceId: organizationId, // ← Crítico para multi-tenancy
+});
+```
+
+### 2. Verificar Estado en el Servidor
+
+Nunca confíes únicamente en el cliente para verificar suscripciones:
+
+```typescript
+const user = await requireAuth(event);
+if (!user.membership?.hasActiveSubscription) {
+  throw createError({ statusCode: 403 });
+}
+```
+
+### 3. Manejar Webhooks Apropiadamente
+
+```typescript
+onSubscriptionCanceled: async (payload) => {
+  // Marca como cancelado en tu DB
+  // Programa revocación de acceso para fin del período
+  // No revocar inmediatamente si hay período de gracia
+},
+```
+
+### 4. Usar Customer State para Decisiones
+
+```typescript
+const { data: state } = await authClient.customer.state();
+const hasFeature = state?.benefits.some(b => b.type === "feature");
+```
+
+### 5. Testing Completo
+
+Prueba todos los flujos:
+- Checkout exitoso
+- Checkout cancelado
+- Renovación de suscripción
+- Cancelación de suscripción
+- Reembolsos
+- Webhooks
+
+### 6. Ambientes Separados
+
+- Usa sandbox para desarrollo
+- Usa producción solo cuando estés listo
+- No mezcles tokens entre ambientes
+
+## Troubleshooting
+
+### Checkout no funciona
+
+1. Verifica que `POLAR_ACCESS_TOKEN` sea válido
+2. Confirma que los Product IDs existan en Polar
+3. Revisa que el usuario esté autenticado
+4. Verifica `successUrl` sea válida
+
+### Webhooks no llegan
+
+1. Confirma que el endpoint sea accesible públicamente
+2. Verifica `POLAR_WEBHOOK_SECRET`
+3. Revisa los logs en Polar Dashboard → Webhooks
+4. Usa herramientas como ngrok para desarrollo local
+
+### Customer no se crea
+
+1. Verifica que `createCustomerOnSignUp: true`
+2. Revisa que el token tenga permisos de escritura
+3. Confirma que el usuario tenga email único
+
+## Recursos
+
+- [Documentación de Polar](https://docs.polar.sh/)
+- [Polar Better Auth Plugin](https://github.com/polarsource/polar-adapters)
+- [API Reference](https://docs.polar.sh/api-reference)
+- [Customer State](https://docs.polar.sh/integrate/customer-state)
+- [Usage-Based Billing](https://docs.polar.sh/features/usage-based-billing/introduction)
+- [Webhooks](https://docs.polar.sh/developers/webhooks)

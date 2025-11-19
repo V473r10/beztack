@@ -1,0 +1,12 @@
+{
+  "root": true,
+  "pages": [
+    "index",
+    "getting-started",
+    "architecture",
+    "drizzle-orm",
+    "better-auth",
+    "resend-react-email",
+    "polar"
+  ]
+}

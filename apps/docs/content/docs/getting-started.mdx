@@ -1,0 +1,92 @@
+---
+title: Primeros Pasos
+description: Configuración del entorno de desarrollo
+---
+
+Esta guía te ayudará a configurar el proyecto Beztack en tu máquina local.
+
+## Prerrequisitos
+
+Asegúrate de tener instalado:
+
+- [Node.js](https://nodejs.org/) (versión LTS recomendada)
+- [pnpm](https://pnpm.io/) (gestor de paquetes)
+- [Git](https://git-scm.com/)
+
+## Crear un Nuevo Proyecto
+
+Puedes crear un nuevo proyecto Beztack usando el comando `create-beztack`:
+
+```bash
+pnpm create beztack
+```
+
+El script te guiará a través de algunos pasos de configuración:
+- **Nombre del proyecto**: El nombre de tu nuevo proyecto (minúsculas con guiones)
+- **Descripción del proyecto**: Una breve descripción de tu proyecto
+- **¿Inicializar repositorio Git?**: Elige si deseas inicializar un nuevo repositorio Git
+- **¿Instalar dependencias?**: Elige si deseas instalar automáticamente las dependencias usando `pnpm install`
+
+## Configuración Inicial
+
+Una vez creado el proyecto, navega al directorio y configura tu entorno:
+
+### 1. Configurar Variables de Entorno
+
+Copia el archivo `.env.example` a `.env`:
+
+```bash
+cd tu-proyecto
+cp .env.example .env
+```
+
+### 2. Configurar las Variables Requeridas
+
+Abre el archivo `.env` y configura las siguientes variables:
+
+- `BETTER_AUTH_SECRET`: Clave secreta para Better Auth
+- `BETTER_AUTH_URL`: La URL base de tu aplicación
+- `DATABASE_URL`: Cadena de conexión para tu base de datos PostgreSQL
+
+### 3. Inicializar la Base de Datos
+
+Ejecuta las migraciones de la base de datos:
+
+```bash
+pnpm run migrate
+```
+
+## Desarrollo
+
+Para iniciar el servidor de desarrollo (UI + API):
+
+```bash
+pnpm run dev
+```
+
+Esto iniciará:
+- **UI** en http://localhost:5173
+- **API** en http://localhost:3000
+
+### Comandos Adicionales con Nx
+
+Beztack utiliza Nx para la ejecución de tareas. Puedes ejecutar aplicaciones individuales:
+
+- **UI:** `npx nx serve ui`
+- **API:** `npx nx serve api`
+- **Docs:** `npx nx serve docs` (Por defecto en http://localhost:3001)
+
+### Construcción para Producción
+
+Para construir todos los proyectos:
+
+```bash
+pnpm run build
+```
+
+O construir proyectos específicos:
+
+```bash
+npx nx build ui
+npx nx build api
+```

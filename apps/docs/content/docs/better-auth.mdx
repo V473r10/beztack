@@ -1,0 +1,499 @@
+---
+title: Better Auth
+description: Sistema de autenticación moderno con Better Auth
+---
+
+Beztack utiliza [Better Auth](https://www.better-auth.com/) como solución de autenticación, proporcionando un sistema completo con soporte para email/password, autenticación social, organizaciones, equipos y más.
+
+## ¿Por qué Better Auth?
+
+Better Auth fue elegido por:
+
+- **Framework Agnostic**: Funciona con cualquier framework de JavaScript
+- **Type-Safe**: Completamente tipado con TypeScript
+- **Modular**: Sistema de plugins para extender funcionalidad
+- **Developer Experience**: API intuitiva y bien documentada
+- **Base de Datos**: Integración nativa con Drizzle ORM
+- **Seguridad**: Built-in 2FA, email verification, y más
+- **Organizaciones**: Soporte nativo para multi-tenancy
+
+## Configuración
+
+### Variables de Entorno
+
+Configura las siguientes variables en tu archivo `.env`:
+
+```bash
+# Better Auth Configuration
+BETTER_AUTH_SECRET=your-secret-key-here
+BETTER_AUTH_URL=http://localhost:3000
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/beztack
+
+# App Configuration
+APP_NAME=beztack
+```
+
+### Servidor (Backend)
+
+La configuración del servidor se encuentra en `apps/api/server/utils/auth.ts`:
+
+```typescript
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { admin, organization, twoFactor } from "better-auth/plugins";
+import { db } from "@/db/db";
+import { schema } from "@/db/schema";
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { 
+    provider: "pg", 
+    schema 
+  }),
+  
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false,
+  },
+  
+  socialProviders: {
+    // Configura proveedores sociales aquí
+  },
+  
+  plugins: [
+    twoFactor({
+      issuer: process.env.APP_NAME || "beztack",
+    }),
+    admin(),
+    organization({
+      // Configuración de organizaciones
+    }),
+  ],
+});
+```
+
+### Cliente (Frontend)
+
+La configuración del cliente se encuentra en `apps/ui/src/lib/auth-client.ts`:
+
+```typescript
+import { createAuthClient } from "better-auth/react";
+import {
+  adminClient,
+  organizationClient,
+  twoFactorClient,
+} from "better-auth/client/plugins";
+
+export const authClient = createAuthClient({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+  fetchOptions: {
+    credentials: "include",
+  },
+  plugins: [
+    twoFactorClient(),
+    adminClient(),
+    organizationClient({
+      teams: {
+        enabled: true,
+      },
+    }),
+  ],
+});
+```
+
+## Autenticación Básica
+
+### Registro de Usuario
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+// Registrar un nuevo usuario
+const { data, error } = await authClient.signUp.email({
+  email: "user@example.com",
+  password: "securePassword123",
+  name: "John Doe",
+});
+```
+
+### Iniciar Sesión
+
+```typescript
+// Iniciar sesión con email/password
+const { data, error } = await authClient.signIn.email({
+  email: "user@example.com",
+  password: "securePassword123",
+});
+```
+
+### Cerrar Sesión
+
+```typescript
+// Cerrar sesión
+await authClient.signOut();
+```
+
+### Obtener Usuario Actual
+
+```typescript
+// Usando el hook de React
+import { useSession } from "@/lib/auth-client";
+
+function MyComponent() {
+  const { data: session, isPending } = useSession();
+  
+  if (isPending) return <div>Loading...</div>;
+  if (!session) return <div>Not authenticated</div>;
+  
+  return <div>Welcome, {session.user.name}!</div>;
+}
+```
+
+## Autenticación de Dos Factores (2FA)
+
+### Habilitar 2FA
+
+```typescript
+// 1. Generar código QR para TOTP
+const { data } = await authClient.twoFactor.enable({
+  password: "userPassword",
+});
+
+// data contiene:
+// - totpURI: URL para código QR
+// - backupCodes: Códigos de respaldo
+
+// 2. Verificar y confirmar 2FA
+await authClient.twoFactor.verifyTotp({
+  code: "123456", // Código del dispositivo TOTP
+});
+```
+
+### Iniciar Sesión con 2FA
+
+```typescript
+// 1. Iniciar sesión normal
+await authClient.signIn.email({
+  email: "user@example.com",
+  password: "password",
+});
+
+// 2. Si 2FA está habilitado, proporcionar código TOTP
+await authClient.twoFactor.verifyTotp({
+  code: "123456",
+});
+```
+
+### Desactivar 2FA
+
+```typescript
+await authClient.twoFactor.disable({
+  password: "userPassword",
+});
+```
+
+## Organizaciones y Equipos
+
+Better Auth incluye soporte completo para multi-tenancy con organizaciones y equipos.
+
+### Crear Organización
+
+```typescript
+const { data } = await authClient.organization.create({
+  name: "Mi Empresa",
+  slug: "mi-empresa",
+});
+```
+
+### Invitar Miembros
+
+```typescript
+await authClient.organization.inviteMember({
+  organizationId: "org-id",
+  email: "member@example.com",
+  role: "member", // "owner", "admin", o "member"
+});
+```
+
+### Aceptar Invitación
+
+```typescript
+await authClient.organization.acceptInvitation({
+  invitationId: "invitation-id",
+});
+```
+
+### Equipos dentro de Organizaciones
+
+```typescript
+// Crear un equipo
+await authClient.organization.createTeam({
+  organizationId: "org-id",
+  name: "Equipo de Desarrollo",
+});
+
+// Agregar miembro a un equipo
+await authClient.organization.addTeamMember({
+  teamId: "team-id",
+  userId: "user-id",
+});
+```
+
+### Cambiar Organización Activa
+
+```typescript
+await authClient.organization.setActive({
+  organizationId: "org-id",
+});
+```
+
+## Roles y Permisos
+
+### Roles Predefinidos
+
+Better Auth incluye tres roles predefinidos:
+
+- **owner**: Control total de la organización
+- **admin**: Puede gestionar miembros y configuración
+- **member**: Acceso básico
+
+### Verificar Rol en el Cliente
+
+```typescript
+import { useActiveOrganization } from "@/lib/auth-client";
+
+function AdminPanel() {
+  const { data: org } = useActiveOrganization();
+  
+  if (!org || org.role !== "admin") {
+    return <div>No tienes permiso</div>;
+  }
+  
+  return <div>Panel de administración</div>;
+}
+```
+
+### Verificar Rol en el Servidor
+
+```typescript
+import { auth } from "~/utils/auth";
+
+export default defineEventHandler(async (event) => {
+  const session = await auth.api.getSession({ 
+    headers: event.headers 
+  });
+  
+  if (!session) {
+    throw createError({
+      statusCode: 401,
+      message: "No autenticado",
+    });
+  }
+  
+  // Verificar rol en organización activa
+  const member = await db
+    .select()
+    .from(member)
+    .where(
+      and(
+        eq(member.userId, session.user.id),
+        eq(member.organizationId, session.activeOrganizationId)
+      )
+    );
+  
+  if (member[0]?.role !== "admin") {
+    throw createError({
+      statusCode: 403,
+      message: "No autorizado",
+    });
+  }
+  
+  // Continuar con la lógica
+});
+```
+
+## Administración
+
+Better Auth incluye un plugin de administración para gestionar usuarios.
+
+### Listar Usuarios (Admin)
+
+```typescript
+const { data } = await authClient.admin.listUsers();
+```
+
+### Banear Usuario (Admin)
+
+```typescript
+await authClient.admin.banUser({
+  userId: "user-id",
+  reason: "Violación de términos de servicio",
+  expiresAt: new Date("2024-12-31"), // Opcional
+});
+```
+
+### Desbanear Usuario (Admin)
+
+```typescript
+await authClient.admin.unbanUser({
+  userId: "user-id",
+});
+```
+
+### Impersonar Usuario (Admin)
+
+```typescript
+await authClient.admin.impersonateUser({
+  userId: "user-id",
+});
+```
+
+## Hooks y Middleware
+
+### Hook de Post-Registro
+
+En `apps/api/server/utils/auth.ts`:
+
+```typescript
+import { sendEmail } from "@beztack/email";
+import { createAuthMiddleware } from "better-auth/plugins";
+
+export const auth = betterAuth({
+  // ... configuración
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.includes("/sign-up")) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          await sendEmail({
+            type: "welcome",
+            to: newSession.user.email,
+            data: { username: newSession.user.name },
+          });
+        }
+      }
+    }),
+  },
+});
+```
+
+### Verificar Sesión en el Servidor
+
+```typescript
+import { auth } from "~/utils/auth";
+
+export default defineEventHandler(async (event) => {
+  const session = await auth.api.getSession({ 
+    headers: event.headers 
+  });
+  
+  if (!session) {
+    throw createError({
+      statusCode: 401,
+      message: "No autenticado",
+    });
+  }
+  
+  return { user: session.user };
+});
+```
+
+## Integración con Drizzle
+
+Better Auth utiliza Drizzle ORM para la persistencia de datos. Las tablas necesarias están definidas en `apps/api/db/schema.ts`:
+
+- `user`: Información del usuario
+- `session`: Sesiones activas
+- `account`: Cuentas vinculadas (proveedores sociales)
+- `verification`: Tokens de verificación
+- `twoFactor`: Configuración de 2FA
+- `organization`: Organizaciones
+- `member`: Miembros de organizaciones
+- `team`: Equipos dentro de organizaciones
+- `teamMember`: Miembros de equipos
+- `invitation`: Invitaciones pendientes
+
+## Configuración de Cookies
+
+Para producción con diferentes subdominios:
+
+```typescript
+export const auth = betterAuth({
+  // ... otras opciones
+  advanced: {
+    cookies: {
+      sessionToken: {
+        attributes: {
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "none", // Permitir cookies cross-site
+          httpOnly: true,   // Prevenir XSS
+        },
+      },
+    },
+  },
+});
+```
+
+## Mejores Prácticas
+
+### 1. Siempre Verificar Sesión en el Servidor
+
+Nunca confíes únicamente en la validación del cliente:
+
+```typescript
+export default defineEventHandler(async (event) => {
+  const session = await auth.api.getSession({ headers: event.headers });
+  
+  if (!session) {
+    throw createError({ statusCode: 401, message: "No autenticado" });
+  }
+  
+  // Tu lógica aquí
+});
+```
+
+### 2. Usar Roles para Control de Acceso
+
+Implementa verificaciones de roles antes de operaciones sensibles:
+
+```typescript
+if (member.role !== "admin" && member.role !== "owner") {
+  throw createError({ statusCode: 403, message: "No autorizado" });
+}
+```
+
+### 3. Configurar Email Verification
+
+Para producción, habilita la verificación de email:
+
+```typescript
+emailAndPassword: {
+  enabled: true,
+  requireEmailVerification: true,
+}
+```
+
+### 4. Usar 2FA para Cuentas Sensibles
+
+Recomienda o requiere 2FA para cuentas con permisos elevados.
+
+### 5. Manejar Errores Apropiadamente
+
+```typescript
+try {
+  await authClient.signIn.email({ email, password });
+} catch (error) {
+  if (error.code === "INVALID_CREDENTIALS") {
+    // Mostrar error genérico por seguridad
+    showError("Email o contraseña incorrectos");
+  }
+}
+```
+
+## Recursos
+
+- [Documentación oficial de Better Auth](https://www.better-auth.com/docs)
+- [Plugins disponibles](https://www.better-auth.com/docs/plugins)
+- [Adaptadores de base de datos](https://www.better-auth.com/docs/database)
+- [Ejemplos de integración](https://github.com/better-auth/better-auth/tree/main/examples)

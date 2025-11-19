@@ -1,0 +1,342 @@
+---
+title: Drizzle ORM
+description: Sistema de base de datos con Drizzle ORM y PostgreSQL
+---
+
+Beztack utiliza [Drizzle ORM](https://orm.drizzle.team/) como solución de base de datos, proporcionando type-safety completa y una excelente experiencia de desarrollo con PostgreSQL.
+
+## ¿Por qué Drizzle ORM?
+
+Drizzle ORM fue elegido por:
+
+- **Type-Safety**: Inferencia automática de tipos de TypeScript
+- **Performance**: Sin overhead, SQL puro optimizado
+- **Developer Experience**: API intuitiva y fácil de usar
+- **SQL-like**: Sintaxis cercana a SQL nativo
+- **Migrations**: Sistema de migraciones robusto con Drizzle Kit
+- **Lightweight**: Sin dependencias pesadas
+
+## Configuración
+
+### Estructura de Archivos
+
+```txt
+apps/api/
+├── db/
+│   ├── db.ts           # Instancia de conexión a la base de datos
+│   └── schema.ts       # Definición del esquema de tablas
+├── drizzle/            # Archivos de migración generados
+└── drizzle.config.ts   # Configuración de Drizzle Kit
+```
+
+### Conexión a la Base de Datos
+
+La conexión se configura en `apps/api/db/db.ts`:
+
+```typescript
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+const connectionString = process.env.DATABASE_URL || "";
+const client = postgres(connectionString);
+export const db = drizzle({ client });
+```
+
+### Configuración de Drizzle Kit
+
+El archivo `drizzle.config.ts` define cómo Drizzle Kit genera y aplica migraciones:
+
+```typescript
+import "dotenv/config";
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  out: "./drizzle",
+  schema: "./db/schema.ts",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL || "",
+  },
+});
+```
+
+## Definición del Esquema
+
+El esquema se define en `apps/api/db/schema.ts` usando la API de Drizzle:
+
+### Ejemplo: Tabla de Usuarios
+
+```typescript
+import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+```
+
+### Relaciones
+
+Drizzle soporta relaciones mediante referencias:
+
+```typescript
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // ... otros campos
+});
+```
+
+## Migraciones
+
+### Generar Migraciones
+
+Después de modificar el esquema, genera las migraciones:
+
+```bash
+pnpm run db:generate
+```
+
+Este comando:
+1. Compara el esquema actual con la base de datos
+2. Genera archivos SQL en la carpeta `drizzle/`
+3. Mantiene un historial de cambios
+
+### Aplicar Migraciones
+
+Para aplicar las migraciones a la base de datos:
+
+```bash
+pnpm run db:migrate
+```
+
+### Ver el Estado de Migraciones
+
+Para revisar qué migraciones han sido aplicadas:
+
+```bash
+pnpm run db:status
+```
+
+### Abrir Drizzle Studio
+
+Drizzle Studio es una interfaz visual para explorar y modificar tu base de datos:
+
+```bash
+pnpm run db:studio
+```
+
+Esto abrirá una interfaz web en `https://local.drizzle.studio`
+
+## Consultas
+
+### Operaciones CRUD Básicas
+
+#### SELECT
+
+```typescript
+import { db } from "~/db/db";
+import { user } from "~/db/schema";
+import { eq } from "drizzle-orm";
+
+// Obtener todos los usuarios
+const users = await db.select().from(user);
+
+// Obtener un usuario por ID
+const specificUser = await db
+  .select()
+  .from(user)
+  .where(eq(user.id, "user-123"));
+
+// Obtener con campos específicos
+const userEmails = await db
+  .select({ email: user.email, name: user.name })
+  .from(user);
+```
+
+#### INSERT
+
+```typescript
+// Insertar un usuario
+const newUser = await db
+  .insert(user)
+  .values({
+    id: "user-123",
+    name: "John Doe",
+    email: "john@example.com",
+  })
+  .returning();
+
+// Insertar múltiples registros
+const newUsers = await db
+  .insert(user)
+  .values([
+    { id: "1", name: "Alice", email: "alice@example.com" },
+    { id: "2", name: "Bob", email: "bob@example.com" },
+  ])
+  .returning();
+```
+
+#### UPDATE
+
+```typescript
+// Actualizar un usuario
+const updated = await db
+  .update(user)
+  .set({ name: "Jane Doe" })
+  .where(eq(user.id, "user-123"))
+  .returning();
+```
+
+#### DELETE
+
+```typescript
+// Eliminar un usuario
+await db
+  .delete(user)
+  .where(eq(user.id, "user-123"));
+```
+
+### Consultas con JOINs
+
+```typescript
+import { member, organization } from "~/db/schema";
+
+const membersWithOrgs = await db
+  .select({
+    memberId: member.id,
+    memberRole: member.role,
+    orgName: organization.name,
+  })
+  .from(member)
+  .innerJoin(organization, eq(member.organizationId, organization.id));
+```
+
+### Operadores de Consulta
+
+Drizzle proporciona operadores para construir condiciones:
+
+```typescript
+import { eq, ne, gt, gte, lt, lte, like, and, or } from "drizzle-orm";
+
+// Igualdad
+await db.select().from(user).where(eq(user.email, "john@example.com"));
+
+// Mayor/Menor que
+await db.select().from(user).where(gt(user.createdAt, new Date("2024-01-01")));
+
+// LIKE
+await db.select().from(user).where(like(user.name, "%John%"));
+
+// Múltiples condiciones
+await db
+  .select()
+  .from(user)
+  .where(
+    and(
+      eq(user.emailVerified, true),
+      gt(user.createdAt, new Date("2024-01-01"))
+    )
+  );
+```
+
+## Mejores Prácticas
+
+### 1. Type Safety
+
+Aprovecha la inferencia de tipos de TypeScript:
+
+```typescript
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import { user } from "~/db/schema";
+
+// Tipo para leer (SELECT)
+type User = InferSelectModel<typeof user>;
+
+// Tipo para insertar (INSERT)
+type NewUser = InferInsertModel<typeof user>;
+```
+
+### 2. Transacciones
+
+Para operaciones que deben ser atómicas:
+
+```typescript
+await db.transaction(async (tx) => {
+  const newUser = await tx.insert(user).values({
+    id: "user-123",
+    name: "John Doe",
+    email: "john@example.com",
+  });
+
+  await tx.insert(session).values({
+    id: "session-456",
+    userId: "user-123",
+    token: "token-789",
+  });
+});
+```
+
+### 3. Prepared Statements
+
+Para consultas repetidas con mejor performance:
+
+```typescript
+const getUserById = db
+  .select()
+  .from(user)
+  .where(eq(user.id, sql.placeholder("id")))
+  .prepare("get_user_by_id");
+
+// Usar la consulta preparada
+const user1 = await getUserById.execute({ id: "user-123" });
+const user2 = await getUserById.execute({ id: "user-456" });
+```
+
+### 4. Paginación
+
+```typescript
+const page = 1;
+const pageSize = 10;
+
+const users = await db
+  .select()
+  .from(user)
+  .limit(pageSize)
+  .offset((page - 1) * pageSize);
+```
+
+## Integración con Better Auth
+
+Drizzle ORM está integrado con Better Auth a través del adaptador:
+
+```typescript
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db } from "~/db/db";
+import * as schema from "~/db/schema";
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema,
+  }),
+  // ... otras opciones
+});
+```
+
+## Recursos
+
+- [Documentación oficial de Drizzle ORM](https://orm.drizzle.team/)
+- [Drizzle Kit CLI](https://orm.drizzle.team/kit-docs/overview)
+- [Ejemplos de consultas](https://orm.drizzle.team/docs/select)
+- [Drizzle Studio](https://orm.drizzle.team/drizzle-studio/overview)

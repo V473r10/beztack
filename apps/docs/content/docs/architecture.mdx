@@ -1,0 +1,42 @@
+---
+title: Arquitectura
+description: Estructura y componentes del sistema
+---
+
+Beztack está estructurado como un monorepo utilizando **Nx**, lo que permite compartir código eficientemente entre el frontend y el backend.
+
+## Estructura de Directorios
+
+```txt
+/
+├── apps/               # Aplicaciones desplegables
+│   ├── api/            # Backend (Nitro server)
+│   ├── docs/           # Documentación (Fumadocs)
+│   ├── landing/        # Página de aterrizaje
+│   └── ui/             # Frontend (React + Vite)
+├── packages/           # Librerías compartidas
+│   ├── api-types/      # Tipos compartidos entre API y UI
+│   └── payments/       # Lógica de pagos (MercadoPago/Polar)
+└── tools/              # Herramientas de configuración y scripts
+```
+
+## Aplicaciones
+
+### UI (`apps/ui`)
+Una aplicación **React** construida con **Vite**.
+- **Estilos:** TailwindCSS.
+- **Estado:** React Query / Context API.
+- **Autenticación:** Cliente de Better Auth.
+
+### API (`apps/api`)
+Un servidor **Nitro** (el motor detrás de Nuxt) que provee una API REST rápida y ligera.
+- **Rutas:** Basadas en sistema de archivos en `server/api`.
+- **Base de Datos:** Drizzle ORM (si aplica) o conexión directa.
+- **Autenticación:** Better Auth Server.
+
+## Paquetes Compartidos
+
+El código reutilizable se encuentra en `packages/` para mantener las aplicaciones limpias y DRY (Don't Repeat Yourself).
+
+- **`packages/api-types`**: Contiene las definiciones de TypeScript de la API. Esto permite que el frontend tenga autocompletado y seguridad de tipos al consumir el backend.
+- **`packages/payments`**: Abstracción sobre los proveedores de pago (MercadoPago, Polar), permitiendo cambiar o actualizar la lógica de cobros sin afectar el resto del sistema.

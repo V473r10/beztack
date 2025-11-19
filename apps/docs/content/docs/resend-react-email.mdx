@@ -1,0 +1,579 @@
+---
+title: Resend & React Email
+description: Sistema de emails con Resend y plantillas React Email
+---
+
+Beztack utiliza [Resend](https://resend.com/) como proveedor de email y [React Email](https://react.email/) para crear plantillas de email usando componentes de React.
+
+## ¿Por qué Resend y React Email?
+
+Esta combinación fue elegida por:
+
+- **Developer Experience**: Escribe emails con componentes de React
+- **Type Safety**: Plantillas completamente tipadas
+- **Preview**: Vista previa en desarrollo con React Email
+- **Rendimiento**: Renderizado optimizado a HTML
+- **Fiabilidad**: Resend maneja la entrega de emails
+- **Simplicidad**: API intuitiva y fácil de usar
+- **Moderno**: Stack tecnológico actual
+
+## Configuración
+
+### Variables de Entorno
+
+Configura tu API key de Resend en `.env`:
+
+```bash
+RESEND_API_KEY=re_xxxxxxxxxxxxx
+```
+
+### Estructura del Paquete
+
+El paquete `@beztack/email` está en `packages/email/`:
+
+```txt
+packages/email/
+├── emails/                    # Plantillas de email
+│   ├── welcome.tsx
+│   ├── password-reset.tsx
+│   ├── subscription-confirmation.tsx
+│   └── organization-invitation.tsx
+├── lib/
+│   ├── interfaces.ts          # Tipos TypeScript
+│   ├── send.ts               # Lógica de envío
+│   └── templates.ts          # Registro de plantillas
+└── index.ts                  # Exports públicos
+```
+
+## Plantillas Predefinidas
+
+Beztack incluye cuatro plantillas de email predefinidas:
+
+### 1. Welcome Email
+
+Enviado automáticamente cuando un usuario se registra.
+
+```typescript
+import { sendEmail } from "@beztack/email";
+
+await sendEmail({
+  type: "welcome",
+  to: "user@example.com",
+  data: {
+    username: "John Doe",
+    loginUrl: "https://app.example.com/login",
+  },
+});
+```
+
+### 2. Password Reset
+
+Para solicitudes de restablecimiento de contraseña.
+
+```typescript
+await sendEmail({
+  type: "password-reset",
+  to: "user@example.com",
+  data: {
+    username: "John Doe",
+    resetUrl: "https://app.example.com/reset-password?token=xxx",
+  },
+});
+```
+
+### 3. Subscription Confirmation
+
+Confirmación de suscripción exitosa.
+
+```typescript
+await sendEmail({
+  type: "subscription-confirmation",
+  to: "user@example.com",
+  data: {
+    username: "John Doe",
+    planName: "Pro",
+    amount: "$29",
+    billingPeriod: "mensual",
+    dashboardUrl: "https://app.example.com/dashboard",
+  },
+});
+```
+
+### 4. Organization Invitation
+
+Invitación a unirse a una organización.
+
+```typescript
+await sendEmail({
+  type: "organization-invitation",
+  to: "member@example.com",
+  data: {
+    invitedByUsername: "Jane Doe",
+    invitedByEmail: "jane@example.com",
+    organizationName: "Mi Empresa",
+    invitationUrl: "https://app.example.com/accept-invitation/xxx",
+  },
+});
+```
+
+## Crear una Nueva Plantilla
+
+### 1. Crear el Componente React
+
+Crea un nuevo archivo en `packages/email/emails/`:
+
+```tsx
+// packages/email/emails/verification.tsx
+import {
+  Body,
+  Button,
+  Container,
+  Head,
+  Html,
+  Preview,
+  Text,
+} from "@react-email/components";
+
+type VerificationEmailProps = {
+  username?: string;
+  verificationUrl?: string;
+};
+
+export const VerificationEmail = ({
+  username = "User",
+  verificationUrl = "https://beztack.app/verify",
+}: VerificationEmailProps) => (
+  <Html>
+    <Head />
+    <Preview>Verifica tu email para activar tu cuenta</Preview>
+    <Body style={main}>
+      <Container style={container}>
+        <Text style={title}>Hola, {username}!</Text>
+        <Text style={paragraph}>
+          Por favor verifica tu dirección de email haciendo clic en el botón
+          de abajo:
+        </Text>
+        <Button href={verificationUrl} style={button}>
+          Verificar Email
+        </Button>
+        <Text style={paragraph}>
+          Si no creaste esta cuenta, puedes ignorar este email.
+        </Text>
+      </Container>
+    </Body>
+  </Html>
+);
+
+export default VerificationEmail;
+
+// Estilos...
+const main = {
+  backgroundColor: "#f6f9fc",
+  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto',
+};
+
+const container = {
+  margin: "0 auto",
+  padding: "20px 0 48px",
+  backgroundColor: "#ffffff",
+  borderRadius: "5px",
+  maxWidth: "580px",
+};
+
+const title = {
+  fontSize: "24px",
+  fontWeight: "600",
+  color: "#374151",
+  padding: "0 40px",
+  marginBottom: "30px",
+};
+
+const paragraph = {
+  fontSize: "16px",
+  color: "#525f7f",
+  padding: "0 40px",
+  marginBottom: "20px",
+};
+
+const button = {
+  backgroundColor: "#000",
+  borderRadius: "5px",
+  color: "#fff",
+  fontSize: "16px",
+  fontWeight: "bold",
+  textDecoration: "none",
+  textAlign: "center" as const,
+  display: "block",
+  width: "200px",
+  padding: "14px 0",
+  margin: "0 auto 20px",
+};
+```
+
+### 2. Registrar la Plantilla
+
+Agrega tu plantilla a `packages/email/lib/templates.ts`:
+
+```typescript
+import { VerificationEmail } from "../emails/verification";
+
+// Agrega al tipo EmailType en interfaces.ts
+export type EmailType =
+  | "welcome"
+  | "password-reset"
+  | "subscription-confirmation"
+  | "organization-invitation"
+  | "verification"; // ← Nuevo tipo
+
+// Agrega los datos en send.ts
+type VerificationEmailData = {
+  username: string;
+  verificationUrl: string;
+};
+
+// Agrega el caso en getEmailTemplate
+export function getEmailTemplate(
+  type: EmailType,
+  data: EmailDataMap[EmailType]
+): ReactElement {
+  switch (type) {
+    // ... otros casos
+    case "verification":
+      return VerificationEmail(data as VerificationEmailData);
+    default:
+      throw new Error(`Unknown email type: ${type}`);
+  }
+}
+```
+
+### 3. Actualizar los Tipos
+
+Actualiza `SendEmailUnifiedProps` en `packages/email/lib/interfaces.ts`:
+
+```typescript
+export type SendEmailUnifiedProps = {
+  type: EmailType;
+  to: string;
+  data: {
+    username?: string;
+    verificationUrl?: string; // ← Agregar nuevo campo
+    // ... otros campos
+  };
+};
+```
+
+### 4. Usar la Nueva Plantilla
+
+```typescript
+import { sendEmail } from "@beztack/email";
+
+await sendEmail({
+  type: "verification",
+  to: "user@example.com",
+  data: {
+    username: "John Doe",
+    verificationUrl: "https://app.example.com/verify/xxx",
+  },
+});
+```
+
+## Vista Previa en Desarrollo
+
+React Email incluye un servidor de desarrollo para previsualizar tus emails:
+
+```bash
+cd packages/email
+pnpm run email:dev
+```
+
+Esto abrirá una interfaz web donde puedes ver todas tus plantillas y probarlas con diferentes datos.
+
+## Envío Directo con HTML o React
+
+### Enviar con HTML Directo
+
+```typescript
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+await resend.emails.send({
+  from: "noreply@beztack.app",
+  to: "user@example.com",
+  subject: "Mi Email Personalizado",
+  html: "<h1>Hola mundo</h1><p>Este es un email HTML.</p>",
+});
+```
+
+### Enviar con Componente React Personalizado
+
+```typescript
+import { render } from "@react-email/render";
+import { Resend } from "resend";
+import { MyCustomEmail } from "./my-custom-email";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const html = render(<MyCustomEmail name="John" />);
+
+await resend.emails.send({
+  from: "noreply@beztack.app",
+  to: "user@example.com",
+  subject: "Mi Email Personalizado",
+  html,
+});
+```
+
+## Componentes de React Email
+
+React Email proporciona componentes para construir emails:
+
+### Componentes Básicos
+
+```tsx
+import {
+  Html,        // Wrapper principal
+  Head,        // <head> del email
+  Body,        // <body> del email
+  Container,   // Contenedor centrado
+  Preview,     // Texto de preview
+  Text,        // Párrafo de texto
+  Heading,     // Título
+  Button,      // Botón clickeable
+  Link,        // Enlace
+  Hr,          // Línea horizontal
+  Img,         // Imagen
+  Section,     // Sección
+  Column,      // Columna (para layouts)
+  Row,         // Fila (para layouts)
+} from "@react-email/components";
+```
+
+### Ejemplo Completo
+
+```tsx
+import {
+  Body,
+  Button,
+  Column,
+  Container,
+  Head,
+  Heading,
+  Html,
+  Img,
+  Link,
+  Preview,
+  Row,
+  Section,
+  Text,
+} from "@react-email/components";
+
+export const ProductUpdateEmail = ({ 
+  username = "User",
+  productName = "Product",
+  updateDescription = "We've made some improvements",
+  imageUrl = "https://example.com/image.png",
+  ctaUrl = "https://example.com",
+}) => (
+  <Html>
+    <Head />
+    <Preview>Nueva actualización de {productName}</Preview>
+    <Body style={main}>
+      <Container style={container}>
+        <Heading style={h1}>Nueva Actualización Disponible</Heading>
+        
+        <Text style={text}>Hola {username},</Text>
+        
+        <Img
+          src={imageUrl}
+          width="600"
+          height="300"
+          alt={productName}
+          style={image}
+        />
+        
+        <Text style={text}>{updateDescription}</Text>
+        
+        <Section style={buttonContainer}>
+          <Button href={ctaUrl} style={button}>
+            Ver Actualización
+          </Button>
+        </Section>
+        
+        <Section style={footer}>
+          <Row>
+            <Column>
+              <Link href="https://example.com" style={link}>
+                Sitio Web
+              </Link>
+            </Column>
+            <Column>
+              <Link href="https://example.com/unsubscribe" style={link}>
+                Desuscribirse
+              </Link>
+            </Column>
+          </Row>
+        </Section>
+      </Container>
+    </Body>
+  </Html>
+);
+
+const main = { backgroundColor: "#f6f9fc" };
+const container = { margin: "0 auto", maxWidth: "600px" };
+const h1 = { fontSize: "32px", fontWeight: "bold" };
+const text = { fontSize: "16px", lineHeight: "26px" };
+const image = { width: "100%", height: "auto" };
+const buttonContainer = { textAlign: "center" as const };
+const button = {
+  backgroundColor: "#000",
+  color: "#fff",
+  padding: "12px 20px",
+  borderRadius: "5px",
+};
+const footer = { marginTop: "30px", color: "#8898aa" };
+const link = { color: "#000", textDecoration: "underline" };
+```
+
+## Mejores Prácticas
+
+### 1. Inline CSS
+
+Los clientes de email requieren estilos inline. React Email lo hace automáticamente:
+
+```tsx
+<Text style={{ fontSize: "16px", color: "#333" }}>
+  Contenido del email
+</Text>
+```
+
+### 2. Responsive Design
+
+Usa media queries con cuidado y prefiere layouts simples:
+
+```tsx
+const container = {
+  margin: "0 auto",
+  width: "100%",
+  maxWidth: "600px",
+};
+```
+
+### 3. Imágenes
+
+Siempre usa URLs absolutas para imágenes:
+
+```tsx
+<Img
+  src="https://cdn.example.com/logo.png"
+  width="200"
+  height="50"
+  alt="Logo"
+/>
+```
+
+### 4. Testing
+
+Prueba tus emails en diferentes clientes:
+- Gmail
+- Outlook
+- Apple Mail
+- Móviles (iOS/Android)
+
+### 5. Accesibilidad
+
+- Usa texto alternativo para imágenes
+- Estructura semántica apropiada
+- Alto contraste de colores
+- Tamaños de fuente legibles (mínimo 16px)
+
+### 6. Links
+
+Siempre usa URLs completas:
+
+```tsx
+<Button href="https://example.com/action">
+  Click aquí
+</Button>
+```
+
+### 7. Tamaño del Email
+
+Mantén tus emails bajo 100KB para evitar problemas de entrega.
+
+## Integración con Better Auth
+
+Los emails se envían automáticamente en ciertos eventos de Better Auth:
+
+```typescript
+// En apps/api/server/utils/auth.ts
+import { sendEmail } from "@beztack/email";
+
+export const auth = betterAuth({
+  // ...
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      // Enviar email de bienvenida al registrarse
+      if (ctx.path.includes("/sign-up")) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          await sendEmail({
+            type: "welcome",
+            to: newSession.user.email,
+            data: { username: newSession.user.name },
+          });
+        }
+      }
+    }),
+  },
+});
+```
+
+## Desarrollo Local
+
+### Configuración para Testing
+
+Durante el desarrollo, puedes usar servicios como:
+
+1. **Resend Test Mode**: Los emails no se envían realmente
+2. **Ethereal Email**: Servicio de testing gratuito
+3. **MailHog**: Servidor SMTP local
+
+### Variables de Entorno para Testing
+
+```bash
+# Desarrollo
+RESEND_API_KEY=re_test_xxxxxxxxxxxxx
+
+# Producción
+RESEND_API_KEY=re_xxxxxxxxxxxxx
+```
+
+## Troubleshooting
+
+### Email no se envía
+
+1. Verifica tu API key de Resend
+2. Revisa los logs de error
+3. Confirma que el dominio está verificado en Resend
+
+### Estilos no se aplican
+
+1. Asegúrate de usar inline styles
+2. Evita CSS avanzado (flexbox, grid)
+3. Usa propiedades soportadas por clientes de email
+
+### Email en spam
+
+1. Configura SPF, DKIM, y DMARC en tu dominio
+2. Usa un dominio verificado
+3. Evita palabras spam en el asunto
+4. Incluye un link de desuscripción
+
+## Recursos
+
+- [Documentación de Resend](https://resend.com/docs)
+- [Documentación de React Email](https://react.email/docs)
+- [Componentes de React Email](https://react.email/docs/components/html)
+- [Ejemplos de plantillas](https://react.email/examples)
+- [Guía de compatibilidad de email](https://www.caniemail.com/)
