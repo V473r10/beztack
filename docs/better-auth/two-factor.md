@@ -39,7 +39,7 @@ This plugin offers two main methods to do a second factor verification:
 
     export const auth = betterAuth({
         // ... other config options
-        appName: "My App", // provide your app name. It'll be used as an issuer. // [!code highlight]
+        appName: "Beztack", // provide your app name. It'll be used as an issuer. // [!code highlight]
         plugins: [
             twoFactor() // [!code highlight]
         ]
