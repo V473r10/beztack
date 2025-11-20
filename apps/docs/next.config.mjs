@@ -12,6 +12,13 @@ const withMDX = createMDX();
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        hostname: "env.t3.gg",
+      },
+    ],
+  },
 };
 
 export default withMDX(config);

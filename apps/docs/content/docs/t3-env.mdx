@@ -1,0 +1,271 @@
+---
+title: T3 Env
+description: Type-safe environment variables with runtime validation
+---
+
+Beztack uses **T3 Env** to validate environment variables at build time, ensuring your application never runs with invalid or missing configuration.
+
+## Why T3 Env?
+
+Traditional environment variables are error-prone:
+
+- ❌ No validation until runtime
+- ❌ Typos go unnoticed
+- ❌ Missing variables cause crashes in production
+- ❌ No type safety or autocomplete
+
+**T3 Env solves all of these problems:**
+
+- ✅ Validates at build time (fails fast)
+- ✅ Full TypeScript autocomplete
+- ✅ Prevents typos with type checking
+- ✅ Separates client/server variables automatically
+- ✅ Transforms and validates types (URLs, emails, UUIDs)
+
+## How It Works
+
+Each application in the monorepo has its own `env.ts` file that defines and validates environment variables:
+
+```typescript
+import { env } from "@/env";
+
+// ✅ Type-safe, validated at build time
+const apiUrl = env.VITE_API_URL;
+const dbUrl = env.DATABASE_URL;
+```
+
+If you try to access a variable that doesn't exist or forget to set a required variable, **the build will fail** with a clear error message.
+
+## Configuration by App
+
+### Backend (apps/api)
+
+The API validates server-side variables:
+
+- **Database**: `DATABASE_URL`
+- **Authentication**: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `APP_NAME`
+- **Payments**: Polar configuration (access tokens, product IDs, webhooks)
+- **Email**: Resend API credentials
+
+All variables are validated as proper types (URLs, UUIDs, emails, etc.).
+
+### Frontend (apps/ui)
+
+The UI validates client-side variables (prefixed with `VITE_`):
+
+- `VITE_API_URL` - Backend API endpoint
+- `VITE_BASE_PATH` - Router base path (optional)
+
+**Important**: Only variables prefixed with `VITE_` are exposed to the browser. This prevents accidentally leaking secrets.
+
+### Landing & Docs (Next.js apps)
+
+Next.js apps use `NEXT_PUBLIC_` prefix for client-side variables:
+
+- Server variables: Only accessible on the server
+- Client variables: Must start with `NEXT_PUBLIC_` to be exposed to the browser
+
+## Adding New Variables
+
+### Step 1: Define in Schema
+
+Edit the appropriate `env.ts` file:
+
+```typescript
+// apps/api/env.ts (backend)
+export const env = createEnv({
+  server: {
+    // Add your new variable
+    NEW_API_KEY: z.string().min(1),
+  },
+  runtimeEnv: process.env,
+});
+```
+
+```typescript
+// apps/ui/src/env.ts (frontend)
+export const env = createEnv({
+  clientPrefix: "VITE_",
+  client: {
+    // Must start with VITE_
+    VITE_NEW_FEATURE: z.boolean().default(false),
+  },
+  runtimeEnv: import.meta.env,
+});
+```
+
+### Step 2: Add to .env
+
+Update your `.env` file:
+
+```bash
+NEW_API_KEY=your_key_here
+VITE_NEW_FEATURE=true
+```
+
+### Step 3: Use in Code
+
+```typescript
+import { env } from "@/env";
+
+// Fully type-safe!
+const apiKey = env.NEW_API_KEY;
+const enabled = env.VITE_NEW_FEATURE;
+```
+
+## Common Validations
+
+### String Types
+
+```typescript
+// Required string
+API_KEY: z.string().min(1)
+
+// Email validation
+EMAIL: z.string().email()
+
+// URL validation
+API_URL: z.string().url()
+
+// UUID validation
+USER_ID: z.string().uuid()
+```
+
+### Numbers
+
+```typescript
+// Convert string to number
+PORT: z.coerce.number().min(1000).max(9999)
+
+// With default value
+MAX_CONNECTIONS: z.coerce.number().default(100)
+```
+
+### Booleans
+
+```typescript
+// Convert "true"/"false" to boolean
+ENABLE_FEATURE: z
+  .string()
+  .transform((s) => s === "true")
+  .pipe(z.boolean())
+```
+
+### Enums
+
+```typescript
+// Restrict to specific values
+NODE_ENV: z.enum(["development", "production", "test"])
+LOG_LEVEL: z.enum(["debug", "info", "warn", "error"])
+```
+
+### Optional with Defaults
+
+```typescript
+APP_NAME: z.string().default("beztack")
+RETRY_COUNT: z.coerce.number().default(3)
+```
+
+## Troubleshooting
+
+### Build Fails: "Missing environment variable"
+
+**Error:**
+```
+Error: Missing environment variable: DATABASE_URL
+```
+
+**Solution:** Add the variable to your `.env` file:
+
+```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/db
+```
+
+### Type Error: "Expected string, received number"
+
+**Error:**
+```
+Error: Expected string, received number at "PORT"
+```
+
+**Solution:** Use `z.coerce.number()` to convert strings to numbers:
+
+```typescript
+PORT: z.coerce.number() // "3000" → 3000
+```
+
+### Client Variable Not Found
+
+**Error:**
+```
+Error: Variable doesn't have correct prefix
+```
+
+**Solution:** Add the correct prefix:
+
+- Vite: `VITE_` → `VITE_API_URL`
+- Next.js: `NEXT_PUBLIC_` → `NEXT_PUBLIC_API_URL`
+
+## Security Best Practices
+
+### ⚠️ Never expose secrets to the client
+
+```typescript
+// ❌ WRONG - Secret exposed to browser
+client: {
+  VITE_API_SECRET: z.string() // DON'T DO THIS!
+}
+
+// ✅ CORRECT - Secret stays on server
+server: {
+  API_SECRET: z.string()
+}
+```
+
+### 🔒 Use server variables for sensitive data
+
+- API keys
+- Database passwords
+- OAuth secrets
+- Webhook signatures
+- Private tokens
+
+These should **never** have the `VITE_` or `NEXT_PUBLIC_` prefix.
+
+### ✅ Client variables are safe for public data
+
+- API URLs
+- Feature flags
+- Public configuration
+- Analytics IDs
+
+## Real-World Example
+
+Here's how we use T3 Env in the authentication setup:
+
+```typescript
+// apps/api/server/utils/auth.ts
+import { env } from "@/env";
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { provider: "pg", schema }),
+  secret: env.BETTER_AUTH_SECRET,        // ✅ Validated URL
+  baseURL: env.BETTER_AUTH_URL,          // ✅ Validated string
+  trustedOrigins: [
+    "http://localhost:5173",
+    `https://${env.APP_NAME}.vercel.app`  // ✅ With default value
+  ],
+});
+```
+
+**Benefits:**
+- ✅ TypeScript knows these variables exist
+- ✅ Build fails if any are missing
+- ✅ URL format is validated
+- ✅ Autocomplete works everywhere
+
+## Learn More
+
+- [T3 Env Documentation](https://env.t3.gg)
+- [Zod Validation Library](https://zod.dev)
+- Project implementation details: `/docs/t3-env.md`
