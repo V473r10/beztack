@@ -74,7 +74,8 @@ async function fetchUserGrowthData() {
 // Real data fetchers
 async function fetchSystemMetrics(): Promise<SystemMetric[]> {
   try {
-    const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const { env } = await import("@/env");
+    const baseURL = env.VITE_API_URL;
     const response = await fetch(`${baseURL}/api/admin/metrics`, {
       method: "GET",
       credentials: "include",

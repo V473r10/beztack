@@ -10,6 +10,7 @@ import {
   planLimit,
   planPermission,
 } from "@/db/schema";
+import { env } from "@/env";
 
 type ProductTier = {
   id: string;
@@ -28,12 +29,12 @@ type ProductTier = {
 
 export default defineEventHandler(async (_event) => {
   const polar = new Polar({
-    accessToken: process.env.POLAR_ACCESS_TOKEN,
-    server: process.env.POLAR_SERVER as "production" | "sandbox",
+    accessToken: env.POLAR_ACCESS_TOKEN,
+    server: env.POLAR_SERVER,
   });
 
   const products = await polar.products.list({
-    organizationId: process.env.POLAR_ORGANIZATION_ID,
+    organizationId: env.POLAR_ORGANIZATION_ID,
     isArchived: false,
   });
 

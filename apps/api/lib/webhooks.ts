@@ -381,10 +381,8 @@ export async function handleWebhookRequest(
         "x-polar-signature"
       ) || "";
 
-    const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      return { success: false, error: "POLAR_WEBHOOK_SECRET not configured" };
-    }
+    const { env } = await import("@/env");
+    const webhookSecret = env.POLAR_WEBHOOK_SECRET;
 
     // Verify webhook signature
     if (!verifyWebhookSignature(bodyString, signature, webhookSecret)) {

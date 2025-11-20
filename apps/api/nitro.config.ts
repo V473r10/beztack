@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { defineNitroConfig } from "nitropack/config";
+import "./env";
 
 // https://nitro.build/config
 export default defineNitroConfig({

@@ -96,7 +96,8 @@ export function useUserInvitations() {
     queryKey: ["userInvitations"],
     queryFn: async () => {
       // Use custom endpoint to get invitations for the current user
-      const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const { env } = await import("@/env");
+      const baseURL = env.VITE_API_URL;
       const response = await fetch(`${baseURL}/api/invitations/me`, {
         credentials: "include",
         headers: {
