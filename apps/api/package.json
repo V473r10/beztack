@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "@beztack/email": "workspace:*",
+    "@beztack/env": "workspace:*",
     "@polar-sh/better-auth": "^1.1.0",
     "@polar-sh/sdk": "^0.34.15",
-    "@t3-oss/env-core": "^0.13.8",
     "@types/react": "^19.1.12",
     "better-auth": "^1.3.7",
     "cors": "^2.8.5",

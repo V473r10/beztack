@@ -1,0 +1,45 @@
+{
+  "name": "@beztack/env",
+  "version": "0.0.1",
+  "description": "Centralized T3 Env configuration for Beztack monorepo",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./api": {
+      "types": "./dist/api.d.ts",
+      "default": "./dist/api.js"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "default": "./dist/ui.js"
+    },
+    "./nextjs": {
+      "types": "./dist/nextjs.d.ts",
+      "default": "./dist/nextjs.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "zod": "^3.23.0"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.8",
+    "@t3-oss/env-nextjs": "^0.13.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "env",
+    "environment",
+    "validation",
+    "t3",
+    "monorepo"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.12.1"
+}
