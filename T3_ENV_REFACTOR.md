@@ -178,6 +178,56 @@ pnpm install
 ✓ @beztack/env instalado en todas las apps
 ```
 
+## Solución para Deployment en Vercel
+
+### Problema Original
+Durante el deployment en Vercel, el error `Cannot find module '@beztack/env/dist/api.js'` ocurría porque el paquete no se compilaba automáticamente durante `pnpm install`.
+
+### Solución Implementada
+
+**1. Script `prepare` agregado** en `packages/env/package.json`:
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "prepare": "pnpm build",
+    "typecheck": "tsc --noEmit"
+  }
+}
+```
+
+El script `prepare` se ejecuta automáticamente:
+- Después de `pnpm install`
+- Antes de empaquetar/publicar
+- Durante deployments en CI/CD
+
+**2. `.gitignore` creado** en `packages/env/`:
+```gitignore
+# Build output
+dist/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+```
+
+Esto asegura que:
+- ✅ Los archivos compilados (`dist/`) no se commitean
+- ✅ El paquete se compila automáticamente en cada instalación
+- ✅ Vercel construye el paquete durante el deployment
+
+### Verificación de la Solución
+
+```bash
+# Limpiar y reinstalar para simular deployment
+cd packages/env
+rm -rf dist
+pnpm install
+
+# El script prepare se ejecuta automáticamente
+# ✓ dist/ se crea con todos los archivos compilados
+```
+
 ## Compatibilidad
 
 - ✅ **Retrocompatible**: Todas las apps siguen usando `import { env } from "@/env"`
