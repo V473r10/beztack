@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
+      dedupe: ["react", "react-dom"],
     },
     build: {
       sourcemap: true,
@@ -40,8 +41,9 @@ export default defineConfig(({ mode }) => {
       minifySyntax: false,
     },
     optimizeDeps: {
-      force: false,
-      include: ["react", "react-dom"],
+      force: true,
+      include: ["react", "react-dom", "@beztack/state"],
+      exclude: [],
     },
     css: {
       devSourcemap: true,

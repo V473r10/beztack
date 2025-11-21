@@ -1,0 +1,5 @@
+{
+  "title": "Database",
+  "pages": ["drizzle-orm"],
+  "defaultOpen": true
+}
