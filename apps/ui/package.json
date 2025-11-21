@@ -13,6 +13,7 @@
     "@beztack/ai": "workspace:*",
     "@beztack/env": "workspace:*",
     "@beztack/ocr": "workspace:*",
+    "@beztack/state": "workspace:*",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",

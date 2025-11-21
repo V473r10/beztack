@@ -13,6 +13,7 @@ import SignUp from "./app/auth/sign-up/sign-up.tsx";
 import Billing from "./app/billing/billing.tsx";
 import CheckoutSuccess from "./app/billing/checkout-success.tsx";
 import Pricing from "./app/billing/pricing.tsx";
+import NuqsDemo from "./app/examples/nuqs-demo.tsx";
 import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
 import OrganizationsPage from "./app/organizations/organizations.tsx";
@@ -129,6 +130,7 @@ function App() {
               <Route element={<CheckoutSuccess />} path="checkout-success" />
               <Route element={<AI />} path="ai" />
               <Route element={<OCR />} path="ocr" />
+              <Route element={<NuqsDemo />} path="nuqs-demo" />
               {/* Redirect any unknown routes to home */}
               <Route element={<Navigate replace to="/" />} path="*" />
             </Routes>
