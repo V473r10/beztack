@@ -1,6 +1,7 @@
 import {
   Blocks,
   Check,
+  CheckCircle2,
   Clock,
   Code2,
   Database,
@@ -12,6 +13,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CopyCommandButton } from "@/components/copy-command-button";
+import { T3Icon } from "@/components/svg/t3";
 import { TechBadge } from "@/components/tech-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,7 +31,6 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="-z-10 absolute top-0 right-0 left-0 m-auto h-[310px] w-[310px] rounded-full bg-accent/20 opacity-20 blur-[100px]" />
       </div>
-
       {/* Hero Section */}
       <section className="container relative z-10 mx-auto overflow-hidden px-4 py-20 md:py-32">
         {/* Spotlight effect */}
@@ -82,7 +83,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Tech Stack Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="mx-auto max-w-5xl">
@@ -115,10 +115,14 @@ export default function Home() {
               logoUrl="https://svgl.app/library/drizzle-orm_dark.svg"
               name="Drizzle"
             />
+            <TechBadge
+              logoUrl="https://env.t3.gg/favicon-32x32.png"
+              name="T3 Env"
+            />
+            <TechBadge logoUrl="https://svgl.app/library/zod.svg" name="Zod" />
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="mx-auto max-w-6xl">
@@ -336,7 +340,55 @@ export default function Home() {
           </div>
 
           {/* Core Infrastructure Section - Separated visually */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {/* T3 Env - Type-Safe Environment */}
+            <Card className="group relative overflow-hidden border-2 border-border border-dashed bg-secondary/5 p-8 transition-all duration-300 hover:border-emerald-500/30 hover:bg-secondary/10">
+              <div className="pointer-events-none absolute top-0 right-0 flex gap-2 p-4 opacity-[0.05] transition-opacity duration-500 group-hover:opacity-[0.1]">
+                <T3Icon className="h-24 w-24 object-contain" />
+                <Image
+                  alt="Zod"
+                  className="h-32 w-32 object-contain"
+                  height={128}
+                  src="https://svgl.app/library/zod.svg"
+                  width={128}
+                />
+              </div>
+
+              <div className="relative z-10">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-500">
+                    <CheckCircle2 className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-bold font-heading font-mono text-xl tracking-tight">
+                    TYPE_SAFE_ENV
+                  </h3>
+                </div>
+                <p className="mb-4 text-muted-foreground">
+                  Powered by{" "}
+                  <span className="font-semibold text-foreground">T3 Env</span>{" "}
+                  and <span className="font-semibold text-foreground">Zod</span>
+                  . Environment variables validated at build time with full
+                  TypeScript support.
+                </p>
+                <div className="flex gap-3">
+                  <div className="flex w-fit items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
+                    <T3Icon className="h-4 w-4" />
+                    Env
+                  </div>
+                  <div className="flex w-fit items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
+                    <Image
+                      alt="Zod"
+                      className="h-4 w-4"
+                      height={16}
+                      src="https://svgl.app/library/zod.svg"
+                      width={16}
+                    />
+                    Zod
+                  </div>
+                </div>
+              </div>
+            </Card>
+
             {/* Rapid Development */}
             <Card className="group relative overflow-hidden border-2 border-border border-dashed bg-secondary/5 p-8 transition-all duration-300 hover:border-blue-500/30 hover:bg-secondary/10">
               <div className="pointer-events-none absolute top-0 right-0 p-4 opacity-[0.05] transition-opacity duration-500 group-hover:opacity-[0.1]">
@@ -440,8 +492,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Final CTA Section */}
       <section className="container mx-auto px-4 py-20 md:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="mb-6 text-balance font-bold font-heading text-4xl text-foreground md:text-5xl">
@@ -478,8 +528,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
       <footer className="border-border border-t">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
@@ -513,6 +561,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      ;
     </div>
   );
 }

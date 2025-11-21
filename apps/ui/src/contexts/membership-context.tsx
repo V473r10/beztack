@@ -7,6 +7,7 @@ import type React from "react";
 import { createContext, useCallback, useContext } from "react";
 // import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
 import { toast } from "sonner";
+import { env } from "@/env";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 
 // Time constants
@@ -133,24 +134,21 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       billingPeriod: "monthly" | "yearly";
       metadata?: Record<string, unknown>;
     }) => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/polar/checkout`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+      const response = await fetch(`${env.VITE_API_URL}/api/polar/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: params.productId,
+          successUrl: `${window.location.origin}/dashboard?checkout=success`,
+          cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
+          metadata: {
+            billingPeriod: params.billingPeriod,
+            ...params.metadata,
           },
-          body: JSON.stringify({
-            productId: params.productId,
-            successUrl: `${window.location.origin}/dashboard?checkout=success`,
-            cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
-            metadata: {
-              billingPeriod: params.billingPeriod,
-              ...params.metadata,
-            },
-          }),
-        }
-      );
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`Checkout failed: ${response.statusText}`);
@@ -212,9 +210,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const tierConfigsQuery = useQuery({
     queryKey: ["tierConfigs"],
     queryFn: async (): Promise<MembershipTierConfig[]> => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/polar/products`
-      );
+      const response = await fetch(`${env.VITE_API_URL}/api/polar/products`);
       if (!response.ok) {
         throw new Error("Failed to fetch tier configurations");
       }

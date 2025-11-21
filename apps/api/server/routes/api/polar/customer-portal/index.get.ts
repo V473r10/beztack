@@ -1,10 +1,11 @@
 import { Polar } from "@polar-sh/sdk";
 import { defineEventHandler } from "h3";
+import { env } from "@/env";
 
 export default defineEventHandler(async (_event) => {
   const polar = new Polar({
-    accessToken: process.env.POLAR_ACCESS_TOKEN,
-    server: process.env.POLAR_SERVER as "production" | "sandbox",
+    accessToken: env.POLAR_ACCESS_TOKEN,
+    server: env.POLAR_SERVER,
   });
 
   const result = await polar.customerSessions.create({

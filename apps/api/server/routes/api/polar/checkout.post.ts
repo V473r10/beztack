@@ -1,6 +1,7 @@
 import { Polar } from "@polar-sh/sdk";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
+import { env } from "@/env";
 
 // Constants for validation
 const MIN_AMOUNT_CENTS = 50;
@@ -60,8 +61,8 @@ const checkoutRequestSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const polar = new Polar({
-    accessToken: process.env.POLAR_ACCESS_TOKEN,
-    server: process.env.POLAR_SERVER as "production" | "sandbox",
+    accessToken: env.POLAR_ACCESS_TOKEN,
+    server: env.POLAR_SERVER,
   });
   if (event.node.req.method !== "POST") {
     throw createError({

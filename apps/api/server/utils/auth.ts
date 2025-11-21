@@ -11,15 +11,16 @@ import {
 } from "better-auth/plugins";
 import { db } from "@/db/db";
 import { schema } from "@/db/schema";
+import { env } from "@/env";
 
 const polarClient = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN,
-  server: "sandbox",
+  accessToken: env.POLAR_ACCESS_TOKEN,
+  server: env.POLAR_SERVER,
 });
 
 // Determine project name: in development use APP_NAME from env (defaults to "beztack" in .env.example),
 // in new projects this falls back to the template placeholder and will be replaced by the initializer
-const projectName = process.env.APP_NAME || "{{project-name}}";
+const projectName = env.APP_NAME;
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema }),
@@ -39,7 +40,7 @@ export const auth = betterAuth({
   ],
   plugins: [
     twoFactor({
-      issuer: process.env.APP_NAME || "{{project-name}}",
+      issuer: env.APP_NAME,
     }),
     admin(),
     organization({
@@ -47,7 +48,7 @@ export const auth = betterAuth({
       async sendInvitationEmail(data) {
         // Construct invitation acceptance URL
         const baseUrl =
-          process.env.NODE_ENV === "production"
+          env.NODE_ENV === "production"
             ? `https://${projectName}.vercel.app`
             : "http://localhost:5173";
         const invitationUrl = `${baseUrl}/accept-invitation/${data.id}`;
@@ -86,31 +87,31 @@ export const auth = betterAuth({
         checkout({
           products: [
             {
-              productId: process.env.POLAR_BASIC_MONTHLY_PRODUCT_ID || "",
+              productId: env.POLAR_BASIC_MONTHLY_PRODUCT_ID,
               slug: "basic-monthly",
             },
             {
-              productId: process.env.POLAR_BASIC_YEARLY_PRODUCT_ID || "",
+              productId: env.POLAR_BASIC_YEARLY_PRODUCT_ID,
               slug: "basic-yearly",
             },
             {
-              productId: process.env.POLAR_PRO_MONTHLY_PRODUCT_ID || "",
+              productId: env.POLAR_PRO_MONTHLY_PRODUCT_ID,
               slug: "pro-monthly",
             },
             {
-              productId: process.env.POLAR_PRO_YEARLY_PRODUCT_ID || "",
+              productId: env.POLAR_PRO_YEARLY_PRODUCT_ID,
               slug: "pro-yearly",
             },
             {
-              productId: process.env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID || "",
+              productId: env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
               slug: "ultimate-monthly",
             },
             {
-              productId: process.env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID || "",
+              productId: env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
               slug: "ultimate-yearly",
             },
           ],
-          successUrl: process.env.POLAR_SUCCESS_URL,
+          successUrl: env.POLAR_SUCCESS_URL,
           authenticatedUsersOnly: true,
         }),
         portal(),
@@ -138,7 +139,7 @@ export const auth = betterAuth({
     cookies: {
       sessionToken: {
         attributes: {
-          secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+          secure: env.NODE_ENV === "production", // Use secure cookies in production
           sameSite: "none", // Allow cookies to be sent in cross-site contexts
           httpOnly: true, // Prevent XSS attacks
         },
