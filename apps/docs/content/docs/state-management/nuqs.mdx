@@ -1,0 +1,426 @@
+---
+title: nuqs
+description: Type-safe URL search params state management with React hooks
+---
+
+Beztack uses **nuqs** through the centralized `@beztack/state` package for type-safe URL search params management, making it easy to synchronize component state with the URL.
+
+## Why nuqs?
+
+Traditional URL search params handling is fragile:
+
+- ❌ Manual string parsing and serialization
+- ❌ No type safety
+- ❌ Inconsistent behavior across frameworks
+- ❌ SSR/SSG compatibility issues
+- ❌ Boilerplate code for every param
+
+**nuqs solves all of these problems:**
+
+- ✅ Type-safe hooks with TypeScript inference
+- ✅ Built-in parsers for common types
+- ✅ Automatic URL synchronization
+- ✅ SSR/SSG compatible
+- ✅ Framework adapters (React, Next.js, Remix)
+- ✅ Batched updates for multiple params
+- ✅ Lightweight (~3kb gzipped)
+
+## How It Works
+
+The `@beztack/state` package provides a centralized export of nuqs hooks and utilities:
+
+```typescript
+import { useQueryState, parseAsInteger } from '@beztack/state';
+
+function MyComponent() {
+  const [page, setPage] = useQueryState(
+    'page',
+    parseAsInteger.withDefault(1)
+  );
+
+  return (
+    <div>
+      <p>Current page: {page}</p>
+      <button onClick={() => setPage(p => p + 1)}>
+        Next page
+      </button>
+    </div>
+  );
+}
+```
+
+The state is automatically synchronized with the URL: `?page=2`
+
+## Setup
+
+### React SPA (Vite)
+
+Wrap your app with the `NuqsAdapter`:
+
+```tsx
+// apps/ui/src/main.tsx
+import { NuqsAdapter } from '@beztack/state/adapters/react';
+import { createRoot } from 'react-dom/client';
+import App from './app';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <NuqsAdapter>
+      <App />
+    </NuqsAdapter>
+  </StrictMode>
+);
+```
+
+### Next.js App Router
+
+```tsx
+// app/layout.tsx
+import { NuqsAdapter } from '@beztack/state/adapters/next/app';
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <NuqsAdapter>{children}</NuqsAdapter>
+      </body>
+    </html>
+  );
+}
+```
+
+### Next.js Pages Router
+
+```tsx
+// pages/_app.tsx
+import { NuqsAdapter } from '@beztack/state/adapters/next/pages';
+
+export default function App({ Component, pageProps }) {
+  return (
+    <NuqsAdapter>
+      <Component {...pageProps} />
+    </NuqsAdapter>
+  );
+}
+```
+
+## Basic Usage
+
+### Single State
+
+Use `useQueryState` for a single search param:
+
+```tsx
+import { useQueryState, parseAsString } from '@beztack/state';
+
+function SearchBox() {
+  const [search, setSearch] = useQueryState(
+    'search',
+    parseAsString.withDefault('')
+  );
+
+  return (
+    <input
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Search..."
+    />
+  );
+}
+```
+
+### Multiple States
+
+Use `useQueryStates` for batched updates:
+
+```tsx
+import { useQueryStates, parseAsInteger, parseAsString } from '@beztack/state';
+
+function Filters() {
+  const [filters, setFilters] = useQueryStates({
+    minPrice: parseAsInteger.withDefault(0),
+    maxPrice: parseAsInteger.withDefault(100),
+    category: parseAsString.withDefault(''),
+  });
+
+  // Update multiple params at once (single URL update)
+  const applyFilters = () => {
+    setFilters({
+      minPrice: 20,
+      maxPrice: 80,
+      category: 'electronics',
+    });
+  };
+
+  return (
+    <div>
+      <p>Price: {filters.minPrice} - {filters.maxPrice}</p>
+      <p>Category: {filters.category || 'All'}</p>
+      <button onClick={applyFilters}>Apply Filters</button>
+    </div>
+  );
+}
+```
+
+## Built-in Parsers
+
+nuqs provides type-safe parsers for common data types:
+
+### String
+
+```tsx
+import { useQueryState, parseAsString } from '@beztack/state';
+
+const [name, setName] = useQueryState(
+  'name',
+  parseAsString.withDefault('')
+);
+```
+
+### Integer
+
+```tsx
+import { useQueryState, parseAsInteger } from '@beztack/state';
+
+const [page, setPage] = useQueryState(
+  'page',
+  parseAsInteger.withDefault(1)
+);
+```
+
+### Float
+
+```tsx
+import { useQueryState, parseAsFloat } from '@beztack/state';
+
+const [price, setPrice] = useQueryState(
+  'price',
+  parseAsFloat.withDefault(0.0)
+);
+```
+
+### Boolean
+
+```tsx
+import { useQueryState, parseAsBoolean } from '@beztack/state';
+
+const [enabled, setEnabled] = useQueryState(
+  'enabled',
+  parseAsBoolean.withDefault(false)
+);
+```
+
+### Enum
+
+```tsx
+import { useQueryState, parseAsStringEnum } from '@beztack/state';
+
+const sortOptions = ['asc', 'desc', 'newest', 'oldest'] as const;
+
+const [sort, setSort] = useQueryState(
+  'sort',
+  parseAsStringEnum([...sortOptions]).withDefault('asc')
+);
+```
+
+### Array
+
+```tsx
+import { useQueryState, parseAsArrayOf, parseAsInteger } from '@beztack/state';
+
+const [tags, setTags] = useQueryState(
+  'tags',
+  parseAsArrayOf(parseAsInteger).withDefault([])
+);
+```
+
+### JSON
+
+```tsx
+import { useQueryState, parseAsJson } from '@beztack/state';
+
+const [config, setConfig] = useQueryState(
+  'config',
+  parseAsJson<{ theme: string; lang: string }>().withDefault({
+    theme: 'dark',
+    lang: 'en',
+  })
+);
+```
+
+### DateTime
+
+```tsx
+import { useQueryState, parseAsIsoDateTime } from '@beztack/state';
+
+const [date, setDate] = useQueryState(
+  'date',
+  parseAsIsoDateTime.withDefault(new Date())
+);
+```
+
+## Advanced Patterns
+
+### Updater Functions
+
+Update state based on previous value:
+
+```tsx
+const [count, setCount] = useQueryState('count', parseAsInteger.withDefault(0));
+
+// Increment
+<button onClick={() => setCount(c => c + 1)}>+1</button>
+
+// Decrement
+<button onClick={() => setCount(c => c - 1)}>-1</button>
+```
+
+### Clear State
+
+Set to `null` to remove from URL:
+
+```tsx
+<button onClick={() => setSearch(null)}>Clear</button>
+```
+
+### Shallow Routing
+
+Prevent scroll to top on URL change:
+
+```tsx
+const [tab, setTab] = useQueryState('tab', {
+  defaultValue: 'home',
+  shallow: true, // Don't scroll to top
+});
+```
+
+### Server-Side Rendering
+
+Access search params on the server:
+
+```tsx
+import { createSearchParamsCache, parseAsInteger } from '@beztack/state/server';
+
+// Define your parsers
+const searchParamsCache = createSearchParamsCache({
+  page: parseAsInteger.withDefault(1),
+  limit: parseAsInteger.withDefault(10),
+});
+
+// In your server component or loader
+export async function loader({ request }) {
+  const searchParams = new URL(request.url).searchParams;
+  const { page, limit } = searchParamsCache.parse(searchParams);
+  
+  const data = await fetchData({ page, limit });
+  return { data };
+}
+```
+
+## Best Practices
+
+### Always Use Parsers
+
+```tsx
+// ✅ Good - Type-safe with parser
+const [count, setCount] = useQueryState(
+  'count',
+  parseAsInteger.withDefault(0)
+);
+
+// ❌ Bad - Returns string | null
+const [count, setCount] = useQueryState('count');
+```
+
+### Provide Default Values
+
+```tsx
+// ✅ Good - Never null
+const [search, setSearch] = useQueryState(
+  'search',
+  parseAsString.withDefault('')
+);
+
+// ❌ Bad - Can be null
+const [search, setSearch] = useQueryState('search');
+```
+
+### Use Batched Updates
+
+```tsx
+// ✅ Good - Single URL update
+const [filters, setFilters] = useQueryStates({
+  min: parseAsInteger.withDefault(0),
+  max: parseAsInteger.withDefault(100),
+});
+setFilters({ min: 10, max: 90 });
+
+// ❌ Bad - Multiple URL updates
+const [min, setMin] = useQueryState('min', parseAsInteger.withDefault(0));
+const [max, setMax] = useQueryState('max', parseAsInteger.withDefault(100));
+setMin(10);
+setMax(90);
+```
+
+### Use Enums for Fixed Options
+
+```tsx
+// ✅ Good - Type-safe options
+const sortOptions = ['asc', 'desc'] as const;
+const [sort, setSort] = useQueryState(
+  'sort',
+  parseAsStringEnum([...sortOptions]).withDefault('asc')
+);
+
+// ❌ Bad - Any string allowed
+const [sort, setSort] = useQueryState('sort', parseAsString.withDefault('asc'));
+```
+
+## Demo
+
+Check out the live demo at `/nuqs-demo` in the UI app to see all features in action:
+
+- String state with text input
+- Number parser with pagination
+- Boolean parser with switches
+- Enum parser with options
+- Array parser with tags
+- Batched updates with filters
+
+## Resources
+
+- [nuqs Documentation](https://nuqs.dev/docs)
+- [nuqs Playground](https://nuqs.dev/playground)
+- [Package Source](../../packages/state)
+- [Demo Component](../../apps/ui/src/app/examples/nuqs-demo.tsx)
+
+## Troubleshooting
+
+### Invalid Hook Call Error
+
+If you see "Invalid hook call" errors:
+
+1. Ensure `NuqsAdapter` is wrapping your app
+2. Check for multiple React versions (run `pnpm list react`)
+3. Verify Vite config has `dedupe: ["react", "react-dom"]`
+
+### State Not Syncing with URL
+
+1. Make sure the adapter is at the root level
+2. Check that you're using the correct adapter for your framework
+3. Verify the parser is correctly configured
+
+### SSR Hydration Mismatch
+
+Use server-side parsers to match client-side state:
+
+```tsx
+import { createSearchParamsCache } from '@beztack/state/server';
+
+const cache = createSearchParamsCache({
+  page: parseAsInteger.withDefault(1),
+});
+
+// Use in getServerSideProps or loader
+const { page } = cache.parse(searchParams);
+```

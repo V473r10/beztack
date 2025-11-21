@@ -4,10 +4,10 @@
     "index",
     "getting-started",
     "architecture",
-    "t3-env",
-    "drizzle-orm",
-    "better-auth",
-    "resend-react-email",
-    "polar"
+    "state-management",
+    "database",
+    "authentication",
+    "emails",
+    "payments"
   ]
 }

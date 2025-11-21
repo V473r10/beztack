@@ -5,6 +5,7 @@ import {
   Clock,
   Code2,
   Database,
+  Link2,
   Rocket,
   Shield,
   Zap,
@@ -118,6 +119,10 @@ export default function Home() {
             <TechBadge
               logoUrl="https://env.t3.gg/favicon-32x32.png"
               name="T3 Env"
+            />
+            <TechBadge
+              logoUrl="https://svgl.app/library/nuqs_dark.svg"
+              name="nuqs"
             />
             <TechBadge logoUrl="https://svgl.app/library/zod.svg" name="Zod" />
           </div>
@@ -332,6 +337,101 @@ export default function Home() {
                     <div className="space-y-1">
                       <div className="h-2 w-16 rounded bg-muted" />
                       <div className="h-2 w-10 rounded bg-muted" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* nuqs - URL State Management */}
+            <Card className="group relative overflow-hidden border-border bg-card p-8 transition-all duration-300 hover:border-accent/50 md:col-span-3">
+              <div className="pointer-events-none absolute top-0 right-0 p-6 opacity-[0.03] transition-opacity duration-500 group-hover:opacity-[0.08]">
+                <Image
+                  alt="nuqs"
+                  className="-rotate-12 h-64 w-64 object-contain"
+                  height={256}
+                  src="https://svgl.app/library/nuqs_dark.svg"
+                  width={256}
+                />
+              </div>
+
+              <div className="relative z-10 flex h-full flex-col">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-blue-500/10 p-2 text-blue-500">
+                    <Link2 className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-bold font-heading text-2xl">
+                    URL State Management
+                  </h3>
+                </div>
+
+                <p className="mb-6 max-w-2xl text-muted-foreground">
+                  Type-safe URL search params with{" "}
+                  <span className="font-semibold text-foreground">nuqs</span>.
+                  Synchronize component state with the URL effortlessly with
+                  full TypeScript support and SSR compatibility.
+                </p>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 font-mono text-xs">
+                    <div className="mb-3 font-semibold text-foreground text-sm">
+                      Type-safe parsers
+                    </div>
+                    <div className="space-y-1 text-muted-foreground">
+                      <div className="flex gap-2">
+                        <span className="text-purple-400">const</span>
+                        <span className="text-blue-400">[page, setPage]</span>
+                        <span className="text-foreground">=</span>
+                      </div>
+                      <div className="flex gap-2 pl-4">
+                        <span className="text-yellow-400">useQueryState</span>
+                        <span className="text-foreground">(</span>
+                      </div>
+                      <div className="flex gap-2 pl-6">
+                        <span className="text-green-400">"page"</span>
+                        <span className="text-foreground">,</span>
+                      </div>
+                      <div className="flex gap-2 pl-6">
+                        <span className="text-foreground">parseAsInteger</span>
+                      </div>
+                      <div className="flex gap-2 pl-4">
+                        <span className="text-foreground">)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="mb-3 font-semibold text-foreground text-sm">
+                      Built-in Parsers
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        "String",
+                        "Integer",
+                        "Float",
+                        "Boolean",
+                        "Enum",
+                        "Array",
+                        "JSON",
+                        "DateTime",
+                      ].map((parser) => (
+                        <span
+                          className="inline-flex items-center rounded-md border border-secondary bg-secondary/50 px-2.5 py-1 text-secondary-foreground text-xs"
+                          key={parser}
+                        >
+                          {parser}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex w-fit items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
+                      <Image
+                        alt="nuqs"
+                        className="h-4 w-4"
+                        height={16}
+                        src="https://svgl.app/library/nuqs_dark.svg"
+                        width={16}
+                      />
+                      nuqs
                     </div>
                   </div>
                 </div>
