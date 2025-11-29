@@ -45,6 +45,7 @@ export async function createProject() {
   process.stdout.write(`  cd ${config.name}\n`);
   process.stdout.write("  cp apps/api/.env.example apps/api/.env\n");
   process.stdout.write("  cp apps/ui/.env.example apps/ui/.env\n");
+  process.stdout.write("  cp apps/docs/.env.example apps/docs/.env\n");
   process.stdout.write("  # Configure your .env files\n");
   process.stdout.write("  pnpm run push\n");
   process.stdout.write("  pnpm run dev\n\n");

@@ -1,6 +1,6 @@
 {
   "name": "beztack",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Beztack initialization and module management CLI",
   "type": "module",
   "license": "MIT",
