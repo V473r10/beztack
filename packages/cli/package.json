@@ -21,6 +21,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "start": "pnpm run build && node dist/cli.js",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit"
   },

@@ -1,5 +1,6 @@
 import {
   Blocks,
+  Bot,
   Check,
   CheckCircle2,
   Clock,
@@ -91,7 +92,7 @@ export default function Home() {
             Built on Modern Tools
           </h2>
           <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
-            Carefully selected technologies that work seamlessly together
+            This project wouldn't be possible without the following
           </p>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
@@ -116,15 +117,16 @@ export default function Home() {
               logoUrl="https://svgl.app/library/drizzle-orm_dark.svg"
               name="Drizzle"
             />
-            <TechBadge
-              logoUrl="https://env.t3.gg/favicon-32x32.png"
-              name="T3 Env"
-            />
+            <TechBadge logoComponent={<T3Icon />} name="T3 Env" />
             <TechBadge
               logoUrl="https://svgl.app/library/nuqs_dark.svg"
               name="nuqs"
             />
             <TechBadge logoUrl="https://svgl.app/library/zod.svg" name="Zod" />
+            <TechBadge
+              logoUrl="https://svgl.app/library/vercel_dark.svg"
+              name="AI SDK"
+            />
           </div>
         </div>
       </section>
@@ -432,6 +434,102 @@ export default function Home() {
                         width={16}
                       />
                       nuqs
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* AI SDK Card */}
+            <Card className="group relative overflow-hidden border-border bg-card p-8 transition-all duration-300 hover:border-accent/50 md:col-span-3">
+              <div className="pointer-events-none absolute top-0 right-0 p-6 opacity-[0.03] transition-opacity duration-500 group-hover:opacity-[0.08]">
+                <Image
+                  alt="Vercel AI SDK"
+                  className="-rotate-12 h-64 w-64 object-contain"
+                  height={256}
+                  src="https://svgl.app/library/vercel_dark.svg"
+                  width={256}
+                />
+              </div>
+
+              <div className="relative z-10 flex h-full flex-col">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-violet-500/10 p-2 text-violet-500">
+                    <Bot className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-bold font-heading text-2xl">AI Ready</h3>
+                </div>
+
+                <p className="mb-6 max-w-2xl text-muted-foreground">
+                  Integrated{" "}
+                  <span className="font-semibold text-foreground">
+                    Vercel AI SDK
+                  </span>
+                  . Build AI-powered features with streaming, tool calling, and
+                  structured outputs.
+                </p>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 font-mono text-xs">
+                    <div className="mb-3 font-semibold text-foreground text-sm">
+                      Streaming responses
+                    </div>
+                    <div className="space-y-1 text-muted-foreground">
+                      <div className="flex gap-2">
+                        <span className="text-purple-400">import</span>
+                        <span className="text-foreground">{"{"}</span>
+                        <span className="text-blue-400">streamText</span>
+                        <span className="text-foreground">{"}"}</span>
+                      </div>
+                      <div className="flex gap-2 pl-2">
+                        <span className="text-purple-400">from</span>
+                        <span className="text-green-400">
+                          &apos;@beztack/ai&apos;
+                        </span>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <span className="text-purple-400">const</span>
+                        <span className="text-blue-400">result</span>
+                        <span className="text-foreground">=</span>
+                        <span className="text-purple-400">await</span>
+                      </div>
+                      <div className="flex gap-2 pl-2">
+                        <span className="text-yellow-400">streamText</span>
+                        <span className="text-foreground">({"{ ... }"})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="mb-3 font-semibold text-foreground text-sm">
+                      Features
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        "Streaming",
+                        "Tool Calling",
+                        "Structured Output",
+                        "Multi-Modal",
+                        "Embeddings",
+                        "React Hooks",
+                      ].map((feature) => (
+                        <span
+                          className="inline-flex items-center rounded-md border border-secondary bg-secondary/50 px-2.5 py-1 text-secondary-foreground text-xs"
+                          key={feature}
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex w-fit items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
+                      <Image
+                        alt="Vercel AI SDK"
+                        className="h-4 w-4"
+                        height={16}
+                        src="https://svgl.app/library/vercel_dark.svg"
+                        width={16}
+                      />
+                      AI SDK
                     </div>
                   </div>
                 </div>

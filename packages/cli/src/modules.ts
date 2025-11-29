@@ -1,86 +1,116 @@
 export type AppName = "api" | "ui" | "docs";
 
 export interface ModuleDefinition {
-  name: string; // 'auth', 'storage-s3', etc.
+  name: string; // 'auth', 'payments', etc.
   label: string; // Texto amigable para la UI
   description?: string; // Texto corto para la UI
   required: boolean;
-  packageDir?: string; // 'packages/storage-s3'
-  npmDeps?: string[]; // deps a quitar de package.json
-  nxProjects?: string[]; // proyectos Nx afectados (por nombre)
-  fileGlobs?: string[]; // archivos a borrar
-  codemods?: string[]; // nombres de codemods a ejecutar
+  packageDir?: string; // 'packages/email' - if removed, module is disabled
+  npmDeps?: string[]; // deps to remove from package.json
+  nxProjects?: string[]; // Nx projects affected
+  fileGlobs?: string[]; // files to delete when removing module
+  codemods?: string[]; // codemods to execute
+  hasApiModule?: boolean; // has apps/api/server/modules/{name}/
+  hasUiFeature?: boolean; // has apps/ui/src/features/{name}/
 }
 
 export const modules: ModuleDefinition[] = [
   {
     name: "auth",
-    label: "Auth (obligatorio)",
+    label: "Auth (required)",
+    description: "Core authentication with Better Auth",
     required: true,
-    packageDir: "packages/auth",
-    npmDeps: ["@beztack/auth"],
     nxProjects: ["api", "ui"],
+    hasApiModule: true,
+    hasUiFeature: true,
     fileGlobs: [
       "apps/api/server/modules/auth/**/*",
+      "apps/api/server/routes/api/auth/**/*",
       "apps/ui/src/features/auth/**/*",
+      "apps/ui/src/app/auth/**/*",
     ],
   },
   {
     name: "payments",
     label: "Payments",
-    description: "Sistema de pagos con Mercado Pago",
+    description: "Payment processing with Polar",
     required: false,
-    packageDir: "packages/payments",
-    npmDeps: ["@beztack/payments", "@mercadopago/sdk-react", "mercadopago"],
     nxProjects: ["api", "ui"],
+    hasApiModule: true,
+    hasUiFeature: true,
+    npmDeps: ["@polar-sh/sdk", "@polar-sh/better-auth"],
     fileGlobs: [
       "apps/api/server/modules/payments/**/*",
+      "apps/api/server/routes/api/polar/**/*",
       "apps/ui/src/features/payments/**/*",
+      "apps/ui/src/app/billing/**/*",
     ],
     codemods: ["remove-payments-imports"],
   },
   {
     name: "email",
     label: "Email",
-    description: "Envío de emails con templates",
+    description: "Email sending with React Email and Resend",
     required: false,
     packageDir: "packages/email",
     npmDeps: ["@beztack/email", "resend", "@react-email/components"],
     nxProjects: ["api"],
-    fileGlobs: ["apps/api/server/modules/email/**/*"],
+    hasApiModule: true,
+    hasUiFeature: false,
+    fileGlobs: [
+      "apps/api/server/modules/email/**/*",
+      "apps/api/server/routes/api/email/**/*",
+    ],
     codemods: ["remove-email-imports"],
   },
   {
     name: "ai",
     label: "AI",
-    description: "Integración con OpenAI y otros LLMs",
+    description: "AI integration with Vercel AI SDK",
     required: false,
     packageDir: "packages/ai",
-    npmDeps: ["@beztack/ai", "ai", "openai"],
-    nxProjects: ["api"],
-    fileGlobs: ["apps/api/server/modules/ai/**/*"],
+    npmDeps: ["@beztack/ai", "ai"],
+    nxProjects: ["api", "ui"],
+    hasApiModule: true,
+    hasUiFeature: true,
+    fileGlobs: [
+      "apps/api/server/modules/ai/**/*",
+      "apps/ui/src/features/ai/**/*",
+      "apps/ui/src/app/ai/**/*",
+    ],
     codemods: ["remove-ai-imports"],
   },
   {
     name: "ocr",
     label: "OCR",
-    description: "Reconocimiento óptico de caracteres",
+    description: "Optical Character Recognition with Tesseract.js",
     required: false,
     packageDir: "packages/ocr",
     npmDeps: ["@beztack/ocr", "tesseract.js"],
-    nxProjects: ["api"],
-    fileGlobs: ["apps/api/server/modules/ocr/**/*"],
+    nxProjects: ["api", "ui"],
+    hasApiModule: true,
+    hasUiFeature: true,
+    fileGlobs: [
+      "apps/api/server/modules/ocr/**/*",
+      "apps/ui/src/features/ocr/**/*",
+      "apps/ui/src/app/ocr/**/*",
+    ],
     codemods: ["remove-ocr-imports"],
   },
   {
     name: "state",
     label: "State Management",
-    description: "Manejo de estado con nuqs",
+    description: "URL state management with nuqs",
     required: false,
     packageDir: "packages/state",
     npmDeps: ["@beztack/state", "nuqs"],
     nxProjects: ["ui", "docs"],
-    fileGlobs: ["apps/ui/src/features/state/**/*"],
+    hasApiModule: false,
+    hasUiFeature: true,
+    fileGlobs: [
+      "apps/ui/src/features/state/**/*",
+      "apps/ui/src/app/examples/nuqs-demo.tsx",
+    ],
     codemods: ["remove-state-imports"],
   },
 ];

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { exec, execSync } from "node:child_process";
+import { exec, spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import {
   mkdir,
   mkdtemp,
@@ -10,7 +11,8 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import {
   cancel,
@@ -24,6 +26,7 @@ import {
 
 const execAsync = promisify(exec);
 const PROJECT_NAME_REGEX = /^[a-z0-9-]+$/;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 interface ProjectConfig {
   name: string;
@@ -32,16 +35,47 @@ interface ProjectConfig {
   installDependencies: boolean;
 }
 
+/**
+ * Detect if we're running in development mode (from the monorepo source)
+ */
+function isDevMode(): boolean {
+  // Check if we're in the monorepo by looking for the CLI source
+  const monorepoCliPath = resolve(
+    __dirname,
+    "../../../packages/cli/dist/cli.js"
+  );
+  return existsSync(monorepoCliPath);
+}
+
+/**
+ * Get the path to the beztack CLI
+ * In development: use the local compiled CLI from the monorepo
+ * In production: use npx to run from npm registry
+ */
+function getBeztackCommand(): { command: string; args: string[] } {
+  if (isDevMode()) {
+    const cliPath = resolve(__dirname, "../../../packages/cli/dist/cli.js");
+    return { command: "node", args: [cliPath, "init"] };
+  }
+  // Production: run from npm registry
+  return { command: "npx", args: ["beztack", "init"] };
+}
+
 function runBeztackInit(projectDir: string) {
   const spin = spinner();
   spin.start("Configuring modules");
 
   try {
-    // Execute beztack-init CLI in the project directory
-    execSync("npx tsx packages/beztack-init/src/cli.ts", {
+    const { command, args } = getBeztackCommand();
+
+    const result = spawnSync(command, args, {
       cwd: projectDir,
       stdio: "inherit",
     });
+
+    if (result.status !== 0) {
+      throw new Error(`Command failed with exit code ${result.status}`);
+    }
 
     spin.stop("Modules configured");
   } catch (error) {
@@ -61,12 +95,13 @@ async function main() {
 
     await createProjectStructure(projectDir, config);
 
-    // Run beztack-init to configure modules
-    runBeztackInit(projectDir);
-
     if (config.installDependencies) {
       await installDependencies(projectDir);
     }
+
+    // Run beztack init to configure modules (after dependencies are installed)
+    runBeztackInit(projectDir);
+
     if (config.initializeGit) {
       await initializeGit(projectDir);
     }
