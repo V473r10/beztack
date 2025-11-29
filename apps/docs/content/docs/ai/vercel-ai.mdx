@@ -1,0 +1,374 @@
+---
+title: Vercel AI SDK
+description: AI integration with Vercel AI SDK and Amazon Bedrock
+---
+
+Beztack includes `@beztack/ai`, a lightweight wrapper package that provides pre-configured [Vercel AI SDK](https://sdk.vercel.ai/docs) integration with Amazon Bedrock support.
+
+## Why Vercel AI SDK?
+
+We chose Vercel AI SDK because:
+
+- **Framework Agnostic**: Works with any JavaScript framework
+- **Streaming First**: Built-in support for streaming responses
+- **Type-Safe**: Fully typed with TypeScript
+- **Provider Abstraction**: Easy to switch between AI providers
+- **React Hooks**: Ready-to-use hooks for chat and completion UIs
+- **Edge Ready**: Works in serverless and edge environments
+
+## Package Overview
+
+The `@beztack/ai` package provides:
+
+- **AI SDK Re-exports**: Complete Vercel AI SDK functionality
+- **Amazon Bedrock Provider**: Pre-configured Bedrock provider with AWS credential chain
+- **Zero Configuration**: Works out of the box with AWS credentials
+
+## Installation
+
+The package is already included in the monorepo. To use it in your app:
+
+```bash
+pnpm add @beztack/ai
+```
+
+## Configuration
+
+### Environment Variables
+
+Set up your AWS credentials using one of the standard methods:
+
+```bash
+# Option 1: Environment variables
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=us-east-1
+
+# Option 2: AWS CLI profile (recommended for development)
+# Configure with: aws configure
+```
+
+The package uses AWS Node.js credential provider chain, which automatically detects credentials from:
+
+1. Environment variables
+2. AWS CLI configuration files
+3. IAM roles (when running on AWS)
+4. Container credentials (ECS/EKS)
+
+## Basic Usage
+
+### Generate Text
+
+```typescript
+import { generateText, bedrock } from '@beztack/ai';
+
+const result = await generateText({
+  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+  prompt: 'Explain quantum computing in simple terms',
+});
+
+console.log(result.text);
+```
+
+### Stream Text
+
+```typescript
+import { streamText, bedrock } from '@beztack/ai';
+
+const result = await streamText({
+  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+  prompt: 'Write a short story about a robot',
+});
+
+for await (const chunk of result.textStream) {
+  process.stdout.write(chunk);
+}
+```
+
+### Generate Object (Structured Output)
+
+```typescript
+import { generateObject, bedrock } from '@beztack/ai';
+import { z } from 'zod';
+
+const result = await generateObject({
+  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+  schema: z.object({
+    recipe: z.object({
+      name: z.string(),
+      ingredients: z.array(z.object({
+        name: z.string(),
+        amount: z.string(),
+      })),
+      steps: z.array(z.string()),
+    }),
+  }),
+  prompt: 'Generate a recipe for chocolate chip cookies',
+});
+
+console.log(result.object.recipe);
+```
+
+## React Integration
+
+### Chat Component
+
+```tsx
+import { useChat } from '@beztack/ai/react';
+
+export function Chat() {
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    api: '/api/chat',
+  });
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>
+          <strong>{message.role}:</strong> {message.content}
+        </div>
+      ))}
+
+      <form onSubmit={handleSubmit}>
+        <input
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Say something..."
+          disabled={isLoading}
+        />
+        <button type="submit" disabled={isLoading}>
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+```
+
+### Completion Component
+
+```tsx
+import { useCompletion } from '@beztack/ai/react';
+
+export function Completion() {
+  const { completion, input, handleInputChange, handleSubmit, isLoading } = useCompletion({
+    api: '/api/completion',
+  });
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Enter a prompt..."
+        />
+        <button type="submit" disabled={isLoading}>
+          Generate
+        </button>
+      </form>
+
+      {completion && <div>{completion}</div>}
+    </div>
+  );
+}
+```
+
+## API Routes
+
+### Chat Endpoint (Nitro)
+
+Create a chat endpoint in `apps/api/server/routes/api/chat.post.ts`:
+
+```typescript
+import { streamText, bedrock } from '@beztack/ai';
+
+export default defineEventHandler(async (event) => {
+  const { messages } = await readBody(event);
+
+  const result = await streamText({
+    model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+    messages,
+  });
+
+  return result.toDataStreamResponse();
+});
+```
+
+### Completion Endpoint (Nitro)
+
+Create a completion endpoint in `apps/api/server/routes/api/completion.post.ts`:
+
+```typescript
+import { streamText, bedrock } from '@beztack/ai';
+
+export default defineEventHandler(async (event) => {
+  const { prompt } = await readBody(event);
+
+  const result = await streamText({
+    model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+    prompt,
+  });
+
+  return result.toDataStreamResponse();
+});
+```
+
+## Available Models
+
+### Amazon Bedrock Models
+
+The package comes pre-configured for Amazon Bedrock. Available models include:
+
+| Model | ID |
+|-------|-----|
+| Claude 3.5 Sonnet | `anthropic.claude-3-5-sonnet-20241022-v2:0` |
+| Claude 3 Sonnet | `anthropic.claude-3-sonnet-20240229-v1:0` |
+| Claude 3 Haiku | `anthropic.claude-3-haiku-20240307-v1:0` |
+| Claude 3 Opus | `anthropic.claude-3-opus-20240229-v1:0` |
+| Llama 3.1 70B | `meta.llama3-1-70b-instruct-v1:0` |
+| Llama 3.1 8B | `meta.llama3-1-8b-instruct-v1:0` |
+
+### Using Other Providers
+
+Since the package re-exports the full AI SDK, you can use any provider:
+
+```typescript
+import { generateText } from '@beztack/ai';
+import { openai } from '@ai-sdk/openai';
+import { anthropic } from '@ai-sdk/anthropic';
+
+// Using OpenAI
+const result = await generateText({
+  model: openai('gpt-4-turbo'),
+  prompt: 'Hello!',
+});
+
+// Using Anthropic directly
+const result2 = await generateText({
+  model: anthropic('claude-3-sonnet-20240229'),
+  prompt: 'Hello!',
+});
+```
+
+## Advanced Usage
+
+### Tool Calling
+
+```typescript
+import { generateText, bedrock, tool } from '@beztack/ai';
+import { z } from 'zod';
+
+const result = await generateText({
+  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+  prompt: 'What is the weather in San Francisco?',
+  tools: {
+    getWeather: tool({
+      description: 'Get the weather for a location',
+      parameters: z.object({
+        location: z.string().describe('The city name'),
+      }),
+      execute: async ({ location }) => {
+        // Call your weather API here
+        return { temperature: 72, condition: 'sunny' };
+      },
+    }),
+  },
+});
+```
+
+### Multi-Modal (Vision)
+
+```typescript
+import { generateText, bedrock } from '@beztack/ai';
+
+const result = await generateText({
+  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+  messages: [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: 'What is in this image?' },
+        { type: 'image', image: imageUrl },
+      ],
+    },
+  ],
+});
+```
+
+### Embeddings
+
+```typescript
+import { embed, bedrock } from '@beztack/ai';
+
+const result = await embed({
+  model: bedrock.embedding('amazon.titan-embed-text-v1'),
+  value: 'The quick brown fox jumps over the lazy dog',
+});
+
+console.log(result.embedding); // Vector array
+```
+
+## Best Practices
+
+### 1. Use Streaming for Long Responses
+
+Streaming provides better UX for long-running generations:
+
+```typescript
+const result = await streamText({
+  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+  prompt: 'Write a detailed essay...',
+});
+
+// Stream to response
+return result.toDataStreamResponse();
+```
+
+### 2. Handle Errors Gracefully
+
+```typescript
+try {
+  const result = await generateText({
+    model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+    prompt: 'Hello!',
+  });
+} catch (error) {
+  if (error.code === 'RATE_LIMIT_EXCEEDED') {
+    // Implement retry logic
+  }
+  if (error.code === 'CONTEXT_LENGTH_EXCEEDED') {
+    // Reduce input size
+  }
+}
+```
+
+### 3. Use Structured Output When Possible
+
+```typescript
+// Prefer this
+const result = await generateObject({
+  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+  schema: yourZodSchema,
+  prompt: 'Extract data...',
+});
+
+// Over parsing text manually
+```
+
+### 4. Set Reasonable Token Limits
+
+```typescript
+const result = await generateText({
+  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+  prompt: 'Summarize this article...',
+  maxTokens: 500, // Prevent runaway costs
+});
+```
+
+## Resources
+
+- [Vercel AI SDK Documentation](https://sdk.vercel.ai/docs)
+- [Amazon Bedrock Provider](https://sdk.vercel.ai/providers/ai-sdk-providers/amazon-bedrock)
+- [AI SDK Examples](https://github.com/vercel/ai/tree/main/examples)
+- [AWS Bedrock Pricing](https://aws.amazon.com/bedrock/pricing/)
