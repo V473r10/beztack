@@ -27,7 +27,7 @@ export async function main() {
   }
 
   const selected = await multiselect({
-    message: "Seleccioná los módulos que querés incluir:",
+    message: "Select the modules you want to include:",
     options: optionalModules.map((m) => ({
       value: m.name,
       label: m.label,
@@ -37,7 +37,7 @@ export async function main() {
   });
 
   if (isCancel(selected)) {
-    cancel("Operación cancelada por el usuario.");
+    cancel("Operation cancelled.");
     process.exit(0);
   }
 
@@ -47,13 +47,13 @@ export async function main() {
   ];
 
   const s = spinner();
-  s.start("Configurando módulos de Beztack...");
+  s.start("Configuring modules...");
 
   try {
     await initProject(enabledModuleNames);
-    s.stop("Configuración completada.");
+    s.stop("Modules configured.");
   } catch (err) {
-    s.stop("Ocurrió un error durante la configuración.");
+    s.stop("Failed to configure modules.");
     if (err instanceof Error) {
       process.stderr.write(
         `${pc.red("Error:")} ${err.message}\n${pc.dim(err.stack || "")}\n`
@@ -64,7 +64,7 @@ export async function main() {
     process.exit(1);
   }
 
-  outro(pc.green("✓ Listo. Podés empezar a trabajar con tu proyecto Beztack."));
+  outro(pc.green("Done!"));
 }
 
 // Solo ejecutar si se llama directamente

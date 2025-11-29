@@ -62,25 +62,16 @@ function getBeztackCommand(): { command: string; args: string[] } {
 }
 
 function runBeztackInit(projectDir: string) {
-  const spin = spinner();
-  spin.start("Configuring modules");
+  // No spinner here - the beztack CLI has its own interactive UI
+  const { command, args } = getBeztackCommand();
 
-  try {
-    const { command, args } = getBeztackCommand();
+  const result = spawnSync(command, args, {
+    cwd: projectDir,
+    stdio: "inherit",
+  });
 
-    const result = spawnSync(command, args, {
-      cwd: projectDir,
-      stdio: "inherit",
-    });
-
-    if (result.status !== 0) {
-      throw new Error(`Command failed with exit code ${result.status}`);
-    }
-
-    spin.stop("Modules configured");
-  } catch (error) {
-    spin.stop("Failed to configure modules");
-    throw error;
+  if (result.status !== 0) {
+    throw new Error("Failed to configure modules");
   }
 }
 

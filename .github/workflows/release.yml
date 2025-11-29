@@ -32,12 +32,24 @@ jobs:
       - name: Install dependencies
         run: pnpm i
 
-      - name: Build
+      # Build and publish beztack CLI
+      - name: Build beztack CLI
+        working-directory: packages/cli
+        run: pnpm run build
+
+      - name: Publish beztack CLI to NPM
+        working-directory: packages/cli
+        run: pnpm publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Build and publish create-beztack
+      - name: Build create-beztack
         working-directory: scripts/create-beztack
         run: pnpm run build
 
-      - name: Publish to NPM
+      - name: Publish create-beztack to NPM
         working-directory: scripts/create-beztack
-        run: pnpm publish
+        run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
