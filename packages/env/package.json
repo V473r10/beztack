@@ -1,6 +1,6 @@
 {
   "name": "@beztack/env",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Centralized T3 Env configuration for Beztack monorepo",
   "private": true,
   "type": "module",
