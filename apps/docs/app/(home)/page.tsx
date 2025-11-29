@@ -92,7 +92,7 @@ export default function Home() {
             Built on Modern Tools
           </h2>
           <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
-            This project wouldn't be possible without the following
+            This project wouldn't be possible without the following gems
           </p>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
