@@ -3,26 +3,43 @@ import { dirname, join, resolve } from "node:path";
 import { cwd } from "node:process";
 
 /**
- * Get the workspace root directory by searching upward for pnpm-workspace.yaml
- * This should be the directory where package.json and pnpm-workspace.yaml are located
+ * Get the workspace root directory by searching for pnpm-workspace.yaml
+ * First checks the current directory, then searches upward
+ * Falls back to package.json if pnpm-workspace.yaml is not found
  */
 export function getWorkspaceRoot(): string {
-  let current = resolve(cwd());
+  const startDir = resolve(cwd());
+
+  // First, check the current directory
+  if (existsSync(join(startDir, "pnpm-workspace.yaml"))) {
+    return startDir;
+  }
+
+  // Search upward for pnpm-workspace.yaml
+  let current = startDir;
   const root = dirname(current);
 
   while (current !== root) {
+    current = dirname(current);
     if (existsSync(join(current, "pnpm-workspace.yaml"))) {
       return current;
     }
-    current = dirname(current);
   }
 
-  // Fallback: check root directory
-  if (existsSync(join(current, "pnpm-workspace.yaml"))) {
+  // Fallback: use the directory with package.json (starting from cwd)
+  current = startDir;
+  if (existsSync(join(current, "package.json"))) {
     return current;
   }
 
-  throw new Error(
-    "Could not find pnpm-workspace.yaml. Are you inside a pnpm workspace?"
-  );
+  // Search upward for package.json
+  while (current !== root) {
+    current = dirname(current);
+    if (existsSync(join(current, "package.json"))) {
+      return current;
+    }
+  }
+
+  // Ultimate fallback: use cwd
+  return startDir;
 }

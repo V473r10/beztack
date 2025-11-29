@@ -9,9 +9,13 @@ import {
   spinner,
 } from "@clack/prompts";
 import pc from "picocolors";
+import { createProject } from "./create.js";
 import { initProject } from "./init-project.js";
 import { modules } from "./modules.js";
 
+/**
+ * Initialize modules in an existing project
+ */
 export async function main() {
   intro(pc.bgCyan(pc.black(" Beztack Init ")));
 
@@ -67,11 +71,67 @@ export async function main() {
   outro(pc.green("Done!"));
 }
 
-// Solo ejecutar si se llama directamente
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((e: unknown) => {
-    const message = e instanceof Error ? e.message : String(e);
-    process.stderr.write(`${pc.red("Fatal error:")} ${message}\n`);
+/**
+ * Create a new Beztack project
+ */
+async function create() {
+  process.stdout.write("\x1Bc"); // Clear terminal
+  intro("🚀 Welcome to Beztack - A Modern NX Monorepo Starter");
+
+  try {
+    await createProject();
+    outro("🎉 Project created successfully!");
+  } catch (error) {
+    cancel(error instanceof Error ? error.message : "Operation cancelled");
     process.exit(1);
-  });
+  }
+}
+
+function showHelp() {
+  process.stdout.write(`
+${pc.bold("Beztack CLI")} - Modern NX Monorepo Starter
+
+${pc.bold("Usage:")}
+  beztack <command>
+
+${pc.bold("Commands:")}
+  create    Create a new Beztack project
+  init      Configure modules in an existing project
+  help      Show this help message
+
+${pc.bold("Examples:")}
+  pnpm dlx beztack create
+  beztack init
+`);
+}
+
+// Only run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const command = process.argv[2] || "create";
+
+  switch (command) {
+    case "create":
+      create().catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : String(e);
+        process.stderr.write(`${pc.red("Fatal error:")} ${message}\n`);
+        process.exit(1);
+      });
+      break;
+    case "init":
+      main().catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : String(e);
+        process.stderr.write(`${pc.red("Fatal error:")} ${message}\n`);
+        process.exit(1);
+      });
+      break;
+    case "help":
+    case "--help":
+    case "-h":
+      showHelp();
+      break;
+    default:
+      process.stderr.write(`${pc.red("Unknown command:")} ${command}\n`);
+      showHelp();
+      process.exit(1);
+  }
 }

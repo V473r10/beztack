@@ -12,7 +12,7 @@ export async function initProject(enabledModuleNames: string[]) {
   const enabledSet = new Set(enabledModuleNames);
   const disabled = allModules.filter((m) => !enabledSet.has(m.name));
 
-  // 1. Remover módulos deshabilitados (sin ejecutar pnpm install aquí)
+  // 1. Remove disabled modules (skip pnpm install for each)
   for (const mod of disabled) {
     if (mod.required) {
       continue;
@@ -20,10 +20,10 @@ export async function initProject(enabledModuleNames: string[]) {
     await removeModule(mod.name, { skipInstall: true });
   }
 
-  // 2. Regenerar entrypoints (routes, index de módulos, etc.)
+  // 2. Regenerate entrypoints (routes, module index, etc.)
   await regenerateEntrypoints();
 
-  // 3. Ejecutar un único pnpm install en el workspaceRoot
+  // 3. Run a single pnpm install at the workspace root
   const workspaceRoot = getWorkspaceRoot();
   await exec("pnpm install", { cwd: workspaceRoot });
 }

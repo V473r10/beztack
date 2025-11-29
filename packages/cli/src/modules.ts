@@ -2,8 +2,8 @@ export type AppName = "api" | "ui" | "docs";
 
 export interface ModuleDefinition {
   name: string; // 'auth', 'payments', etc.
-  label: string; // Texto amigable para la UI
-  description?: string; // Texto corto para la UI
+  label: string; // User-friendly text for the UI
+  description?: string; // Short description for the UI
   required: boolean;
   packageDir?: string; // 'packages/email' - if removed, module is disabled
   npmDeps?: string[]; // deps to remove from package.json

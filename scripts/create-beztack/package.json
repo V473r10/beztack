@@ -1,7 +1,7 @@
 {
   "name": "create-beztack",
   "version": "0.0.4",
-  "description": "Scaffold a new Beztack monorepo project",
+  "description": "Proxy to beztack CLI - Create a new Beztack monorepo project",
   "type": "module",
   "license": "MIT",
   "homepage": "https://beztack.com",
@@ -46,10 +46,7 @@
     "nx",
     "pnpm"
   ],
-  "dependencies": {
-    "@clack/prompts": "^0.10.1",
-    "picocolors": "^1.1.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.15.17",
     "bumpp": "^10.1.0",

@@ -25,16 +25,16 @@ export async function removeModule(
 
   const workspaceRoot = getWorkspaceRoot();
 
-  // 1. Eliminar carpeta de packages
+  // 1. Remove package directory
   await removePackageDir(workspaceRoot, mod.packageDir);
 
-  // 2. Limpiar package.json de proyectos Nx afectados
+  // 2. Clean package.json from affected Nx projects
   await cleanProjectDependencies(mod);
 
-  // 3. Eliminar archivos relacionados
+  // 3. Remove related files
   await removeModuleFiles(workspaceRoot, mod.fileGlobs);
 
-  // 4. Ejecutar codemods
+  // 4. Run codemods
   await runCodemods(mod.codemods);
 }
 

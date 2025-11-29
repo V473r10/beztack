@@ -1,50 +1,82 @@
-# @beztack/init
+# beztack
 
-CLI para inicializar y configurar módulos opcionales en proyectos Beztack.
+CLI to create and configure Beztack monorepo projects.
 
-## Características
+## Features
 
-- 🎯 **Sistema de módulos opcionales**: Selecciona solo los módulos que necesitas
-- 🚀 **Interactivo**: Interfaz CLI con `@clack/prompts` para selección visual
-- 🧹 **Limpieza automática**: Remueve dependencias, archivos y código innecesario
-- 🔄 **Codemods**: Actualiza automáticamente imports y referencias
-- 📦 **Gestión inteligente**: Un solo `pnpm install` al final
+- 🚀 **Project scaffolding**: Create new Beztack projects from template
+- 🎯 **Optional modules**: Select only the modules you need
+- �️ **Interactive UI**: Beautiful CLI interface with `@clack/prompts`
+- 🧹 **Auto cleanup**: Removes unused dependencies, files, and code
+- 🔄 **Codemods**: Automatically updates imports and references
+- 📦 **Smart install**: Single `pnpm install` at the end
 
-## Uso
+## Usage
 
-Este paquete se ejecuta automáticamente cuando creas un nuevo proyecto con `create-beztack`:
+### Create a new project
 
 ```bash
+# Using pnpm create (recommended)
 pnpm create beztack
+
+# Or directly with the CLI
+pnpm dlx beztack create
 ```
 
-O puedes ejecutarlo manualmente en un proyecto existente:
+### Configure modules in existing project
 
 ```bash
-npx beztack-init
+pnpm dlx beztack init
 ```
 
-## Módulos disponibles
+### Show help
 
-- **auth** (obligatorio): Sistema de autenticación con Better Auth
-- **payments**: Integración de pagos con Mercado Pago
-- **email**: Envío de emails con Resend y React Email
-- **ai**: Integración con OpenAI y otros LLMs
-- **ocr**: Reconocimiento óptico de caracteres con Tesseract
-- **state**: Manejo de estado en URL con nuqs
+```bash
+pnpm dlx beztack help
+```
 
-## Cómo funciona
+## Commands
 
-1. Muestra un selector interactivo de módulos opcionales
-2. Remueve los módulos no seleccionados:
-   - Elimina carpetas de packages
-   - Limpia dependencias de package.json
-   - Borra archivos relacionados
-   - Ejecuta codemods para limpiar imports
-3. Regenera entrypoints (routes, módulos API)
-4. Ejecuta `pnpm install` una sola vez
+| Command | Description |
+|---------|-------------|
+| `create` | Create a new Beztack project (default) |
+| `init` | Configure modules in an existing project |
+| `help` | Show help message |
 
-## Desarrollo
+## Available Modules
+
+| Module | Required | Description |
+|--------|----------|-------------|
+| **auth** | ✅ | Authentication with Better Auth |
+| **payments** | ❌ | Payment processing with Polar |
+| **email** | ❌ | Email sending with Resend and React Email |
+| **ai** | ❌ | AI integration with Vercel AI SDK |
+| **ocr** | ❌ | Optical Character Recognition with Tesseract.js |
+| **state** | ❌ | URL state management with nuqs |
+
+## How it works
+
+### `beztack create`
+
+1. Prompts for project name and configuration
+2. Clones the Beztack template repository
+3. Customizes project files with your settings
+4. Installs dependencies
+5. Runs `beztack init` to configure modules
+6. Initializes Git repository (optional)
+
+### `beztack init`
+
+1. Shows interactive module selector
+2. Removes unselected modules:
+   - Deletes package directories
+   - Cleans dependencies from package.json
+   - Removes related files
+   - Runs codemods to clean imports
+3. Regenerates entrypoints (routes, API modules)
+4. Runs `pnpm install` once
+
+## Development
 
 ```bash
 # Build
@@ -57,53 +89,63 @@ pnpm dev
 pnpm typecheck
 ```
 
-## Estructura
+## Project Structure
 
 ```
 src/
-├── cli.ts                    # Entry point del CLI
-├── index.ts                  # Exports públicos
-├── modules.ts                # Definición de módulos
-├── init-project.ts           # Lógica principal
-├── remove-module.ts          # Remoción de módulos
-├── generate-entrypoints.ts   # Generación de archivos
+├── cli.ts                    # CLI entry point with commands
+├── create.ts                 # Project creation logic
+├── index.ts                  # Public exports
+├── modules.ts                # Module definitions
+├── init-project.ts           # Module initialization logic
+├── remove-module.ts          # Module removal logic
+├── generate-entrypoints.ts   # Entrypoint file generation
 ├── utils/
-│   ├── workspace.ts          # Utilidades de workspace
-│   ├── remove-deps.ts        # Limpieza de dependencias
-│   └── get-nx-project-roots.ts # Detección de proyectos Nx
+│   ├── workspace.ts          # Workspace utilities
+│   ├── remove-deps.ts        # Dependency cleanup
+│   └── get-nx-project-roots.ts # Nx project detection
 └── codemods/
-    ├── shared.ts             # Utilidades compartidas
-    └── remove-*-imports.ts   # Codemods específicos
+    ├── shared.ts             # Shared utilities
+    └── remove-*-imports.ts   # Module-specific codemods
 ```
 
-## Agregar nuevo módulo
+## Adding a New Module
 
-1. Agregar definición en `src/modules.ts`:
+1. Add definition in `src/modules.ts`:
 
 ```typescript
 {
-  name: "mi-modulo",
-  label: "Mi Módulo",
-  description: "Descripción breve",
+  name: "my-module",
+  label: "My Module",
+  description: "Short description",
   required: false,
-  packageDir: "packages/mi-modulo",
-  npmDeps: ["@beztack/mi-modulo"],
+  packageDir: "packages/my-module",
+  npmDeps: ["@beztack/my-module"],
   nxProjects: ["api", "ui"],
-  fileGlobs: ["apps/api/server/modules/mi-modulo/**/*"],
-  codemods: ["remove-mi-modulo-imports"],
+  hasApiModule: true,
+  hasUiFeature: true,
+  fileGlobs: [
+    "apps/api/server/modules/my-module/**/*",
+    "apps/ui/src/features/my-module/**/*",
+  ],
+  codemods: ["remove-my-module-imports"],
 }
 ```
 
-2. Crear codemod en `src/codemods/remove-mi-modulo-imports.ts`:
+2. Create codemod in `src/codemods/remove-my-module-imports.ts`:
 
 ```typescript
 import { removeImportsForPackage } from "./shared.js";
 
 export async function run() {
-  await removeImportsForPackage("@beztack/mi-modulo");
+  await removeImportsForPackage("@beztack/my-module");
 }
 ```
 
-## Licencia
+3. Create module files:
+   - `apps/api/server/modules/my-module/index.ts`
+   - `apps/ui/src/features/my-module/routes.tsx`
+
+## License
 
 MIT
