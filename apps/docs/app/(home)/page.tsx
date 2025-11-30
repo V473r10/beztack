@@ -53,9 +53,10 @@ export default function Home() {
           </div>
 
           <h1 className="mb-6 text-balance font-bold font-heading text-5xl text-foreground md:text-7xl">
-            Launch Projects at{" "}
+            You want to ship.
+            <br />
             <span className="bg-gradient-to-b from-accent via-accent to-accent/60 bg-clip-text text-transparent">
-              Lightning Speed
+              You need this.
             </span>
           </h1>
 
@@ -108,29 +109,35 @@ export default function Home() {
             />
             <TechBadge
               logoUrl="https://svgl.app/library/react_dark.svg"
+              logoUrlLight="https://svgl.app/library/react_light.svg"
               name="React"
             />
             <TechBadge
               logoUrl="https://svgl.app/library/shadcn-ui_dark.svg"
+              logoUrlLight="https://svgl.app/library/shadcn-ui.svg"
               name="shadcn/ui"
             />
             <TechBadge logoUrl="https://nitro.build/icon.svg" name="Nitro" />
             <TechBadge
               logoUrl="https://svgl.app/library/better-auth_dark.svg"
+              logoUrlLight="https://svgl.app/library/better-auth_light.svg"
               name="better-auth"
             />
             <TechBadge
               logoUrl="https://svgl.app/library/drizzle-orm_dark.svg"
+              logoUrlLight="https://svgl.app/library/drizzle-orm_light.svg"
               name="Drizzle"
             />
             <TechBadge logoComponent={<T3Icon />} name="T3 Env" />
             <TechBadge
               logoUrl="https://svgl.app/library/nuqs_dark.svg"
+              logoUrlLight="https://svgl.app/library/nuqs.svg"
               name="nuqs"
             />
             <TechBadge logoUrl="https://svgl.app/library/zod.svg" name="Zod" />
             <TechBadge
               logoUrl="https://svgl.app/library/vercel_dark.svg"
+              logoUrlLight="https://svgl.app/library/vercel.svg"
               name="AI SDK"
             />
             <TechBadge
@@ -189,9 +196,16 @@ export default function Home() {
                   <ArrowRight className="h-3 w-3" />
                   <Image
                     alt="React"
-                    className="h-4 w-4"
+                    className="hidden h-4 w-4 dark:block"
                     height={16}
                     src="https://svgl.app/library/react_dark.svg"
+                    width={16}
+                  />
+                  <Image
+                    alt="React"
+                    className="block h-4 w-4 dark:hidden"
+                    height={16}
+                    src="https://svgl.app/library/react.svg"
                     width={16}
                   />
                   <span className="font-semibold text-foreground">React</span>
@@ -363,9 +377,16 @@ export default function Home() {
               <div className="pointer-events-none absolute top-0 right-0 p-6 opacity-[0.03] transition-opacity duration-500 group-hover:opacity-[0.08]">
                 <Image
                   alt="Better Auth"
-                  className="-rotate-12 -translate-y-10 h-64 w-64 translate-x-10 object-contain"
+                  className="-rotate-12 -translate-y-10 hidden h-64 w-64 translate-x-10 object-contain dark:block"
                   height={256}
                   src="https://svgl.app/library/better-auth_dark.svg"
+                  width={256}
+                />
+                <Image
+                  alt="Better Auth"
+                  className="-rotate-12 -translate-y-10 block h-64 w-64 translate-x-10 object-contain dark:hidden"
+                  height={256}
+                  src="https://svgl.app/library/better-auth_light.svg"
                   width={256}
                 />
               </div>
@@ -452,9 +473,16 @@ export default function Home() {
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.03] transition-opacity duration-500 group-hover:opacity-[0.08]">
                 <Image
                   alt="Drizzle"
-                  className="h-80 w-80 rotate-12 object-contain"
+                  className="hidden h-80 w-80 rotate-12 object-contain dark:block"
                   height={320}
                   src="https://svgl.app/library/drizzle-orm_dark.svg"
+                  width={320}
+                />
+                <Image
+                  alt="Drizzle"
+                  className="block h-80 w-80 rotate-12 object-contain dark:hidden"
+                  height={320}
+                  src="https://svgl.app/library/drizzle-orm_light.svg"
                   width={320}
                 />
               </div>
@@ -468,7 +496,7 @@ export default function Home() {
                 </h3>
               </div>
 
-              <p className="mb-6 flex-grow text-muted-foreground">
+              <p className="mb-6 grow text-muted-foreground">
                 Drizzle ORM with full TypeScript support. Write queries with
                 confidence, autocomplete, and zero runtime overhead.
               </p>
@@ -508,9 +536,16 @@ export default function Home() {
               <div className="-bottom-4 -right-4 pointer-events-none absolute opacity-[0.05] transition-opacity duration-500 group-hover:opacity-[0.1]">
                 <Image
                   alt="shadcn/ui"
-                  className="h-64 w-64 rotate-12 object-contain"
+                  className="hidden h-64 w-64 rotate-12 object-contain dark:block"
                   height={256}
                   src="https://svgl.app/library/shadcn-ui_dark.svg"
+                  width={256}
+                />
+                <Image
+                  alt="shadcn/ui"
+                  className="block h-64 w-64 rotate-12 object-contain dark:hidden"
+                  height={256}
+                  src="https://svgl.app/library/shadcn-ui.svg"
                   width={256}
                 />
               </div>
@@ -534,9 +569,16 @@ export default function Home() {
                 <div className="flex w-fit items-center gap-1.5 rounded-md border border-secondary bg-secondary/50 px-2 py-1 font-medium text-muted-foreground text-xs">
                   <Image
                     alt="shadcn/ui"
-                    className="h-4 w-4"
+                    className="hidden h-4 w-4 dark:block"
                     height={16}
                     src="https://svgl.app/library/shadcn-ui_dark.svg"
+                    width={16}
+                  />
+                  <Image
+                    alt="shadcn/ui"
+                    className="block h-4 w-4 dark:hidden"
+                    height={16}
+                    src="https://svgl.app/library/shadcn-ui.svg"
                     width={16}
                   />
                   shadcn/ui
@@ -566,9 +608,16 @@ export default function Home() {
               <div className="pointer-events-none absolute top-0 right-0 p-6 opacity-[0.03] transition-opacity duration-500 group-hover:opacity-[0.08]">
                 <Image
                   alt="nuqs"
-                  className="-rotate-12 h-64 w-64 object-contain"
+                  className="-rotate-12 hidden h-64 w-64 object-contain dark:block"
                   height={256}
                   src="https://svgl.app/library/nuqs_dark.svg"
+                  width={256}
+                />
+                <Image
+                  alt="nuqs"
+                  className="-rotate-12 block h-64 w-64 object-contain dark:hidden"
+                  height={256}
+                  src="https://svgl.app/library/nuqs.svg"
                   width={256}
                 />
               </div>
@@ -644,9 +693,16 @@ export default function Home() {
                     <div className="mt-4 flex w-fit items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
                       <Image
                         alt="nuqs"
-                        className="h-4 w-4"
+                        className="hidden h-4 w-4 dark:block"
                         height={16}
                         src="https://svgl.app/library/nuqs_dark.svg"
+                        width={16}
+                      />
+                      <Image
+                        alt="nuqs"
+                        className="block h-4 w-4 dark:hidden"
+                        height={16}
+                        src="https://svgl.app/library/nuqs.svg"
                         width={16}
                       />
                       nuqs
@@ -661,9 +717,16 @@ export default function Home() {
               <div className="pointer-events-none absolute top-0 right-0 p-6 opacity-[0.03] transition-opacity duration-500 group-hover:opacity-[0.08]">
                 <Image
                   alt="Vercel AI SDK"
-                  className="-rotate-12 h-64 w-64 object-contain"
+                  className="-rotate-12 hidden h-64 w-64 object-contain dark:block"
                   height={256}
                   src="https://svgl.app/library/vercel_dark.svg"
+                  width={256}
+                />
+                <Image
+                  alt="Vercel AI SDK"
+                  className="-rotate-12 block h-64 w-64 object-contain dark:hidden"
+                  height={256}
+                  src="https://svgl.app/library/vercel.svg"
                   width={256}
                 />
               </div>
@@ -740,9 +803,16 @@ export default function Home() {
                     <div className="mt-4 flex w-fit items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
                       <Image
                         alt="Vercel AI SDK"
-                        className="h-4 w-4"
+                        className="hidden h-4 w-4 dark:block"
                         height={16}
                         src="https://svgl.app/library/vercel_dark.svg"
+                        width={16}
+                      />
+                      <Image
+                        alt="Vercel AI SDK"
+                        className="block h-4 w-4 dark:hidden"
+                        height={16}
+                        src="https://svgl.app/library/vercel.svg"
                         width={16}
                       />
                       AI SDK
@@ -855,9 +925,16 @@ export default function Home() {
                 />
                 <Image
                   alt="NX"
-                  className="h-24 w-24 object-contain"
+                  className="hidden h-24 w-24 object-contain dark:block"
                   height={96}
                   src="https://svgl.app/library/nx_dark.svg"
+                  width={96}
+                />
+                <Image
+                  alt="NX"
+                  className="block h-24 w-24 object-contain dark:hidden"
+                  height={96}
+                  src="https://svgl.app/library/nx.svg"
                   width={96}
                 />
               </div>
@@ -893,9 +970,16 @@ export default function Home() {
                   <div className="flex items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
                     <Image
                       alt="NX"
-                      className="h-4 w-4"
+                      className="hidden h-4 w-4 dark:block"
                       height={16}
                       src="https://svgl.app/library/nx_dark.svg"
+                      width={16}
+                    />
+                    <Image
+                      alt="NX"
+                      className="block h-4 w-4 dark:hidden"
+                      height={16}
+                      src="https://svgl.app/library/nx.svg"
                       width={16}
                     />
                     NX
@@ -975,7 +1059,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-      ;
     </div>
   );
 }
