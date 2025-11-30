@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   Blocks,
   Bot,
   Check,
@@ -6,8 +7,12 @@ import {
   Clock,
   Code2,
   Database,
+  FileText,
+  Globe,
+  Layout,
   Link2,
   Rocket,
+  Server,
   Shield,
   Zap,
 } from "lucide-react";
@@ -15,6 +20,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CopyCommandButton } from "@/components/copy-command-button";
+import { FumaDocsIcon } from "@/components/svg/fumadocs";
 import { T3Icon } from "@/components/svg/t3";
 import { TechBadge } from "@/components/tech-badge";
 import { Button } from "@/components/ui/button";
@@ -127,6 +133,216 @@ export default function Home() {
               logoUrl="https://svgl.app/library/vercel_dark.svg"
               name="AI SDK"
             />
+            <TechBadge
+              logoUrl="https://svgl.app/library/nextjs_icon_dark.svg"
+              name="Next.js"
+            />
+            <TechBadge logoComponent={<FumaDocsIcon />} name="Fumadocs" />
+          </div>
+        </div>
+      </section>
+      {/* Architecture Section */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="mb-4 text-center font-bold font-heading text-3xl text-foreground">
+            Project Architecture
+          </h2>
+          <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
+            Three apps, one monorepo. Each optimized for its purpose.
+          </p>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* UI App */}
+            <Card className="group relative overflow-hidden border-border bg-card p-6 transition-all duration-300 hover:border-cyan-500/50">
+              <div className="pointer-events-none absolute top-0 right-0 p-4 opacity-[0.05] transition-opacity duration-500 group-hover:opacity-[0.12]">
+                <Image
+                  alt="React"
+                  className="h-24 w-24 object-contain"
+                  height={96}
+                  src="https://svgl.app/library/react_dark.svg"
+                  width={96}
+                />
+              </div>
+
+              <div className="relative z-10">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-cyan-500/10 p-2 text-cyan-500">
+                    <Layout className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-heading text-lg">apps/ui</h3>
+                    <p className="font-mono text-muted-foreground text-xs">
+                      Frontend SPA
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-4 flex items-center gap-2 text-muted-foreground text-sm">
+                  <Image
+                    alt="Vite"
+                    className="h-4 w-4"
+                    height={16}
+                    src="https://svgl.app/library/vitejs.svg"
+                    width={16}
+                  />
+                  <span className="font-semibold text-foreground">Vite</span>
+                  <ArrowRight className="h-3 w-3" />
+                  <Image
+                    alt="React"
+                    className="h-4 w-4"
+                    height={16}
+                    src="https://svgl.app/library/react_dark.svg"
+                    width={16}
+                  />
+                  <span className="font-semibold text-foreground">React</span>
+                </div>
+
+                <ul className="space-y-1.5 text-muted-foreground text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-cyan-500" />
+                    <span>Fast HMR & instant refresh</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-cyan-500" />
+                    <span>shadcn/ui components</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-cyan-500" />
+                    <span>Client-side routing</span>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+
+            {/* API App */}
+            <Card className="group relative overflow-hidden border-border bg-card p-6 transition-all duration-300 hover:border-amber-500/50">
+              <div className="pointer-events-none absolute top-0 right-0 p-4 opacity-[0.05] transition-opacity duration-500 group-hover:opacity-[0.12]">
+                <Image
+                  alt="Nitro"
+                  className="h-24 w-24 object-contain"
+                  height={96}
+                  src="https://nitro.build/icon.svg"
+                  width={96}
+                />
+              </div>
+
+              <div className="relative z-10">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-amber-500/10 p-2 text-amber-500">
+                    <Server className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-heading text-lg">apps/api</h3>
+                    <p className="font-mono text-muted-foreground text-xs">
+                      Backend Server
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-4 flex items-center gap-2 text-muted-foreground text-sm">
+                  <Image
+                    alt="Nitro"
+                    className="h-4 w-4"
+                    height={16}
+                    src="https://nitro.build/icon.svg"
+                    width={16}
+                  />
+                  <span className="font-semibold text-foreground">Nitro</span>
+                  <span className="rounded bg-amber-500/10 px-1.5 py-0.5 font-mono text-amber-500 text-xs">
+                    h3
+                  </span>
+                </div>
+
+                <ul className="space-y-1.5 text-muted-foreground text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-amber-500" />
+                    <span>Edge-ready & portable</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-amber-500" />
+                    <span>File-based routing</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-amber-500" />
+                    <span>Auto-imports & HMR</span>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+
+            {/* Docs App */}
+            <Card className="group relative overflow-hidden border-border bg-card p-6 transition-all duration-300 hover:border-foreground/30">
+              <div className="pointer-events-none absolute top-0 right-0 p-4 opacity-[0.05] transition-opacity duration-500 group-hover:opacity-[0.12]">
+                <Image
+                  alt="Next.js"
+                  className="h-24 w-24 object-contain"
+                  height={96}
+                  src="https://svgl.app/library/nextjs_icon_dark.svg"
+                  width={96}
+                />
+              </div>
+
+              <div className="relative z-10">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-foreground/10 p-2 text-foreground">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-heading text-lg">
+                      apps/docs
+                    </h3>
+                    <p className="font-mono text-muted-foreground text-xs">
+                      Landing & Docs
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-4 flex items-center gap-2 text-muted-foreground text-sm">
+                  <Image
+                    alt="Next.js"
+                    className="h-4 w-4"
+                    height={16}
+                    src="https://svgl.app/library/nextjs_icon_dark.svg"
+                    width={16}
+                  />
+                  <span className="font-semibold text-foreground">Next.js</span>
+                  <ArrowRight className="h-3 w-3" />
+                  <FumaDocsIcon className="h-4 w-4" />
+                  <span className="font-semibold text-foreground">
+                    Fumadocs
+                  </span>
+                </div>
+
+                <ul className="space-y-1.5 text-muted-foreground text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-foreground" />
+                    <span>SSR & static generation</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-foreground" />
+                    <span>MDX documentation</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-foreground" />
+                    <span>SEO optimized</span>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+          </div>
+
+          {/* Connection indicator */}
+          <div className="mt-8 flex items-center justify-center gap-4">
+            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium text-muted-foreground text-sm">
+                Deploy anywhere
+              </span>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="text-muted-foreground text-sm">
+                Vercel, Cloudflare, Node.js
+              </span>
+            </div>
           </div>
         </div>
       </section>
