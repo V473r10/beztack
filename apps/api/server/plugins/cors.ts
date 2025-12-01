@@ -12,6 +12,7 @@ const ALLOWED_ORIGINS = [
   "https://beztack-api.vercel.app", // Allow API domain for proxy requests
   "https://beztack-api.codedicated.com",
   "https://beztack-ui.codedicated.com",
+  "https://app.beztack.com"
 ];
 
 /**
