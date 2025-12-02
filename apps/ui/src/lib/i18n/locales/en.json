@@ -41,6 +41,7 @@
   },
   "auth": {
     "signIn": {
+      "backToSignIn": "Back to Sign In",
       "button": "Sign In",
       "description": "Enter your credentials to sign in to your account",
       "forgotPassword": "Forgot password?",

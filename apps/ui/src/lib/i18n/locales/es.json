@@ -41,6 +41,7 @@
   },
   "auth": {
     "signIn": {
+      "backToSignIn": "Volver a Iniciar Sesión",
       "button": "Iniciar Sesión",
       "description": "Ingresa tus credenciales para iniciar sesión en tu cuenta",
       "forgotPassword": "¿Olvidaste tu contraseña?",

@@ -1,5 +1,5 @@
 import { Key, Loader2, Shield } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { authClient } from "@/lib/auth-client";
 
 const BACKUP_CODE_LENGTH = 11;
+const FOCUS_DELAY_MS = 50;
 const PRIMARY_FORMAT = /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/;
 const TOTP_CODE_LENGTH = 6;
 
@@ -43,34 +44,54 @@ const TwoFactor = () => {
   >("totp");
   const navigate = useNavigate();
 
-  const handleTotpSubmit = async (e: React.FormEvent) => {
+  const totpContainerRef = useRef<HTMLDivElement>(null);
+  const backupContainerRef = useRef<HTMLDivElement>(null);
+
+  const clearAndFocusTotpInput = () => {
+    setTotpCode("");
+    // Wait for React to re-render and InputOTP to reset before focusing
+    setTimeout(() => {
+      const input = totpContainerRef.current?.querySelector("input");
+      input?.focus();
+      input?.click();
+    }, FOCUS_DELAY_MS);
+  };
+
+  const clearAndFocusBackupInput = () => {
+    setBackupCode("");
+    // Wait for React to re-render and InputOTP to reset before focusing
+    setTimeout(() => {
+      const input = backupContainerRef.current?.querySelector("input");
+      input?.focus();
+      input?.click();
+    }, FOCUS_DELAY_MS);
+  };
+
+  const handleTotpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     setIsLoading(true);
-    try {
-      await authClient.twoFactor.verifyTotp(
-        { code: totpCode },
-        {
-          onSuccess() {
-            toast.success("Signed in successfully with 2FA!");
-            navigate("/");
-          },
-          onError(res) {
-            const errorDetail = extractAuthErrorMessage(res);
-            toast.error(errorDetail);
-          },
-        }
-      );
-    } catch (err: unknown) {
-      const errorDetail = extractAuthErrorMessage(err as object);
-      toast.error(errorDetail);
-    } finally {
-      setIsLoading(false);
-    }
+
+    authClient.twoFactor.verifyTotp(
+      { code: totpCode },
+      {
+        onSuccess() {
+          setIsLoading(false);
+          toast.success("Signed in successfully with 2FA!");
+          navigate("/");
+        },
+        onError(res) {
+          setIsLoading(false);
+          const errorDetail = extractAuthErrorMessage(res);
+          toast.error(errorDetail);
+          clearAndFocusTotpInput();
+        },
+      }
+    );
   };
 
-  const handleBackupCodeSubmit = async (e: React.FormEvent) => {
+  const handleBackupCodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -79,51 +100,44 @@ const TwoFactor = () => {
       !isValidBackupCode(backupCode)
     ) {
       toast.error("Please enter a valid backup code format (XXXXX-XXXXX)");
+      clearAndFocusBackupInput();
       return;
     }
 
     setIsLoading(true);
 
-    try {
-      // Try with dash format first (original format from API)
-      await authClient.twoFactor.verifyBackupCode(
-        { code: backupCode },
-        {
-          onSuccess() {
-            toast.success("Signed in successfully with backup code!");
-            navigate("/");
-          },
-          async onError() {
-            // If dash format fails, try without dash
-            const codeWithoutDash = backupCode.replace("-", "");
-            try {
-              await authClient.twoFactor.verifyBackupCode(
-                { code: codeWithoutDash },
-                {
-                  onSuccess() {
-                    toast.success("Signed in successfully with backup code!");
-                    navigate("/");
-                  },
-                  onError(res) {
-                    const errorDetail = extractAuthErrorMessage(res);
-                    toast.error(`Verification failed: ${errorDetail}`);
-                  },
-                }
-              );
-            } catch (err: unknown) {
-              const errorDetail = extractAuthErrorMessage(err as object);
-              toast.error(`Verification failed: ${errorDetail}`);
-            } finally {
-              setIsLoading(false);
+    // Try with dash format first (original format from API)
+    authClient.twoFactor.verifyBackupCode(
+      { code: backupCode },
+      {
+        onSuccess() {
+          setIsLoading(false);
+          toast.success("Signed in successfully with backup code!");
+          navigate("/");
+        },
+        onError() {
+          // If dash format fails, try without dash
+          const codeWithoutDash = backupCode.replace("-", "");
+
+          authClient.twoFactor.verifyBackupCode(
+            { code: codeWithoutDash },
+            {
+              onSuccess() {
+                setIsLoading(false);
+                toast.success("Signed in successfully with backup code!");
+                navigate("/");
+              },
+              onError(res) {
+                setIsLoading(false);
+                const errorDetail = extractAuthErrorMessage(res);
+                toast.error(`Verification failed: ${errorDetail}`);
+                clearAndFocusBackupInput();
+              },
             }
-          },
-        }
-      );
-    } catch (err: unknown) {
-      const errorDetail = extractAuthErrorMessage(err as object);
-      toast.error(`Verification failed: ${errorDetail}`);
-      setIsLoading(false);
-    }
+          );
+        },
+      }
+    );
   };
 
   const isValidBackupCode = (value: string) => {
@@ -183,26 +197,28 @@ const TwoFactor = () => {
             </p>
           </div>
           <form className="space-y-4" onSubmit={handleTotpSubmit}>
-            <InputOTP
-              autoFocus
-              disabled={isLoading}
-              maxLength={6}
-              onChange={(value) => setTotpCode(value)}
-              pattern="[0-9]*"
-              value={totpCode}
-            >
-              <InputOTPGroup className="flex w-full justify-center">
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-              </InputOTPGroup>
-              <InputOTPSeparator />
-              <InputOTPGroup className="flex w-full justify-center">
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-                <InputOTPSlot index={5} />
-              </InputOTPGroup>
-            </InputOTP>
+            <div ref={totpContainerRef}>
+              <InputOTP
+                autoFocus
+                disabled={isLoading}
+                maxLength={6}
+                onChange={(value) => setTotpCode(value)}
+                pattern="[0-9]*"
+                value={totpCode}
+              >
+                <InputOTPGroup className="flex w-full justify-center">
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup className="flex w-full justify-center">
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
             <Button
               className="w-full"
               disabled={isLoading || totpCode.length !== TOTP_CODE_LENGTH}
@@ -231,31 +247,33 @@ const TwoFactor = () => {
             </p>
           </div>
           <form className="space-y-4" onSubmit={handleBackupCodeSubmit}>
-            <InputOTP
-              autoFocus
-              disabled={isLoading}
-              maxLength={11}
-              onChange={handleBackupCodeChange}
-              value={backupCode}
-            >
-              <InputOTPGroup className="flex w-full justify-center">
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-              </InputOTPGroup>
-              <InputOTPSeparator>
-                <span className="text-muted-foreground">-</span>
-              </InputOTPSeparator>
-              <InputOTPGroup className="flex w-full justify-center">
-                <InputOTPSlot index={6} />
-                <InputOTPSlot index={7} />
-                <InputOTPSlot index={8} />
-                <InputOTPSlot index={9} />
-                <InputOTPSlot index={10} />
-              </InputOTPGroup>
-            </InputOTP>
+            <div ref={backupContainerRef}>
+              <InputOTP
+                autoFocus
+                disabled={isLoading}
+                maxLength={11}
+                onChange={handleBackupCodeChange}
+                value={backupCode}
+              >
+                <InputOTPGroup className="flex w-full justify-center">
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                </InputOTPGroup>
+                <InputOTPSeparator>
+                  <span className="text-muted-foreground">-</span>
+                </InputOTPSeparator>
+                <InputOTPGroup className="flex w-full justify-center">
+                  <InputOTPSlot index={6} />
+                  <InputOTPSlot index={7} />
+                  <InputOTPSlot index={8} />
+                  <InputOTPSlot index={9} />
+                  <InputOTPSlot index={10} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
             <Button
               className="w-full"
               disabled={isLoading || !isValidBackupCode(backupCode)}
