@@ -34,33 +34,30 @@ export function SignInForm() {
     },
     onSubmit: async ({ value }) => {
       setIsLoading(true);
-      try {
-        await authClient.signIn.email(
-          {
-            email: value.email,
-            password: value.password,
+
+      await authClient.signIn.email(
+        {
+          email: value.email,
+          password: value.password,
+        },
+        {
+          onSuccess(context) {
+            if (context.data.twoFactorRedirect) {
+              toast.success("Two-factor authentication required!");
+              navigate("/auth/sign-in/two-factor");
+            } else {
+              toast.success("Signed in successfully!");
+              navigate("/");
+            }
           },
-          {
-            onSuccess(context) {
-              if (context.data.twoFactorRedirect) {
-                toast.success("Two-factor authentication required!");
-                navigate("/auth/sign-in/two-factor");
-              } else {
-                toast.success("Signed in successfully!");
-                navigate("/");
-              }
-            },
-          }
-        );
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Invalid email or password. Please try again.";
-        toast.error(errorMessage);
-      } finally {
-        setIsLoading(false);
-      }
+          onError(error) {
+            toast.error(error.error.message);
+          },
+          onResponse() {
+            setIsLoading(false);
+          },
+        }
+      );
     },
   });
 
@@ -108,6 +105,7 @@ export function SignInForm() {
                 <Button
                   asChild
                   className="h-auto p-0 text-muted-foreground text-xs"
+                  tabIndex={-1}
                   variant="link"
                 >
                   <Link className="hover:underline" to="/auth/reset-password">
