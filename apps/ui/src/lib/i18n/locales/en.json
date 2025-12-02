@@ -360,5 +360,24 @@
     "homeTour": {
       "step1": "On the settings page you can manage your account settings such as two factor authentication, info, etc."
     }
+  },
+  "validation": {
+    "password": {
+      "length": "Password must be at least 8 characters",
+      "lowercase": "Must contain at least one lowercase letter",
+      "mismatch": "Passwords don't match",
+      "number": "Must contain at least one number",
+      "special": "Must contain at least one special character",
+      "uppercase": "Must contain at least one uppercase letter"
+    },
+    "email": {
+      "invalid": "Invalid email address"
+    },
+    "confirmPassword": {
+      "match": "Passwords don't match"
+    },
+    "name": {
+      "length": "Name must be at least 2 characters."
+    }
   }
 }
