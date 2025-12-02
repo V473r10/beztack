@@ -39,7 +39,7 @@ const getFormSchema = (t: (key: string) => string) =>
       confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
-      message: t("validation.confirmPassword.match"),
+      message: t("validation.password.match"),
       path: ["confirmPassword"],
     });
 

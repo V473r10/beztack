@@ -356,7 +356,8 @@
       "mismatch": "Las contraseñas no coinciden",
       "number": "Debe contener al menos un número",
       "special": "Debe contener al menos un carácter especial",
-      "uppercase": "Debe contener al menos una letra mayúscula"
+      "uppercase": "Debe contener al menos una letra mayúscula",
+      "match": "Las contraseñas no coinciden"
     }
   },
   "tour": {

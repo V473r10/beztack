@@ -370,13 +370,11 @@
       "mismatch": "Passwords don't match",
       "number": "Must contain at least one number",
       "special": "Must contain at least one special character",
-      "uppercase": "Must contain at least one uppercase letter"
+      "uppercase": "Must contain at least one uppercase letter",
+      "match": "Passwords don't match"
     },
     "email": {
       "invalid": "Invalid email address"
-    },
-    "confirmPassword": {
-      "match": "Passwords don't match"
     },
     "name": {
       "length": "Name must be at least 2 characters."
