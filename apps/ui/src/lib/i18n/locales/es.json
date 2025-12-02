@@ -296,8 +296,10 @@
       "placeholder": "John Doe"
     },
     "password": {
+      "hide": "Ocultar contraseña",
       "label": "Contraseña",
       "mustContain": "La contraseña debe contener:",
+      "show": "Mostrar contraseña",
       "requirements": {
         "length": "Al menos 8 caracteres",
         "lowercase": "Al menos una letra minúscula",

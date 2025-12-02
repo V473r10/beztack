@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
@@ -46,6 +46,7 @@ const getFormSchema = (t: (key: string) => string) =>
 export function SignUpForm() {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const FormSchema = getFormSchema(t);
   const navigate = useNavigate();
 
@@ -139,14 +140,34 @@ export function SignUpForm() {
               <field.FormItem>
                 <field.FormLabel>{t("form.password.label")}</field.FormLabel>
                 <field.FormControl>
-                  <Input
-                    autoComplete="new-password"
-                    disabled={isLoading}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    type="password"
-                    value={value}
-                  />
+                  <div className="relative">
+                    <Input
+                      autoComplete="new-password"
+                      className="pr-10"
+                      disabled={isLoading}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      type={showPassword ? "text" : "password"}
+                      value={value}
+                    />
+                    <button
+                      aria-label={
+                        showPassword
+                          ? t("form.password.hide")
+                          : t("form.password.show")
+                      }
+                      className="-translate-y-1/2 absolute top-1/2 right-3 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                      type="button"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </field.FormControl>
                 <field.FormMessage />
                 <p className="font-medium text-destructive text-sm">
@@ -171,14 +192,34 @@ export function SignUpForm() {
                 {t("form.confirmPassword.label")}
               </field.FormLabel>
               <field.FormControl>
-                <Input
-                  autoComplete="new-password"
-                  disabled={isLoading}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  type="password"
-                  value={field.state.value}
-                />
+                <div className="relative">
+                  <Input
+                    autoComplete="new-password"
+                    className="pr-10"
+                    disabled={isLoading}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    value={field.state.value}
+                  />
+                  <button
+                    aria-label={
+                      showPassword
+                        ? t("form.password.hide")
+                        : t("form.password.show")
+                    }
+                    className="-translate-y-1/2 absolute top-1/2 right-3 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                    type="button"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </field.FormControl>
               <field.FormMessage />
             </field.FormItem>
