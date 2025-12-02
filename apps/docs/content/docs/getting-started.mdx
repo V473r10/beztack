@@ -37,23 +37,21 @@ Copy the `.env.example` file to `.env`:
 
 ```bash
 cd your-project
-cp .env.example .env
+cp  apps/api/.env.example apps/api/.env
+cp  apps/ui/.env.example apps/ui/.env
+cp  apps/docs/.env.example apps/docs/.env
 ```
 
 ### 2. Configure Required Variables
 
-Open the `.env` file and set up the following variables:
-
-- `BETTER_AUTH_SECRET`: Secret key for Better Auth
-- `BETTER_AUTH_URL`: Your application's base URL
-- `DATABASE_URL`: Connection string for your PostgreSQL database
+Open the `.env` files in each app directory and set the variables.
 
 ### 3. Initialize the Database
 
 Run database migrations:
 
 ```bash
-pnpm run migrate
+pnpm run push
 ```
 
 ## Development
