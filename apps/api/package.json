@@ -6,8 +6,8 @@
     "dev": "nitro dev",
     "vercel-build": "pnpm build",
     "start": "node .output/server/index.mjs",
-    "migrate": "pnpm dlx @better-auth/cli generate --output ./db/schema.ts --config ./server/utils/auth.ts -y & pnpm dlx drizzle-kit push",
-    "push": "pnpm dlx drizzle-kit push"
+    "migrate": "pnpm dlx @better-auth/cli generate --output ./db/schema.ts --config ./server/utils/auth.ts -y & pnpm exec drizzle-kit push",
+    "push": "pnpm exec drizzle-kit push"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
