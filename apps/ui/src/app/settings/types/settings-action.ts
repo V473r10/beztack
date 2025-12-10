@@ -4,7 +4,10 @@ export type SettingsAction =
       payload: { username: string; email: string; twoFactorEnabled: boolean };
     }
   | { type: "SET_PROFILE_FIELD"; field: "username" | "email"; value: string }
-  | { type: "OPEN_PASSWORD_DIALOG"; action: "enable" | "disable" }
+  | {
+      type: "OPEN_PASSWORD_DIALOG";
+      action: "enable" | "disable" | "regenerate";
+    }
   | { type: "CLOSE_PASSWORD_DIALOG" }
   | { type: "SET_PASSWORD"; value: string }
   | { type: "SET_DIALOG_TOTP_CODE"; value: string }
@@ -18,4 +21,6 @@ export type SettingsAction =
   | { type: "HIDE_TOTP_VERIFICATION" }
   | { type: "START_TOTP_VERIFICATION" }
   | { type: "STOP_TOTP_VERIFICATION" }
-  | { type: "SET_BACKUP_CODES_CONFIRMED"; confirmed: boolean };
+  | { type: "SET_BACKUP_CODES_CONFIRMED"; confirmed: boolean }
+  | { type: "SET_REGENERATED_CODES"; codes: string[] }
+  | { type: "CLOSE_REGENERATED_CODES" };

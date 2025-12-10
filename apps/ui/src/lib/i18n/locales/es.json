@@ -35,7 +35,21 @@
         "verifyAuthenticatorApp": "Verificar la aplicación de autenticador",
         "verifying": "Verificando...",
         "viewBackupCodes": "Ver Códigos de recuperación",
-        "willPrompt": "Se te pedirá que configure la autenticación de dos factores usando una aplicación de autenticador (por ejemplo, Google Authenticator, Authy)."
+        "willPrompt": "Se te pedirá que configure la autenticación de dos factores usando una aplicación de autenticador (por ejemplo, Google Authenticator, Authy).",
+        "confirmSavedCodes": "He guardado estos códigos de recuperación de forma segura",
+        "regenerate": {
+          "title": "Códigos de Recuperación",
+          "description": "Si perdiste el acceso a tus códigos de recuperación o has usado algunos de ellos, puedes generar nuevos. Esto invalidará todos los códigos de recuperación anteriores.",
+          "button": "Regenerar Códigos de Recuperación"
+        },
+        "regeneratedCodes": {
+          "title": "Nuevos Códigos de Recuperación Generados",
+          "description": "Tus códigos de recuperación anteriores han sido invalidados. Guarda estos nuevos códigos en un lugar seguro.",
+          "warning": "¡Guarda estos nuevos códigos de recuperación ahora! Tus códigos anteriores ya no son válidos. Cada código solo puede usarse una vez.",
+          "copy": "Copiar Todos los Códigos",
+          "download": "Descargar como Archivo",
+          "done": "Listo"
+        }
       }
     }
   },

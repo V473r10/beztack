@@ -35,7 +35,21 @@
         "verifyAuthenticatorApp": "Verify Authenticator App",
         "verifying": "Verifying...",
         "viewBackupCodes": "View Backup Codes",
-        "willPrompt": "You will be prompted to configure two-factor authentication using an authentication app (e.g., Google Authenticator, Authy)."
+        "willPrompt": "You will be prompted to configure two-factor authentication using an authentication app (e.g., Google Authenticator, Authy).",
+        "confirmSavedCodes": "I have safely saved these backup codes",
+        "regenerate": {
+          "title": "Backup Codes",
+          "description": "If you've lost access to your backup codes or have used some of them, you can generate new ones. This will invalidate all previous backup codes.",
+          "button": "Regenerate Backup Codes"
+        },
+        "regeneratedCodes": {
+          "title": "New Backup Codes Generated",
+          "description": "Your previous backup codes have been invalidated. Save these new codes in a secure location.",
+          "warning": "Save these new backup codes now! Your previous codes are no longer valid. Each code can only be used once.",
+          "copy": "Copy All Codes",
+          "download": "Download as File",
+          "done": "Done"
+        }
       }
     }
   },

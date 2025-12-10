@@ -8,6 +8,7 @@ import { TwoFactorCard } from "./components/two-factor-card";
 import { useProfileMutation } from "./hooks/use-profile-mutation";
 import { useSettingsTour } from "./hooks/use-settings-tour";
 import {
+  useBackupCodesRegenerate,
   useTotpVerification,
   useTwoFactorMutation,
 } from "./hooks/use-two-factor";
@@ -30,9 +31,10 @@ export function Settings() {
   const profileMutation = useProfileMutation(userQuery.data?.email);
   const twoFactorMutation = useTwoFactorMutation(
     dispatch,
-    state.twoFactor.action
+    state.twoFactor.action === "regenerate" ? null : state.twoFactor.action
   );
   const totpVerificationMutation = useTotpVerification(dispatch);
+  const backupCodesRegenerateMutation = useBackupCodesRegenerate(dispatch);
 
   // Tour initialization
   useSettingsTour();
@@ -81,6 +83,12 @@ export function Settings() {
       return;
     }
 
+    // Handle regenerate action separately
+    if (state.twoFactor.action === "regenerate") {
+      backupCodesRegenerateMutation.mutate(state.twoFactor.passwordInput);
+      return;
+    }
+
     twoFactorMutation.mutate({
       action: state.twoFactor.action,
       password: state.twoFactor.passwordInput,
@@ -88,6 +96,7 @@ export function Settings() {
     });
   }, [
     twoFactorMutation,
+    backupCodesRegenerateMutation,
     state.twoFactor.action,
     state.twoFactor.passwordInput,
     state.twoFactor.dialogTotpCode,
@@ -115,6 +124,27 @@ export function Settings() {
     }
   }, [state.twoFactor.backupCodes]);
 
+  // Regenerated backup codes handlers
+  const handleRegenerateBackupCodes = useCallback(() => {
+    dispatch({ type: "OPEN_PASSWORD_DIALOG", action: "regenerate" });
+  }, []);
+
+  const handleCopyRegeneratedCodes = useCallback(() => {
+    if (state.twoFactor.regeneratedCodes) {
+      copyBackupCodesToClipboard(state.twoFactor.regeneratedCodes);
+    }
+  }, [state.twoFactor.regeneratedCodes]);
+
+  const handleDownloadRegeneratedCodes = useCallback(() => {
+    if (state.twoFactor.regeneratedCodes) {
+      downloadBackupCodes(state.twoFactor.regeneratedCodes);
+    }
+  }, [state.twoFactor.regeneratedCodes]);
+
+  const handleCloseRegeneratedCodes = useCallback(() => {
+    dispatch({ type: "CLOSE_REGENERATED_CODES" });
+  }, []);
+
   return (
     <div className="space-y-6 p-4 md:p-8">
       <h1 className="font-semibold text-2xl">{t("account.settings.title")}</h1>
@@ -140,14 +170,20 @@ export function Settings() {
         isEnabled={state.twoFactor.isEnabled}
         isSubmitting={state.twoFactor.isSubmitting}
         isVerifying={state.twoFactor.isVerifyingTotp}
+        onCloseRegeneratedCodes={handleCloseRegeneratedCodes}
         onConfirmBackupCodes={(confirmed) =>
           dispatch({ type: "SET_BACKUP_CODES_CONFIRMED", confirmed })
         }
         onCopyBackupCodes={handleCopyBackupCodes}
+        onCopyRegeneratedCodes={handleCopyRegeneratedCodes}
         onDownloadBackupCodes={handleDownloadBackupCodes}
+        onDownloadRegeneratedCodes={handleDownloadRegeneratedCodes}
+        onRegenerateBackupCodes={handleRegenerateBackupCodes}
         onToggle={handleTwoFactorToggle}
         onTotpCodeChange={(value) => dispatch({ type: "SET_TOTP_CODE", value })}
         onVerifyTotp={handleTotpVerification}
+        regeneratedCodes={state.twoFactor.regeneratedCodes}
+        showRegeneratedCodes={state.twoFactor.showRegeneratedCodes}
         showSetup={state.twoFactor.showTotpVerification}
         totpCode={state.twoFactor.totpCode}
         totpURI={state.twoFactor.totpURI}

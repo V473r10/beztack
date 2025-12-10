@@ -8,7 +8,7 @@ export type SettingsState = {
     isPasswordDialogOpen: boolean;
     passwordInput: string;
     dialogTotpCode: string;
-    action: "enable" | "disable" | null;
+    action: "enable" | "disable" | "regenerate" | null;
     isSubmitting: boolean;
     totpURI: string | null;
     backupCodes: string[] | null;
@@ -16,5 +16,7 @@ export type SettingsState = {
     showTotpVerification: boolean;
     isVerifyingTotp: boolean;
     hasConfirmedBackupCodes: boolean;
+    showRegeneratedCodes: boolean;
+    regeneratedCodes: string[] | null;
   };
 };

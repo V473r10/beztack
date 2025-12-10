@@ -19,7 +19,7 @@ export const INITIAL_SETTINGS_STATE = {
     isPasswordDialogOpen: false,
     passwordInput: "",
     dialogTotpCode: "",
-    action: null as "enable" | "disable" | null,
+    action: null as "enable" | "disable" | "regenerate" | null,
     isSubmitting: false,
     totpURI: null as string | null,
     backupCodes: null as string[] | null,
@@ -27,5 +27,7 @@ export const INITIAL_SETTINGS_STATE = {
     showTotpVerification: false,
     isVerifyingTotp: false,
     hasConfirmedBackupCodes: false,
+    showRegeneratedCodes: false,
+    regeneratedCodes: null as string[] | null,
   },
 } as const;

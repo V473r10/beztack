@@ -19,7 +19,7 @@ import { TOTP_CODE_LENGTH } from "../lib/constants";
 
 type PasswordConfirmDialogProps = {
   open: boolean;
-  action: "enable" | "disable" | null;
+  action: "enable" | "disable" | "regenerate" | null;
   password: string;
   totpCode?: string;
   isSubmitting: boolean;

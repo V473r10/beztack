@@ -127,3 +127,46 @@ export function useTotpVerification(dispatch: React.Dispatch<SettingsAction>) {
     },
   });
 }
+
+type RegenerateBackupCodesResponse = {
+  backupCodes: string[];
+};
+
+export function useBackupCodesRegenerate(
+  dispatch: React.Dispatch<SettingsAction>
+) {
+  return useMutation({
+    mutationFn: async (password: string) => {
+      const response = await authClient.twoFactor.generateBackupCodes({
+        password,
+      });
+      if (response.error) {
+        throw new Error(
+          response.error.message || "Failed to regenerate backup codes"
+        );
+      }
+      return response.data as RegenerateBackupCodesResponse;
+    },
+    onMutate: () => {
+      dispatch({ type: "START_SUBMITTING" });
+    },
+    onSuccess: (data) => {
+      dispatch({ type: "SET_REGENERATED_CODES", codes: data.backupCodes });
+      dispatch({ type: "CLOSE_PASSWORD_DIALOG" });
+      toast.success("New backup codes generated! Save them securely.");
+    },
+    onError: (error: Error & { code?: string }) => {
+      const errorMessage = error.message || "An unexpected error occurred.";
+      toast.error(`Failed to regenerate backup codes: ${errorMessage}`);
+
+      if (error.code === "INVALID_PASSWORD") {
+        dispatch({ type: "SET_PASSWORD", value: "" });
+      } else {
+        dispatch({ type: "CLOSE_PASSWORD_DIALOG" });
+      }
+    },
+    onSettled: () => {
+      dispatch({ type: "STOP_SUBMITTING" });
+    },
+  });
+}

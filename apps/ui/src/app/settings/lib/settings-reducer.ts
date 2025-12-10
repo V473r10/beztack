@@ -155,6 +155,26 @@ export function settingsReducer(
           hasConfirmedBackupCodes: action.confirmed,
         },
       };
+    case "SET_REGENERATED_CODES":
+      return {
+        ...state,
+        twoFactor: {
+          ...state.twoFactor,
+          regeneratedCodes: action.codes,
+          showRegeneratedCodes: true,
+          hasConfirmedBackupCodes: false,
+        },
+      };
+    case "CLOSE_REGENERATED_CODES":
+      return {
+        ...state,
+        twoFactor: {
+          ...state.twoFactor,
+          regeneratedCodes: null,
+          showRegeneratedCodes: false,
+          hasConfirmedBackupCodes: false,
+        },
+      };
     default:
       return state;
   }
