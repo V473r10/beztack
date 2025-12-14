@@ -5,10 +5,16 @@ import type { Subscription } from "@polar-sh/sdk/models/components/subscription.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { createContext, useCallback, useContext } from "react";
-// import { authClient } from "@/lib/auth-client"; // TODO: Re-enable when server-side Polar integration is complete
 import { toast } from "sonner";
 import { env } from "@/env";
+import { authClient } from "@/lib/auth-client";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
+
+// Type for Polar API response structure
+type PolarListResponse = {
+  items?: unknown[];
+  result?: { items?: unknown[] };
+};
 
 // Time constants
 const MILLISECONDS_PER_SECOND = 1000;
@@ -71,60 +77,58 @@ export type MembershipProviderProps = {
 export function MembershipProvider({ children }: MembershipProviderProps) {
   const queryClient = useQueryClient();
 
-  // Mock data queries for now until server-side Polar integration is complete
+  // Fetch customer state directly from Polar via Better Auth plugin
+  // This is the source of truth for subscription data
   const customerStateQuery = useQuery({
     queryKey: ["customer", "state"],
-    queryFn: () => {
-      // Mock customer state
-      return {
-        customerId: "mock-customer",
-        subscriptions: [],
-        orders: [],
-        benefits: [],
-        meters: [],
-      };
+    queryFn: async () => {
+      const result = await authClient.customer.state();
+      if (result.error) {
+        throw new Error(
+          result.error.message || "Failed to fetch customer state"
+        );
+      }
+      return result.data;
     },
     staleTime: CUSTOMER_STATE_STALE_TIME,
   });
 
-  // Fetch subscriptions
+  // Fetch subscriptions from Polar
   const subscriptionsQuery = useQuery({
     queryKey: ["customer", "subscriptions"],
-    queryFn: (): Promise<Subscription[]> => {
-      // Mock subscriptions - replace with actual API call when server is ready
-      return Promise.resolve([]);
+    queryFn: async (): Promise<Subscription[]> => {
+      const result = await authClient.customer.subscriptions.list({
+        query: { limit: 100, active: true },
+      });
+      if (result.error) {
+        return [];
+      }
+      // Handle different response structures from Polar API
+      const data = result.data as PolarListResponse | undefined;
+      const items = (data?.items ||
+        data?.result?.items ||
+        []) as Subscription[];
+      return items;
     },
     staleTime: SUBSCRIPTIONS_STALE_TIME,
   });
 
-  // Fetch orders
+  // Fetch orders from Polar
   const ordersQuery = useQuery({
     queryKey: ["customer", "orders"],
-    queryFn: (): Promise<Order[]> => {
-      // Mock orders - replace with actual API call when server is ready
-      return Promise.resolve([]);
+    queryFn: async (): Promise<Order[]> => {
+      const result = await authClient.customer.orders.list({
+        query: { limit: 100 },
+      });
+      if (result.error) {
+        return [];
+      }
+      // Handle different response structures from Polar API
+      const data = result.data as PolarListResponse | undefined;
+      const items = (data?.items || data?.result?.items || []) as Order[];
+      return items;
     },
     staleTime: ORDERS_STALE_TIME,
-  });
-
-  // Fetch meters
-  const metersQuery = useQuery({
-    queryKey: ["customer", "meters"],
-    queryFn: (): Promise<CustomerMeter[]> => {
-      // Mock meters - replace with actual API call when server is ready
-      return Promise.resolve([]);
-    },
-    staleTime: SUBSCRIPTIONS_STALE_TIME, // 2 minutes
-  });
-
-  // Fetch benefits
-  const benefitsQuery = useQuery({
-    queryKey: ["customer", "benefits"],
-    queryFn: (): Promise<Benefit[]> => {
-      // Mock benefits - replace with actual API call when server is ready
-      return Promise.resolve([]);
-    },
-    staleTime: CUSTOMER_STATE_STALE_TIME, // 5 minutes
   });
 
   // Checkout mutation
@@ -187,11 +191,18 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
   });
 
-  // Derived state
-  const subscriptions = subscriptionsQuery.data || [];
+  // Derived state from Polar customer state (source of truth)
+  // Use type assertion for flexible access to Polar response structure
+  const customerState = customerStateQuery.data as
+    | Record<string, unknown>
+    | undefined;
+  const subscriptions =
+    (customerState?.subscriptions as Subscription[]) ||
+    subscriptionsQuery.data ||
+    [];
   const orders = ordersQuery.data || [];
-  const meters = metersQuery.data || [];
-  const benefits = benefitsQuery.data || [];
+  const meters = (customerState?.meters as CustomerMeter[]) || [];
+  const benefits = (customerState?.benefits as Benefit[]) || [];
 
   const activeSubscription =
     subscriptions.find(
@@ -202,9 +213,25 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
           new Date(sub.currentPeriodEnd) > new Date())
     ) || null;
 
-  // Determine current tier from subscription or default to free
-  const currentTier: MembershipTier =
-    (activeSubscription?.metadata?.tier as MembershipTier) || "free";
+  // Determine current tier from active subscription product name
+  const determineTier = (): MembershipTier => {
+    if (!activeSubscription) {
+      return "free";
+    }
+    const productName = activeSubscription.product?.name?.toLowerCase() || "";
+    if (productName.includes("ultimate")) {
+      return "ultimate";
+    }
+    if (productName.includes("pro")) {
+      return "pro";
+    }
+    if (productName.includes("basic")) {
+      return "basic";
+    }
+    return "free";
+  };
+
+  const currentTier: MembershipTier = determineTier();
 
   // Fetch tier configurations from API instead of hardcoded constants
   const tierConfigsQuery = useQuery({
@@ -232,11 +259,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     billingPortalMutation.isPending;
 
   const error =
-    customerStateQuery.error ||
-    subscriptionsQuery.error ||
-    ordersQuery.error ||
-    metersQuery.error ||
-    benefitsQuery.error;
+    customerStateQuery.error || subscriptionsQuery.error || ordersQuery.error;
 
   // Actions
   const upgradeToTier = useCallback(
