@@ -331,6 +331,35 @@
     "account": {
       "createError": "Error al crear la cuenta. Por favor, inténtalo de nuevo.",
       "createSuccess": "¡Cuenta creada con éxito!"
+    },
+    "auth": {
+      "signInSuccess": "¡Inicio de sesión exitoso!",
+      "signIn2FASuccess": "¡Inicio de sesión exitoso con 2FA!",
+      "signInBackupSuccess": "¡Inicio de sesión exitoso con código de recuperación!",
+      "twoFactorRequired": "¡Autenticación de dos factores requerida!"
+    },
+    "twoFactor": {
+      "enableSuccess": "Escanea el código QR, guarda los códigos de recuperación y luego ingresa el código de verificación.",
+      "disableSuccess": "¡Autenticación de dos factores deshabilitada exitosamente!",
+      "verifySuccess": "¡Configuración de autenticación de dos factores completada y verificada!",
+      "regenerateSuccess": "¡Nuevos códigos de recuperación generados! Guárdalos de forma segura.",
+      "errors": {
+        "passwordRequired": "La contraseña es requerida.",
+        "totpRequired": "El código TOTP es requerido para deshabilitar 2FA.",
+        "invalidCode": "Por favor, ingresa un código de verificación de 6 dígitos.",
+        "invalidBackupFormat": "Por favor, ingresa un código de recuperación válido (XXXXX-XXXXX)",
+        "verificationFailed": "Verificación fallida: {{message}}",
+        "enableFailed": "Error al habilitar 2FA: {{message}}",
+        "disableFailed": "Error al deshabilitar 2FA: {{message}}",
+        "regenerateFailed": "Error al regenerar códigos de recuperación: {{message}}",
+        "invalidPassword": "Contraseña inválida. Por favor, inténtalo de nuevo.",
+        "invalidTotpCode": "Código TOTP inválido. Por favor, inténtalo de nuevo.",
+        "totpNotEnabled": "La autenticación de dos factores no está habilitada.",
+        "invalidCookie": "Sesión expirada. Por favor, inicia sesión de nuevo.",
+        "backupCodeNotFound": "Código de recuperación inválido.",
+        "backupCodeUsed": "Este código de recuperación ya ha sido usado.",
+        "unknownError": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
+      }
     }
   },
   "sidebar": {

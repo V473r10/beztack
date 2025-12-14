@@ -327,6 +327,35 @@
     "account": {
       "createError": "Failed to create account. Please try again.",
       "createSuccess": "Account created successfully!"
+    },
+    "auth": {
+      "signInSuccess": "Signed in successfully!",
+      "signIn2FASuccess": "Signed in successfully with 2FA!",
+      "signInBackupSuccess": "Signed in successfully with backup code!",
+      "twoFactorRequired": "Two-factor authentication required!"
+    },
+    "twoFactor": {
+      "enableSuccess": "Scan QR code, save backup codes, then enter verification code below.",
+      "disableSuccess": "Two-Factor Authentication disabled successfully!",
+      "verifySuccess": "Two-Factor Authentication setup complete and verified!",
+      "regenerateSuccess": "New backup codes generated! Save them securely.",
+      "errors": {
+        "passwordRequired": "Password is required.",
+        "totpRequired": "TOTP code is required to disable 2FA.",
+        "invalidCode": "Please enter a 6-digit verification code.",
+        "invalidBackupFormat": "Please enter a valid backup code format (XXXXX-XXXXX)",
+        "verificationFailed": "Verification failed: {{message}}",
+        "enableFailed": "Failed to enable 2FA: {{message}}",
+        "disableFailed": "Failed to disable 2FA: {{message}}",
+        "regenerateFailed": "Failed to regenerate backup codes: {{message}}",
+        "invalidPassword": "Invalid password. Please try again.",
+        "invalidTotpCode": "Invalid TOTP code. Please try again.",
+        "totpNotEnabled": "Two-factor authentication is not enabled.",
+        "invalidCookie": "Session expired. Please sign in again.",
+        "backupCodeNotFound": "Invalid backup code.",
+        "backupCodeUsed": "This backup code has already been used.",
+        "unknownError": "An unexpected error occurred. Please try again."
+      }
     }
   },
   "sidebar": {

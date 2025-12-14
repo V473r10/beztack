@@ -78,13 +78,15 @@ const TwoFactor = () => {
       {
         onSuccess() {
           setIsLoading(false);
-          toast.success("Signed in successfully with 2FA!");
+          toast.success(t("notifications.auth.signIn2FASuccess"));
           navigate("/");
         },
         onError(res) {
           setIsLoading(false);
           const errorDetail = extractAuthErrorMessage(res);
-          toast.error(errorDetail);
+          toast.error(
+            errorDetail || t("notifications.twoFactor.errors.invalidTotpCode")
+          );
           clearAndFocusTotpInput();
         },
       }
@@ -99,7 +101,7 @@ const TwoFactor = () => {
       backupCode.length !== BACKUP_CODE_LENGTH ||
       !isValidBackupCode(backupCode)
     ) {
-      toast.error("Please enter a valid backup code format (XXXXX-XXXXX)");
+      toast.error(t("notifications.twoFactor.errors.invalidBackupFormat"));
       clearAndFocusBackupInput();
       return;
     }
@@ -124,13 +126,17 @@ const TwoFactor = () => {
             {
               onSuccess() {
                 setIsLoading(false);
-                toast.success("Signed in successfully with backup code!");
+                toast.success(t("notifications.auth.signInBackupSuccess"));
                 navigate("/");
               },
               onError(res) {
                 setIsLoading(false);
                 const errorDetail = extractAuthErrorMessage(res);
-                toast.error(`Verification failed: ${errorDetail}`);
+                toast.error(
+                  t("notifications.twoFactor.errors.verificationFailed", {
+                    message: errorDetail,
+                  })
+                );
                 clearAndFocusBackupInput();
               },
             }
