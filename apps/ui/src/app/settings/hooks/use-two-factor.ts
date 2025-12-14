@@ -1,6 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import {
+  type AuthError,
+  getAuthErrorMessage,
+  isPasswordError,
+  isTotpCodeError,
+} from "@/lib/auth-error-messages";
 import type { SettingsAction } from "../types/settings-action";
 
 type TwoFactorEnableSuccessData = {
@@ -16,7 +23,8 @@ type TwoFactorMutationParams = {
 
 export function useTwoFactorMutation(
   dispatch: React.Dispatch<SettingsAction>,
-  currentAction: "enable" | "disable" | null
+  currentAction: "enable" | "disable" | null,
+  t: TFunction
 ) {
   return useMutation({
     mutationFn: async ({
@@ -66,22 +74,26 @@ export function useTwoFactorMutation(
           backupCodes: enableData.backupCodes,
         });
         dispatch({ type: "SHOW_TOTP_VERIFICATION" });
-        toast.success(
-          "Scan QR, save codes, then enter verification code below."
-        );
+        toast.success(t("notifications.twoFactor.enableSuccess"));
       } else {
         dispatch({ type: "SET_2FA_ENABLED", enabled: false });
         dispatch({ type: "CLEAR_2FA_SETUP_DATA" });
-        toast.success("Two-Factor Authentication disabled successfully!");
+        toast.success(t("notifications.twoFactor.disableSuccess"));
       }
       dispatch({ type: "CLOSE_PASSWORD_DIALOG" });
     },
-    onError: (error: Error & { code?: string }) => {
-      const errorMessage = error.message || "An unexpected error occurred.";
-      toast.error(`Failed to ${currentAction} 2FA: ${errorMessage}`);
+    onError: (error: AuthError) => {
+      const fallbackKey =
+        currentAction === "enable"
+          ? "notifications.twoFactor.errors.enableFailed"
+          : "notifications.twoFactor.errors.disableFailed";
+      const errorMessage = getAuthErrorMessage(t, error, fallbackKey);
+      toast.error(errorMessage);
 
-      if (error.code === "INVALID_PASSWORD") {
+      if (isPasswordError(error)) {
         dispatch({ type: "SET_PASSWORD", value: "" });
+      } else if (isTotpCodeError(error)) {
+        dispatch({ type: "SET_DIALOG_TOTP_CODE", value: "" });
       } else {
         dispatch({ type: "CLOSE_PASSWORD_DIALOG" });
       }
@@ -96,7 +108,10 @@ export function useTwoFactorMutation(
   });
 }
 
-export function useTotpVerification(dispatch: React.Dispatch<SettingsAction>) {
+export function useTotpVerification(
+  dispatch: React.Dispatch<SettingsAction>,
+  t: TFunction
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -111,15 +126,18 @@ export function useTotpVerification(dispatch: React.Dispatch<SettingsAction>) {
       dispatch({ type: "START_TOTP_VERIFICATION" });
     },
     onSuccess: () => {
-      toast.success("Two-Factor Authentication setup complete and verified!");
+      toast.success(t("notifications.twoFactor.verifySuccess"));
       dispatch({ type: "SET_2FA_ENABLED", enabled: true });
       dispatch({ type: "HIDE_TOTP_VERIFICATION" });
       queryClient.invalidateQueries({ queryKey: ["user-session"] });
     },
-    onError: (error: Error) => {
-      toast.error(
-        error.message || "Invalid verification code. Please try again."
+    onError: (error: AuthError) => {
+      const errorMessage = getAuthErrorMessage(
+        t,
+        error,
+        "notifications.twoFactor.errors.invalidTotpCode"
       );
+      toast.error(errorMessage);
       dispatch({ type: "SET_TOTP_CODE", value: "" });
     },
     onSettled: () => {
@@ -133,7 +151,8 @@ type RegenerateBackupCodesResponse = {
 };
 
 export function useBackupCodesRegenerate(
-  dispatch: React.Dispatch<SettingsAction>
+  dispatch: React.Dispatch<SettingsAction>,
+  t: TFunction
 ) {
   return useMutation({
     mutationFn: async (password: string) => {
@@ -153,13 +172,17 @@ export function useBackupCodesRegenerate(
     onSuccess: (data) => {
       dispatch({ type: "SET_REGENERATED_CODES", codes: data.backupCodes });
       dispatch({ type: "CLOSE_PASSWORD_DIALOG" });
-      toast.success("New backup codes generated! Save them securely.");
+      toast.success(t("notifications.twoFactor.regenerateSuccess"));
     },
-    onError: (error: Error & { code?: string }) => {
-      const errorMessage = error.message || "An unexpected error occurred.";
-      toast.error(`Failed to regenerate backup codes: ${errorMessage}`);
+    onError: (error: AuthError) => {
+      const errorMessage = getAuthErrorMessage(
+        t,
+        error,
+        "notifications.twoFactor.errors.regenerateFailed"
+      );
+      toast.error(errorMessage);
 
-      if (error.code === "INVALID_PASSWORD") {
+      if (isPasswordError(error)) {
         dispatch({ type: "SET_PASSWORD", value: "" });
       } else {
         dispatch({ type: "CLOSE_PASSWORD_DIALOG" });

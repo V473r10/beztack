@@ -34,15 +34,14 @@ import {
 import { useMembership } from "@/contexts/membership-context";
 import { authClient } from "@/lib/auth-client";
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
+export function NavUser() {
+  const { data: session } = authClient.useSession();
+
+  const user = {
+    name: session?.user?.name ?? "User",
+    email: session?.user?.email ?? "",
+    avatar: session?.user?.image ?? "",
   };
-}) {
   const { t, i18n } = useTranslation();
   const { isMobile } = useSidebar();
   const { startTour } = useTour();
@@ -71,7 +70,7 @@ export function NavUser({
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild className="h-20">
             <SidebarMenuButton
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               size="lg"

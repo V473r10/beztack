@@ -31,10 +31,11 @@ export function Settings() {
   const profileMutation = useProfileMutation(userQuery.data?.email);
   const twoFactorMutation = useTwoFactorMutation(
     dispatch,
-    state.twoFactor.action === "regenerate" ? null : state.twoFactor.action
+    state.twoFactor.action === "regenerate" ? null : state.twoFactor.action,
+    t
   );
-  const totpVerificationMutation = useTotpVerification(dispatch);
-  const backupCodesRegenerateMutation = useBackupCodesRegenerate(dispatch);
+  const totpVerificationMutation = useTotpVerification(dispatch, t);
+  const backupCodesRegenerateMutation = useBackupCodesRegenerate(dispatch, t);
 
   // Tour initialization
   useSettingsTour();
@@ -71,7 +72,7 @@ export function Settings() {
 
   const handlePasswordConfirm = useCallback(() => {
     if (!(state.twoFactor.action && state.twoFactor.passwordInput)) {
-      toast.error("Password is required.");
+      toast.error(t("notifications.twoFactor.errors.passwordRequired"));
       return;
     }
 
@@ -79,7 +80,7 @@ export function Settings() {
       state.twoFactor.action === "disable" &&
       state.twoFactor.dialogTotpCode.length !== TOTP_CODE_LENGTH
     ) {
-      toast.error("TOTP code is required to disable 2FA.");
+      toast.error(t("notifications.twoFactor.errors.totpRequired"));
       return;
     }
 
@@ -104,12 +105,12 @@ export function Settings() {
 
   const handleTotpVerification = useCallback(() => {
     if (state.twoFactor.totpCode.length !== TOTP_CODE_LENGTH) {
-      toast.error("Please enter a 6-digit verification code.");
+      toast.error(t("notifications.twoFactor.errors.invalidCode"));
       return;
     }
 
     totpVerificationMutation.mutate(state.twoFactor.totpCode);
-  }, [totpVerificationMutation, state.twoFactor.totpCode]);
+  }, [totpVerificationMutation, state.twoFactor.totpCode, t]);
 
   // Backup codes handlers
   const handleCopyBackupCodes = useCallback(() => {

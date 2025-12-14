@@ -44,10 +44,10 @@ export function SignInForm() {
         {
           onSuccess(context) {
             if (context.data.twoFactorRedirect) {
-              toast.success("Two-factor authentication required!");
+              toast.success(t("notifications.auth.twoFactorRequired"));
               navigate("/auth/sign-in/two-factor");
             } else {
-              toast.success("Signed in successfully!");
+              toast.success(t("notifications.auth.signInSuccess"));
               navigate("/");
             }
           },
