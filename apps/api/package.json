@@ -1,6 +1,6 @@
 {
   "name": "@beztack/api",
-  "private": true,
+
   "scripts": {
     "build": "nitro build",
     "dev": "nitro dev",
