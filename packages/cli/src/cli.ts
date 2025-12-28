@@ -10,6 +10,7 @@ import {
 } from "@clack/prompts";
 import pc from "picocolors";
 import { createProject } from "./create.js";
+import { parseDebugFlag, setDebugMode } from "./debug.js";
 import { initProject } from "./init-project.js";
 import { modules } from "./modules.js";
 
@@ -99,6 +100,9 @@ ${pc.bold("Commands:")}
   init      Configure modules in an existing project
   help      Show this help message
 
+${pc.bold("Options:")}
+  -d, --debug    Show command outputs for debugging
+
 ${pc.bold("Examples:")}
   pnpm dlx beztack create
   beztack init
@@ -107,7 +111,19 @@ ${pc.bold("Examples:")}
 
 // Only run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const command = process.argv[2] || "create";
+  // Parse debug flag before anything else
+  if (parseDebugFlag()) {
+    setDebugMode(true);
+    process.stdout.write(pc.dim("[DEBUG] Debug mode enabled\n"));
+  }
+
+  const command =
+    process.argv.find(
+      (arg) =>
+        !arg.startsWith("-") &&
+        arg !== process.argv[0] &&
+        arg !== process.argv[1]
+    ) || "create";
 
   switch (command) {
     case "create":

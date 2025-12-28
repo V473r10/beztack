@@ -12,13 +12,36 @@ import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { cancel, confirm, group, spinner, text } from "@clack/prompts";
 import { main as initModules } from "./cli.js";
+import { debugLog, debugOutput } from "./debug.js";
 
-const execAsync = promisify(exec);
+const execAsyncBase = promisify(exec);
 const PROJECT_NAME_REGEX = /^[a-z0-9-]+$/;
 const BYTES_PER_KB = 1024;
 const KB_PER_MB = 1024;
 const BUFFER_SIZE_MB = 10;
 const MAX_BUFFER = BUFFER_SIZE_MB * KB_PER_MB * BYTES_PER_KB;
+
+interface ExecOptions {
+  cwd?: string;
+  maxBuffer?: number;
+  encoding?: BufferEncoding;
+}
+
+async function execAsync(
+  command: string,
+  options?: ExecOptions
+): Promise<{ stdout: string; stderr: string }> {
+  debugLog(`Executing: ${command}`);
+  const result = await execAsyncBase(command, {
+    maxBuffer: MAX_BUFFER,
+    encoding: "utf-8",
+    ...options,
+  });
+  const stdout = String(result.stdout);
+  const stderr = String(result.stderr);
+  debugOutput(command, stdout, stderr);
+  return { stdout, stderr };
+}
 
 interface ProjectConfig {
   name: string;
@@ -104,7 +127,7 @@ async function createProjectStructure(
   config: ProjectConfig
 ) {
   const templateRepoUrl = "https://github.com/V473r10/beztack.git";
-  let tempDir = "";
+  let tempDir: string | undefined;
   const spin = spinner();
   spin.start("Creating project structure");
 
@@ -238,8 +261,8 @@ async function initializeGit(projectDir: string) {
   spin.start("Initializing Git repository");
 
   try {
-    await execAsync("git init", { cwd: projectDir, maxBuffer: MAX_BUFFER });
-    await execAsync("git add .", { cwd: projectDir, maxBuffer: MAX_BUFFER });
+    await execAsync("git init", { cwd: projectDir });
+    await execAsync("git add .", { cwd: projectDir });
     await commitWithFallback(projectDir);
     spin.stop("Git repository initialized");
   } catch (error) {
@@ -253,24 +276,17 @@ async function initializeGit(projectDir: string) {
 
 async function commitWithFallback(projectDir: string) {
   try {
-    await execAsync('git commit -m "Initial commit"', {
-      cwd: projectDir,
-      maxBuffer: MAX_BUFFER,
-    });
+    await execAsync('git commit -m "Initial commit"', { cwd: projectDir });
   } catch (commitError) {
-    if (commitError instanceof Error) {
-      process.stderr.write(`Commit error: ${commitError.message}\n`);
-    }
-
+    // Verify if commit actually succeeded despite the error
     try {
-      await execAsync("git rev-parse HEAD", {
-        cwd: projectDir,
-        maxBuffer: MAX_BUFFER,
-      });
+      await execAsync("git rev-parse HEAD", { cwd: projectDir });
+      // Commit succeeded, ignore the error (likely just verbose output)
     } catch {
-      process.stderr.write(
-        "Failed to verify commit. Git initialization might be incomplete.\n"
-      );
+      // Commit truly failed
+      if (commitError instanceof Error) {
+        process.stderr.write(`Commit error: ${commitError.message}\n`);
+      }
       throw commitError;
     }
   }
