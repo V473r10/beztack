@@ -15,6 +15,10 @@ import { main as initModules } from "./cli.js";
 
 const execAsync = promisify(exec);
 const PROJECT_NAME_REGEX = /^[a-z0-9-]+$/;
+const BYTES_PER_KB = 1024;
+const KB_PER_MB = 1024;
+const BUFFER_SIZE_MB = 10;
+const MAX_BUFFER = BUFFER_SIZE_MB * KB_PER_MB * BYTES_PER_KB;
 
 interface ProjectConfig {
   name: string;
@@ -234,8 +238,8 @@ async function initializeGit(projectDir: string) {
   spin.start("Initializing Git repository");
 
   try {
-    await execAsync("git init", { cwd: projectDir });
-    await execAsync("git add .", { cwd: projectDir });
+    await execAsync("git init", { cwd: projectDir, maxBuffer: MAX_BUFFER });
+    await execAsync("git add .", { cwd: projectDir, maxBuffer: MAX_BUFFER });
     await commitWithFallback(projectDir);
     spin.stop("Git repository initialized");
   } catch (error) {
@@ -249,14 +253,20 @@ async function initializeGit(projectDir: string) {
 
 async function commitWithFallback(projectDir: string) {
   try {
-    await execAsync('git commit -m "Initial commit"', { cwd: projectDir });
+    await execAsync('git commit -m "Initial commit"', {
+      cwd: projectDir,
+      maxBuffer: MAX_BUFFER,
+    });
   } catch (commitError) {
     if (commitError instanceof Error) {
       process.stderr.write(`Commit error: ${commitError.message}\n`);
     }
 
     try {
-      await execAsync("git rev-parse HEAD", { cwd: projectDir });
+      await execAsync("git rev-parse HEAD", {
+        cwd: projectDir,
+        maxBuffer: MAX_BUFFER,
+      });
     } catch {
       process.stderr.write(
         "Failed to verify commit. Git initialization might be incomplete.\n"
