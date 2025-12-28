@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/useAwait: <explanation> */
 import type { Benefit } from "@polar-sh/sdk/models/components/benefit.js";
 import type { CustomerMeter } from "@polar-sh/sdk/models/components/customermeter.js";
 import type { Order } from "@polar-sh/sdk/models/components/order.js";
@@ -30,6 +31,24 @@ const SUBSCRIPTIONS_STALE_TIME =
 const ORDERS_STALE_TIME =
   MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * FIVE_MINUTES; // 5 minutes
 
+// Plan change type for detecting upgrade vs downgrade
+export type PlanChangeType = "upgrade" | "downgrade" | "same" | "period_change";
+
+// Plan change result from API
+export type PlanChangeResult = {
+  success: boolean;
+  subscription?: {
+    id: string;
+    status: string;
+    productId: string;
+    amount: number;
+    currency: string;
+    currentPeriodEnd: string;
+    recurringInterval: string;
+  };
+  error?: string;
+};
+
 export type MembershipContextValue = {
   // Current membership state
   currentTier: MembershipTier;
@@ -50,6 +69,12 @@ export type MembershipContextValue = {
     billingPeriod?: "monthly" | "yearly",
     organizationId?: string
   ) => Promise<void>;
+  changePlan: (
+    productId: string,
+    options?: {
+      prorationBehavior?: "invoice" | "prorate";
+    }
+  ) => Promise<PlanChangeResult>;
   openBillingPortal: (returnUrl?: string) => Promise<void>;
   refreshMembership: () => void;
 
@@ -58,6 +83,7 @@ export type MembershipContextValue = {
   hasPermission: (permission: string) => boolean;
   isWithinLimit: (limitKey: string, currentUsage: number) => boolean;
   canUpgrade: boolean;
+  getPlanChangeType: (targetTierId: string) => PlanChangeType;
 };
 
 const MembershipContext = createContext<MembershipContextValue | null>(null);
@@ -175,13 +201,62 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
   });
 
+  // Plan change mutation (for existing subscriptions)
+  const planChangeMutation = useMutation({
+    mutationFn: async (params: {
+      subscriptionId: string;
+      productId: string;
+      prorationBehavior: "invoice" | "prorate";
+    }): Promise<PlanChangeResult> => {
+      const response = await fetch(
+        `${env.VITE_API_URL}/api/polar/subscription`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            subscriptionId: params.subscriptionId,
+            productId: params.productId,
+            prorationBehavior: params.prorationBehavior,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.statusMessage ||
+            `Plan change failed: ${response.statusText}`
+        );
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success("Plan updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["customer"] });
+    },
+    // biome-ignore lint/nursery/noShadow: <explanation>
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to change plan");
+    },
+  });
+
   // Billing portal mutation
   const billingPortalMutation = useMutation({
-    mutationFn: () => {
-      toast.success(
-        "Mock billing portal opened (replace with actual implementation)"
-      );
-      return Promise.resolve();
+    mutationFn: async (): Promise<void> => {
+      // Open Polar customer portal
+      const result = await authClient.customer.portal();
+      if (result.error) {
+        throw new Error(
+          result.error.message || "Failed to open billing portal"
+        );
+      }
+      if (result.data?.url) {
+        window.open(result.data.url, "_blank");
+      }
     },
     onSuccess: () => {
       toast.success("Opening billing portal...");
@@ -256,6 +331,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     customerStateQuery.isLoading ||
     subscriptionsQuery.isLoading ||
     checkoutMutation.isPending ||
+    planChangeMutation.isPending ||
     billingPortalMutation.isPending;
 
   const error =
@@ -278,6 +354,27 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       });
     },
     [checkoutMutation]
+  );
+
+  // Change plan for existing subscription
+  const changePlan = useCallback(
+    async (
+      productId: string,
+      options?: {
+        prorationBehavior?: "invoice" | "prorate";
+      }
+    ): Promise<PlanChangeResult> => {
+      if (!activeSubscription) {
+        throw new Error("No active subscription to change");
+      }
+
+      return planChangeMutation.mutateAsync({
+        subscriptionId: activeSubscription.id,
+        productId,
+        prorationBehavior: options?.prorationBehavior || "prorate",
+      });
+    },
+    [activeSubscription, planChangeMutation]
   );
 
   const openBillingPortal = useCallback(async () => {
@@ -331,6 +428,30 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   const canUpgrade = currentTier !== "ultimate";
 
+  // Determine if target tier is upgrade, downgrade, or same
+  const getPlanChangeType = useCallback(
+    (targetTierId: string): PlanChangeType => {
+      const tierHierarchy: Record<string, number> = {
+        free: 0,
+        basic: 1,
+        pro: 2,
+        ultimate: 3,
+      };
+
+      const currentLevel = tierHierarchy[currentTier] ?? 0;
+      const targetLevel = tierHierarchy[targetTierId] ?? 0;
+
+      if (targetLevel > currentLevel) {
+        return "upgrade";
+      }
+      if (targetLevel < currentLevel) {
+        return "downgrade";
+      }
+      return "same";
+    },
+    [currentTier]
+  );
+
   const value: MembershipContextValue = {
     currentTier,
     tierConfig,
@@ -344,6 +465,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     benefits,
 
     upgradeToTier,
+    changePlan,
     openBillingPortal,
     refreshMembership,
 
@@ -351,6 +473,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     hasPermission,
     isWithinLimit,
     canUpgrade,
+    getPlanChangeType,
   };
 
   return (

@@ -84,6 +84,12 @@
     }
   },
   "pricing": {
+    "currentPlan": "Current Plan",
+    "contactSales": "Contact Sales",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "getStarted": "Get Started",
+    "subscribe": "Subscribe",
     "features": {
       "two-factor": "Two-Factor Authentication",
       "social-login": "Social Login",
@@ -116,6 +122,38 @@
       "features": "Features"
     },
     "unlimited": "Unlimited"
+  },
+  "billing": {
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "save17": "Save 17%",
+    "planChange": {
+      "upgradeTitle": "Upgrade Your Plan",
+      "downgradeTitle": "Change Your Plan",
+      "switchTitle": "Switch Billing Period",
+      "upgradeDescription": "Unlock more features and higher limits with this upgrade.",
+      "downgradeDescription": "Review the changes before switching to a lower plan.",
+      "switchDescription": "Change your billing period for this plan.",
+      "currentPlan": "Current Plan",
+      "newPlan": "New Plan",
+      "billingPeriod": "Billing Period",
+      "priceChange": "Price Change",
+      "prorationNote": "Changes will be prorated and applied to your next billing cycle.",
+      "newFeatures": "New Features You'll Get",
+      "confirmUpgrade": "Confirm Upgrade",
+      "confirmDowngrade": "Continue",
+      "confirmSwitch": "Switch Plan"
+    },
+    "downgradeWarning": {
+      "title": "Confirm Downgrade",
+      "description": "You're about to downgrade your plan. Some features may become unavailable.",
+      "lossTitle": "You may lose access to:",
+      "loss1": "Premium features exclusive to your current plan",
+      "loss2": "Higher usage limits",
+      "loss3": "Priority support",
+      "confirmText": "I understand that I may lose access to certain features and my usage limits will be reduced.",
+      "confirm": "Confirm Downgrade"
+    }
   },
   "common": {
     "footer": "© {{year}} Your Company. All rights reserved.",

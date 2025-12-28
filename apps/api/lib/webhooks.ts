@@ -157,6 +157,9 @@ export class WebhookEventHandler {
       case "subscription.past_due":
         await this.handleSubscriptionPastDue(payload.data.subscription);
         break;
+      case "subscription.updated":
+        await this.handleSubscriptionUpdated(payload.data.subscription);
+        break;
       case "customer.updated":
         await this.handleCustomerUpdated(payload.data.customer);
         break;
@@ -278,6 +281,45 @@ export class WebhookEventHandler {
   }
 
   /**
+   * Handle subscription updated (plan change/upgrade/downgrade)
+   */
+  private async handleSubscriptionUpdated(
+    subscription?: Subscription
+  ): Promise<void> {
+    if (!subscription?.metadata?.userId) {
+      return;
+    }
+
+    // Determine new tier from product name or metadata
+    let newTier: MembershipTier = "free";
+    const productName = subscription.product?.name?.toLowerCase() || "";
+
+    if (
+      productName.includes("ultimate") ||
+      productName.includes("enterprise")
+    ) {
+      newTier = "enterprise";
+    } else if (productName.includes("pro")) {
+      newTier = "pro";
+    } else if (subscription.metadata.tier) {
+      newTier = subscription.metadata.tier as MembershipTier;
+    }
+
+    const update: MembershipUpdate = {
+      userId: subscription.metadata.userId.toString(),
+      tier: newTier,
+      status: subscription.status === "active" ? "active" : "inactive",
+      subscriptionId: subscription.id,
+      organizationId: subscription.metadata.organizationId?.toString(),
+      validUntil: subscription.currentPeriodEnd
+        ? new Date(subscription.currentPeriodEnd)
+        : undefined,
+    };
+
+    await this.updateMembership(update);
+  }
+
+  /**
    * Handle customer updates
    */
   private handleCustomerUpdated(customer?: Customer): void {
@@ -329,6 +371,11 @@ export function createDefaultWebhookHandlers(
       }),
     "subscription.revoked":
       customHandlers.onSubscriptionRevoked ||
+      (async (_payload) => {
+        // Default no-op handler
+      }),
+    "subscription.updated":
+      customHandlers.onSubscriptionUpdated ||
       (async (_payload) => {
         // Default no-op handler
       }),

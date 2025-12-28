@@ -1,4 +1,6 @@
 import {
+  ArrowDown,
+  ArrowUp,
   Building2,
   Check,
   Crown,
@@ -9,6 +11,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import type { PlanChangeType } from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
 import type { PolarPricingTier } from "@/types/polar-pricing";
 
@@ -28,11 +32,17 @@ export type PricingCardProps = {
   tier: PolarPricingTier;
   billingPeriod: "monthly" | "yearly";
   currentTier?: string;
+  changeType?: PlanChangeType;
+  hasActiveSubscription?: boolean;
   isPopular?: boolean;
   onSelect?: (tierId: string) => void;
+  onPlanChange?: (tier: PolarPricingTier) => void;
   isLoading?: boolean;
   disabled?: boolean;
+  index?: number;
 };
+
+const ANIMATION_DELAY_STEP = 0.1;
 
 const tierIcons = {
   basic: Sparkles,
@@ -50,18 +60,18 @@ const limitIcons = {
   uploads: Database,
 };
 
-// Helper function to get tier styling classes
 function getTierStyling(tierId: string) {
-  const baseClasses = "flex h-10 w-10 items-center justify-center rounded-lg";
+  const baseClasses =
+    "flex h-12 w-12 items-center justify-center rounded-xl transition-colors duration-300";
 
   if (tierId === "basic") {
-    return `${baseClasses} bg-blue-100 text-blue-600 dark:bg-blue-900/20`;
+    return `${baseClasses} bg-blue-100/50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30`;
   }
   if (tierId === "pro") {
-    return `${baseClasses} bg-purple-100 text-purple-600 dark:bg-purple-900/20`;
+    return `${baseClasses} bg-primary/10 text-primary group-hover:bg-primary/20`;
   }
   if (tierId === "ultimate") {
-    return `${baseClasses} bg-orange-100 text-orange-600 dark:bg-orange-900/20`;
+    return `${baseClasses} bg-orange-100/50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30`;
   }
   return baseClasses;
 }
@@ -70,10 +80,14 @@ export function PricingCard({
   tier,
   billingPeriod,
   currentTier,
+  changeType = "same",
+  hasActiveSubscription = false,
   isPopular = false,
   onSelect,
+  onPlanChange,
   isLoading = false,
   disabled = false,
+  index = 0,
 }: PricingCardProps) {
   const { t } = useTranslation();
   const Icon = tierIcons[tier.id as keyof typeof tierIcons] || Sparkles;
@@ -82,18 +96,27 @@ export function PricingCard({
   const yearlyPrice = tier.price.yearly;
   const monthlyPrice = tier.price.monthly;
 
-  // Calculate savings for yearly billing
   const savings =
     billingPeriod === "yearly" && monthlyPrice > 0
       ? calculateYearlySavings(monthlyPrice, yearlyPrice)
       : null;
 
   const handleSelect = () => {
-    if (!onSelect || disabled || isLoading || isCurrentTier) {
+    if (disabled || isLoading || isCurrentTier) {
       return;
     }
 
-    // Get the correct Polar product ID based on billing period
+    // If user has an active subscription, trigger plan change flow
+    if (hasActiveSubscription && onPlanChange) {
+      onPlanChange(tier);
+      return;
+    }
+
+    // Otherwise, proceed with new checkout
+    if (!onSelect) {
+      return;
+    }
+
     const productId =
       billingPeriod === "yearly" ? tier.yearly?.id : tier.monthly?.id;
 
@@ -106,180 +129,175 @@ export function PricingCard({
 
   const getButtonText = () => {
     if (isCurrentTier) {
-      return "Current Plan";
-    }
-    if (tier.id === "basic") {
-      return "Get Started";
+      return t("pricing.currentPlan", "Current Plan");
     }
     if (tier.id === "ultimate") {
-      return "Contact Sales";
+      return t("pricing.contactSales", "Contact Sales");
     }
-    return "Upgrade";
+    if (hasActiveSubscription) {
+      if (changeType === "downgrade") {
+        return t("pricing.downgrade", "Downgrade");
+      }
+      return t("pricing.upgrade", "Upgrade");
+    }
+    if (tier.id === "basic" || tier.price.monthly === 0) {
+      return t("pricing.getStarted", "Get Started");
+    }
+    return t("pricing.subscribe", "Subscribe");
+  };
+
+  const getButtonIcon = () => {
+    if (isCurrentTier || !hasActiveSubscription) {
+      return null;
+    }
+    if (changeType === "downgrade") {
+      return <ArrowDown className="mr-1.5 h-4 w-4" />;
+    }
+    if (changeType === "upgrade") {
+      return <ArrowUp className="mr-1.5 h-4 w-4" />;
+    }
+    return null;
   };
 
   const getButtonVariant = () => {
     if (isCurrentTier) {
       return "outline";
     }
-    if (isPopular) {
+    if (changeType === "downgrade") {
+      return "secondary";
+    }
+    if (isPopular || changeType === "upgrade") {
       return "default";
     }
     return "outline";
   };
 
   return (
-    <Card
-      className={cn(
-        "relative h-full w-full",
-        isPopular && "border-primary shadow-lg",
-        isCurrentTier && "bg-muted/30"
-      )}
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className="h-full"
+      initial={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.4, delay: index * ANIMATION_DELAY_STEP }}
     >
-      {isPopular && (
-        <div className="-top-3 -translate-x-1/2 absolute left-1/2">
-          <Badge className="px-3 py-1" variant="default">
-            Most Popular
-          </Badge>
-        </div>
-      )}
-
-      <CardHeader className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className={getTierStyling(tier.id)}>
-            <Icon className="h-5 w-5" />
+      <Card
+        className={cn(
+          "group relative flex h-full w-full flex-col overflow-hidden transition-all duration-300 hover:shadow-xl dark:hover:shadow-primary/5",
+          isPopular
+            ? "border-primary/50 shadow-md shadow-primary/5"
+            : "border-border hover:border-primary/20",
+          isCurrentTier && "border-muted bg-muted/10 opacity-75 grayscale-[0.5]"
+        )}
+      >
+        {isPopular && (
+          <div className="absolute top-0 right-0">
+            <div className="rounded-bl-xl bg-primary px-3 py-1 font-medium text-primary-foreground text-xs">
+              Popular
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-xl">{tier.name}</CardTitle>
-            <CardDescription className="text-sm">
-              {tier.description}
-            </CardDescription>
-          </div>
-        </div>
+        )}
 
-        <div className="space-y-2">
-          <div className="flex items-baseline gap-1">
-            <span className="font-bold text-3xl">
-              {price === 0 ? "Free" : formatCurrency(price)}
-            </span>
-            {price > 0 && (
-              <span className="text-muted-foreground text-sm">
-                /{billingPeriod === "yearly" ? "year" : "month"}
+        <CardHeader className="space-y-4 pb-6">
+          <div className="flex items-center gap-4">
+            <div className={getTierStyling(tier.id)}>
+              <Icon className="h-6 w-6" />
+            </div>
+            <div>
+              <CardTitle className="font-bold text-xl tracking-tight">
+                {tier.name}
+              </CardTitle>
+              <CardDescription className="line-clamp-1 text-sm">
+                {tier.description}
+              </CardDescription>
+            </div>
+          </div>
+
+          <div className="space-y-1 pt-2">
+            <div className="flex items-baseline gap-1">
+              <span className="font-bold text-4xl tracking-tight">
+                {price === 0 ? "Free" : formatCurrency(price)}
               </span>
+              {price > 0 && (
+                <span className="font-medium text-muted-foreground text-sm">
+                  /{billingPeriod === "yearly" ? "year" : "month"}
+                </span>
+              )}
+            </div>
+
+            {savings ? (
+              <div className="flex items-center gap-2 text-sm">
+                <Badge
+                  className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400"
+                  variant="secondary"
+                >
+                  Save {savings.formattedPercentage}
+                </Badge>
+                <span className="text-green-600 text-xs dark:text-green-400">
+                  {savings.formattedAmount} yearly
+                </span>
+              </div>
+            ) : (
+              <div className="h-6" />
             )}
           </div>
+        </CardHeader>
 
-          {savings && (
-            <div className="flex items-center gap-2 text-green-600 text-sm dark:text-green-400">
-              <Badge className="px-2 py-0.5 text-xs" variant="secondary">
-                Save {savings.formattedPercentage}
-              </Badge>
-              <span>({savings.formattedAmount} yearly)</span>
-            </div>
-          )}
-        </div>
-      </CardHeader>
+        <CardContent className="flex-1 space-y-6">
+          <Separator className="bg-border/50" />
 
-      <CardContent className="space-y-4">
-        <Separator />
-
-        <div className="space-y-3">
-          <div className="font-medium text-sm">Features included:</div>
-          <ul className="space-y-2">
-            {(tier.features || []).map((feature: string) => (
-              <li
-                className="flex items-start gap-3 text-sm"
-                key={`${tier.id}-feature-${feature}-${crypto.randomUUID()}`}
-              >
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-                <span>{t(`pricing.features.${feature}`, feature)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {tier.limits && Object.keys(tier.limits).length > 0 && (
           <div className="space-y-4">
-            <Separator />
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 font-medium text-sm">
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
-                  <Database className="h-3 w-3 text-primary" />
-                </div>
-                Usage Limits
+            <div className="font-semibold text-foreground/80 text-sm">
+              Includes:
+            </div>
+            <ul className="space-y-3">
+              {(tier.features || []).map((feature: string) => (
+                <li
+                  className="flex items-start gap-3 text-muted-foreground text-sm"
+                  key={`${tier.id}-feature-${feature}-${crypto.randomUUID()}`}
+                >
+                  <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Check className="h-2.5 w-2.5 text-primary" />
+                  </div>
+                  <span className="leading-tight">
+                    {t(`pricing.features.${feature}`, feature)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {tier.limits && Object.keys(tier.limits).length > 0 && (
+            <div className="space-y-4 pt-2">
+              <div className="font-semibold text-foreground/80 text-sm">
+                Limits:
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-2">
                 {Object.entries(tier.limits).map(
                   ([key, value]: [string, number]) => {
                     const IconComponent =
                       limitIcons[key as keyof typeof limitIcons] || FileText;
                     const isUnlimited = value === -1;
 
-                    const formatValue = () => {
-                      if (isUnlimited) {
-                        return "Unlimited";
-                      }
-                      if (key === "storage") {
-                        return `${value}GB`;
-                      }
-                      if (key === "apiCalls" || key === "requests") {
-                        return `${value.toLocaleString()}/mo`;
-                      }
-                      return value.toLocaleString();
-                    };
-
                     return (
                       <div
-                        className="flex items-center justify-between rounded-lg border border-muted bg-muted/30 p-3"
+                        className="flex items-center justify-between rounded-md border border-border/50 bg-muted/20 px-3 py-2 transition-colors hover:bg-muted/40"
                         key={key}
                       >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={cn(
-                              "flex h-8 w-8 items-center justify-center rounded-lg",
-                              isUnlimited
-                                ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
-                                : "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                            )}
-                          >
-                            {isUnlimited ? (
-                              <InfinityIcon className="h-4 w-4" />
-                            ) : (
-                              <IconComponent className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm capitalize">
-                              {key.replace(/([A-Z])/g, " $1").toLowerCase()}
-                            </span>
-                            <span className="text-muted-foreground text-xs">
-                              {key === "storage" && "File storage space"}
-                              {key === "apiCalls" && "API requests per month"}
-                              {key === "users" && "Team members"}
-                              {key === "projects" && "Active projects"}
-                              {key === "documents" && "Documents & files"}
-                              {key === "requests" && "Monthly requests"}
-                              {key === "uploads" && "File uploads"}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={cn(
-                              "font-semibold text-sm",
-                              isUnlimited
-                                ? "text-green-600 dark:text-green-400"
-                                : "text-foreground"
-                            )}
-                          >
-                            {formatValue()}
+                        <div className="flex items-center gap-2.5">
+                          <IconComponent className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground text-xs capitalize">
+                            {key.replace(/([A-Z])/g, " $1").toLowerCase()}
                           </span>
-                          {isUnlimited && (
-                            <Badge
-                              className="bg-green-100 px-2 py-0.5 text-green-700 text-xs dark:bg-green-900/20 dark:text-green-400"
-                              variant="secondary"
-                            >
-                              ∞
-                            </Badge>
+                        </div>
+                        <div className="font-medium text-xs">
+                          {isUnlimited ? (
+                            <span className="flex items-center gap-1 text-primary">
+                              <InfinityIcon className="h-3 w-3" />
+                            </span>
+                          ) : (
+                            <span>
+                              {value.toLocaleString()}
+                              {key === "storage" && "GB"}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -288,30 +306,46 @@ export function PricingCard({
                 )}
               </div>
             </div>
-          </div>
-        )}
-      </CardContent>
+          )}
+        </CardContent>
 
-      <CardFooter>
-        <Button
-          className="w-full"
-          disabled={disabled || isLoading || isCurrentTier}
-          onClick={handleSelect}
-          size="lg"
-          variant={
-            getButtonVariant() as
-              | "default"
-              | "destructive"
-              | "outline"
-              | "secondary"
-              | "ghost"
-              | "link"
-          }
-        >
-          {isLoading ? "Processing..." : getButtonText()}
-        </Button>
-      </CardFooter>
-    </Card>
+        <CardFooter className="pt-6">
+          <Button
+            className={cn(
+              "w-full font-semibold transition-all hover:scale-[1.02]",
+              isPopular ? "shadow-md shadow-primary/20" : "",
+              changeType === "upgrade" &&
+                hasActiveSubscription &&
+                "bg-green-600 hover:bg-green-700",
+              changeType === "downgrade" &&
+                hasActiveSubscription &&
+                "bg-amber-600 text-white hover:bg-amber-700"
+            )}
+            disabled={disabled || isLoading || isCurrentTier}
+            onClick={handleSelect}
+            size="lg"
+            variant={
+              getButtonVariant() as
+                | "default"
+                | "destructive"
+                | "outline"
+                | "secondary"
+                | "ghost"
+                | "link"
+            }
+          >
+            {isLoading ? (
+              t("common.processing", "Processing...")
+            ) : (
+              <>
+                {getButtonIcon()}
+                {getButtonText()}
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -341,7 +375,6 @@ const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
 
 export const formatCurrency = (amount: number, currency = "USD"): string => {
   const CENTS_TO_DOLLARS = 100;
-
   const dollars = amount / CENTS_TO_DOLLARS;
 
   return new Intl.NumberFormat("en-US", {

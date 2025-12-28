@@ -84,6 +84,12 @@
     }
   },
   "pricing": {
+    "currentPlan": "Plan Actual",
+    "contactSales": "Contactar Ventas",
+    "upgrade": "Mejorar",
+    "downgrade": "Reducir",
+    "getStarted": "Comenzar",
+    "subscribe": "Suscribirse",
     "features": {
       "two-factor": "Autenticación de Dos Factores",
       "social-login": "Inicio de Sesión Social",
@@ -116,6 +122,38 @@
       "features": "Características"
     },
     "unlimited": "Ilimitado"
+  },
+  "billing": {
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "save17": "Ahorra 17%",
+    "planChange": {
+      "upgradeTitle": "Mejora tu Plan",
+      "downgradeTitle": "Cambiar tu Plan",
+      "switchTitle": "Cambiar Período de Facturación",
+      "upgradeDescription": "Desbloquea más funciones y límites más altos con esta mejora.",
+      "downgradeDescription": "Revisa los cambios antes de cambiar a un plan inferior.",
+      "switchDescription": "Cambia tu período de facturación para este plan.",
+      "currentPlan": "Plan Actual",
+      "newPlan": "Nuevo Plan",
+      "billingPeriod": "Período de Facturación",
+      "priceChange": "Cambio de Precio",
+      "prorationNote": "Los cambios se prorratearán y se aplicarán a tu próximo ciclo de facturación.",
+      "newFeatures": "Nuevas Funciones que Obtendrás",
+      "confirmUpgrade": "Confirmar Mejora",
+      "confirmDowngrade": "Continuar",
+      "confirmSwitch": "Cambiar Plan"
+    },
+    "downgradeWarning": {
+      "title": "Confirmar Reducción",
+      "description": "Estás a punto de reducir tu plan. Algunas funciones pueden dejar de estar disponibles.",
+      "lossTitle": "Podrías perder acceso a:",
+      "loss1": "Funciones premium exclusivas de tu plan actual",
+      "loss2": "Límites de uso más altos",
+      "loss3": "Soporte prioritario",
+      "confirmText": "Entiendo que puedo perder acceso a ciertas funciones y mis límites de uso se reducirán.",
+      "confirm": "Confirmar Reducción"
+    }
   },
   "common": {
     "footer": "© {{year}} Tu Compañía. Todos los derechos reservados.",
