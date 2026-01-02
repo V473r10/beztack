@@ -1,6 +1,5 @@
 {
   "name": "@beztack/api",
-
   "scripts": {
     "build": "nitro build",
     "dev": "nitro dev",
@@ -27,6 +26,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
+    "mercadopago": "^2.11.0",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",
     "react": "^19.2.1",

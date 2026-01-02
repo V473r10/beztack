@@ -38,6 +38,10 @@ export const env = createEnv({
     RESEND_FROM_EMAIL: z.string().email(),
     RESEND_API_KEY: z.string().min(1),
 
+    // MercadoPago
+    MERCADO_PAGO_ACCESS_TOKEN: z.string().min(1),
+    MERCADO_PAGO_WEBHOOK_SECRET: z.string().min(1),
+
     // Node
     NODE_ENV: z
       .enum(["development", "production", "test"])
