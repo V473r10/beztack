@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import MercadoPagoButton from "@/components/payments/mercado-pago/mercado-pago-btn";
+import MercadoPagoCheckout from "@/components/payments/mercado-pago";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,7 +24,7 @@ export default function SignIn() {
           {t("auth.signIn.description")}
         </p>
 
-        <MercadoPagoButton />
+        <MercadoPagoCheckout amount={1000} title="Test Payment" />
       </div>
 
       <Card className="w-full">

@@ -49,7 +49,6 @@ export default defineEventHandler(async (event) => {
 
     return response;
   } catch (error) {
-    console.error("Error creating Mercado Pago preference:", error);
     return {
       error: true,
       message: error instanceof Error ? error.message : "Unknown error",
