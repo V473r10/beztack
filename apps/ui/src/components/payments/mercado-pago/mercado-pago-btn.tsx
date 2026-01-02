@@ -6,7 +6,7 @@ import { env } from "@/env";
 const MercadoPagoButton = () => {
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
   const publicKey = env.VITE_MERCADO_PAGO_PUBLIC_KEY;
-  const createPreferenceIdEndpoint = `${env.VITE_API_URL}/payments/mercado-pago/preference`;
+  const createPreferenceIdEndpoint = `${env.VITE_API_URL}/api/payments/mercado-pago/preference`;
 
   useEffect(() => {
     if (!window.MercadoPago) {

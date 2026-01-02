@@ -1,4 +1,4 @@
-import { defineEventHandler } from "h3";
+import { defineEventHandler, readBody } from "h3";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { env } from "@/env";
 
@@ -6,11 +6,13 @@ const client = new MercadoPagoConfig({
   accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
 });
 
+const isLocalhost = env.BETTER_AUTH_URL.includes("localhost");
+
 export default defineEventHandler(async (event) => {
   try {
-    const data = event.body ? JSON.parse(event.body as string) : {};
+    const data = await readBody(event);
 
-    if (!data || data.unit_price || !data.quantity || !data.title) {
+    if (!(data?.unit_price && data?.quantity && data?.title)) {
       throw new Error(
         "Missing required fields: unit_price, quantity, or title"
       );
@@ -26,23 +28,31 @@ export default defineEventHandler(async (event) => {
             unit_price: data.unit_price,
           },
         ],
-        back_urls: {
-          success: "https://yourdomain.com/success",
-          pending: "https://yourdomain.com/pending",
-          failure: "https://yourdomain.com/failure",
-        },
-        auto_return: "approved",
+        ...(isLocalhost
+          ? {}
+          : {
+              back_urls: {
+                success: `${env.BETTER_AUTH_URL}/payments/success`,
+                pending: `${env.BETTER_AUTH_URL}/payments/pending`,
+                failure: `${env.BETTER_AUTH_URL}/payments/failure`,
+              },
+              auto_return: "approved",
+              notification_url: `${env.BETTER_AUTH_URL}/api/payments/mercado-pago/webhook`,
+            }),
         payment_methods: {
           excluded_payment_methods: [],
           excluded_payment_types: [],
           installments: 12,
         },
-        notification_url: "https://yourdomain.com/notifications",
       },
     });
 
     return response;
   } catch (error) {
-    console.error("Error parsing request body:", error);
+    console.error("Error creating Mercado Pago preference:", error);
+    return {
+      error: true,
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 });
