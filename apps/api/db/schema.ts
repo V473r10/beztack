@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  numeric,
   pgTable,
   serial,
   text,
@@ -207,6 +208,29 @@ export const planLimit = pgTable("plan_limit", {
   value: integer("value").notNull(),
 });
 
+export const mpOrder = pgTable("mp_order", {
+  id: numeric("id").primaryKey(),
+  externalReference: text("external_reference").notNull(),
+  status: text("status").notNull(),
+  statusDetail: text("status_detail").notNull(),
+  totalPaidAmount: numeric("total_paid_amount").notNull(),
+  dateCreated: timestamp("date_created").notNull(),
+  userId: text("user_id").notNull(),
+});
+
+export const mpPayment = pgTable("mp_payment", {
+  id: text("id").primaryKey(),
+  orderId: text("order_id").notNull(),
+  status: text("status").notNull(),
+  statusDetail: text("status_detail").notNull(),
+  amount: numeric("amount").notNull(),
+  paidAmount: numeric("paid_amount").notNull(),
+  paymentMethodId: text("payment_method_id"),
+  paymentMethodType: text("payment_method_type"),
+  installments: integer("installments"),
+  reference: text("reference").notNull(),
+});
+
 // Export schema object for Better Auth drizzle adapter
 export const schema = {
   user,
@@ -225,4 +249,6 @@ export const schema = {
   planFeature,
   planPermission,
   planLimit,
+  mpOrder,
+  mpPayment,
 };

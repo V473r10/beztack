@@ -1,5 +1,8 @@
-import { createError, defineEventHandler, readBody } from "h3";
+import { eq, type InferSelectModel } from "drizzle-orm";
+import { defineEventHandler, readBody } from "h3";
 import { MercadoPagoConfig, Payment } from "mercadopago";
+import { db } from "@/db/db";
+import { schema } from "@/db/schema";
 import { env } from "@/env";
 
 const client = new MercadoPagoConfig({
@@ -37,18 +40,47 @@ export default defineEventHandler(async (event) => {
     // biome-ignore lint/suspicious/noConsole: Webhook logging for debugging
     console.log("[MP Webhook] Received:", JSON.stringify(body, null, 2));
 
-    if (!body?.data?.id) {
-      throw createError({
-        statusCode: 400,
-        message: "Invalid webhook payload: missing data.id",
-      });
-    }
-
     const { type, action } = body;
     const resourceId = body.data.id;
 
     // Handle different webhook types
     switch (type) {
+      case "order": {
+        const order = snakeCaseToCamelCase(body);
+        console.log("[MP Webhook] Order:", order);
+        const orderData = order.data as InferSelectModel<typeof schema.mpOrder>;
+        console.log("[MP Webhook] Order data:", orderData);
+        const existingOrder = await db
+          .select()
+          .from(schema.mpOrder)
+          .where(eq(schema.mpOrder.id, resourceId));
+
+        if (existingOrder.length === 0) {
+          await db.insert(schema.mpOrder).values({
+            id: resourceId,
+            status: orderData.status as string,
+            statusDetail: orderData.statusDetail as string,
+            totalPaidAmount: orderData.totalPaidAmount as string,
+            dateCreated: new Date(order.dateCreated as string),
+            userId: order.userId as string,
+            externalReference: orderData.externalReference as string,
+          });
+        } else {
+          await db
+            .update(schema.mpOrder)
+            .set({
+              status: orderData.status as string,
+              statusDetail: orderData.statusDetail as string,
+              totalPaidAmount: orderData.totalPaidAmount as string,
+              dateCreated: new Date(order.dateCreated as string),
+              userId: order.userId as string,
+              externalReference: orderData.externalReference as string,
+            })
+            .where(eq(schema.mpOrder.id, resourceId));
+        }
+
+        break;
+      }
       case "payment": {
         const paymentApi = new Payment(client);
         const paymentData = await paymentApi.get({ id: resourceId });
@@ -150,3 +182,24 @@ export default defineEventHandler(async (event) => {
     };
   }
 });
+
+const snakeCaseToCamelCase = (obj: any): any => {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => snakeCaseToCamelCase(item));
+  }
+
+  if (typeof obj !== "object") {
+    return obj;
+  }
+
+  return Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [
+      key.replace(/_([a-z])/g, (_, char) => char.toUpperCase()),
+      snakeCaseToCamelCase(value),
+    ])
+  );
+};
