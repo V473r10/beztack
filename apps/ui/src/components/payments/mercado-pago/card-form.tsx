@@ -1,4 +1,4 @@
-import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
+import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
 import { useCallback, useEffect, useState } from "react";
 import { env } from "@/env";
 
@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-type PaymentFormData = {
+type CardFormData = {
   token: string;
   issuer_id: number;
   payment_method_id: string;
@@ -22,13 +22,7 @@ type PaymentFormData = {
   };
 };
 
-type BrickError = {
-  type: string;
-  cause: string;
-  message: string;
-};
-
-type PaymentBrickProps = {
+type CardFormProps = {
   amount: number;
   description?: string;
   onSuccess?: (paymentId: number, status: string) => void;
@@ -41,18 +35,18 @@ type PaymentResponse = {
   status_detail: string;
 };
 
-const PaymentBrick = ({
+const CardForm = ({
   amount,
   description = "Payment",
   onSuccess,
   onError,
-}: PaymentBrickProps) => {
+}: CardFormProps) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const publicKey = env.VITE_MERCADO_PAGO_PUBLIC_KEY;
   const processPaymentEndpoint = `${env.VITE_API_URL}/api/payments/mercado-pago/process-payment`;
 
   useEffect(() => {
-    if (!window.MercadoPago && publicKey) {
+    if (!window.MercadoPago) {
       initMercadoPago(publicKey, {
         locale: "es-UY",
       });
@@ -64,22 +58,9 @@ const PaymentBrick = ({
     amount,
   };
 
-  const customization = {
-    paymentMethods: {
-      creditCard: "all" as const,
-      debitCard: "all" as const,
-      maxInstallments: 12,
-    },
-    visual: {
-      style: {
-        theme: "default" as const,
-      },
-    },
-  };
-
   const onSubmit = useCallback(
     async (formData: unknown) => {
-      const data = formData as PaymentFormData;
+      const data = formData as CardFormData;
       try {
         const response = await fetch(processPaymentEndpoint, {
           method: "POST",
@@ -115,8 +96,8 @@ const PaymentBrick = ({
   );
 
   const handleError = useCallback(
-    (error: BrickError) => {
-      onError?.(new Error(error.message || "Brick error"));
+    (error: { type: string; cause: string; message: string }) => {
+      onError?.(new Error(error.message || "Card form error"));
     },
     [onError]
   );
@@ -126,8 +107,17 @@ const PaymentBrick = ({
   }
 
   return (
-    <Payment
-      customization={customization}
+    <CardPayment
+      customization={{
+        paymentMethods: {
+          maxInstallments: 12,
+        },
+        visual: {
+          style: {
+            theme: "default",
+          },
+        },
+      }}
       initialization={initialization}
       onError={handleError}
       onSubmit={onSubmit}
@@ -135,4 +125,4 @@ const PaymentBrick = ({
   );
 };
 
-export default PaymentBrick;
+export default CardForm;

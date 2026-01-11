@@ -42,6 +42,9 @@ export const env = createEnv({
     MERCADO_PAGO_ACCESS_TOKEN: z.string().min(1),
     MERCADO_PAGO_WEBHOOK_SECRET: z.string().min(1),
 
+    // Payment Provider Switch
+    PAYMENT_PROVIDER: z.enum(["polar", "mercadopago"]).default("polar"),
+
     // Node
     NODE_ENV: z
       .enum(["development", "production", "test"])

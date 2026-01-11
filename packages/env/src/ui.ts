@@ -19,8 +19,8 @@ export const env = createEnv({
   client: {
     VITE_API_URL: z.string().url().default("http://localhost:3000"),
     VITE_BASE_PATH: z.string().default("/").optional(),
-    VITE_MERCADO_PAGO_PUBLIC_KEY: z.string().min(1),
-    VITE_MERCADO_PAGO_CHECKOUT_TYPE: z.enum(["pro", "bricks"]).default("pro"),
+    VITE_MERCADO_PAGO_PUBLIC_KEY: z.string().min(1).optional(),
+    VITE_PAYMENT_PROVIDER: z.enum(["polar", "mercadopago"]).default("polar"),
   },
 
   /**

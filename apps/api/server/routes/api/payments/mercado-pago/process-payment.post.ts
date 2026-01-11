@@ -63,6 +63,21 @@ export default defineEventHandler(async (event) => {
       throw error;
     }
 
+    // biome-ignore lint/suspicious/noConsole: Needed for debugging MP errors
+    console.error("Mercado Pago payment error:", error);
+
+    // Handle Mercado Pago API errors
+    if (error && typeof error === "object" && "cause" in error) {
+      const mpError = error as {
+        cause?: Array<{ code: string; description: string }>;
+      };
+      const causes = mpError.cause?.map((c) => c.description).join(", ");
+      throw createError({
+        statusCode: 400,
+        message: causes || "Mercado Pago API error",
+      });
+    }
+
     throw createError({
       statusCode: 500,
       message:
