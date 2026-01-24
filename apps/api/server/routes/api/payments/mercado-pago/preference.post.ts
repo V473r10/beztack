@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
       body: {
         items: [
           {
+            id: data.id,
             title: data.title,
             quantity: data.quantity,
             unit_price: data.unit_price,

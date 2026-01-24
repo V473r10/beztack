@@ -22,6 +22,19 @@ type WebhookPayload = {
   };
 };
 
+type WebhookPayloadCamelCase = {
+  id: number;
+  liveMode: boolean;
+  type: string;
+  dateCreated: string;
+  userId: number;
+  apiVersion: string;
+  action: string;
+  data: {
+    id: string;
+  };
+};
+
 type PaymentStatus =
   | "pending"
   | "approved"
@@ -46,7 +59,9 @@ export default defineEventHandler(async (event) => {
     // Handle different webhook types
     switch (type) {
       case "order": {
-        const order = snakeCaseToCamelCase(body);
+        const order = snakeCaseToCamelCase(
+          body
+        ) as unknown as WebhookPayloadCamelCase;
         console.log("[MP Webhook] Order:", order);
         const orderData = order.data as InferSelectModel<typeof schema.mpOrder>;
         console.log("[MP Webhook] Order data:", orderData);
@@ -61,8 +76,8 @@ export default defineEventHandler(async (event) => {
             status: orderData.status as string,
             statusDetail: orderData.statusDetail as string,
             totalPaidAmount: orderData.totalPaidAmount as string,
-            dateCreated: new Date(order.dateCreated as string),
-            userId: order.userId as string,
+            dateCreated: new Date(order.dateCreated),
+            userId: String(order.userId),
             externalReference: orderData.externalReference as string,
           });
         } else {
@@ -72,8 +87,8 @@ export default defineEventHandler(async (event) => {
               status: orderData.status as string,
               statusDetail: orderData.statusDetail as string,
               totalPaidAmount: orderData.totalPaidAmount as string,
-              dateCreated: new Date(order.dateCreated as string),
-              userId: order.userId as string,
+              dateCreated: new Date(order.dateCreated),
+              userId: String(order.userId),
               externalReference: orderData.externalReference as string,
             })
             .where(eq(schema.mpOrder.id, resourceId));
@@ -94,24 +109,6 @@ export default defineEventHandler(async (event) => {
           external_reference: paymentData.external_reference,
           metadata: paymentData.metadata,
         });
-
-        // TODO: Persist payment status to database
-        // Example:
-        // await db.payments.upsert({
-        //   where: { externalId: String(paymentData.id) },
-        //   create: {
-        //     externalId: String(paymentData.id),
-        //     status: paymentData.status as PaymentStatus,
-        //     amount: paymentData.transaction_amount ?? 0,
-        //     userId: paymentData.metadata?.userId ?? null,
-        //     paymentMethod: paymentData.payment_method_id ?? "",
-        //     createdAt: new Date(paymentData.date_created ?? Date.now()),
-        //   },
-        //   update: {
-        //     status: paymentData.status as PaymentStatus,
-        //     updatedAt: new Date(),
-        //   },
-        // });
 
         // Handle specific payment statuses
         const status = paymentData.status as PaymentStatus;
@@ -183,13 +180,13 @@ export default defineEventHandler(async (event) => {
   }
 });
 
-const snakeCaseToCamelCase = (obj: any): any => {
+const snakeCaseToCamelCase = <T>(obj: T): T => {
   if (obj === null || obj === undefined) {
     return obj;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item) => snakeCaseToCamelCase(item));
+    return obj.map((item: unknown) => snakeCaseToCamelCase(item)) as T;
   }
 
   if (typeof obj !== "object") {
@@ -197,9 +194,9 @@ const snakeCaseToCamelCase = (obj: any): any => {
   }
 
   return Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => [
-      key.replace(/_([a-z])/g, (_, char) => char.toUpperCase()),
+    Object.entries(obj as Record<string, unknown>).map(([key, value]) => [
+      key.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase()),
       snakeCaseToCamelCase(value),
     ])
-  );
+  ) as T;
 };
