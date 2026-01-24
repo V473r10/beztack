@@ -243,8 +243,8 @@ export const mpPayment = pgTable("mp_payment", {
   id: text("id").primaryKey(),
   // Vinculacion con la app
   beztackUserId: text("beztack_user_id").references(() => user.id),
-  // Relacion con MP
-  orderId: text("order_id").references(() => mpOrder.id),
+  // Relacion con MP (sin FK porque el order puede no existir en nuestra DB)
+  orderId: text("order_id"),
   externalReference: text("external_reference"),
   // Estado
   status: text("status").notNull(),
