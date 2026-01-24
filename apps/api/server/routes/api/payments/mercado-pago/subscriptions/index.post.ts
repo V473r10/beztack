@@ -1,5 +1,6 @@
 import { createError, defineEventHandler, readBody } from "h3";
 import { env } from "@/env";
+import { auth } from "@/server/utils/auth";
 
 type CreateSubscriptionBody = {
   preapproval_plan_id?: string;
@@ -33,7 +34,10 @@ type SubscriptionResponse = {
   };
 };
 
-function buildSubscriptionData(body: CreateSubscriptionBody) {
+function buildSubscriptionData(
+  body: CreateSubscriptionBody,
+  userId: string | undefined
+) {
   const backUrl =
     body.back_url ?? `${env.BETTER_AUTH_URL}/subscriptions/callback`;
 
@@ -41,6 +45,8 @@ function buildSubscriptionData(body: CreateSubscriptionBody) {
     payer_email: body.payer_email,
     status: "pending",
     back_url: backUrl,
+    // Set external_reference to userId for webhook linking (prioritize userId over body)
+    external_reference: userId ?? body.external_reference,
   };
 
   if (body.preapproval_plan_id) {
@@ -52,10 +58,6 @@ function buildSubscriptionData(body: CreateSubscriptionBody) {
 
   if (body.card_token_id) {
     data.card_token_id = body.card_token_id;
-  }
-
-  if (body.external_reference) {
-    data.external_reference = body.external_reference;
   }
 
   return data;
@@ -82,7 +84,11 @@ export default defineEventHandler(async (event) => {
     const body = await readBody<CreateSubscriptionBody>(event);
     validateBody(body);
 
-    const subscriptionData = buildSubscriptionData(body);
+    // Get authenticated user if available
+    const session = await auth.api.getSession({ headers: event.headers });
+    const userId = session?.user?.id;
+
+    const subscriptionData = buildSubscriptionData(body, userId);
 
     const response = await fetch("https://api.mercadopago.com/preapproval", {
       method: "POST",

@@ -174,6 +174,11 @@ export function createMercadoPagoAdapter(config: {
         `/preapproval_plan/${options.productId}`
       );
 
+      // Use customerId (Beztack userId) as external_reference, fallback to metadata
+      const externalReference =
+        options.customerId ??
+        (options.metadata?.referenceId as string | undefined);
+
       const subscription = await mpFetch<MPPreapproval>(
         accessToken,
         "/preapproval",
@@ -183,7 +188,7 @@ export function createMercadoPagoAdapter(config: {
             preapproval_plan_id: options.productId,
             payer_email: options.customerEmail,
             back_url: options.successUrl,
-            external_reference: options.metadata?.referenceId,
+            external_reference: externalReference,
             status: "pending",
           }),
         }
@@ -217,8 +222,12 @@ export function createMercadoPagoAdapter(config: {
         };
       }
 
-      if (options.metadata?.referenceId) {
-        body.external_reference = options.metadata.referenceId;
+      // Use customerId (Beztack userId) as external_reference, fallback to metadata
+      const externalReference =
+        options.customerId ??
+        (options.metadata?.referenceId as string | undefined);
+      if (externalReference) {
+        body.external_reference = externalReference;
       }
 
       const subscription = await mpFetch<MPPreapproval>(

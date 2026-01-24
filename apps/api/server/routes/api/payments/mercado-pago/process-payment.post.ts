@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, readBody } from "h3";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { env } from "@/env";
+import { auth } from "@/server/utils/auth";
 
 const client = new MercadoPagoConfig({
   accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
@@ -20,6 +21,7 @@ type PaymentRequestBody = {
       number: string;
     };
   };
+  external_reference?: string;
 };
 
 export default defineEventHandler(async (event) => {
@@ -34,6 +36,10 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // Get authenticated user if available
+    const session = await auth.api.getSession({ headers: event.headers });
+    const userId = session?.user?.id;
+
     const payment = new Payment(client);
     const response = await payment.create({
       body: {
@@ -43,6 +49,8 @@ export default defineEventHandler(async (event) => {
         transaction_amount: body.transaction_amount,
         installments: body.installments,
         description: body.description,
+        // Set external_reference to userId for webhook linking
+        external_reference: userId ?? body.external_reference,
         payer: {
           email: body.payer.email,
           identification: body.payer.identification,
@@ -69,7 +77,7 @@ export default defineEventHandler(async (event) => {
     // Handle Mercado Pago API errors
     if (error && typeof error === "object" && "cause" in error) {
       const mpError = error as {
-        cause?: Array<{ code: string; description: string }>;
+        cause?: { code: string; description: string }[];
       };
       const causes = mpError.cause?.map((c) => c.description).join(", ");
       throw createError({

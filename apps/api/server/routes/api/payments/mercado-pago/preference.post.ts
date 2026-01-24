@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody } from "h3";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { env } from "@/env";
+import { auth } from "@/server/utils/auth";
 
 const client = new MercadoPagoConfig({
   accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
@@ -18,6 +19,10 @@ export default defineEventHandler(async (event) => {
       );
     }
 
+    // Get authenticated user if available
+    const session = await auth.api.getSession({ headers: event.headers });
+    const userId = session?.user?.id;
+
     const preference = new Preference(client);
     const response = await preference.create({
       body: {
@@ -29,6 +34,8 @@ export default defineEventHandler(async (event) => {
             unit_price: data.unit_price,
           },
         ],
+        // Set external_reference to userId for webhook linking
+        external_reference: userId ?? data.external_reference,
         ...(isLocalhost
           ? {}
           : {
