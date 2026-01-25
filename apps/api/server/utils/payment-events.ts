@@ -58,6 +58,13 @@ class PaymentEventEmitter extends EventEmitter {
   }
 
   emitPaymentEvent(event: PaymentEvent): void {
+    // biome-ignore lint/suspicious/noConsole: Event debugging
+    console.log("[PaymentEvents] Emitting event:", {
+      type: event.type,
+      userId: event.data.userId,
+      id: event.data.id,
+    });
+
     // Emit to all listeners
     this.emit("payment-event", event);
 

@@ -34,8 +34,23 @@ const mp = createMercadoPagoClient({
 export default defineEventHandler(async (event) => {
   const body = await readBody<WebhookPayload>(event);
 
+  // biome-ignore lint/suspicious/noConsole: Webhook debugging
+  console.log("[MP Webhook] Received:", {
+    type: body.type,
+    action: body.action,
+    resourceId: body.data?.id,
+    webhookId: body.id,
+  });
+
   const xSignature = getHeader(event, "x-signature");
   const xRequestId = getHeader(event, "x-request-id");
+
+  // biome-ignore lint/suspicious/noConsole: Webhook debugging
+  console.log("[MP Webhook] Headers:", {
+    xSignature: xSignature ? "present" : "missing",
+    xRequestId: xRequestId ? "present" : "missing",
+    hasWebhookSecret: !!env.MERCADO_PAGO_WEBHOOK_SECRET,
+  });
 
   if (
     !mp.webhooks.validate(xSignature ?? null, xRequestId ?? null, body.data.id)
@@ -65,6 +80,13 @@ export default defineEventHandler(async (event) => {
 
   try {
     await processWebhook(type, action, resourceId);
+
+    // biome-ignore lint/suspicious/noConsole: Webhook debugging
+    console.log("[MP Webhook] Successfully processed:", {
+      type,
+      action,
+      resourceId,
+    });
 
     await db
       .update(schema.mpWebhookLog)
@@ -123,6 +145,9 @@ async function processWebhook(
 // =============================================================================
 
 async function handlePayment(paymentId: string): Promise<void> {
+  // biome-ignore lint/suspicious/noConsole: Webhook debugging
+  console.log("[MP Webhook] Handling payment:", paymentId);
+
   const payment = await mp.payments.get(paymentId);
   if (!payment.id) {
     throw new Error(`Payment ${paymentId} not found`);
@@ -134,8 +159,19 @@ async function handlePayment(paymentId: string): Promise<void> {
     payment.payer?.email
   );
 
+  // biome-ignore lint/suspicious/noConsole: Webhook debugging
+  console.log("[MP Webhook] Payment details:", {
+    id,
+    status: payment.status,
+    beztackUserId,
+    email: payment.payer?.email,
+  });
+
   const data = mapPaymentData(id, payment, beztackUserId);
   await upsertPayment(id, data);
+
+  // biome-ignore lint/suspicious/noConsole: Webhook debugging
+  console.log("[MP Webhook] Payment persisted to DB");
 
   if (payment.refunds && payment.refunds.length > 0) {
     await syncRefunds(id, payment.refunds);
@@ -143,6 +179,9 @@ async function handlePayment(paymentId: string): Promise<void> {
 
   // Emit real-time event
   const eventType = mapPaymentStatusToEventType(payment.status ?? "");
+  // biome-ignore lint/suspicious/noConsole: Webhook debugging
+  console.log("[MP Webhook] Event type mapped:", eventType);
+
   if (eventType) {
     paymentEvents.emitPaymentEvent(
       createPaymentEvent(eventType, {

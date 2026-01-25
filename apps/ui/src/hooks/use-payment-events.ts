@@ -225,7 +225,14 @@ export function usePaymentEvents(options: UsePaymentEventsOptions = {}) {
         }, reconnectDelay);
       }
     };
-  }, [userId, updateStatus, handleEvent, autoReconnect, reconnectDelay]);
+  }, [
+    userId,
+    listenToAll,
+    updateStatus,
+    handleEvent,
+    autoReconnect,
+    reconnectDelay,
+  ]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

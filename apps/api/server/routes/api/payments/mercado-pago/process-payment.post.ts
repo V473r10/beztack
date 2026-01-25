@@ -2,6 +2,11 @@ import { createMercadoPagoClient } from "@beztack/mercadopago/server";
 import { createError, defineEventHandler, readBody } from "h3";
 import { env } from "@/env";
 import { auth } from "@/server/utils/auth";
+import {
+  createPaymentEvent,
+  mapPaymentStatusToEventType,
+  paymentEvents,
+} from "@/server/utils/payment-events";
 
 const mp = createMercadoPagoClient({
   accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
@@ -37,7 +42,7 @@ export default defineEventHandler(async (event) => {
 
   // Get authenticated user if available
   const session = await auth.api.getSession({ headers: event.headers });
-  const _userId = session?.user?.id;
+  const userId = session?.user?.id ?? null;
 
   try {
     const response = await mp.payments.create({
@@ -52,6 +57,31 @@ export default defineEventHandler(async (event) => {
         identification: body.payer.identification,
       },
     });
+
+    // Emit real-time event for immediate UI feedback
+    // (Webhook will also emit, but this provides instant feedback)
+    const eventType = mapPaymentStatusToEventType(response.status);
+    if (eventType) {
+      // biome-ignore lint/suspicious/noConsole: Payment debugging
+      console.log("[Process Payment] Emitting event:", {
+        type: eventType,
+        paymentId: response.id,
+        status: response.status,
+        userId,
+      });
+
+      paymentEvents.emitPaymentEvent(
+        createPaymentEvent(eventType, {
+          id: String(response.id),
+          userId,
+          status: response.status,
+          amount: String(body.transaction_amount),
+          currency: "UYU",
+          description: body.description,
+          payerEmail: body.payer.email,
+        })
+      );
+    }
 
     return {
       id: response.id,

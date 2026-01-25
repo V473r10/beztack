@@ -82,10 +82,22 @@ export default defineEventHandler(async (event) => {
     ? "payment-event"
     : `payment-event:${userId}`;
 
+  // biome-ignore lint/suspicious/noConsole: SSE debugging
+  console.log("[SSE Events] Client connected:", {
+    userId,
+    listenToAll,
+    channel: eventChannel,
+  });
+
   paymentEvents.on(eventChannel, handleEvent);
 
   // Cleanup on connection close
   event.node.req.on("close", () => {
+    // biome-ignore lint/suspicious/noConsole: SSE debugging
+    console.log("[SSE Events] Client disconnected:", {
+      userId,
+      channel: eventChannel,
+    });
     clearInterval(keepAliveInterval);
     paymentEvents.off(eventChannel, handleEvent);
     response.end();
