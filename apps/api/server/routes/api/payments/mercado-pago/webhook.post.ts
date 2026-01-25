@@ -18,6 +18,13 @@ import {
   validateWebhookSignature,
   type WebhookPayload,
 } from "@/server/utils/mercadopago";
+import {
+  createPaymentEvent,
+  mapInvoiceStatusToEventType,
+  mapPaymentStatusToEventType,
+  mapSubscriptionStatusToEventType,
+  paymentEvents,
+} from "@/server/utils/payment-events";
 
 // =============================================================================
 // Webhook Handler
@@ -89,7 +96,7 @@ export default defineEventHandler(async (event) => {
 
 async function processWebhook(
   type: string,
-  action: string,
+  _action: string,
   resourceId: string
 ): Promise<void> {
   switch (type) {
@@ -109,8 +116,8 @@ async function processWebhook(
       await handleChargeback(resourceId);
       break;
     default:
-      // biome-ignore lint/suspicious/noConsole: Webhook logging
-      console.log("[MP Webhook] Unhandled type:", type, action, resourceId);
+      // Unknown webhook type - ignore silently
+      break;
   }
 }
 
@@ -137,8 +144,21 @@ async function handlePayment(paymentId: string): Promise<void> {
     await syncRefunds(id, payment.refunds);
   }
 
-  // biome-ignore lint/suspicious/noConsole: Webhook logging
-  console.log(`[MP Webhook] Payment ${id} - ${payment.status}`);
+  // Emit real-time event
+  const eventType = mapPaymentStatusToEventType(payment.status ?? "");
+  if (eventType) {
+    paymentEvents.emitPaymentEvent(
+      createPaymentEvent(eventType, {
+        id,
+        userId: beztackUserId,
+        status: payment.status ?? "unknown",
+        amount: payment.transaction_amount?.toString() ?? null,
+        currency: payment.currency_id ?? null,
+        description: payment.description ?? null,
+        payerEmail: payment.payer?.email ?? null,
+      })
+    );
+  }
 }
 
 async function handleMerchantOrder(orderId: string): Promise<void> {
@@ -150,9 +170,6 @@ async function handleMerchantOrder(orderId: string): Promise<void> {
   const id = String(order.id);
   const data = mapOrderData(id, order);
   await upsertOrder(id, data);
-
-  // biome-ignore lint/suspicious/noConsole: Webhook logging
-  console.log(`[MP Webhook] Order ${id} - ${order.status}`);
 }
 
 async function handleSubscription(subscriptionId: string): Promise<void> {
@@ -170,8 +187,24 @@ async function handleSubscription(subscriptionId: string): Promise<void> {
   const data = mapSubscriptionData(id, subscription, beztackUserId);
   await upsertSubscription(id, data);
 
-  // biome-ignore lint/suspicious/noConsole: Webhook logging
-  console.log(`[MP Webhook] Subscription ${id} - ${subscription.status}`);
+  // Emit real-time event
+  const eventType = mapSubscriptionStatusToEventType(subscription.status ?? "");
+  if (eventType) {
+    paymentEvents.emitPaymentEvent(
+      createPaymentEvent(eventType, {
+        id,
+        userId: beztackUserId,
+        status: subscription.status ?? "unknown",
+        amount:
+          subscription.auto_recurring?.transaction_amount?.toString() ?? null,
+        currency: subscription.auto_recurring?.currency_id ?? null,
+        payerEmail: subscription.payer_email ?? null,
+        planId: subscription.preapproval_plan_id ?? null,
+        reason: subscription.reason ?? null,
+        nextPaymentDate: subscription.next_payment_date ?? null,
+      })
+    );
+  }
 }
 
 async function handleInvoice(invoiceId: string): Promise<void> {
@@ -184,8 +217,31 @@ async function handleInvoice(invoiceId: string): Promise<void> {
   const data = mapInvoiceData(id, invoice);
   await upsertInvoice(id, data);
 
-  // biome-ignore lint/suspicious/noConsole: Webhook logging
-  console.log(`[MP Webhook] Invoice ${id} - ${invoice.status}`);
+  // Emit real-time event
+  const eventType = mapInvoiceStatusToEventType(invoice.status ?? "");
+  if (eventType) {
+    // Try to find the user from the subscription
+    let beztackUserId: string | null = null;
+    if (invoice.preapproval_id) {
+      const [sub] = await db
+        .select({ beztackUserId: schema.mpSubscription.beztackUserId })
+        .from(schema.mpSubscription)
+        .where(eq(schema.mpSubscription.id, invoice.preapproval_id))
+        .limit(1);
+      beztackUserId = sub?.beztackUserId ?? null;
+    }
+
+    paymentEvents.emitPaymentEvent(
+      createPaymentEvent(eventType, {
+        id,
+        userId: beztackUserId,
+        status: invoice.status ?? "unknown",
+        amount: invoice.transaction_amount?.toString() ?? null,
+        currency: invoice.currency_id ?? null,
+        reason: invoice.reason ?? null,
+      })
+    );
+  }
 }
 
 async function handleChargeback(chargebackId: string): Promise<void> {
@@ -198,8 +254,17 @@ async function handleChargeback(chargebackId: string): Promise<void> {
   const data = mapChargebackData(id, chargeback);
   await upsertChargeback(id, data);
 
-  // biome-ignore lint/suspicious/noConsole: Webhook logging
-  console.log(`[MP Webhook] Chargeback ${id} - ${chargeback.status}`);
+  // Emit chargeback event
+  paymentEvents.emitPaymentEvent(
+    createPaymentEvent("chargeback.created", {
+      id,
+      userId: null, // Could look up from payment if needed
+      status: chargeback.status ?? "unknown",
+      amount: chargeback.amount?.toString() ?? null,
+      currency: null,
+      description: chargeback.reason?.description ?? null,
+    })
+  );
 }
 
 // =============================================================================

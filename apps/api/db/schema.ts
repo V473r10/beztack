@@ -284,10 +284,51 @@ export const mpPayment = pgTable("mp_payment", {
     .notNull(),
 });
 
+export const mpPlan = pgTable("mp_plan", {
+  // ID de Mercado Pago (primary key)
+  id: text("id").primaryKey(),
+
+  // Metadata de MP
+  applicationId: text("application_id"),
+  collectorId: text("collector_id"),
+
+  // Descripción del plan
+  reason: text("reason").notNull(),
+  status: text("status").notNull(), // active, inactive
+
+  // Auto recurring config
+  frequency: integer("frequency").notNull(),
+  frequencyType: text("frequency_type").notNull(), // days, months
+  transactionAmount: numeric("transaction_amount").notNull(),
+  currencyId: text("currency_id").notNull(),
+  repetitions: integer("repetitions"), // null = indefinido
+  billingDay: integer("billing_day"),
+  billingDayProportional: boolean("billing_day_proportional"),
+
+  // Free trial
+  freeTrialFrequency: integer("free_trial_frequency"),
+  freeTrialFrequencyType: text("free_trial_frequency_type"),
+
+  // URLs
+  initPoint: text("init_point"),
+  backUrl: text("back_url"),
+
+  // Fechas de MP
+  dateCreated: timestamp("date_created"),
+  lastModified: timestamp("last_modified"),
+
+  // Auditoría local
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
 export const mpSubscription = pgTable("mp_subscription", {
   id: text("id").primaryKey(),
   beztackUserId: text("beztack_user_id").references(() => user.id),
-  preapprovalPlanId: text("preapproval_plan_id"),
+  preapprovalPlanId: text("preapproval_plan_id").references(() => mpPlan.id),
   externalReference: text("external_reference"),
   payerId: text("payer_id"),
   payerEmail: text("payer_email"),

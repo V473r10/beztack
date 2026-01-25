@@ -15,10 +15,13 @@ import {
   CardForm,
   MercadoPagoButton,
   PaymentBrick,
+  PaymentEventsMonitor,
+  PlanList,
   SubscriptionForm,
 } from "@/components/payments/mercado-pago";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -31,6 +34,8 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Plan } from "@/lib/mercado-pago-types";
+import { formatFrequency, formatPlanPrice } from "@/lib/mercado-pago-types";
 
 type PaymentResult = {
   id: number;
@@ -53,6 +58,7 @@ export default function MercadoPagoDemo() {
   const [subscriptionResult, setSubscriptionResult] =
     useState<SubscriptionResult | null>(null);
   const [customAmount, setCustomAmount] = useState(DEMO_AMOUNT);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
   const handlePaymentSuccess = (paymentId: number, status: string) => {
     setPaymentResult({ id: paymentId, status, timestamp: new Date() });
@@ -447,29 +453,89 @@ import {
         {/* SUBSCRIPTIONS TAB */}
         <TabsContent className="space-y-6" value="subscriptions">
           <div className="grid gap-6 lg:grid-cols-2">
+            {/* Left: Plan Selection and Subscription */}
             <div className="space-y-6">
+              {/* Step 1: Select Plan */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <RefreshCcw className="h-5 w-5" />
-                    Crear Suscripción
+                    Paso 1: Seleccionar Plan
                   </CardTitle>
                   <CardDescription>
-                    Las suscripciones permiten cobros recurrentes automáticos
+                    Selecciona un plan existente o crea uno nuevo
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SubscriptionForm
-                    amount={500}
-                    currencyId="UYU"
-                    frequency={1}
-                    frequencyType="months"
-                    onError={handlePaymentError}
-                    onSuccess={handleSubscriptionSuccess}
-                    reason="Plan Premium - Demo"
+                  <PlanList
+                    onSelect={setSelectedPlan}
+                    selectedPlanId={selectedPlan?.id}
                   />
                 </CardContent>
               </Card>
+
+              {/* Step 2: Subscribe */}
+              {selectedPlan && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Paso 2: Suscribirse</CardTitle>
+                    <CardDescription>
+                      Plan seleccionado:{" "}
+                      <strong>
+                        {selectedPlan.reason} -{" "}
+                        {formatPlanPrice(
+                          selectedPlan.transactionAmount,
+                          selectedPlan.currencyId
+                        )}{" "}
+                        {formatFrequency(
+                          selectedPlan.frequency,
+                          selectedPlan.frequencyType
+                        )}
+                      </strong>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs defaultValue="checkout">
+                      <TabsList className="w-full">
+                        <TabsTrigger className="flex-1" value="checkout">
+                          Checkout MP
+                        </TabsTrigger>
+                        <TabsTrigger className="flex-1" value="form">
+                          Formulario
+                        </TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent className="pt-4" value="checkout">
+                        <div className="space-y-4">
+                          <p className="text-muted-foreground text-sm">
+                            El usuario será redirigido a Mercado Pago para
+                            completar la suscripción.
+                          </p>
+                          <Button
+                            className="w-full"
+                            onClick={() => {
+                              if (selectedPlan.initPoint) {
+                                window.open(selectedPlan.initPoint, "_blank");
+                              }
+                            }}
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Ir a Mercado Pago
+                          </Button>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent className="pt-4" value="form">
+                        <SubscriptionForm
+                          onError={handlePaymentError}
+                          onSuccess={handleSubscriptionSuccess}
+                          planId={selectedPlan.id}
+                        />
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              )}
 
               {subscriptionResult && (
                 <Alert>
@@ -487,6 +553,7 @@ import {
               )}
             </div>
 
+            {/* Right: Documentation */}
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -547,6 +614,42 @@ import {
                     <div className="space-y-4">
                       <div className="rounded-lg border p-3">
                         <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-600">GET</Badge>
+                          <code className="text-sm">
+                            /api/payments/mercado-pago/subscriptions/plans
+                          </code>
+                        </div>
+                        <p className="mt-1 text-muted-foreground text-sm">
+                          Listar planes disponibles
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border p-3">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-green-600">POST</Badge>
+                          <code className="text-sm">
+                            /api/payments/mercado-pago/subscriptions/plans
+                          </code>
+                        </div>
+                        <p className="mt-1 text-muted-foreground text-sm">
+                          Crear plan de suscripción
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border p-3">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-green-600">POST</Badge>
+                          <code className="text-sm">
+                            /api/payments/mercado-pago/subscriptions/plans/sync
+                          </code>
+                        </div>
+                        <p className="mt-1 text-muted-foreground text-sm">
+                          Sincronizar planes desde Mercado Pago
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border p-3">
+                        <div className="flex items-center gap-2">
                           <Badge className="bg-green-600">POST</Badge>
                           <code className="text-sm">
                             /api/payments/mercado-pago/subscriptions
@@ -580,30 +683,6 @@ import {
                           Pausar, reanudar o cancelar
                         </p>
                       </div>
-
-                      <div className="rounded-lg border p-3">
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-blue-600">GET</Badge>
-                          <code className="text-sm">
-                            /api/payments/mercado-pago/subscriptions/search
-                          </code>
-                        </div>
-                        <p className="mt-1 text-muted-foreground text-sm">
-                          Buscar suscripciones por email
-                        </p>
-                      </div>
-
-                      <div className="rounded-lg border p-3">
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-green-600">POST</Badge>
-                          <code className="text-sm">
-                            /api/payments/mercado-pago/subscriptions/plans
-                          </code>
-                        </div>
-                        <p className="mt-1 text-muted-foreground text-sm">
-                          Crear plan de suscripción
-                        </p>
-                      </div>
                     </div>
                   </ScrollArea>
                 </CardContent>
@@ -614,6 +693,9 @@ import {
 
         {/* WEBHOOKS TAB */}
         <TabsContent className="space-y-6" value="webhooks">
+          {/* Real-time Events Monitor - listenToAll for demo purposes */}
+          <PaymentEventsMonitor listenToAll />
+
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-6">
               <Card>

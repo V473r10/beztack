@@ -22,11 +22,25 @@ type SubscriptionFormProps = {
   onError?: (error: Error) => void;
 };
 
-type SubscriptionResponse = {
-  id: string;
-  status: string;
-  init_point: string;
-};
+type SubscriptionResponse =
+  | {
+      mode: "checkout";
+      plan: {
+        id: string;
+        reason: string;
+        transactionAmount: string;
+        currencyId: string;
+      };
+      checkoutUrl: string;
+    }
+  | {
+      mode: "authorized";
+      subscription: {
+        id: string;
+        status: string;
+        initPoint: string;
+      };
+    };
 
 const SubscriptionForm = ({
   planId,
@@ -79,10 +93,15 @@ const SubscriptionForm = ({
       }
 
       const data: SubscriptionResponse = await response.json();
-      onSuccess?.(data.id, data.init_point);
 
-      if (data.init_point) {
-        window.location.href = data.init_point;
+      if (data.mode === "checkout") {
+        onSuccess?.(data.plan.id, data.checkoutUrl);
+        window.location.href = data.checkoutUrl;
+      } else {
+        onSuccess?.(data.subscription.id, data.subscription.initPoint || "");
+        if (data.subscription.initPoint) {
+          window.location.href = data.subscription.initPoint;
+        }
       }
     } catch (error) {
       onError?.(
