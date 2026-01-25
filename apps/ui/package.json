@@ -11,6 +11,7 @@
   "dependencies": {
     "@beztack/ai": "workspace:*",
     "@beztack/env": "workspace:*",
+    "@beztack/mercadopago": "workspace:*",
     "@beztack/ocr": "workspace:*",
     "@beztack/state": "workspace:*",
     "@dnd-kit/core": "^6.3.1",

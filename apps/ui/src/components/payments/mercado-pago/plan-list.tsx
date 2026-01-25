@@ -1,3 +1,4 @@
+import { type Plan, usePlans, useSyncPlans } from "@beztack/mercadopago/react";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { usePlans, useSyncPlans } from "@/hooks/use-mercado-pago-plans";
-import type { Plan } from "@/lib/mercado-pago-types";
 import { CreatePlanForm } from "./create-plan-form";
 import { PlanCard } from "./plan-card";
 

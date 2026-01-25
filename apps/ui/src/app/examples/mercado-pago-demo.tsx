@@ -1,4 +1,12 @@
 import {
+  CardForm,
+  CheckoutButton,
+  formatFrequency,
+  formatPlanPrice,
+  PaymentBrick,
+  type Plan,
+} from "@beztack/mercadopago/react";
+import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
@@ -12,9 +20,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import {
-  CardForm,
-  MercadoPagoButton,
-  PaymentBrick,
   PaymentEventsMonitor,
   PlanList,
   SubscriptionForm,
@@ -34,8 +39,6 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Plan } from "@/lib/mercado-pago-types";
-import { formatFrequency, formatPlanPrice } from "@/lib/mercado-pago-types";
 
 type PaymentResult = {
   id: number;
@@ -239,7 +242,7 @@ export default function MercadoPagoDemo() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <MercadoPagoButton
+                      <CheckoutButton
                         quantity={1}
                         title="Producto de prueba"
                         unitPrice={customAmount}
@@ -409,13 +412,13 @@ export default function MercadoPagoDemo() {
                     <pre className="font-mono text-xs">
                       {`// Importar componentes
 import {
-  MercadoPagoButton,  // Checkout Pro
+  CheckoutButton,  // Checkout Pro
   PaymentBrick,       // Bricks
   CardForm,           // API
 } from "@/components/payments/mercado-pago";
 
 // Checkout Pro - Redirige a MP
-<MercadoPagoButton
+<CheckoutButton
   title="Producto"
   unitPrice={1000}
   quantity={1}

@@ -46,7 +46,7 @@ const CardForm = ({
   const processPaymentEndpoint = `${env.VITE_API_URL}/api/payments/mercado-pago/process-payment`;
 
   useEffect(() => {
-    if (!window.MercadoPago) {
+    if (!window.MercadoPago && publicKey) {
       initMercadoPago(publicKey, {
         locale: "es-UY",
       });

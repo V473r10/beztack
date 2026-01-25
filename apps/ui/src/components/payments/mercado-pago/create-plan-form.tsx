@@ -1,3 +1,5 @@
+import { createPlanSchema } from "@beztack/mercadopago";
+import { type CreatePlanData, useCreatePlan } from "@beztack/mercadopago/react";
 import { Loader2 } from "lucide-react";
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,11 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppForm } from "@/components/ui/tanstack-form";
-import { useCreatePlan } from "@/hooks/use-mercado-pago-plans";
-import {
-  type CreatePlanData,
-  createPlanSchema,
-} from "@/lib/mercado-pago-types";
 
 type CreatePlanFormProps = {
   onSuccess?: () => void;

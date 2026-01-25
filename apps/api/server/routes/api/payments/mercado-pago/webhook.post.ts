@@ -1,13 +1,5 @@
-import { eq } from "drizzle-orm";
-import { defineEventHandler, getHeader, readBody } from "h3";
-import { db } from "@/db/db";
-import { schema } from "@/db/schema";
 import {
-  fetchChargeback,
-  fetchInvoice,
-  fetchMerchantOrder,
-  fetchPayment,
-  fetchSubscription,
+  createMercadoPagoClient,
   type MPChargebackResponse,
   type MPInvoiceResponse,
   type MPMerchantOrderResponse,
@@ -15,9 +7,13 @@ import {
   type MPSubscriptionResponse,
   parseDate,
   toStringId,
-  validateWebhookSignature,
   type WebhookPayload,
-} from "@/server/utils/mercadopago";
+} from "@beztack/mercadopago/server";
+import { eq } from "drizzle-orm";
+import { defineEventHandler, getHeader, readBody } from "h3";
+import { db } from "@/db/db";
+import { schema } from "@/db/schema";
+import { env } from "@/env";
 import {
   createPaymentEvent,
   mapInvoiceStatusToEventType,
@@ -25,6 +21,11 @@ import {
   mapSubscriptionStatusToEventType,
   paymentEvents,
 } from "@/server/utils/payment-events";
+
+const mp = createMercadoPagoClient({
+  accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
+  webhookSecret: env.MERCADO_PAGO_WEBHOOK_SECRET,
+});
 
 // =============================================================================
 // Webhook Handler
@@ -37,11 +38,7 @@ export default defineEventHandler(async (event) => {
   const xRequestId = getHeader(event, "x-request-id");
 
   if (
-    !validateWebhookSignature(
-      xSignature ?? null,
-      xRequestId ?? null,
-      body.data.id
-    )
+    !mp.webhooks.validate(xSignature ?? null, xRequestId ?? null, body.data.id)
   ) {
     // biome-ignore lint/suspicious/noConsole: Security logging
     console.error("[MP Webhook] Invalid signature");
@@ -126,7 +123,7 @@ async function processWebhook(
 // =============================================================================
 
 async function handlePayment(paymentId: string): Promise<void> {
-  const payment = await fetchPayment(paymentId);
+  const payment = await mp.payments.get(paymentId);
   if (!payment.id) {
     throw new Error(`Payment ${paymentId} not found`);
   }
@@ -162,7 +159,7 @@ async function handlePayment(paymentId: string): Promise<void> {
 }
 
 async function handleMerchantOrder(orderId: string): Promise<void> {
-  const order = await fetchMerchantOrder(orderId);
+  const order = await mp.merchantOrders.get(orderId);
   if (!order.id) {
     throw new Error(`Order ${orderId} not found`);
   }
@@ -173,7 +170,7 @@ async function handleMerchantOrder(orderId: string): Promise<void> {
 }
 
 async function handleSubscription(subscriptionId: string): Promise<void> {
-  const subscription = await fetchSubscription(subscriptionId);
+  const subscription = await mp.subscriptions.get(subscriptionId);
   if (!subscription.id) {
     throw new Error(`Subscription ${subscriptionId} not found`);
   }
@@ -208,7 +205,7 @@ async function handleSubscription(subscriptionId: string): Promise<void> {
 }
 
 async function handleInvoice(invoiceId: string): Promise<void> {
-  const invoice = await fetchInvoice(invoiceId);
+  const invoice = await mp.invoices.get(invoiceId);
   if (!invoice.id) {
     throw new Error(`Invoice ${invoiceId} not found`);
   }
@@ -245,7 +242,7 @@ async function handleInvoice(invoiceId: string): Promise<void> {
 }
 
 async function handleChargeback(chargebackId: string): Promise<void> {
-  const chargeback = await fetchChargeback(chargebackId);
+  const chargeback = await mp.chargebacks.get(chargebackId);
   if (!chargeback.id) {
     throw new Error(`Chargeback ${chargebackId} not found`);
   }
