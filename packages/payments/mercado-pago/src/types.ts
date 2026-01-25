@@ -368,17 +368,78 @@ export type MPChargebackResponse = {
   resolution?: string;
 };
 
+export type MPRefundResponse = {
+  id: number;
+  payment_id: number;
+  amount: number;
+  status: "approved" | "pending" | "rejected";
+  reason?: string;
+  date_created: string;
+  unique_sequence_number?: string;
+  refund_mode?: string;
+  adjustment_amount?: number;
+  amount_refunded_to_payer?: number;
+  source?: {
+    id?: string;
+    name?: string;
+    type?: string;
+  };
+};
+
+export type MPPaymentSearchParams = {
+  begin_date?: string;
+  end_date?: string;
+  sort?:
+    | "date_created"
+    | "date_approved"
+    | "date_last_updated"
+    | "money_release_date";
+  criteria?: "asc" | "desc";
+  external_reference?: string;
+  status?: PaymentStatus;
+  offset?: number;
+  limit?: number;
+};
+
+export type MPPaymentSearchResponse = {
+  paging: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+  results: MPPaymentResponse[];
+};
+
+export type MPInvoiceSearchResponse = {
+  paging: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+  results: MPInvoiceResponse[];
+};
+
 export type MPPreapprovalPlan = {
   id: string;
   status: string;
   reason: string;
+  application_id?: number;
+  collector_id?: number;
   auto_recurring: {
     frequency: number;
     frequency_type: string;
     transaction_amount: number;
     currency_id: string;
+    repetitions?: number;
+    billing_day?: number;
+    billing_day_proportional?: boolean;
+    free_trial?: {
+      frequency: number;
+      frequency_type: string;
+    };
   };
   date_created: string;
+  last_modified?: string;
   init_point: string;
   back_url?: string;
 };

@@ -1,9 +1,14 @@
+import { createMercadoPagoClient } from "@beztack/mercadopago/server";
 import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, readBody } from "h3";
 import { db } from "@/db/db";
 import { mpPlan } from "@/db/schema";
 import { env } from "@/env";
-import { auth } from "@/server/utils/auth";
+import { getOptionalSession } from "@/server/utils/require-auth";
+
+const mp = createMercadoPagoClient({
+  accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
+});
 
 type CreateSubscriptionBody = {
   preapproval_plan_id?: string;
@@ -24,63 +29,6 @@ type CreateSubscriptionBody = {
   use_checkout?: boolean;
 };
 
-type SubscriptionResponse = {
-  id: string;
-  status: string;
-  reason: string;
-  payer_id: number;
-  init_point: string;
-  date_created: string;
-  auto_recurring: {
-    frequency: number;
-    frequency_type: string;
-    transaction_amount: number;
-    currency_id: string;
-  };
-};
-
-function buildSubscriptionData(
-  body: CreateSubscriptionBody,
-  userId: string | undefined
-) {
-  const backUrl =
-    body.back_url ?? `${env.BETTER_AUTH_URL}/subscriptions/callback`;
-
-  const data: Record<string, unknown> = {
-    payer_email: body.payer_email,
-    status: "pending",
-    back_url: backUrl,
-  };
-
-  // Set external_reference for webhook linking (prioritize userId over body)
-  const externalRef = userId ?? body.external_reference;
-  if (externalRef) {
-    data.external_reference = externalRef;
-  }
-
-  if (body.preapproval_plan_id) {
-    data.preapproval_plan_id = body.preapproval_plan_id;
-  } else {
-    data.reason = body.reason;
-
-    // Ensure end_date is set (required by Mercado Pago API)
-    // Default to 1 year from now if not provided
-    const autoRecurring = { ...body.auto_recurring };
-    if (!autoRecurring.end_date) {
-      const oneYearFromNow = new Date();
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-      autoRecurring.end_date = oneYearFromNow.toISOString();
-    }
-    data.auto_recurring = autoRecurring;
-  }
-
-  if (body.card_token_id) {
-    data.card_token_id = body.card_token_id;
-  }
-
-  return data;
-}
-
 function validateBody(body: CreateSubscriptionBody) {
   if (!body.payer_email) {
     throw createError({
@@ -98,89 +46,75 @@ function validateBody(body: CreateSubscriptionBody) {
 }
 
 export default defineEventHandler(async (event) => {
-  try {
-    const body = await readBody<CreateSubscriptionBody>(event);
-    validateBody(body);
+  const body = await readBody<CreateSubscriptionBody>(event);
+  validateBody(body);
 
-    // Get authenticated user if available
-    const session = await auth.api.getSession({ headers: event.headers });
-    const userId = session?.user?.id;
+  // Get authenticated user if available
+  const session = await getOptionalSession(event);
+  const userId = session?.user?.id;
 
-    // If using a plan and requesting checkout mode, return the plan's init_point
-    if (body.preapproval_plan_id && body.use_checkout !== false) {
-      const [plan] = await db
-        .select()
-        .from(mpPlan)
-        .where(eq(mpPlan.id, body.preapproval_plan_id))
-        .limit(1);
+  // If using a plan and requesting checkout mode, return the plan's init_point
+  if (body.preapproval_plan_id && body.use_checkout !== false) {
+    const [plan] = await db
+      .select()
+      .from(mpPlan)
+      .where(eq(mpPlan.id, body.preapproval_plan_id))
+      .limit(1);
 
-      if (plan?.initPoint) {
-        return {
-          mode: "checkout",
-          plan: {
-            id: plan.id,
-            reason: plan.reason,
-            transactionAmount: plan.transactionAmount,
-            currencyId: plan.currencyId,
-            frequency: plan.frequency,
-            frequencyType: plan.frequencyType,
-          },
-          checkoutUrl: plan.initPoint,
-        };
-      }
+    if (plan?.initPoint) {
+      return {
+        mode: "checkout",
+        plan: {
+          id: plan.id,
+          reason: plan.reason,
+          transactionAmount: plan.transactionAmount,
+          currencyId: plan.currencyId,
+          frequency: plan.frequency,
+          frequencyType: plan.frequencyType,
+        },
+        checkoutUrl: plan.initPoint,
+      };
     }
-
-    // Otherwise, call the Mercado Pago API directly (requires card_token_id for plan subscriptions)
-    const subscriptionData = buildSubscriptionData(body, userId);
-
-    const response = await fetch("https://api.mercadopago.com/preapproval", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${env.MERCADO_PAGO_ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify(subscriptionData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage =
-        errorData.message ||
-        errorData.error ||
-        errorData.cause?.[0]?.description ||
-        "Failed to create subscription";
-
-      throw createError({
-        statusCode: response.status,
-        message: errorMessage,
-      });
-    }
-
-    const data: SubscriptionResponse = await response.json();
-
-    return {
-      mode: "authorized",
-      subscription: {
-        id: data.id,
-        status: data.status,
-        reason: data.reason,
-        payerId: data.payer_id,
-        initPoint: data.init_point,
-        dateCreated: data.date_created,
-        autoRecurring: data.auto_recurring,
-      },
-    };
-  } catch (error) {
-    if (error instanceof Error && "statusCode" in error) {
-      throw error;
-    }
-
-    throw createError({
-      statusCode: 500,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Unknown error creating subscription",
-    });
   }
+
+  // Build subscription data
+  const backUrl =
+    body.back_url ?? `${env.BETTER_AUTH_URL}/subscriptions/callback`;
+  const externalRef = userId ?? body.external_reference;
+
+  // Ensure end_date is set for non-plan subscriptions (required by MP API)
+  let autoRecurring = body.auto_recurring;
+  if (autoRecurring && !autoRecurring.end_date) {
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    autoRecurring = {
+      ...autoRecurring,
+      end_date: oneYearFromNow.toISOString(),
+    };
+  }
+
+  // Call SDK to create subscription
+  const subscription = await mp.subscriptions.create({
+    preapproval_plan_id: body.preapproval_plan_id,
+    payer_email: body.payer_email,
+    card_token_id: body.card_token_id,
+    back_url: backUrl,
+    external_reference: externalRef,
+    reason: body.reason,
+    auto_recurring: autoRecurring,
+    status: "pending",
+  });
+
+  return {
+    mode: "authorized",
+    subscription: {
+      id: subscription.id,
+      status: subscription.status,
+      reason: subscription.reason,
+      payerId: subscription.payer_id,
+      initPoint: subscription.init_point,
+      dateCreated: subscription.date_created,
+      autoRecurring: subscription.auto_recurring,
+    },
+  };
 });

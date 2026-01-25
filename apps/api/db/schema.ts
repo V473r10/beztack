@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   numeric,
   pgTable,
@@ -212,240 +213,307 @@ export const planLimit = pgTable("plan_limit", {
 // Mercado Pago Tables
 // =============================================================================
 
-export const mpOrder = pgTable("mp_order", {
-  id: text("id").primaryKey(),
-  preferenceId: text("preference_id"),
-  applicationId: text("application_id"),
-  externalReference: text("external_reference"),
-  status: text("status").notNull(),
-  orderStatus: text("order_status"),
-  siteId: text("site_id"),
-  payerId: text("payer_id"),
-  collectorId: text("collector_id"),
-  paidAmount: numeric("paid_amount"),
-  refundedAmount: numeric("refunded_amount"),
-  shippingCost: numeric("shipping_cost"),
-  totalAmount: numeric("total_amount"),
-  cancelled: boolean("cancelled").default(false),
-  notificationUrl: text("notification_url"),
-  additionalInfo: text("additional_info"),
-  isTest: boolean("is_test").default(false),
-  dateCreated: timestamp("date_created"),
-  lastUpdated: timestamp("last_updated"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+export const mpOrder = pgTable(
+  "mp_order",
+  {
+    id: text("id").primaryKey(),
+    preferenceId: text("preference_id"),
+    applicationId: text("application_id"),
+    externalReference: text("external_reference"),
+    status: text("status").notNull(),
+    orderStatus: text("order_status"),
+    siteId: text("site_id"),
+    payerId: text("payer_id"),
+    collectorId: text("collector_id"),
+    paidAmount: numeric("paid_amount"),
+    refundedAmount: numeric("refunded_amount"),
+    shippingCost: numeric("shipping_cost"),
+    totalAmount: numeric("total_amount"),
+    cancelled: boolean("cancelled").default(false),
+    notificationUrl: text("notification_url"),
+    additionalInfo: text("additional_info"),
+    isTest: boolean("is_test").default(false),
+    dateCreated: timestamp("date_created"),
+    lastUpdated: timestamp("last_updated"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("mp_order_status_idx").on(table.status),
+    index("mp_order_external_ref_idx").on(table.externalReference),
+    index("mp_order_preference_idx").on(table.preferenceId),
+  ]
+);
 
-export const mpPayment = pgTable("mp_payment", {
-  id: text("id").primaryKey(),
-  // Vinculacion con la app
-  beztackUserId: text("beztack_user_id").references(() => user.id),
-  // Relacion con MP (sin FK porque el order puede no existir en nuestra DB)
-  orderId: text("order_id"),
-  externalReference: text("external_reference"),
-  // Estado
-  status: text("status").notNull(),
-  statusDetail: text("status_detail"),
-  operationType: text("operation_type"),
-  // Metodo de pago
-  paymentMethodId: text("payment_method_id"),
-  paymentTypeId: text("payment_type_id"),
-  issuerId: text("issuer_id"),
-  // Montos
-  transactionAmount: numeric("transaction_amount"),
-  transactionAmountRefunded: numeric("transaction_amount_refunded"),
-  netReceivedAmount: numeric("net_received_amount"),
-  currencyId: text("currency_id"),
-  installments: integer("installments"),
-  // Pagador
-  payerId: text("payer_id"),
-  payerEmail: text("payer_email"),
-  // Receptor
-  collectorId: text("collector_id"),
-  // Info adicional
-  description: text("description"),
-  statementDescriptor: text("statement_descriptor"),
-  cardFirstSixDigits: text("card_first_six_digits"),
-  cardLastFourDigits: text("card_last_four_digits"),
-  liveMode: boolean("live_mode"),
-  // Fechas MP
-  dateCreated: timestamp("date_created"),
-  dateApproved: timestamp("date_approved"),
-  dateLastUpdated: timestamp("date_last_updated"),
-  moneyReleaseDate: timestamp("money_release_date"),
-  // Auditoria local
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+export const mpPayment = pgTable(
+  "mp_payment",
+  {
+    id: text("id").primaryKey(),
+    // Vinculacion con la app
+    beztackUserId: text("beztack_user_id").references(() => user.id),
+    // Relacion con MP (sin FK porque el order puede no existir en nuestra DB)
+    orderId: text("order_id"),
+    externalReference: text("external_reference"),
+    // Estado
+    status: text("status").notNull(),
+    statusDetail: text("status_detail"),
+    operationType: text("operation_type"),
+    // Metodo de pago
+    paymentMethodId: text("payment_method_id"),
+    paymentTypeId: text("payment_type_id"),
+    issuerId: text("issuer_id"),
+    // Montos
+    transactionAmount: numeric("transaction_amount"),
+    transactionAmountRefunded: numeric("transaction_amount_refunded"),
+    netReceivedAmount: numeric("net_received_amount"),
+    currencyId: text("currency_id"),
+    installments: integer("installments"),
+    // Pagador
+    payerId: text("payer_id"),
+    payerEmail: text("payer_email"),
+    // Receptor
+    collectorId: text("collector_id"),
+    // Info adicional
+    description: text("description"),
+    statementDescriptor: text("statement_descriptor"),
+    cardFirstSixDigits: text("card_first_six_digits"),
+    cardLastFourDigits: text("card_last_four_digits"),
+    liveMode: boolean("live_mode"),
+    // Fechas MP
+    dateCreated: timestamp("date_created"),
+    dateApproved: timestamp("date_approved"),
+    dateLastUpdated: timestamp("date_last_updated"),
+    moneyReleaseDate: timestamp("money_release_date"),
+    // Auditoria local
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("mp_payment_user_idx").on(table.beztackUserId),
+    index("mp_payment_status_idx").on(table.status),
+    index("mp_payment_order_idx").on(table.orderId),
+    index("mp_payment_external_ref_idx").on(table.externalReference),
+    index("mp_payment_payer_email_idx").on(table.payerEmail),
+    index("mp_payment_date_created_idx").on(table.dateCreated),
+  ]
+);
 
-export const mpPlan = pgTable("mp_plan", {
-  // ID de Mercado Pago (primary key)
-  id: text("id").primaryKey(),
+export const mpPlan = pgTable(
+  "mp_plan",
+  {
+    // ID de Mercado Pago (primary key)
+    id: text("id").primaryKey(),
 
-  // Metadata de MP
-  applicationId: text("application_id"),
-  collectorId: text("collector_id"),
+    // Metadata de MP
+    applicationId: text("application_id"),
+    collectorId: text("collector_id"),
 
-  // Descripción del plan
-  reason: text("reason").notNull(),
-  status: text("status").notNull(), // active, inactive
+    // Descripción del plan
+    reason: text("reason").notNull(),
+    status: text("status").notNull(), // active, inactive
 
-  // Auto recurring config
-  frequency: integer("frequency").notNull(),
-  frequencyType: text("frequency_type").notNull(), // days, months
-  transactionAmount: numeric("transaction_amount").notNull(),
-  currencyId: text("currency_id").notNull(),
-  repetitions: integer("repetitions"), // null = indefinido
-  billingDay: integer("billing_day"),
-  billingDayProportional: boolean("billing_day_proportional"),
+    // Auto recurring config
+    frequency: integer("frequency").notNull(),
+    frequencyType: text("frequency_type").notNull(), // days, months
+    transactionAmount: numeric("transaction_amount").notNull(),
+    currencyId: text("currency_id").notNull(),
+    repetitions: integer("repetitions"), // null = indefinido
+    billingDay: integer("billing_day"),
+    billingDayProportional: boolean("billing_day_proportional"),
 
-  // Free trial
-  freeTrialFrequency: integer("free_trial_frequency"),
-  freeTrialFrequencyType: text("free_trial_frequency_type"),
+    // Free trial
+    freeTrialFrequency: integer("free_trial_frequency"),
+    freeTrialFrequencyType: text("free_trial_frequency_type"),
 
-  // URLs
-  initPoint: text("init_point"),
-  backUrl: text("back_url"),
+    // URLs
+    initPoint: text("init_point"),
+    backUrl: text("back_url"),
 
-  // Fechas de MP
-  dateCreated: timestamp("date_created"),
-  lastModified: timestamp("last_modified"),
+    // Fechas de MP
+    dateCreated: timestamp("date_created"),
+    lastModified: timestamp("last_modified"),
 
-  // Auditoría local
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+    // Auditoría local
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("mp_plan_status_idx").on(table.status)]
+);
 
-export const mpSubscription = pgTable("mp_subscription", {
-  id: text("id").primaryKey(),
-  beztackUserId: text("beztack_user_id").references(() => user.id),
-  preapprovalPlanId: text("preapproval_plan_id").references(() => mpPlan.id),
-  externalReference: text("external_reference"),
-  payerId: text("payer_id"),
-  payerEmail: text("payer_email"),
-  collectorId: text("collector_id"),
-  applicationId: text("application_id"),
-  status: text("status").notNull(),
-  reason: text("reason"),
-  initPoint: text("init_point"),
-  backUrl: text("back_url"),
-  // Auto recurring
-  frequency: integer("frequency"),
-  frequencyType: text("frequency_type"),
-  transactionAmount: numeric("transaction_amount"),
-  currencyId: text("currency_id"),
-  // Summarized info
-  chargedQuantity: integer("charged_quantity"),
-  chargedAmount: numeric("charged_amount"),
-  pendingChargeAmount: numeric("pending_charge_amount"),
-  // Proximo cobro
-  nextPaymentDate: timestamp("next_payment_date"),
-  paymentMethodId: text("payment_method_id"),
-  // Fechas MP
-  dateCreated: timestamp("date_created"),
-  lastModified: timestamp("last_modified"),
-  // Auditoria local
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+export const mpSubscription = pgTable(
+  "mp_subscription",
+  {
+    id: text("id").primaryKey(),
+    beztackUserId: text("beztack_user_id").references(() => user.id),
+    preapprovalPlanId: text("preapproval_plan_id").references(() => mpPlan.id),
+    externalReference: text("external_reference"),
+    payerId: text("payer_id"),
+    payerEmail: text("payer_email"),
+    collectorId: text("collector_id"),
+    applicationId: text("application_id"),
+    status: text("status").notNull(),
+    reason: text("reason"),
+    initPoint: text("init_point"),
+    backUrl: text("back_url"),
+    // Auto recurring
+    frequency: integer("frequency"),
+    frequencyType: text("frequency_type"),
+    transactionAmount: numeric("transaction_amount"),
+    currencyId: text("currency_id"),
+    // Summarized info
+    chargedQuantity: integer("charged_quantity"),
+    chargedAmount: numeric("charged_amount"),
+    pendingChargeAmount: numeric("pending_charge_amount"),
+    // Fechas de cobro
+    nextPaymentDate: timestamp("next_payment_date"),
+    endDate: timestamp("end_date"),
+    paymentMethodId: text("payment_method_id"),
+    // Semaphore para control de concurrencia en webhooks
+    semaphore: text("semaphore"),
+    // Fechas MP
+    dateCreated: timestamp("date_created"),
+    lastModified: timestamp("last_modified"),
+    // Auditoria local
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("mp_subscription_user_idx").on(table.beztackUserId),
+    index("mp_subscription_plan_idx").on(table.preapprovalPlanId),
+    index("mp_subscription_status_idx").on(table.status),
+    index("mp_subscription_payer_email_idx").on(table.payerEmail),
+  ]
+);
 
-export const mpInvoice = pgTable("mp_invoice", {
-  id: text("id").primaryKey(),
-  subscriptionId: text("subscription_id").references(() => mpSubscription.id),
-  paymentId: text("payment_id"),
-  externalReference: text("external_reference"),
-  status: text("status").notNull(),
-  reason: text("reason"),
-  transactionAmount: numeric("transaction_amount"),
-  currencyId: text("currency_id"),
-  payerId: text("payer_id"),
-  type: text("type"),
-  retryAttempt: integer("retry_attempt"),
-  debitDate: timestamp("debit_date"),
-  dateCreated: timestamp("date_created"),
-  lastModified: timestamp("last_modified"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+export const mpInvoice = pgTable(
+  "mp_invoice",
+  {
+    id: text("id").primaryKey(),
+    subscriptionId: text("subscription_id").references(() => mpSubscription.id),
+    paymentId: text("payment_id"),
+    externalReference: text("external_reference"),
+    status: text("status").notNull(),
+    reason: text("reason"),
+    transactionAmount: numeric("transaction_amount"),
+    currencyId: text("currency_id"),
+    payerId: text("payer_id"),
+    type: text("type"),
+    retryAttempt: integer("retry_attempt"),
+    debitDate: timestamp("debit_date"),
+    dateCreated: timestamp("date_created"),
+    lastModified: timestamp("last_modified"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("mp_invoice_subscription_idx").on(table.subscriptionId),
+    index("mp_invoice_status_idx").on(table.status),
+    index("mp_invoice_debit_date_idx").on(table.debitDate),
+  ]
+);
 
-export const mpRefund = pgTable("mp_refund", {
-  id: text("id").primaryKey(),
-  paymentId: text("payment_id")
-    .notNull()
-    .references(() => mpPayment.id),
-  amount: numeric("amount"),
-  amountRefundedToPayer: numeric("amount_refunded_to_payer"),
-  adjustmentAmount: numeric("adjustment_amount"),
-  status: text("status"),
-  reason: text("reason"),
-  refundMode: text("refund_mode"),
-  sourceId: text("source_id"),
-  sourceName: text("source_name"),
-  sourceType: text("source_type"),
-  uniqueSequenceNumber: text("unique_sequence_number"),
-  dateCreated: timestamp("date_created"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const mpRefund = pgTable(
+  "mp_refund",
+  {
+    id: text("id").primaryKey(),
+    paymentId: text("payment_id")
+      .notNull()
+      .references(() => mpPayment.id),
+    amount: numeric("amount"),
+    amountRefundedToPayer: numeric("amount_refunded_to_payer"),
+    adjustmentAmount: numeric("adjustment_amount"),
+    status: text("status"),
+    reason: text("reason"),
+    refundMode: text("refund_mode"),
+    sourceId: text("source_id"),
+    sourceName: text("source_name"),
+    sourceType: text("source_type"),
+    uniqueSequenceNumber: text("unique_sequence_number"),
+    dateCreated: timestamp("date_created"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("mp_refund_payment_idx").on(table.paymentId),
+    index("mp_refund_status_idx").on(table.status),
+  ]
+);
 
-export const mpChargeback = pgTable("mp_chargeback", {
-  id: text("id").primaryKey(),
-  paymentId: text("payment_id").references(() => mpPayment.id),
-  // Montos
-  amount: numeric("amount"),
-  coverageApplied: boolean("coverage_applied"),
-  coverageEligible: boolean("coverage_eligible"),
-  // Estado del proceso
-  status: text("status").notNull(),
-  stage: text("stage"),
-  // Razon
-  reason: text("reason"),
-  reasonDetail: text("reason_detail"),
-  // Documentacion
-  documentationRequired: boolean("documentation_required"),
-  documentationStatus: text("documentation_status"),
-  // Resolucion
-  resolution: text("resolution"),
-  // Fechas
-  dateCreated: timestamp("date_created"),
-  dateLastUpdated: timestamp("date_last_updated"),
-  dateDocumentationDeadline: timestamp("date_documentation_deadline"),
-  // Auditoria
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+export const mpChargeback = pgTable(
+  "mp_chargeback",
+  {
+    id: text("id").primaryKey(),
+    paymentId: text("payment_id").references(() => mpPayment.id),
+    // Montos
+    amount: numeric("amount"),
+    currencyId: text("currency_id"),
+    coverageApplied: boolean("coverage_applied"),
+    coverageEligible: boolean("coverage_eligible"),
+    // Estado del proceso
+    status: text("status").notNull(),
+    stage: text("stage"),
+    // Razon
+    reason: text("reason"),
+    reasonDetail: text("reason_detail"),
+    // Documentacion
+    documentationRequired: boolean("documentation_required"),
+    documentationStatus: text("documentation_status"),
+    // Resolucion
+    resolution: text("resolution"),
+    // Fechas
+    dateCreated: timestamp("date_created"),
+    dateLastUpdated: timestamp("date_last_updated"),
+    dateDocumentationDeadline: timestamp("date_documentation_deadline"),
+    // Auditoria
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("mp_chargeback_payment_idx").on(table.paymentId),
+    index("mp_chargeback_status_idx").on(table.status),
+  ]
+);
 
-export const mpWebhookLog = pgTable("mp_webhook_log", {
-  id: serial("id").primaryKey(),
-  webhookId: text("webhook_id"),
-  type: text("type").notNull(),
-  action: text("action"),
-  resourceId: text("resource_id"),
-  liveMode: boolean("live_mode"),
-  mpUserId: text("mp_user_id"),
-  apiVersion: text("api_version"),
-  rawPayload: text("raw_payload"),
-  status: text("status").default("received").notNull(),
-  errorMessage: text("error_message"),
-  processedAt: timestamp("processed_at").defaultNow().notNull(),
-});
+export const mpWebhookLog = pgTable(
+  "mp_webhook_log",
+  {
+    id: serial("id").primaryKey(),
+    webhookId: text("webhook_id"),
+    type: text("type").notNull(),
+    action: text("action"),
+    resourceId: text("resource_id"),
+    liveMode: boolean("live_mode"),
+    mpUserId: text("mp_user_id"),
+    apiVersion: text("api_version"),
+    rawPayload: text("raw_payload"),
+    status: text("status").default("received").notNull(),
+    errorMessage: text("error_message"),
+    processedAt: timestamp("processed_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("mp_webhook_log_type_idx").on(table.type),
+    index("mp_webhook_log_resource_idx").on(table.resourceId),
+    index("mp_webhook_log_status_idx").on(table.status),
+    index("mp_webhook_log_processed_at_idx").on(table.processedAt),
+  ]
+);
 
 // Export schema object for Better Auth drizzle adapter
 export const schema = {

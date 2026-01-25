@@ -15,6 +15,13 @@
       "when": 1769306091585,
       "tag": "0001_cheerful_luke_cage",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769376256388,
+      "tag": "0002_aberrant_stone_men",
+      "breakpoints": true
     }
   ]
 }

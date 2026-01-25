@@ -1,56 +1,59 @@
+import { createMercadoPagoClient } from "@beztack/mercadopago/server";
 import { createError, defineEventHandler, getQuery } from "h3";
 import { env } from "@/env";
+import { requireAuth } from "@/server/utils/require-auth";
+
+const mp = createMercadoPagoClient({
+  accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
+});
 
 export default defineEventHandler(async (event) => {
-  try {
-    const query = getQuery(event);
-    const params = new URLSearchParams();
+  // Require authentication to search subscriptions
+  await requireAuth(event);
+  const session = event.context.auth;
 
-    if (query.payer_email) {
-      params.append("payer_email", String(query.payer_email));
-    }
-    if (query.status) {
-      params.append("status", String(query.status));
-    }
-    if (query.preapproval_plan_id) {
-      params.append("preapproval_plan_id", String(query.preapproval_plan_id));
-    }
-    if (query.offset) {
-      params.append("offset", String(query.offset));
-    }
-    if (query.limit) {
-      params.append("limit", String(query.limit));
-    }
+  const query = getQuery(event);
 
-    const url = `https://api.mercadopago.com/preapproval/search?${params.toString()}`;
+  // Build search params
+  // For non-admin users, filter by their email to prevent data leaks
+  const userEmail = session?.user?.email;
+  const isAdmin = session?.user?.role === "admin";
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${env.MERCADO_PAGO_ACCESS_TOKEN}`,
-      },
-    });
+  const searchParams: Parameters<typeof mp.subscriptions.search>[0] = {
+    limit: query.limit ? Number(query.limit) : undefined,
+    offset: query.offset ? Number(query.offset) : undefined,
+  };
 
-    if (!response.ok) {
-      const errorData = await response.json();
+  // Status filter
+  if (query.status) {
+    searchParams.status = String(query.status);
+  }
+
+  // Plan filter
+  if (query.preapproval_plan_id) {
+    searchParams.preapproval_plan_id = String(query.preapproval_plan_id);
+  }
+
+  // Email filter - admins can search any email, users can only search their own
+  if (query.payer_email) {
+    const requestedEmail = String(query.payer_email);
+    if (isAdmin || requestedEmail === userEmail) {
+      searchParams.payer_email = requestedEmail;
+    } else {
       throw createError({
-        statusCode: response.status,
-        message: errorData.message || "Failed to search subscriptions",
+        statusCode: 403,
+        message: "Cannot search subscriptions for other users",
       });
     }
-
-    return response.json();
-  } catch (error) {
-    if (error instanceof Error && "statusCode" in error) {
-      throw error;
-    }
-
-    throw createError({
-      statusCode: 500,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Unknown error searching subscriptions",
-    });
+  } else if (!isAdmin && userEmail) {
+    // Non-admin users always filter by their email
+    searchParams.payer_email = userEmail;
   }
+
+  const result = await mp.subscriptions.search(searchParams);
+
+  return {
+    subscriptions: result.results,
+    total: result.paging.total,
+  };
 });

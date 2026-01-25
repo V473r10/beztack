@@ -3,10 +3,14 @@ import type {
   CreatePreferenceData,
   MPChargebackResponse,
   MPInvoiceResponse,
+  MPInvoiceSearchResponse,
   MPMerchantOrderResponse,
   MPPaymentResponse,
+  MPPaymentSearchParams,
+  MPPaymentSearchResponse,
   MPPreapproval,
   MPPreapprovalPlan,
+  MPRefundResponse,
   MPSubscriptionResponse,
   PreferenceResponse,
   ProcessPaymentData,
@@ -22,13 +26,158 @@ export type MercadoPagoConfig = {
   accessToken: string;
   webhookSecret?: string;
   baseUrl?: string;
+  /** Request timeout in milliseconds (default: 30000) */
+  timeout?: number;
+  /** Maximum retry attempts for 429/5xx errors (default: 3) */
+  maxRetries?: number;
+  /** Initial retry delay in milliseconds (default: 1000) */
+  initialRetryDelay?: number;
 };
 
 const DEFAULT_BASE_URL = "https://api.mercadopago.com";
+const DEFAULT_TIMEOUT = 30_000;
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_INITIAL_RETRY_DELAY = 1000;
+
+// Retry constants
+const RATE_LIMIT_STATUS = 429;
+const SERVER_ERROR_MIN = 500;
+const SERVER_ERROR_MAX = 600;
+const RETRY_BACKOFF_BASE = 2;
+const NO_CONTENT_STATUS = 204;
+
+// ============================================================================
+// Custom Error Class
+// ============================================================================
+
+export class MercadoPagoError extends Error {
+  statusCode: number;
+  errorCause?: unknown;
+  retryable: boolean;
+
+  constructor(
+    message: string,
+    statusCode: number,
+    errorCause?: unknown,
+    retryable = false
+  ) {
+    super(message);
+    this.name = "MercadoPagoError";
+    this.statusCode = statusCode;
+    this.errorCause = errorCause;
+    this.retryable = retryable;
+  }
+}
 
 // ============================================================================
 // Internal Helpers
 // ============================================================================
+
+function isRetryableStatus(status: number): boolean {
+  return (
+    status === RATE_LIMIT_STATUS ||
+    (status >= SERVER_ERROR_MIN && status < SERVER_ERROR_MAX)
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type FetchResult<T> =
+  | { success: true; data: T }
+  | { success: false; shouldRetry: boolean; error: MercadoPagoError };
+
+type AttemptFetchParams = {
+  baseUrl: string;
+  endpoint: string;
+  accessToken: string;
+  timeout: number;
+  options?: RequestInit;
+};
+
+async function attemptFetch<T>(
+  params: AttemptFetchParams
+): Promise<FetchResult<T>> {
+  const { baseUrl, endpoint, accessToken, timeout, options } = params;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(`${baseUrl}${endpoint}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        ...options?.headers,
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      const error = errorBody as {
+        message?: string;
+        error?: string;
+        cause?: unknown[];
+      };
+
+      const errorMessage =
+        error.message ??
+        error.error ??
+        `Mercado Pago API error: ${response.status}`;
+
+      return {
+        success: false,
+        shouldRetry: isRetryableStatus(response.status),
+        error: new MercadoPagoError(
+          errorMessage,
+          response.status,
+          error.cause,
+          isRetryableStatus(response.status)
+        ),
+      };
+    }
+
+    // Handle empty responses (204 No Content)
+    const contentLength = response.headers.get("content-length");
+    if (response.status === NO_CONTENT_STATUS || contentLength === "0") {
+      return { success: true, data: {} as T };
+    }
+
+    const data = (await response.json()) as T;
+    return { success: true, data };
+  } catch (err) {
+    clearTimeout(timeoutId);
+
+    // Handle abort (timeout)
+    if (err instanceof Error && err.name === "AbortError") {
+      return {
+        success: false,
+        shouldRetry: true,
+        error: new MercadoPagoError(
+          `Request timeout after ${timeout}ms`,
+          0,
+          err,
+          true
+        ),
+      };
+    }
+
+    // Network errors are retryable
+    if (err instanceof Error) {
+      return {
+        success: false,
+        shouldRetry: true,
+        error: new MercadoPagoError(err.message, 0, err, true),
+      };
+    }
+
+    throw err;
+  }
+}
 
 async function mpFetch<T>(
   config: MercadoPagoConfig,
@@ -36,25 +185,39 @@ async function mpFetch<T>(
   options?: RequestInit
 ): Promise<T> {
   const baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
-  const response = await fetch(`${baseUrl}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.accessToken}`,
-      ...options?.headers,
-    },
-  });
+  const timeout = config.timeout ?? DEFAULT_TIMEOUT;
+  const maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
+  const initialRetryDelay =
+    config.initialRetryDelay ?? DEFAULT_INITIAL_RETRY_DELAY;
 
-  if (!response.ok) {
-    const error = (await response.json().catch(() => ({}))) as {
-      message?: string;
-    };
-    throw new Error(
-      error.message ?? `Mercado Pago API error: ${response.status}`
-    );
+  let lastError: MercadoPagoError | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const result = await attemptFetch<T>({
+      baseUrl,
+      endpoint,
+      accessToken: config.accessToken,
+      timeout,
+      options,
+    });
+
+    if (result.success) {
+      return result.data;
+    }
+
+    lastError = result.error;
+
+    // If retryable and we have retries left, wait and retry
+    if (result.shouldRetry && attempt < maxRetries) {
+      const delay = initialRetryDelay * RETRY_BACKOFF_BASE ** attempt;
+      await sleep(delay);
+      continue;
+    }
+
+    throw result.error;
   }
 
-  return response.json() as Promise<T>;
+  throw lastError ?? new Error("Unexpected error in mpFetch");
 }
 
 function parseSignatureHeader(
@@ -89,6 +252,16 @@ function buildSearchEndpoint(
   return query ? `${basePath}?${query}` : basePath;
 }
 
+function setSearchParam(
+  params: URLSearchParams,
+  key: string,
+  value: string | number | undefined
+): void {
+  if (value !== undefined) {
+    params.set(key, String(value));
+  }
+}
+
 // ============================================================================
 // Webhooks Module
 // ============================================================================
@@ -107,10 +280,9 @@ function createWebhooksModule(config: MercadoPagoConfig) {
       const secret = config.webhookSecret;
 
       if (!secret) {
-        console.warn(
-          "[MercadoPago SDK] webhookSecret not configured, skipping validation"
-        );
-        return true;
+        // In production, this should be strict - return false
+        // For development, we allow skipping validation
+        return process.env.NODE_ENV !== "production";
       }
 
       if (!(xSignature && xRequestId)) {
@@ -154,15 +326,74 @@ function createWebhooksModule(config: MercadoPagoConfig) {
 
 function createPaymentsModule(config: MercadoPagoConfig) {
   return {
+    /**
+     * Get payment details by ID
+     */
     get(paymentId: string | number): Promise<MPPaymentResponse> {
       return mpFetch<MPPaymentResponse>(config, `/v1/payments/${paymentId}`);
     },
 
+    /**
+     * Create a new payment
+     */
     create(data: ProcessPaymentData): Promise<ProcessPaymentResponse> {
       return mpFetch<ProcessPaymentResponse>(config, "/v1/payments", {
         method: "POST",
         body: JSON.stringify(data),
       });
+    },
+
+    /**
+     * Search payments with filters
+     */
+    search(params?: MPPaymentSearchParams): Promise<MPPaymentSearchResponse> {
+      const searchParams = new URLSearchParams();
+
+      setSearchParam(searchParams, "begin_date", params?.begin_date);
+      setSearchParam(searchParams, "end_date", params?.end_date);
+      setSearchParam(searchParams, "sort", params?.sort);
+      setSearchParam(searchParams, "criteria", params?.criteria);
+      setSearchParam(
+        searchParams,
+        "external_reference",
+        params?.external_reference
+      );
+      setSearchParam(searchParams, "status", params?.status);
+      setSearchParam(searchParams, "offset", params?.offset);
+      setSearchParam(searchParams, "limit", params?.limit);
+
+      const endpoint = buildSearchEndpoint("/v1/payments/search", searchParams);
+      return mpFetch<MPPaymentSearchResponse>(config, endpoint);
+    },
+
+    /**
+     * Create a refund for a payment
+     * @param paymentId - The payment ID to refund
+     * @param amount - Optional partial refund amount. If not provided, full refund is created.
+     */
+    refund(
+      paymentId: string | number,
+      amount?: number
+    ): Promise<MPRefundResponse> {
+      const body = amount !== undefined ? { amount } : {};
+      return mpFetch<MPRefundResponse>(
+        config,
+        `/v1/payments/${paymentId}/refunds`,
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        }
+      );
+    },
+
+    /**
+     * Get refunds for a payment
+     */
+    getRefunds(paymentId: string | number): Promise<MPRefundResponse[]> {
+      return mpFetch<MPRefundResponse[]>(
+        config,
+        `/v1/payments/${paymentId}/refunds`
+      );
     },
   };
 }
@@ -173,6 +404,9 @@ function createPaymentsModule(config: MercadoPagoConfig) {
 
 function createPlansModule(config: MercadoPagoConfig) {
   return {
+    /**
+     * List subscription plans
+     */
     list(params?: {
       status?: string;
       limit?: number;
@@ -196,10 +430,16 @@ function createPlansModule(config: MercadoPagoConfig) {
       return mpFetch<{ results: MPPreapprovalPlan[] }>(config, endpoint);
     },
 
+    /**
+     * Get a subscription plan by ID
+     */
     get(planId: string): Promise<MPPreapprovalPlan> {
       return mpFetch<MPPreapprovalPlan>(config, `/preapproval_plan/${planId}`);
     },
 
+    /**
+     * Create a new subscription plan
+     */
     create(data: {
       reason: string;
       auto_recurring: {
@@ -220,6 +460,37 @@ function createPlansModule(config: MercadoPagoConfig) {
       return mpFetch<MPPreapprovalPlan>(config, "/preapproval_plan", {
         method: "POST",
         body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Update a subscription plan
+     */
+    update(
+      planId: string,
+      data: {
+        reason?: string;
+        auto_recurring?: {
+          transaction_amount?: number;
+          billing_day?: number;
+          billing_day_proportional?: boolean;
+        };
+        back_url?: string;
+      }
+    ): Promise<MPPreapprovalPlan> {
+      return mpFetch<MPPreapprovalPlan>(config, `/preapproval_plan/${planId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Deactivate (set to inactive) a subscription plan
+     */
+    deactivate(planId: string): Promise<MPPreapprovalPlan> {
+      return mpFetch<MPPreapprovalPlan>(config, `/preapproval_plan/${planId}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "inactive" }),
       });
     },
   };
@@ -249,6 +520,9 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
   };
 
   return {
+    /**
+     * Create a new subscription
+     */
     create(data: {
       preapproval_plan_id?: string;
       payer_email: string;
@@ -270,6 +544,9 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
       });
     },
 
+    /**
+     * Get a subscription by ID
+     */
     get(subscriptionId: string): Promise<MPSubscriptionResponse> {
       return mpFetch<MPSubscriptionResponse>(
         config,
@@ -279,18 +556,30 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
 
     update,
 
+    /**
+     * Cancel a subscription
+     */
     cancel(subscriptionId: string): Promise<MPSubscriptionResponse> {
       return update(subscriptionId, { status: "cancelled" });
     },
 
+    /**
+     * Pause a subscription
+     */
     pause(subscriptionId: string): Promise<MPSubscriptionResponse> {
       return update(subscriptionId, { status: "paused" });
     },
 
+    /**
+     * Resume a paused subscription
+     */
     resume(subscriptionId: string): Promise<MPSubscriptionResponse> {
       return update(subscriptionId, { status: "authorized" });
     },
 
+    /**
+     * Search subscriptions with filters
+     */
     search(params?: {
       payer_email?: string;
       status?: string;
@@ -321,6 +610,37 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
         endpoint
       );
     },
+
+    /**
+     * List invoices (authorized payments) for a subscription
+     */
+    listInvoices(
+      subscriptionId: string,
+      params?: {
+        status?: string;
+        limit?: number;
+        offset?: number;
+      }
+    ): Promise<MPInvoiceSearchResponse> {
+      const searchParams = new URLSearchParams();
+      searchParams.set("preapproval_id", subscriptionId);
+
+      if (params?.status) {
+        searchParams.set("status", params.status);
+      }
+      if (params?.limit) {
+        searchParams.set("limit", String(params.limit));
+      }
+      if (params?.offset) {
+        searchParams.set("offset", String(params.offset));
+      }
+
+      const endpoint = buildSearchEndpoint(
+        "/authorized_payments/search",
+        searchParams
+      );
+      return mpFetch<MPInvoiceSearchResponse>(config, endpoint);
+    },
   };
 }
 
@@ -330,6 +650,9 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
 
 function createCustomersModule(config: MercadoPagoConfig) {
   return {
+    /**
+     * Create a new customer
+     */
     create(data: {
       email: string;
       first_name?: string;
@@ -341,6 +664,9 @@ function createCustomersModule(config: MercadoPagoConfig) {
       });
     },
 
+    /**
+     * Get a customer by ID
+     */
     get(customerId: string): Promise<{ id: string; email: string }> {
       return mpFetch<{ id: string; email: string }>(
         config,
@@ -348,6 +674,9 @@ function createCustomersModule(config: MercadoPagoConfig) {
       );
     },
 
+    /**
+     * Search customers by email
+     */
     searchByEmail(
       email: string
     ): Promise<{ results: { id: string; email: string }[] }> {
@@ -365,6 +694,9 @@ function createCustomersModule(config: MercadoPagoConfig) {
 
 function createCheckoutModule(config: MercadoPagoConfig) {
   return {
+    /**
+     * Create a checkout preference
+     */
     createPreference(data: CreatePreferenceData): Promise<PreferenceResponse> {
       return mpFetch<PreferenceResponse>(config, "/checkout/preferences", {
         method: "POST",
@@ -372,6 +704,9 @@ function createCheckoutModule(config: MercadoPagoConfig) {
       });
     },
 
+    /**
+     * Get a checkout preference by ID
+     */
     getPreference(preferenceId: string): Promise<PreferenceResponse> {
       return mpFetch<PreferenceResponse>(
         config,
@@ -387,11 +722,45 @@ function createCheckoutModule(config: MercadoPagoConfig) {
 
 function createInvoicesModule(config: MercadoPagoConfig) {
   return {
+    /**
+     * Get an invoice (authorized payment) by ID
+     */
     get(invoiceId: string): Promise<MPInvoiceResponse> {
       return mpFetch<MPInvoiceResponse>(
         config,
         `/authorized_payments/${invoiceId}`
       );
+    },
+
+    /**
+     * Search invoices with filters
+     */
+    search(params?: {
+      preapproval_id?: string;
+      status?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<MPInvoiceSearchResponse> {
+      const searchParams = new URLSearchParams();
+
+      if (params?.preapproval_id) {
+        searchParams.set("preapproval_id", params.preapproval_id);
+      }
+      if (params?.status) {
+        searchParams.set("status", params.status);
+      }
+      if (params?.limit) {
+        searchParams.set("limit", String(params.limit));
+      }
+      if (params?.offset) {
+        searchParams.set("offset", String(params.offset));
+      }
+
+      const endpoint = buildSearchEndpoint(
+        "/authorized_payments/search",
+        searchParams
+      );
+      return mpFetch<MPInvoiceSearchResponse>(config, endpoint);
     },
   };
 }
@@ -402,6 +771,9 @@ function createInvoicesModule(config: MercadoPagoConfig) {
 
 function createMerchantOrdersModule(config: MercadoPagoConfig) {
   return {
+    /**
+     * Get a merchant order by ID
+     */
     get(orderId: string): Promise<MPMerchantOrderResponse> {
       return mpFetch<MPMerchantOrderResponse>(
         config,
@@ -417,6 +789,9 @@ function createMerchantOrdersModule(config: MercadoPagoConfig) {
 
 function createChargebacksModule(config: MercadoPagoConfig) {
   return {
+    /**
+     * Get a chargeback by ID
+     */
     get(chargebackId: string): Promise<MPChargebackResponse> {
       return mpFetch<MPChargebackResponse>(
         config,
@@ -451,6 +826,8 @@ export type MercadoPagoClient = {
  * const mp = createMercadoPagoClient({
  *   accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN,
  *   webhookSecret: process.env.MERCADO_PAGO_WEBHOOK_SECRET,
+ *   timeout: 30000, // 30 seconds
+ *   maxRetries: 3,
  * })
  *
  * // Create a preference
@@ -460,6 +837,24 @@ export type MercadoPagoClient = {
  *
  * // Get a payment
  * const payment = await mp.payments.get("123456")
+ *
+ * // Search payments
+ * const payments = await mp.payments.search({
+ *   begin_date: "2024-01-01T00:00:00Z",
+ *   status: "approved",
+ * })
+ *
+ * // Refund a payment (full)
+ * const refund = await mp.payments.refund("123456")
+ *
+ * // Refund a payment (partial)
+ * const partialRefund = await mp.payments.refund("123456", 50.00)
+ *
+ * // List subscription invoices
+ * const invoices = await mp.subscriptions.listInvoices("sub_123")
+ *
+ * // Deactivate a plan
+ * await mp.plans.deactivate("plan_123")
  *
  * // Validate webhook
  * const isValid = mp.webhooks.validate(xSignature, xRequestId, dataId)
