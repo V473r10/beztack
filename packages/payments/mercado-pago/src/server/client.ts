@@ -328,13 +328,37 @@ function createPaymentsModule(config: MercadoPagoConfig) {
   return {
     /**
      * Get payment details by ID
+     *
+     * @param paymentId - The payment ID (numeric or string)
+     * @returns Payment details including status, amount, payer info
+     *
+     * @example
+     * ```typescript
+     * const payment = await mp.payments.get("123456789")
+     * console.log(payment.status) // "approved"
+     * ```
      */
     get(paymentId: string | number): Promise<MPPaymentResponse> {
       return mpFetch<MPPaymentResponse>(config, `/v1/payments/${paymentId}`);
     },
 
     /**
-     * Create a new payment
+     * Create a new payment (card payment)
+     *
+     * @param data - Payment data including token, amount, payer info
+     * @returns Created payment with ID and status
+     *
+     * @example
+     * ```typescript
+     * const payment = await mp.payments.create({
+     *   token: "card_token_from_sdk",
+     *   issuer_id: "visa",
+     *   payment_method_id: "visa",
+     *   transaction_amount: 100,
+     *   installments: 1,
+     *   payer: { email: "user@example.com" },
+     * })
+     * ```
      */
     create(data: ProcessPaymentData): Promise<ProcessPaymentResponse> {
       return mpFetch<ProcessPaymentResponse>(config, "/v1/payments", {
@@ -345,6 +369,20 @@ function createPaymentsModule(config: MercadoPagoConfig) {
 
     /**
      * Search payments with filters
+     *
+     * @param params - Search filters (date range, status, external_reference)
+     * @returns Paginated list of payments
+     *
+     * @example
+     * ```typescript
+     * const results = await mp.payments.search({
+     *   status: "approved",
+     *   begin_date: "2024-01-01T00:00:00Z",
+     *   end_date: "2024-12-31T23:59:59Z",
+     *   limit: 50,
+     * })
+     * console.log(results.paging.total)
+     * ```
      */
     search(params?: MPPaymentSearchParams): Promise<MPPaymentSearchResponse> {
       const searchParams = new URLSearchParams();
@@ -368,8 +406,19 @@ function createPaymentsModule(config: MercadoPagoConfig) {
 
     /**
      * Create a refund for a payment
+     *
      * @param paymentId - The payment ID to refund
      * @param amount - Optional partial refund amount. If not provided, full refund is created.
+     * @returns Refund details with status
+     *
+     * @example
+     * ```typescript
+     * // Full refund
+     * const refund = await mp.payments.refund("123456789")
+     *
+     * // Partial refund
+     * const partialRefund = await mp.payments.refund("123456789", 50.00)
+     * ```
      */
     refund(
       paymentId: string | number,
@@ -387,7 +436,16 @@ function createPaymentsModule(config: MercadoPagoConfig) {
     },
 
     /**
-     * Get refunds for a payment
+     * Get all refunds for a payment
+     *
+     * @param paymentId - The payment ID
+     * @returns Array of refunds for the payment
+     *
+     * @example
+     * ```typescript
+     * const refunds = await mp.payments.getRefunds("123456789")
+     * const totalRefunded = refunds.reduce((sum, r) => sum + r.amount, 0)
+     * ```
      */
     getRefunds(paymentId: string | number): Promise<MPRefundResponse[]> {
       return mpFetch<MPRefundResponse[]>(
@@ -406,6 +464,14 @@ function createPlansModule(config: MercadoPagoConfig) {
   return {
     /**
      * List subscription plans
+     *
+     * @param params - Filter options (status, pagination)
+     * @returns List of preapproval plans
+     *
+     * @example
+     * ```typescript
+     * const { results } = await mp.plans.list({ status: "active" })
+     * ```
      */
     list(params?: {
       status?: string;
@@ -432,6 +498,15 @@ function createPlansModule(config: MercadoPagoConfig) {
 
     /**
      * Get a subscription plan by ID
+     *
+     * @param planId - The plan ID
+     * @returns Plan details
+     *
+     * @example
+     * ```typescript
+     * const plan = await mp.plans.get("2c9380848...")
+     * console.log(plan.reason, plan.auto_recurring.transaction_amount)
+     * ```
      */
     get(planId: string): Promise<MPPreapprovalPlan> {
       return mpFetch<MPPreapprovalPlan>(config, `/preapproval_plan/${planId}`);
@@ -439,6 +514,24 @@ function createPlansModule(config: MercadoPagoConfig) {
 
     /**
      * Create a new subscription plan
+     *
+     * @param data - Plan configuration including name, frequency, and amount
+     * @returns Created plan with init_point for checkout
+     *
+     * @example
+     * ```typescript
+     * const plan = await mp.plans.create({
+     *   reason: "Premium Monthly",
+     *   auto_recurring: {
+     *     frequency: 1,
+     *     frequency_type: "months",
+     *     transaction_amount: 1500,
+     *     currency_id: "UYU",
+     *   },
+     *   back_url: "https://your-site.com/callback",
+     * })
+     * console.log(plan.init_point) // Checkout URL
+     * ```
      */
     create(data: {
       reason: string;
@@ -465,6 +558,17 @@ function createPlansModule(config: MercadoPagoConfig) {
 
     /**
      * Update a subscription plan
+     *
+     * @param planId - The plan ID to update
+     * @param data - Fields to update (reason, amount, billing_day)
+     * @returns Updated plan
+     *
+     * @example
+     * ```typescript
+     * const updated = await mp.plans.update("plan_123", {
+     *   auto_recurring: { transaction_amount: 2000 },
+     * })
+     * ```
      */
     update(
       planId: string,

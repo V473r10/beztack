@@ -12,6 +12,18 @@ import { useMercadoPagoContext } from "../provider.js";
 // Query Keys
 // ============================================================================
 
+/**
+ * Query keys for plans cache management
+ *
+ * @example
+ * ```typescript
+ * // Invalidate all plans
+ * queryClient.invalidateQueries({ queryKey: plansKeys.all })
+ *
+ * // Invalidate specific plan
+ * queryClient.invalidateQueries({ queryKey: plansKeys.detail("plan_123") })
+ * ```
+ */
 export const plansKeys = {
   all: ["mp-plans"] as const,
   list: (status?: string) => [...plansKeys.all, status] as const,
@@ -22,6 +34,32 @@ export const plansKeys = {
 // Hooks
 // ============================================================================
 
+/**
+ * Fetch subscription plans
+ *
+ * @param options - Filter and control options
+ * @param options.status - Filter by plan status ("active" | "inactive")
+ * @param options.enabled - Enable/disable the query (default: true)
+ * @returns TanStack Query result with plans data
+ *
+ * @example
+ * ```tsx
+ * function PlansList() {
+ *   const { data, isLoading, error } = usePlans({ status: "active" })
+ *
+ *   if (isLoading) return <Spinner />
+ *   if (error) return <Error message={error.message} />
+ *
+ *   return (
+ *     <ul>
+ *       {data?.plans.map(plan => (
+ *         <li key={plan.id}>{plan.reason} - {plan.transactionAmount}</li>
+ *       ))}
+ *     </ul>
+ *   )
+ * }
+ * ```
+ */
 export function usePlans(options?: { status?: string; enabled?: boolean }) {
   const { endpoints } = useMercadoPagoContext();
   const { status, enabled = true } = options ?? {};
@@ -53,6 +91,28 @@ export function usePlans(options?: { status?: string; enabled?: boolean }) {
   });
 }
 
+/**
+ * Fetch a single plan by ID
+ *
+ * @param planId - The plan ID to fetch (query disabled if undefined)
+ * @returns TanStack Query result with plan data
+ *
+ * @example
+ * ```tsx
+ * function PlanDetail({ planId }: { planId: string }) {
+ *   const { data: plan, isLoading } = usePlan(planId)
+ *
+ *   if (isLoading) return <Spinner />
+ *
+ *   return (
+ *     <div>
+ *       <h2>{plan?.reason}</h2>
+ *       <p>{plan?.transactionAmount} {plan?.currencyId}</p>
+ *     </div>
+ *   )
+ * }
+ * ```
+ */
 export function usePlan(planId: string | undefined) {
   const { endpoints } = useMercadoPagoContext();
 
@@ -74,6 +134,30 @@ export function usePlan(planId: string | undefined) {
   });
 }
 
+/**
+ * Create a new subscription plan
+ *
+ * @param options - Mutation callbacks
+ * @param options.onSuccess - Called when plan is created successfully
+ * @param options.onError - Called when creation fails
+ * @returns TanStack Mutation with mutate function
+ *
+ * @example
+ * ```tsx
+ * function CreatePlanForm() {
+ *   const { mutate, isPending } = useCreatePlan({
+ *     onSuccess: (plan) => toast.success(`Plan ${plan.reason} created!`),
+ *     onError: (error) => toast.error(error.message),
+ *   })
+ *
+ *   const handleSubmit = (data: CreatePlanData) => {
+ *     mutate(data)
+ *   }
+ *
+ *   return <form onSubmit={handleSubmit}>...</form>
+ * }
+ * ```
+ */
 export function useCreatePlan(options?: {
   onSuccess?: (data: CreatePlanResponse) => void;
   onError?: (error: Error) => void;

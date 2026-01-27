@@ -23,7 +23,17 @@ const translations: Record<SupportedLocale, TranslationKeys> = {
 // ============================================================================
 
 /**
- * Get translations for a specific locale
+ * Get the complete translations object for a specific locale
+ *
+ * @param locale - Locale string (e.g., "es", "es-UY", "en", "en-US")
+ * @returns Complete translations object for the resolved locale
+ *
+ * @example
+ * ```typescript
+ * const t = getTranslations("es")
+ * console.log(t.paymentStatus.approved) // "Aprobado"
+ * console.log(t.components.billingHistory) // "Historial de Facturación"
+ * ```
  */
 export function getTranslations(
   locale: string = DEFAULT_LOCALE
@@ -33,7 +43,25 @@ export function getTranslations(
 }
 
 /**
- * Get a specific translation value by path
+ * Get a specific translation value by dot-notation path
+ *
+ * @param locale - Locale string
+ * @param path - Dot-notation path to the translation (e.g., "components.billingHistory")
+ * @param params - Optional parameters to interpolate into the string
+ * @returns Translated string, or the path if translation not found
+ *
+ * @example
+ * ```typescript
+ * // Simple translation
+ * t("es", "components.billingHistory") // "Historial de Facturación"
+ * t("en", "components.billingHistory") // "Billing History"
+ *
+ * // With parameters
+ * t("es", "frequency.everyN", { n: 3, unit: "meses" }) // "cada 3 meses"
+ *
+ * // Returns path if not found
+ * t("es", "nonexistent.path") // "nonexistent.path"
+ * ```
  */
 export function t(
   locale: string,
@@ -73,7 +101,19 @@ export function t(
 // ============================================================================
 
 /**
- * Get payment status label
+ * Get localized label for a payment status
+ *
+ * @param status - Payment status code (e.g., "approved", "pending", "rejected")
+ * @param locale - Locale string (default: "es-UY")
+ * @returns Localized status label
+ *
+ * @example
+ * ```typescript
+ * getPaymentStatusLabel("approved", "es") // "Aprobado"
+ * getPaymentStatusLabel("approved", "en") // "Approved"
+ * getPaymentStatusLabel("rejected", "es") // "Rechazado"
+ * getPaymentStatusLabel("unknown")        // "unknown" (returns as-is)
+ * ```
  */
 export function getPaymentStatusLabel(
   status: string,
@@ -86,7 +126,19 @@ export function getPaymentStatusLabel(
 }
 
 /**
- * Get subscription status label
+ * Get localized label for a subscription status
+ *
+ * @param status - Subscription status code (e.g., "active", "paused", "cancelled")
+ * @param locale - Locale string (default: "es-UY")
+ * @returns Localized status label
+ *
+ * @example
+ * ```typescript
+ * getSubscriptionStatusLabel("active", "es")    // "Activa"
+ * getSubscriptionStatusLabel("active", "en")    // "Active"
+ * getSubscriptionStatusLabel("paused", "es")    // "Pausada"
+ * getSubscriptionStatusLabel("cancelled", "en") // "Cancelled"
+ * ```
  */
 export function getSubscriptionStatusLabel(
   status: string,
@@ -100,7 +152,17 @@ export function getSubscriptionStatusLabel(
 }
 
 /**
- * Get plan status label
+ * Get localized label for a plan status
+ *
+ * @param status - Plan status code ("active" | "inactive")
+ * @param locale - Locale string (default: "es-UY")
+ * @returns Localized status label
+ *
+ * @example
+ * ```typescript
+ * getPlanStatusLabel("active", "es")   // "Activo"
+ * getPlanStatusLabel("inactive", "en") // "Inactive"
+ * ```
  */
 export function getPlanStatusLabel(
   status: string,
@@ -111,7 +173,20 @@ export function getPlanStatusLabel(
 }
 
 /**
- * Format frequency with localized labels
+ * Format billing frequency with localized labels
+ *
+ * @param frequency - Frequency number (e.g., 1, 3, 6)
+ * @param frequencyType - Frequency type ("days" | "months")
+ * @param locale - Locale string (default: "es-UY")
+ * @returns Formatted frequency string
+ *
+ * @example
+ * ```typescript
+ * formatFrequencyLocalized(1, "months", "es") // "cada mes"
+ * formatFrequencyLocalized(3, "months", "es") // "cada 3 meses"
+ * formatFrequencyLocalized(1, "days", "en")   // "every day"
+ * formatFrequencyLocalized(7, "days", "en")   // "every 7 days"
+ * ```
  */
 export function formatFrequencyLocalized(
   frequency: number,
@@ -140,7 +215,19 @@ export function formatFrequencyLocalized(
 }
 
 /**
- * Format price with locale-specific formatting
+ * Format price amount with locale-specific currency formatting
+ *
+ * @param amount - Price amount (number or string)
+ * @param currencyId - ISO currency code (e.g., "UYU", "USD", "ARS")
+ * @param locale - Locale string (default: "es-UY")
+ * @returns Formatted price string with currency symbol
+ *
+ * @example
+ * ```typescript
+ * formatPriceLocalized(1500, "UYU", "es-UY")  // "$ 1.500"
+ * formatPriceLocalized(99.99, "USD", "en-US") // "$99.99"
+ * formatPriceLocalized("250.50", "UYU", "es") // "$ 250,50"
+ * ```
  */
 export function formatPriceLocalized(
   amount: number | string,
