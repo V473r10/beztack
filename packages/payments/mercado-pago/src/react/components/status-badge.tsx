@@ -1,4 +1,9 @@
 import type { ReactNode } from "react";
+import {
+  DEFAULT_LOCALE,
+  getPaymentStatusLabel,
+  getSubscriptionStatusLabel,
+} from "../../i18n/index.js";
 import type { PaymentStatus, SubscriptionStatus } from "../../types.js";
 
 // ============================================================================
@@ -12,65 +17,70 @@ export type PaymentStatusConfig = {
   borderColor: string;
 };
 
-const PAYMENT_STATUS_MAP: Record<PaymentStatus, PaymentStatusConfig> = {
+type PaymentStatusStyle = {
+  color: string;
+  bgColor: string;
+  borderColor: string;
+};
+
+const PAYMENT_STATUS_STYLES: Record<PaymentStatus, PaymentStatusStyle> = {
   pending: {
-    label: "Pendiente",
     color: "text-yellow-700",
     bgColor: "bg-yellow-100",
     borderColor: "border-yellow-300",
   },
   approved: {
-    label: "Aprobado",
     color: "text-green-700",
     bgColor: "bg-green-100",
     borderColor: "border-green-300",
   },
   authorized: {
-    label: "Autorizado",
     color: "text-blue-700",
     bgColor: "bg-blue-100",
     borderColor: "border-blue-300",
   },
   in_process: {
-    label: "En proceso",
     color: "text-yellow-700",
     bgColor: "bg-yellow-100",
     borderColor: "border-yellow-300",
   },
   in_mediation: {
-    label: "En mediación",
     color: "text-orange-700",
     bgColor: "bg-orange-100",
     borderColor: "border-orange-300",
   },
   rejected: {
-    label: "Rechazado",
     color: "text-red-700",
     bgColor: "bg-red-100",
     borderColor: "border-red-300",
   },
   cancelled: {
-    label: "Cancelado",
     color: "text-gray-700",
     bgColor: "bg-gray-100",
     borderColor: "border-gray-300",
   },
   refunded: {
-    label: "Reembolsado",
     color: "text-blue-700",
     bgColor: "bg-blue-100",
     borderColor: "border-blue-300",
   },
   charged_back: {
-    label: "Contracargo",
     color: "text-red-700",
     bgColor: "bg-red-100",
     borderColor: "border-red-300",
   },
 };
 
+const DEFAULT_STYLE: PaymentStatusStyle = {
+  color: "text-gray-700",
+  bgColor: "bg-gray-100",
+  borderColor: "border-gray-300",
+};
+
 export type PaymentStatusBadgeProps = {
   status: PaymentStatus | string;
+  /** Locale for translations */
+  locale?: string;
   /** Custom render function for full control */
   render?: (config: PaymentStatusConfig & { status: string }) => ReactNode;
   /** CSS class name */
@@ -78,19 +88,16 @@ export type PaymentStatusBadgeProps = {
 };
 
 /**
- * Get payment status configuration
+ * Get payment status configuration with localized label
  */
 export function getPaymentStatusConfig(
-  status: PaymentStatus | string
+  status: PaymentStatus | string,
+  locale: string = DEFAULT_LOCALE
 ): PaymentStatusConfig {
-  return (
-    PAYMENT_STATUS_MAP[status as PaymentStatus] ?? {
-      label: status,
-      color: "text-gray-700",
-      bgColor: "bg-gray-100",
-      borderColor: "border-gray-300",
-    }
-  );
+  const style = PAYMENT_STATUS_STYLES[status as PaymentStatus] ?? DEFAULT_STYLE;
+  const label = getPaymentStatusLabel(status, locale);
+
+  return { label, ...style };
 }
 
 /**
@@ -98,8 +105,11 @@ export function getPaymentStatusConfig(
  *
  * @example
  * ```tsx
- * // Default rendering
+ * // Default rendering (Spanish)
  * <PaymentStatusBadge status="approved" />
+ *
+ * // English
+ * <PaymentStatusBadge status="approved" locale="en-US" />
  *
  * // Custom rendering
  * <PaymentStatusBadge
@@ -112,10 +122,11 @@ export function getPaymentStatusConfig(
  */
 export function PaymentStatusBadge({
   status,
+  locale = DEFAULT_LOCALE,
   render,
   className = "",
 }: PaymentStatusBadgeProps) {
-  const config = getPaymentStatusConfig(status);
+  const config = getPaymentStatusConfig(status, locale);
 
   if (render) {
     return <>{render({ ...config, status })}</>;
@@ -141,36 +152,37 @@ export type SubscriptionStatusConfig = {
   borderColor: string;
 };
 
-const SUBSCRIPTION_STATUS_MAP: Record<
+type SubscriptionStatusStyle = {
+  color: string;
+  bgColor: string;
+  borderColor: string;
+};
+
+const SUBSCRIPTION_STATUS_STYLES: Record<
   SubscriptionStatus,
-  SubscriptionStatusConfig
+  SubscriptionStatusStyle
 > = {
   pending: {
-    label: "Pendiente",
     color: "text-yellow-700",
     bgColor: "bg-yellow-100",
     borderColor: "border-yellow-300",
   },
   authorized: {
-    label: "Autorizada",
     color: "text-blue-700",
     bgColor: "bg-blue-100",
     borderColor: "border-blue-300",
   },
   active: {
-    label: "Activa",
     color: "text-green-700",
     bgColor: "bg-green-100",
     borderColor: "border-green-300",
   },
   paused: {
-    label: "Pausada",
     color: "text-orange-700",
     bgColor: "bg-orange-100",
     borderColor: "border-orange-300",
   },
   cancelled: {
-    label: "Cancelada",
     color: "text-red-700",
     bgColor: "bg-red-100",
     borderColor: "border-red-300",
@@ -179,6 +191,8 @@ const SUBSCRIPTION_STATUS_MAP: Record<
 
 export type SubscriptionStatusBadgeProps = {
   status: SubscriptionStatus | string;
+  /** Locale for translations */
+  locale?: string;
   /** Custom render function for full control */
   render?: (config: SubscriptionStatusConfig & { status: string }) => ReactNode;
   /** CSS class name */
@@ -186,19 +200,17 @@ export type SubscriptionStatusBadgeProps = {
 };
 
 /**
- * Get subscription status configuration
+ * Get subscription status configuration with localized label
  */
 export function getSubscriptionStatusConfig(
-  status: SubscriptionStatus | string
+  status: SubscriptionStatus | string,
+  locale: string = DEFAULT_LOCALE
 ): SubscriptionStatusConfig {
-  return (
-    SUBSCRIPTION_STATUS_MAP[status as SubscriptionStatus] ?? {
-      label: status,
-      color: "text-gray-700",
-      bgColor: "bg-gray-100",
-      borderColor: "border-gray-300",
-    }
-  );
+  const style =
+    SUBSCRIPTION_STATUS_STYLES[status as SubscriptionStatus] ?? DEFAULT_STYLE;
+  const label = getSubscriptionStatusLabel(status, locale);
+
+  return { label, ...style };
 }
 
 /**
@@ -206,8 +218,11 @@ export function getSubscriptionStatusConfig(
  *
  * @example
  * ```tsx
- * // Default rendering
+ * // Default rendering (Spanish)
  * <SubscriptionStatusBadge status="active" />
+ *
+ * // English
+ * <SubscriptionStatusBadge status="active" locale="en-US" />
  *
  * // Custom rendering
  * <SubscriptionStatusBadge
@@ -220,10 +235,11 @@ export function getSubscriptionStatusConfig(
  */
 export function SubscriptionStatusBadge({
   status,
+  locale = DEFAULT_LOCALE,
   render,
   className = "",
 }: SubscriptionStatusBadgeProps) {
-  const config = getSubscriptionStatusConfig(status);
+  const config = getSubscriptionStatusConfig(status, locale);
 
   if (render) {
     return <>{render({ ...config, status })}</>;

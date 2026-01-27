@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatPlanPrice } from "../../types.js";
+import { DEFAULT_LOCALE, formatPriceLocalized, t } from "../../i18n/index.js";
 import {
   getPaymentStatusConfig,
   type PaymentStatusConfig,
@@ -82,10 +82,14 @@ function formatDate(
 
 function createFormatInvoice(locale: string) {
   return (invoice: InvoiceData): FormattedInvoice => {
-    const statusConfig = getPaymentStatusConfig(invoice.status);
+    const statusConfig = getPaymentStatusConfig(invoice.status, locale);
     const formattedAmount =
       invoice.transactionAmount && invoice.currencyId
-        ? formatPlanPrice(invoice.transactionAmount, invoice.currencyId)
+        ? formatPriceLocalized(
+            invoice.transactionAmount,
+            invoice.currencyId,
+            locale
+          )
         : null;
     const formattedDate = formatDate(
       invoice.debitDate || invoice.dateCreated,
@@ -122,7 +126,13 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-function InvoiceItem({ formatted }: { formatted: FormattedInvoice }) {
+function InvoiceItem({
+  formatted,
+  locale,
+}: {
+  formatted: FormattedInvoice;
+  locale: string;
+}) {
   const { invoice, statusConfig, formattedAmount, formattedDate } = formatted;
   const retryAttempt = invoice.retryAttempt ?? 0;
 
@@ -150,7 +160,9 @@ function InvoiceItem({ formatted }: { formatted: FormattedInvoice }) {
           <p className="text-gray-500 text-xs">{formattedDate}</p>
         )}
         {retryAttempt > 0 && (
-          <p className="text-orange-600 text-xs">Intento {retryAttempt}</p>
+          <p className="text-orange-600 text-xs">
+            {t(locale, "components.attempt")} {retryAttempt}
+          </p>
         )}
       </div>
     </div>
@@ -188,17 +200,24 @@ function InvoiceItem({ formatted }: { formatted: FormattedInvoice }) {
 export function BillingHistory({
   invoices,
   isLoading = false,
-  locale = "es-UY",
+  locale = DEFAULT_LOCALE,
   render,
   renderItem,
   className = "",
-  emptyMessage = "No hay facturas para mostrar",
-  loadingMessage = "Cargando historial...",
-  title = "Historial de Facturación",
+  emptyMessage,
+  loadingMessage,
+  title,
   showTitle = true,
 }: BillingHistoryProps) {
   const formatInvoice = createFormatInvoice(locale);
   const isEmpty = invoices.length === 0;
+
+  // Use i18n defaults if not provided
+  const resolvedEmptyMessage =
+    emptyMessage ?? t(locale, "components.noInvoices");
+  const resolvedLoadingMessage =
+    loadingMessage ?? t(locale, "components.loadingHistory");
+  const resolvedTitle = title ?? t(locale, "components.billingHistory");
 
   const renderProps: BillingHistoryRenderProps = {
     invoices,
@@ -213,11 +232,11 @@ export function BillingHistory({
 
   const renderContent = () => {
     if (isLoading) {
-      return <LoadingState message={loadingMessage} />;
+      return <LoadingState message={resolvedLoadingMessage} />;
     }
 
     if (isEmpty) {
-      return <EmptyState message={emptyMessage} />;
+      return <EmptyState message={resolvedEmptyMessage} />;
     }
 
     return (
@@ -229,7 +248,13 @@ export function BillingHistory({
             return renderItem(formatted, index);
           }
 
-          return <InvoiceItem formatted={formatted} key={invoice.id} />;
+          return (
+            <InvoiceItem
+              formatted={formatted}
+              key={invoice.id}
+              locale={locale}
+            />
+          );
         })}
       </div>
     );
@@ -239,7 +264,7 @@ export function BillingHistory({
     <div className={`rounded-lg border bg-white ${className}`}>
       {showTitle && (
         <div className="border-b px-4 py-3">
-          <h3 className="font-medium text-gray-900">{title}</h3>
+          <h3 className="font-medium text-gray-900">{resolvedTitle}</h3>
         </div>
       )}
       <div className="p-4">{renderContent()}</div>

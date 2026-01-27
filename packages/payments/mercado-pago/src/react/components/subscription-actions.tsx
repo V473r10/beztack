@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { DEFAULT_LOCALE, getTranslations } from "../../i18n/index.js";
 import type { SubscriptionData } from "./subscription-card.js";
 
 // ============================================================================
@@ -22,6 +23,8 @@ export type SubscriptionActionsRenderProps = {
 
 export type SubscriptionActionsProps = {
   subscription: SubscriptionData;
+  /** Locale for translations */
+  locale?: string;
   /** Called when pause is requested */
   onPause?: (subscription: SubscriptionData) => void | Promise<void>;
   /** Called when resume is requested */
@@ -40,7 +43,7 @@ export type SubscriptionActionsProps = {
   className?: string;
   /** Require confirmation before cancel */
   confirmCancel?: boolean;
-  /** Custom cancel confirmation message */
+  /** Custom cancel confirmation message (overrides locale) */
   cancelConfirmMessage?: string;
 };
 
@@ -65,11 +68,18 @@ function canPerformAction(status: string, allowedStatuses: string[]): boolean {
  *
  * @example
  * ```tsx
- * // Default rendering
+ * // Default rendering (Spanish)
  * <SubscriptionActions
  *   subscription={sub}
  *   onPause={handlePause}
  *   onCancel={handleCancel}
+ * />
+ *
+ * // English locale
+ * <SubscriptionActions
+ *   subscription={sub}
+ *   locale="en-US"
+ *   onPause={handlePause}
  * />
  *
  * // Custom rendering
@@ -83,12 +93,7 @@ function canPerformAction(status: string, allowedStatuses: string[]): boolean {
  *     <div className="flex gap-2">
  *       {canPause && (
  *         <Button onClick={onPause} disabled={isPausing}>
- *           {isPausing ? "Pausando..." : "Pausar"}
- *         </Button>
- *       )}
- *       {canCancel && (
- *         <Button variant="destructive" onClick={onCancel}>
- *           Cancelar
+ *           {isPausing ? "Pausing..." : "Pause"}
  *         </Button>
  *       )}
  *     </div>
@@ -98,6 +103,7 @@ function canPerformAction(status: string, allowedStatuses: string[]): boolean {
  */
 export function SubscriptionActions({
   subscription,
+  locale = DEFAULT_LOCALE,
   onPause,
   onResume,
   onCancel,
@@ -107,8 +113,10 @@ export function SubscriptionActions({
   render,
   className = "",
   confirmCancel = true,
-  cancelConfirmMessage = "¿Estás seguro de que deseas cancelar esta suscripción? Esta acción no se puede deshacer.",
+  cancelConfirmMessage,
 }: SubscriptionActionsProps) {
+  const t = getTranslations(locale);
+
   const canPause =
     !!onPause && canPerformAction(subscription.status, PAUSABLE_STATUSES);
   const canResume =
@@ -126,8 +134,9 @@ export function SubscriptionActions({
 
   const handleCancel = () => {
     if (confirmCancel) {
+      const message = cancelConfirmMessage ?? t.components.cancelConfirm;
       // eslint-disable-next-line no-alert
-      const confirmed = window.confirm(cancelConfirmMessage);
+      const confirmed = window.confirm(message);
       if (!confirmed) {
         return;
       }
@@ -166,7 +175,7 @@ export function SubscriptionActions({
           onClick={handlePause}
           type="button"
         >
-          {isPausing ? "Pausando..." : "Pausar"}
+          {isPausing ? t.components.pausing : t.components.pause}
         </button>
       )}
 
@@ -177,7 +186,7 @@ export function SubscriptionActions({
           onClick={handleResume}
           type="button"
         >
-          {isResuming ? "Reanudando..." : "Reanudar"}
+          {isResuming ? t.components.resuming : t.components.resume}
         </button>
       )}
 
@@ -188,7 +197,7 @@ export function SubscriptionActions({
           onClick={handleCancel}
           type="button"
         >
-          {isCancelling ? "Cancelando..." : "Cancelar"}
+          {isCancelling ? t.components.cancelling : t.components.cancel}
         </button>
       )}
     </div>

@@ -1,3 +1,4 @@
+// Payment events
 export {
   type ConnectionStatus,
   type PaymentEvent,
@@ -6,6 +7,8 @@ export {
   type UsePaymentEventsReturn,
   usePaymentEvents,
 } from "./use-payment-events.js";
+
+// Plans
 export {
   plansKeys,
   useCreatePlan,
@@ -14,3 +17,19 @@ export {
   useRefreshPlans,
   useSyncPlans,
 } from "./use-plans.js";
+
+// Subscriptions
+export {
+  type InvoiceResponse,
+  type InvoicesResponse,
+  type SubscriptionResponse,
+  type SubscriptionsSearchResponse,
+  subscriptionsKeys,
+  type UseSubscriptionsOptions,
+  useCancelSubscription,
+  usePauseSubscription,
+  useResumeSubscription,
+  useSubscription,
+  useSubscriptionInvoices,
+  useSubscriptions,
+} from "./use-subscriptions.js";

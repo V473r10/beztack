@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
-import { formatFrequency, formatPlanPrice } from "../../types.js";
+import {
+  DEFAULT_LOCALE,
+  formatFrequencyLocalized,
+  formatPriceLocalized,
+  getTranslations,
+} from "../../i18n/index.js";
 import {
   getSubscriptionStatusConfig,
   type SubscriptionStatusConfig,
@@ -35,7 +40,7 @@ export type SubscriptionCardRenderProps = {
 
 export type SubscriptionCardProps = {
   subscription: SubscriptionData;
-  /** Locale for date formatting */
+  /** Locale for date formatting and translations */
   locale?: string;
   /** Custom render function for full control */
   render?: (props: SubscriptionCardRenderProps) => ReactNode;
@@ -53,6 +58,10 @@ export type SubscriptionCardProps = {
 // Helpers
 // ============================================================================
 
+function getIntlLocale(locale: string): string {
+  return locale === "es-UY" || locale === "es" ? "es-UY" : "en-US";
+}
+
 function formatDate(
   dateStr: string | null | undefined,
   locale: string
@@ -64,7 +73,7 @@ function formatDate(
   if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString(getIntlLocale(locale), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -82,7 +91,7 @@ function formatDateTime(
   if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString(getIntlLocale(locale), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -95,16 +104,24 @@ function buildRenderProps(
   subscription: SubscriptionData,
   locale: string
 ): SubscriptionCardRenderProps {
-  const statusConfig = getSubscriptionStatusConfig(subscription.status);
+  const statusConfig = getSubscriptionStatusConfig(subscription.status, locale);
 
   const formattedPrice =
     subscription.transactionAmount && subscription.currencyId
-      ? formatPlanPrice(subscription.transactionAmount, subscription.currencyId)
+      ? formatPriceLocalized(
+          subscription.transactionAmount,
+          subscription.currencyId,
+          locale
+        )
       : null;
 
   const formattedFrequency =
     subscription.frequency && subscription.frequencyType
-      ? formatFrequency(subscription.frequency, subscription.frequencyType)
+      ? formatFrequencyLocalized(
+          subscription.frequency,
+          subscription.frequencyType,
+          locale
+        )
       : null;
 
   const formattedNextPayment = formatDateTime(
@@ -132,8 +149,11 @@ function buildRenderProps(
  *
  * @example
  * ```tsx
- * // Default rendering with Tailwind classes
+ * // Default rendering (Spanish)
  * <SubscriptionCard subscription={sub} />
+ *
+ * // English locale
+ * <SubscriptionCard subscription={sub} locale="en-US" />
  *
  * // Custom rendering with shadcn/ui
  * <SubscriptionCard
@@ -156,13 +176,14 @@ function buildRenderProps(
  */
 export function SubscriptionCard({
   subscription,
-  locale = "es-UY",
+  locale = DEFAULT_LOCALE,
   render,
   onClick,
   className = "",
   showNextPayment = true,
   showStats = false,
 }: SubscriptionCardProps) {
+  const t = getTranslations(locale);
   const renderProps = buildRenderProps(subscription, locale);
   const { statusConfig, formattedPrice, formattedFrequency } = renderProps;
   const { formattedNextPayment, formattedDateCreated } = renderProps;
@@ -186,7 +207,7 @@ export function SubscriptionCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <h3 className="truncate font-medium text-gray-900">
-            {subscription.reason || "Suscripción"}
+            {subscription.reason || t.components.subscription}
           </h3>
           {subscription.payerEmail && (
             <p className="truncate text-gray-500 text-sm">
@@ -218,7 +239,7 @@ export function SubscriptionCard({
       {/* Next payment */}
       {showNextPayment && formattedNextPayment && (
         <div className="mt-3 text-gray-600 text-sm">
-          <span className="font-medium">Próximo cobro:</span>{" "}
+          <span className="font-medium">{t.components.nextPayment}:</span>{" "}
           {formattedNextPayment}
         </div>
       )}
@@ -227,15 +248,16 @@ export function SubscriptionCard({
       {showStats && subscription.chargedQuantity !== null && (
         <div className="mt-3 flex gap-4 border-t pt-3 text-gray-600 text-sm">
           <div>
-            <span className="font-medium">Cobros:</span>{" "}
+            <span className="font-medium">{t.components.charges}:</span>{" "}
             {subscription.chargedQuantity}
           </div>
           {subscription.chargedAmount && (
             <div>
-              <span className="font-medium">Total:</span>{" "}
-              {formatPlanPrice(
+              <span className="font-medium">{t.components.total}:</span>{" "}
+              {formatPriceLocalized(
                 subscription.chargedAmount,
-                subscription.currencyId || "UYU"
+                subscription.currencyId || "UYU",
+                locale
               )}
             </div>
           )}
@@ -245,7 +267,7 @@ export function SubscriptionCard({
       {/* Created date */}
       {formattedDateCreated && (
         <div className="mt-2 text-gray-400 text-xs">
-          Creada: {formattedDateCreated}
+          {t.components.createdAt}: {formattedDateCreated}
         </div>
       )}
     </CardWrapper>
