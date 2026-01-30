@@ -79,7 +79,8 @@ export default defineEventHandler(async (event) => {
 
   // Build subscription data
   const backUrl =
-    body.back_url ?? `${env.BETTER_AUTH_URL}/subscriptions/callback`;
+    body.back_url ??
+    `${env.APP_URL}/api/payments/mercado-pago/subscriptions/callback`;
   const externalRef = userId ?? body.external_reference;
 
   // Ensure end_date is set for non-plan subscriptions (required by MP API)

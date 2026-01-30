@@ -80,7 +80,8 @@ export default defineEventHandler(async (event) => {
   validateBody(body);
 
   const backUrl =
-    body.back_url ?? `${env.BETTER_AUTH_URL}/subscriptions/callback`;
+    body.back_url ??
+    `${env.APP_URL}/api/payments/mercado-pago/subscriptions/callback`;
 
   // Create plan via SDK
   const plan = await mp.plans.create({

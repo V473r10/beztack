@@ -14,6 +14,7 @@ import SignUp from "./app/auth/sign-up/sign-up.tsx";
 import Billing from "./app/billing/billing.tsx";
 import CheckoutSuccess from "./app/billing/checkout-success.tsx";
 import Pricing from "./app/billing/pricing.tsx";
+import SubscriptionWelcome from "./app/billing/subscription-welcome.tsx";
 import MercadoPagoDemo from "./app/examples/mercado-pago-demo.tsx";
 import NuqsDemo from "./app/examples/nuqs-demo.tsx";
 import Home from "./app/home/home.tsx";
@@ -139,6 +140,10 @@ function App() {
                 </Route>
                 <Route element={<Pricing />} path="pricing" />
                 <Route element={<CheckoutSuccess />} path="checkout-success" />
+                <Route
+                  element={<SubscriptionWelcome />}
+                  path="subscription-welcome"
+                />
                 <Route element={<AI />} path="ai" />
                 <Route element={<OCR />} path="ocr" />
                 <Route element={<NuqsDemo />} path="nuqs-demo" />
