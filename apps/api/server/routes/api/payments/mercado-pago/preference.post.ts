@@ -7,7 +7,7 @@ const mp = createMercadoPagoClient({
   accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
 });
 
-const isLocalhost = env.BETTER_AUTH_URL.includes("localhost");
+const isLocalhost = env.APP_URL.includes("localhost");
 
 export default defineEventHandler(async (event) => {
   const data = await readBody(event);
@@ -37,12 +37,12 @@ export default defineEventHandler(async (event) => {
       ? {}
       : {
           back_urls: {
-            success: `${env.BETTER_AUTH_URL}/payments/success`,
-            pending: `${env.BETTER_AUTH_URL}/payments/pending`,
-            failure: `${env.BETTER_AUTH_URL}/payments/failure`,
+            success: `${env.APP_URL}/payments/success`,
+            pending: `${env.APP_URL}/payments/pending`,
+            failure: `${env.APP_URL}/payments/failure`,
           },
           auto_return: "approved",
-          notification_url: `${env.BETTER_AUTH_URL}/api/payments/mercado-pago/webhook`,
+          notification_url: `${env.APP_URL}/api/payments/mercado-pago/webhook`,
         }),
   });
 

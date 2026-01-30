@@ -45,6 +45,9 @@ export const env = createEnv({
     // Payment Provider Switch
     PAYMENT_PROVIDER: z.enum(["polar", "mercadopago"]).default("polar"),
 
+    // UI URL
+    APP_URL: z.string().url(),
+
     // Node
     NODE_ENV: z
       .enum(["development", "production", "test"])
