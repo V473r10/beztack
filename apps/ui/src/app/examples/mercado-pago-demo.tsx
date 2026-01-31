@@ -243,6 +243,8 @@ export default function MercadoPagoDemo() {
                     </CardHeader>
                     <CardContent>
                       <CheckoutButton
+                        description="Dispositivo de tienda móvil de comercio electrónico"
+                        pictureUrl="https://placehold.co/600x400"
                         quantity={1}
                         title="Producto de prueba"
                         unitPrice={customAmount}

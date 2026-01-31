@@ -8,6 +8,7 @@ import { getOptionalSession } from "@/server/utils/require-auth";
 
 const mp = createMercadoPagoClient({
   accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
+  integratorId: env.MERCADO_PAGO_INTEGRATOR_ID,
 });
 
 type CreateSubscriptionBody = {

@@ -25,6 +25,7 @@ import {
 const mp = createMercadoPagoClient({
   accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
   webhookSecret: env.MERCADO_PAGO_WEBHOOK_SECRET,
+  integratorId: env.MERCADO_PAGO_INTEGRATOR_ID,
 });
 
 // =============================================================================

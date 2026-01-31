@@ -505,6 +505,12 @@ export type PreferencePayer = {
 };
 
 export type CreatePreferenceData = {
+  payment_methods?: {
+    excluded_payment_methods?: {
+      id: string;
+    }[];
+    installments?: number;
+  };
   items: PreferenceItem[];
   payer?: PreferencePayer;
   back_urls?: PreferenceBackUrls;

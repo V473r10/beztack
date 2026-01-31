@@ -11,6 +11,7 @@ export type CheckoutButtonProps = {
   unitPrice: number;
   quantity?: number;
   description?: string;
+  pictureUrl?: string;
   onPreferenceCreated?: (preferenceId: string) => void;
   onError?: (error: Error) => void;
   renderTrigger?: (props: {
@@ -29,6 +30,7 @@ export function CheckoutButton({
   unitPrice,
   quantity = 1,
   description,
+  pictureUrl,
   onPreferenceCreated,
   onError,
   renderTrigger,
@@ -51,6 +53,7 @@ export function CheckoutButton({
           unit_price: unitPrice,
           quantity,
           description,
+          picture_url: pictureUrl,
         }),
       });
 
@@ -76,6 +79,7 @@ export function CheckoutButton({
     unitPrice,
     quantity,
     description,
+    pictureUrl,
     onPreferenceCreated,
     onError,
   ]);

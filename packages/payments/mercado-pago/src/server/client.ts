@@ -32,6 +32,8 @@ export type MercadoPagoConfig = {
   maxRetries?: number;
   /** Initial retry delay in milliseconds (default: 1000) */
   initialRetryDelay?: number;
+  /** Integrator ID for Mercado Pago partner metrics tracking */
+  integratorId?: string;
 };
 
 const DEFAULT_BASE_URL = "https://api.mercadopago.com";
@@ -93,13 +95,15 @@ type AttemptFetchParams = {
   endpoint: string;
   accessToken: string;
   timeout: number;
+  integratorId?: string;
   options?: RequestInit;
 };
 
 async function attemptFetch<T>(
   params: AttemptFetchParams
 ): Promise<FetchResult<T>> {
-  const { baseUrl, endpoint, accessToken, timeout, options } = params;
+  const { baseUrl, endpoint, accessToken, timeout, integratorId, options } =
+    params;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -110,6 +114,7 @@ async function attemptFetch<T>(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
+        ...(integratorId ? { "X-Integrator-Id": integratorId } : {}),
         ...options?.headers,
       },
     });
@@ -198,6 +203,7 @@ async function mpFetch<T>(
       endpoint,
       accessToken: config.accessToken,
       timeout,
+      integratorId: config.integratorId,
       options,
     });
 

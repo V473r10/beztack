@@ -5,6 +5,7 @@ import { auth } from "@/server/utils/auth";
 
 const mp = createMercadoPagoClient({
   accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
+  integratorId: env.MERCADO_PAGO_INTEGRATOR_ID,
 });
 
 const isLocalhost = env.APP_URL.includes("localhost");
@@ -24,6 +25,10 @@ export default defineEventHandler(async (event) => {
   const userId = session?.user?.id;
 
   const response = await mp.checkout.createPreference({
+    payment_methods: {
+      excluded_payment_methods: [{ id: "visa" }],
+      installments: 6,
+    },
     items: [
       {
         id: data.id,
@@ -32,7 +37,8 @@ export default defineEventHandler(async (event) => {
         unit_price: data.unit_price,
       },
     ],
-    external_reference: userId ?? data.external_reference,
+    // external_reference: userId ?? data.external_reference,
+    external_reference: "mpago@facundovalerio.com",
     ...(isLocalhost
       ? {}
       : {

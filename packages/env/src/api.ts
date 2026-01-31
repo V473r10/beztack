@@ -41,6 +41,7 @@ export const env = createEnv({
     // MercadoPago
     MERCADO_PAGO_ACCESS_TOKEN: z.string().min(1),
     MERCADO_PAGO_WEBHOOK_SECRET: z.string().optional(),
+    MERCADO_PAGO_INTEGRATOR_ID: z.string().optional(),
 
     // Payment Provider Switch
     PAYMENT_PROVIDER: z.enum(["polar", "mercadopago"]).default("polar"),
