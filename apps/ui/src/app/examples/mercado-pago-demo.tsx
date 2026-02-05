@@ -88,13 +88,6 @@ export default function MercadoPagoDemo() {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <img
-            alt="Mercado Pago"
-            className="h-8"
-            height={32}
-            src="https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.92/mercadopago/logo__large@2x.png"
-            width={150}
-          />
           <h1 className="font-bold text-4xl">Integration Demo</h1>
         </div>
         <p className="max-w-3xl text-muted-foreground">
@@ -971,8 +964,8 @@ export default defineEventHandler(async (event) => {
 
       {/* Footer */}
       <Card className="bg-muted/50">
-        <CardContent className="py-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <CardContent className="flex flex-col items-center justify-between gap-10 py-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h3 className="font-semibold">¿Necesitas más ayuda?</h3>
               <p className="text-muted-foreground text-sm">
@@ -989,6 +982,11 @@ export default defineEventHandler(async (event) => {
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
+          <img
+            alt="Mercado Pago"
+            className="h-48 w-auto"
+            src="/Insignia.png"
+          />
         </CardContent>
       </Card>
     </div>
