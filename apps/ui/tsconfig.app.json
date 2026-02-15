@@ -34,7 +34,13 @@
   ],
   "references": [
     {
+      "path": "../../packages/state"
+    },
+    {
       "path": "../../packages/ocr"
+    },
+    {
+      "path": "../../packages/env"
     },
     {
       "path": "../../packages/ai"

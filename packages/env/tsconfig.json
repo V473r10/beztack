@@ -15,6 +15,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": false,
+    "composite": true,
     "types": ["node"]
   },
   "include": ["src/**/*"],

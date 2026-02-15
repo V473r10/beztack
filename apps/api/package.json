@@ -1,13 +1,13 @@
 {
   "name": "@beztack/api",
-
   "scripts": {
     "build": "nitro build",
     "dev": "nitro dev",
     "vercel-build": "pnpm build",
     "start": "node .output/server/index.mjs",
-    "migrate": "pnpm dlx @better-auth/cli generate --output ./db/schema.ts --config ./server/utils/auth.ts -y & pnpm exec drizzle-kit push",
-    "push": "pnpm exec drizzle-kit push"
+    "migrate": "pnpm exec drizzle-kit generate && pnpm exec drizzle-kit migrate",
+    "push": "pnpm exec drizzle-kit push",
+    "generate-auth-schema": "pnpm dlx @better-auth/cli generate --output ./db/auth-schema.generated.ts --config ./server/utils/auth.ts -y"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -20,6 +20,7 @@
   "dependencies": {
     "@beztack/email": "workspace:*",
     "@beztack/env": "workspace:*",
+    "@beztack/mercadopago": "workspace:*",
     "@polar-sh/better-auth": "^1.6.0",
     "@polar-sh/sdk": "^0.34.17",
     "@types/react": "^19.2.7",
@@ -27,6 +28,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
+    "mercadopago": "^2.11.0",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",
     "react": "^19.2.1",
