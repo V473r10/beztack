@@ -13,6 +13,7 @@ import { promisify } from "node:util";
 import { cancel, confirm, group, spinner, text } from "@clack/prompts";
 import { main as initModules } from "./cli.js";
 import { debugLog, debugOutput } from "./debug.js";
+import { templateExcludedDirs } from "./template-excludes.js";
 
 const execAsyncBase = promisify(exec);
 const PROJECT_NAME_REGEX = /^[a-z0-9-]+$/;
@@ -139,16 +140,12 @@ async function createProjectStructure(
     await execAsync(`git clone --depth 1 ${templateRepoUrl} ${tempDir}`);
     spin.message("Copying project files...");
 
-    const excludeDirs = [
-      ".git",
-      "node_modules",
-      "scripts/create-beztack",
-      ".github",
-      ".nx",
-      "docs",
-    ];
-
-    await copyDir({ src: tempDir, dest: projectDir, excludeDirs, config });
+    await copyDir({
+      src: tempDir,
+      dest: projectDir,
+      excludeDirs: templateExcludedDirs,
+      config,
+    });
 
     // Update package.json with project info
     const packageJsonPath = join(projectDir, "package.json");
