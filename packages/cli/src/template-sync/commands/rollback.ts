@@ -1,16 +1,15 @@
-import { parseArgs } from "../core/args.js"
+import type { ParsedArgs } from "../core/args.js"
 import { clearSnapshots, rollbackSnapshot } from "../core/snapshot.js"
 
 interface RollbackOptions {
 	workspaceRoot: string
-	args: string[]
+	parsed: ParsedArgs
 }
 
 export async function runRollback(options: RollbackOptions): Promise<void> {
-	const parsed = parseArgs(options.args)
 	const snapshotId =
-		typeof parsed.flags.snapshot === "string"
-			? parsed.flags.snapshot
+		typeof options.parsed.flags.snapshot === "string"
+			? options.parsed.flags.snapshot
 			: undefined
 
 	if (!snapshotId) {
@@ -18,7 +17,7 @@ export async function runRollback(options: RollbackOptions): Promise<void> {
 	}
 
 	await rollbackSnapshot(options.workspaceRoot, snapshotId)
-	if (parsed.flags["clear-snapshots"] === true) {
+	if (options.parsed.flags["clear-snapshots"] === true) {
 		await clearSnapshots(options.workspaceRoot)
 	}
 

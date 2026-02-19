@@ -10,6 +10,7 @@ import {
 } from "@clack/prompts";
 import pc from "picocolors";
 import { createProject } from "./create.js";
+import type { CreateProjectOptions } from "./create.js";
 import { parseDebugFlag, setDebugMode } from "./debug.js";
 import { initProject } from "./init-project.js";
 import { modules } from "./modules.js";
@@ -27,7 +28,7 @@ const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
     name: "create",
     description: "Create a new Beztack project",
-    run: () => create(),
+    run: (args) => create(args),
   },
   {
     name: "init",
@@ -138,12 +139,13 @@ export async function main() {
 /**
  * Create a new Beztack project
  */
-async function create() {
+async function create(args: string[]) {
+  const createOptions = parseCreateCommandOptions(args);
   //process.stdout.write("\x1Bc"); // Clear terminal
   intro("🚀 Welcome to Beztack - A Modern NX Monorepo Starter");
 
   try {
-    await createProject();
+    await createProject(createOptions);
     outro("🎉 Project created successfully!");
   } catch (error) {
     cancel(error instanceof Error ? error.message : "Operation cancelled");
@@ -163,24 +165,122 @@ ${getCommandHelpLines()}
 
 ${pc.bold("Options:")}
   -d, --debug    Show command outputs for debugging
+  --refresh      Force template cache refresh before template commands
+  --offline      Use only local template cache for template commands
+  --host <host>  Host for "template inspect" server (default: 127.0.0.1)
+  --port <port>  Port for "template inspect" server (default: 3434)
+
+${pc.bold("Create Flags:")}
+  --yes, --non-interactive       Run create without prompts
+  --name <project-name>          Set project name
+  --description <text>           Set project description
+  --git | --no-git               Enable/disable git init
+  --install | --no-install       Enable/disable dependency install
+  --init | --no-init             Enable/disable module configuration
+  --template-source <path-or-url>  Custom template source
 
 ${pc.bold("Examples:")}
   pnpm dlx beztack create
+  pnpm dlx beztack create --yes --name my-app --no-install --no-git
+  pnpm dlx beztack create --yes --name my-app --template-source ../beztack
   beztack init
   beztack template status
+  beztack template status --offline
   beztack template plan --to 1.2.0
-  beztack template apply --dry-run
+  beztack template apply --dry-run --refresh
+  beztack template inspect --port 3434
 `);
+}
+
+function parseCreateCommandOptions(
+  args: string[]
+): CreateProjectOptions {
+  const options: CreateProjectOptions = {};
+  let hasCreateFlags = false;
+  let yesMode = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+    if (!token.startsWith("--")) {
+      throw new Error(`Unknown create argument: ${token}`);
+    }
+
+    hasCreateFlags = true;
+
+    if (token === "--yes" || token === "--non-interactive") {
+      yesMode = true;
+      options.nonInteractive = true;
+      continue;
+    }
+
+    if (
+      token === "--name" ||
+      token === "--description" ||
+      token === "--template-source"
+    ) {
+      const value = args[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error(`Missing value for ${token}`);
+      }
+
+      if (token === "--name") {
+        options.name = value;
+      } else if (token === "--template-source") {
+        options.templateSource = value;
+      } else {
+        options.description = value;
+      }
+
+      index += 1;
+      continue;
+    }
+
+    if (token === "--git") {
+      options.initializeGit = true;
+      continue;
+    }
+    if (token === "--no-git") {
+      options.initializeGit = false;
+      continue;
+    }
+    if (token === "--install") {
+      options.installDependencies = true;
+      continue;
+    }
+    if (token === "--no-install") {
+      options.installDependencies = false;
+      continue;
+    }
+    if (token === "--init") {
+      options.initializeModules = true;
+      continue;
+    }
+    if (token === "--no-init") {
+      options.initializeModules = false;
+      continue;
+    }
+
+    throw new Error(`Unknown create option: ${token}`);
+  }
+
+  if (
+    hasCreateFlags &&
+    options.nonInteractive !== true
+  ) {
+    options.nonInteractive = true;
+  }
+
+  if (options.nonInteractive === true && !options.name && !yesMode) {
+    throw new Error(
+      'Missing project name for non-interactive create. Use "--name <project-name>" or "--yes".'
+    );
+  }
+
+  return options;
 }
 
 // Only run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  process.stdout.write("\x1Bc"); // Clear terminal
-
-  process.stdout.write(pc.green("process.argv: "));
-  process.stdout.write(process.argv.join("\n"));
-  process.stdout.write("\n");
-
   // Parse debug flag before anything else
   if (parseDebugFlag()) {
     setDebugMode(true);
@@ -193,14 +293,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   );
   const commandToken = args[0] || "create";
   const commandDefinition = commandMap.get(commandToken);
-
-  process.stdout.write(pc.green("args: "));
-  process.stdout.write(args.join("\n"));
-  process.stdout.write("\n");
-
-  process.stdout.write(pc.green("command: "));
-  process.stdout.write(commandToken);
-  process.stdout.write("\n");
 
   if (!commandDefinition) {
     process.stderr.write(

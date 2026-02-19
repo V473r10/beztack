@@ -11,8 +11,11 @@ interface BuildPlanInput {
 export async function buildUpdatePlan(
 	input: BuildPlanInput,
 ): Promise<UpdatePlan> {
-	const diff = await computeDiff(input.workspaceRoot, input.templateRoot)
-	const changes = diff.map((change) => {
+	const diffResult = await computeDiff(
+		input.workspaceRoot,
+		input.templateRoot,
+	)
+	const changes = diffResult.changes.map((change) => {
 		const ownership = resolveOwnership(
 			change.path,
 			input.manifest.strategyByPath,
@@ -37,5 +40,6 @@ export async function buildUpdatePlan(
 	return {
 		changes,
 		conflicts,
+		skippedUnchangedTemplateFiles: diffResult.skippedUnchangedTemplateFiles,
 	}
 }

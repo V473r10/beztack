@@ -19,6 +19,7 @@ export interface FileChange {
   type: ChangeType;
   currentContent?: string;
   templateContent?: string;
+  userModified?: boolean;
 }
 
 export interface PlannedChange extends FileChange {
@@ -29,4 +30,5 @@ export interface PlannedChange extends FileChange {
 export interface UpdatePlan {
   changes: PlannedChange[];
   conflicts: PlannedChange[];
+  skippedUnchangedTemplateFiles: number;
 }

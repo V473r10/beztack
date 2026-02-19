@@ -1,6 +1,6 @@
 import pc from "picocolors"
 import { applyUpdatePlan } from "../core/apply-update.js"
-import { parseArgs } from "../core/args.js"
+import type { ParsedArgs } from "../core/args.js"
 import { readManifest, writeManifest } from "../core/manifest.js"
 import { buildUpdatePlan } from "../core/planner.js"
 import {
@@ -13,22 +13,27 @@ import { readTemplateVersion } from "../core/template-version.js"
 
 interface ApplyOptions {
 	workspaceRoot: string
-	args: string[]
+	parsed: ParsedArgs
+	refresh: boolean
+	offline: boolean
 }
 
 export async function runApply(options: ApplyOptions): Promise<void> {
-	const parsed = parseArgs(options.args)
-	const dryRun = parsed.flags["dry-run"] === true
+	const dryRun = options.parsed.flags["dry-run"] === true
 	const requestedTemplateRoot =
-		typeof parsed.flags["template-root"] === "string"
-			? parsed.flags["template-root"]
+		typeof options.parsed.flags["template-root"] === "string"
+			? options.parsed.flags["template-root"]
 			: undefined
 	const requestedVersion =
-		typeof parsed.flags.to === "string" ? parsed.flags.to : undefined
+		typeof options.parsed.flags.to === "string"
+			? options.parsed.flags.to
+			: undefined
 
 	const templateRoot = await resolveTemplateRoot({
 		workspaceRoot: options.workspaceRoot,
 		templateRoot: requestedTemplateRoot,
+		refresh: options.refresh,
+		offline: options.offline,
 	})
 	await ensureTemplateRoot(templateRoot)
 
@@ -71,6 +76,7 @@ export async function runApply(options: ApplyOptions): Promise<void> {
 				`- Snapshot: ${snapshotId}\n` +
 				`- Applied: ${result.applied}\n` +
 				`- Skipped: ${result.skipped}\n` +
+				`- Skipped unchanged template files: ${plan.skippedUnchangedTemplateFiles}\n` +
 				`- Conflicts: ${result.conflicts.length}\n` +
 				`- Report: ${reportPath}\n`,
 		)

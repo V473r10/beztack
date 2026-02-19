@@ -12,6 +12,7 @@ export async function writePlanReport(
     "",
     `- Total changes: ${plan.changes.length}`,
     `- Conflicts: ${plan.conflicts.length}`,
+    `- Skipped unchanged template files: ${plan.skippedUnchangedTemplateFiles}`,
     "",
     "## Changes",
     "",

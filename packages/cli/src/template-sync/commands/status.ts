@@ -11,22 +11,26 @@ import { readTemplateVersion } from "../core/template-version.js"
 interface StatusOptions {
 	workspaceRoot: string
 	templateRoot?: string
+	refresh: boolean
+	offline: boolean
 }
 
-	/**
-	 * Runs a status check for the template in the given workspace root.
-	 * If the template root is not specified, it will be resolved from the manifest.
-	 * If the template root does not exist, it will be reported as unavailable and
-	 * a hint will be provided to generate or point to a template root.
-	 * The status check will print the template ID, current version, target version,
-	 * pending changes, conflicts, and report path.
-	 * @param {StatusOptions} options - The options for running the status check.
-	 * @returns {Promise<void>} A promise that resolves when the status check is complete.
-	 */
+/**
+ * Runs a status check for the template in the given workspace root.
+ * If the template root is not specified, it will be resolved from the manifest.
+ * If the template root does not exist, it will be reported as unavailable and
+ * a hint will be provided to generate or point to a template root.
+ * The status check will print the template ID, current version, target version,
+ * pending changes, conflicts, and report path.
+ * @param {StatusOptions} options - The options for running the status check.
+ * @returns {Promise<void>} A promise that resolves when the status check is complete.
+ */
 export async function runStatus(options: StatusOptions): Promise<void> {
 	const templateRoot = await resolveTemplateRoot({
 		workspaceRoot: options.workspaceRoot,
 		templateRoot: options.templateRoot,
+		refresh: options.refresh,
+		offline: options.offline,
 	})
 	const manifest = await readManifest(options.workspaceRoot)
 
@@ -64,6 +68,7 @@ export async function runStatus(options: StatusOptions): Promise<void> {
 			`- Current version: ${manifest.currentVersion}\n` +
 			`- Target version: ${targetVersion}\n` +
 			`- Pending changes: ${plan.changes.length}\n` +
+			`- Skipped unchanged template files: ${plan.skippedUnchangedTemplateFiles}\n` +
 			`- Conflicts: ${plan.conflicts.length}\n` +
 			`- Report: ${reportPath}\n`,
 	)

@@ -32,8 +32,16 @@ export async function readManifest(
     const raw = await readFile(manifestPath, "utf-8");
     const parsed = JSON.parse(raw) as Partial<TemplateManifest>;
     return normalizeManifest(parsed);
-  } catch {
-    return DEFAULT_MANIFEST;
+  } catch (error) {
+    if (isMissingFileError(error)) {
+      return DEFAULT_MANIFEST;
+    }
+
+    const message =
+      error instanceof Error ? error.message : "Unknown manifest error";
+    throw new Error(
+      `Failed to read template manifest at ${manifestPath}: ${message}`,
+    );
   }
 }
 
@@ -71,4 +79,12 @@ function normalizeManifest(input: Partial<TemplateManifest>): TemplateManifest {
         )
       : DEFAULT_MANIFEST.appliedMigrations,
   };
+}
+
+function isMissingFileError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return false;
+  }
+
+  return error.code === "ENOENT";
 }

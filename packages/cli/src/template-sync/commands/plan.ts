@@ -12,24 +12,22 @@ interface PlanOptions {
 	workspaceRoot: string
 	templateRoot?: string
 	toVersion?: string
+	refresh: boolean
+	offline: boolean
 }
 
 export async function runPlan(options: PlanOptions): Promise<void> {
 	const templateRoot = await resolveTemplateRoot({
 		workspaceRoot: options.workspaceRoot,
 		templateRoot: options.templateRoot,
+		refresh: options.refresh,
+		offline: options.offline,
 	})
 	await ensureTemplateRoot(templateRoot)
-
-	console.log("Template root:", templateRoot)
 
 	const manifest = await readManifest(options.workspaceRoot)
 	const detectedVersion = await readTemplateVersion(templateRoot)
 	const targetVersion = options.toVersion ?? detectedVersion
-
-	console.log("Manifest:", manifest)
-	console.log("Detected version:", detectedVersion)
-	console.log("Target version:", targetVersion)
 
 	const plan = await buildUpdatePlan({
 		workspaceRoot: options.workspaceRoot,
@@ -38,12 +36,12 @@ export async function runPlan(options: PlanOptions): Promise<void> {
 	})
 	const reportPath = await writePlanReport(options.workspaceRoot, plan)
 
-
 	process.stdout.write(
 		`${pc.bold("Template update plan")}\n` +
 			`- From: ${manifest.currentVersion}\n` +
 			`- To: ${targetVersion}\n` +
 			`- Changes: ${plan.changes.length}\n` +
+			`- Skipped unchanged template files: ${plan.skippedUnchangedTemplateFiles}\n` +
 			`- Conflicts: ${plan.conflicts.length}\n` +
 			`- Report: ${reportPath}\n`,
 	)

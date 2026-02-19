@@ -28,12 +28,30 @@ export async function rollbackSnapshot(
   const snapshotFiles = await listWorkspaceFiles(snapshotRoot, {
     includeBeztackInternal: true,
   });
+  const snapshotRelativePaths = new Set(
+    snapshotFiles.map((absPath) =>
+      relative(snapshotRoot, absPath).replaceAll("\\", "/"),
+    ),
+  );
 
   for (const absPath of snapshotFiles) {
     const relPath = relative(snapshotRoot, absPath);
     const destPath = join(workspaceRoot, relPath);
     await mkdir(dirname(destPath), { recursive: true });
     await copyFile(absPath, destPath);
+  }
+
+  const workspaceFiles = await listWorkspaceFiles(workspaceRoot, {
+    includeBeztackInternal: false,
+  });
+
+  for (const absPath of workspaceFiles) {
+    const relPath = relative(workspaceRoot, absPath).replaceAll("\\", "/");
+    if (snapshotRelativePaths.has(relPath)) {
+      continue;
+    }
+
+    await rm(absPath, { force: true });
   }
 }
 
@@ -81,6 +99,8 @@ async function listWorkspaceFiles(
         relPath.startsWith("node_modules/") ||
         (!options.includeBeztackInternal &&
           (relPath === ".beztack" || relPath.startsWith(".beztack/"))) ||
+        relPath === ".beztack-sandbox" ||
+        relPath.startsWith(".beztack-sandbox/") ||
         relPath === ".nx" ||
         relPath.startsWith(".nx/") ||
         relPath === "dist" ||

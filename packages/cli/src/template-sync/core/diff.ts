@@ -1,8 +1,10 @@
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { promisify } from "node:util";
 import { isTemplateExcludedPath } from "../../template-excludes.js";
+import { hashContent, readOrigin } from "./origin.js";
 import type { FileChange } from "./types.js";
 
 const execFileAsync = promisify(execFile);
@@ -13,9 +15,16 @@ const EXCLUDED_SEGMENTS = new Set([
   ".nx",
   "dist",
   ".beztack",
+  ".beztack-sandbox",
+  "pnpm-lock.yaml",
   "beztack.template.json",
   "beztack-sync-report.md",
 ]);
+
+interface DiffComputationResult {
+  changes: FileChange[];
+  skippedUnchangedTemplateFiles: number;
+}
 
 /**
  * Computes the difference between the file system of the workspace and the template.
@@ -29,11 +38,13 @@ const EXCLUDED_SEGMENTS = new Set([
 export async function computeDiff(
   workspaceRoot: string,
   templateRoot: string,
-): Promise<FileChange[]> {
+): Promise<DiffComputationResult> {
   const currentFiles = await loadFileMap(workspaceRoot);
   const templateFiles = await loadFileMap(templateRoot);
+  const origin = await readOrigin(workspaceRoot);
   const allPaths = new Set([...currentFiles.keys(), ...templateFiles.keys()]);
   const changes: FileChange[] = [];
+  let skippedUnchangedTemplateFiles = 0;
 
   for (const path of allPaths) {
     const currentContent = currentFiles.get(path);
@@ -54,6 +65,30 @@ export async function computeDiff(
       templateContent !== undefined &&
       currentContent !== templateContent
     ) {
+      const originEntry = origin?.files[path];
+
+      if (originEntry) {
+        const templateHash = hashContent(templateContent);
+        const templateChanged = templateHash !== originEntry.templateHash;
+
+        if (!templateChanged) {
+          skippedUnchangedTemplateFiles += 1;
+          continue;
+        }
+
+        const workspaceHash = hashContent(currentContent);
+        const userModified = workspaceHash !== originEntry.projectHash;
+
+        changes.push({
+          path,
+          type: "modify",
+          currentContent,
+          templateContent,
+          userModified,
+        });
+        continue;
+      }
+
       changes.push({
         path,
         type: "modify",
@@ -63,7 +98,10 @@ export async function computeDiff(
     }
   }
 
-  return changes.sort((a, b) => a.path.localeCompare(b.path));
+  return {
+    changes: changes.sort((a, b) => a.path.localeCompare(b.path)),
+    skippedUnchangedTemplateFiles,
+  };
 }
 
 async function loadFileMap(root: string): Promise<Map<string, string>> {
@@ -119,6 +157,10 @@ async function filterGitIgnoredFiles(
   absolutePaths: string[],
 ): Promise<string[]> {
   if (absolutePaths.length === 0) {
+    return absolutePaths;
+  }
+
+  if (!existsSync(join(root, ".git"))) {
     return absolutePaths;
   }
 
