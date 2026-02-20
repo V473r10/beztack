@@ -8,11 +8,27 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
-import { cancel, confirm, group, spinner, text } from "@clack/prompts";
-import { main as initModules } from "./cli.js";
+import {
+  cancel,
+  confirm,
+  group,
+  isCancel,
+  multiselect,
+  spinner,
+  text,
+} from "@clack/prompts";
 import { debugLog, debugOutput } from "./debug.js";
+import {
+  hashContent,
+  writeOrigin,
+  type Origin,
+  type OriginFileEntry,
+} from "./template-sync/core/origin.js";
+import { initProject } from "./init-project.js";
+import { modules } from "./modules.js";
+import { isTemplateExcludedPath } from "./template-excludes.js";
 
 const execAsyncBase = promisify(exec);
 const PROJECT_NAME_REGEX = /^[a-z0-9-]+$/;
@@ -48,21 +64,38 @@ interface ProjectConfig {
   description: string;
   initializeGit: boolean;
   installDependencies: boolean;
+  initializeModules: boolean;
+  nonInteractive: boolean;
+  templateSource: string;
 }
 
-export async function createProject() {
-  const config = await getProjectConfig();
+export interface CreateProjectOptions {
+  name?: string;
+  description?: string;
+  initializeGit?: boolean;
+  installDependencies?: boolean;
+  initializeModules?: boolean;
+  nonInteractive?: boolean;
+  templateSource?: string;
+}
+
+export async function createProject(
+  options: CreateProjectOptions = {}
+) {
+  const config = await getProjectConfig(options);
   const projectDir = resolve(process.cwd(), config.name);
 
-  await createProjectStructure(projectDir, config);
+  const templateHashes = await createProjectStructure(projectDir, config);
 
   if (config.installDependencies) {
     await installDependencies(projectDir);
   }
 
-  // Change to project directory and run module configuration
-  process.chdir(projectDir);
-  await initModules();
+  if (config.initializeModules) {
+    await configureModules(projectDir, config.nonInteractive);
+  }
+
+  await generateOrigin(projectDir, templateHashes);
 
   if (config.initializeGit) {
     await initializeGit(projectDir);
@@ -78,22 +111,38 @@ export async function createProject() {
   process.stdout.write("  pnpm run dev\n\n");
 }
 
-async function getProjectConfig(): Promise<ProjectConfig> {
+async function getProjectConfig(
+  options: CreateProjectOptions
+): Promise<ProjectConfig> {
+  if (options.nonInteractive === true) {
+    const name = options.name ?? "my-beztack-app";
+    const validationError = validateProjectName(name);
+    if (typeof validationError === "string") {
+      throw new Error(
+        `Invalid project name "${name}": ${validationError}`
+      );
+    }
+
+    return {
+      name,
+      description: options.description ?? "",
+      initializeGit: options.initializeGit ?? true,
+      installDependencies: options.installDependencies ?? true,
+      initializeModules: options.initializeModules ?? true,
+      nonInteractive: true,
+      templateSource:
+        options.templateSource ??
+        "https://github.com/V473r10/beztack.git",
+    };
+  }
+
   const config = await group(
     {
       name: () =>
         text({
           message: "Project name:",
           placeholder: "my-beztack-app",
-          validate: (value: string) => {
-            if (!value) {
-              return "Project name is required";
-            }
-            if (!PROJECT_NAME_REGEX.test(value)) {
-              return "Project name must be lowercase with hyphens";
-            }
-            return;
-          },
+          validate: validateProjectName,
         }),
       description: () =>
         text({
@@ -110,6 +159,11 @@ async function getProjectConfig(): Promise<ProjectConfig> {
           message: "Install dependencies?",
           initialValue: true,
         }),
+      initializeModules: () =>
+        confirm({
+          message: "Configure optional modules now?",
+          initialValue: true,
+        }),
     },
     {
       onCancel: () => {
@@ -119,14 +173,91 @@ async function getProjectConfig(): Promise<ProjectConfig> {
     }
   );
 
-  return config as ProjectConfig;
+  return {
+    ...(config as Omit<ProjectConfig, "nonInteractive">),
+    nonInteractive: false,
+    templateSource: "https://github.com/V473r10/beztack.git",
+  };
+}
+
+function validateProjectName(value: string): string | undefined {
+  if (!value) {
+    return "Project name is required";
+  }
+  if (!PROJECT_NAME_REGEX.test(value)) {
+    return "Project name must be lowercase with hyphens";
+  }
+  return;
+}
+
+async function configureModules(
+  projectDir: string,
+  nonInteractive: boolean
+) {
+  process.chdir(projectDir);
+
+  const requiredModuleNames = modules
+    .filter((moduleDefinition) => moduleDefinition.required)
+    .map((moduleDefinition) => moduleDefinition.name);
+
+  if (nonInteractive) {
+    const spin = spinner();
+    spin.start("Configuring required modules...");
+    try {
+      await initProject(requiredModuleNames);
+      spin.stop("Required modules configured");
+    } catch (error) {
+      spin.stop("Failed to configure required modules");
+      throw error;
+    }
+    return;
+  }
+
+  const optionalModules = modules.filter((moduleDefinition) =>
+    !moduleDefinition.required
+  );
+
+  if (optionalModules.length === 0) {
+    return;
+  }
+
+  const selected = await multiselect({
+    message: "Select the modules you want to include:",
+    options: optionalModules.map((moduleDefinition) => ({
+      value: moduleDefinition.name,
+      label: moduleDefinition.label,
+      hint: moduleDefinition.description,
+    })),
+    required: false,
+  });
+
+  if (isCancel(selected)) {
+    cancel("Operation cancelled.");
+    process.exit(0);
+  }
+
+  const enabledModuleNames = [
+    ...requiredModuleNames,
+    ...(selected as string[]),
+  ];
+
+  const spin = spinner();
+  spin.start("Configuring modules...");
+
+  try {
+    await initProject(enabledModuleNames);
+    spin.stop("Modules configured.");
+  } catch (error) {
+    spin.stop("Failed to configure modules.");
+    throw error;
+  }
 }
 
 async function createProjectStructure(
   projectDir: string,
   config: ProjectConfig
-) {
-  const templateRepoUrl = "https://github.com/V473r10/beztack.git";
+): Promise<Map<string, string>> {
+  const templateRepoUrl = config.templateSource;
   let tempDir: string | undefined;
   const spin = spinner();
   spin.start("Creating project structure");
@@ -139,16 +270,13 @@ async function createProjectStructure(
     await execAsync(`git clone --depth 1 ${templateRepoUrl} ${tempDir}`);
     spin.message("Copying project files...");
 
-    const excludeDirs = [
-      ".git",
-      "node_modules",
-      "scripts/create-beztack",
-      ".github",
-      ".nx",
-      "docs",
-    ];
-
-    await copyDir({ src: tempDir, dest: projectDir, excludeDirs, config });
+    const templateHashes = new Map<string, string>();
+    await copyDir({
+      src: tempDir,
+      dest: projectDir,
+      config,
+      templateHashes,
+    });
 
     // Update package.json with project info
     const packageJsonPath = join(projectDir, "package.json");
@@ -164,6 +292,7 @@ async function createProjectStructure(
     );
 
     spin.stop("Project structure created");
+    return templateHashes;
   } catch (error) {
     spin.stop("Failed to create project structure");
     throw error;
@@ -177,21 +306,22 @@ async function createProjectStructure(
 interface CopyDirOptions {
   src: string;
   dest: string;
-  excludeDirs: string[];
   config: ProjectConfig;
   relativePath?: string;
+  templateHashes: Map<string, string>;
 }
 
 async function copyDir(options: CopyDirOptions) {
-  const { src, dest, excludeDirs, config, relativePath = "" } = options;
+  const { src, dest, config, relativePath = "", templateHashes } = options;
   const entries = await readdir(src, { withFileTypes: true });
 
   for (const entry of entries) {
     const srcPath = join(src, entry.name);
     const destPath = join(dest, entry.name);
     const relativeEntryPath = join(relativePath, entry.name);
+    const normalizedRelPath = relativeEntryPath.replaceAll("\\", "/");
 
-    if (excludeDirs.some((dir) => relativeEntryPath.startsWith(dir))) {
+    if (isTemplateExcludedPath(normalizedRelPath)) {
       continue;
     }
 
@@ -200,16 +330,21 @@ async function copyDir(options: CopyDirOptions) {
       await copyDir({
         src: srcPath,
         dest: destPath,
-        excludeDirs,
         config,
         relativePath: relativeEntryPath,
+        templateHashes,
       });
     } else {
-      let content = await readFile(srcPath, "utf-8");
+      const rawContent = await readFile(srcPath, "utf-8");
+      templateHashes.set(normalizedRelPath, hashContent(rawContent));
 
-      content = content
-        .replace(/{{project-name}}/g, config.name)
-        .replace(/{{description}}/g, config.description || "");
+      let content = rawContent;
+
+      if (shouldApplyTemplateInterpolation(normalizedRelPath)) {
+        content = content
+          .replace(/{{project-name}}/g, config.name)
+          .replace(/{{description}}/g, config.description || "");
+      }
 
       if (entry.name === ".env.example") {
         content = content.replace(
@@ -221,6 +356,15 @@ async function copyDir(options: CopyDirOptions) {
       await writeFile(destPath, content, "utf-8");
     }
   }
+}
+
+function shouldApplyTemplateInterpolation(relativePath: string): boolean {
+  const normalizedPath = relativePath.replaceAll("\\", "/");
+  if (normalizedPath.startsWith("packages/cli/")) {
+    return false;
+  }
+
+  return true;
 }
 
 async function installDependencies(projectDir: string) {
@@ -254,6 +398,61 @@ async function installDependencies(projectDir: string) {
     spin.stop("Failed to install dependencies");
     throw error;
   }
+}
+
+const ORIGIN_EXCLUDED_SEGMENTS = new Set([
+  ".git",
+  "node_modules",
+  ".nx",
+  "dist",
+  ".beztack",
+  ".beztack-sandbox",
+  "pnpm-lock.yaml",
+  "beztack.template.json",
+  "beztack-sync-report.md",
+]);
+
+async function generateOrigin(
+  projectDir: string,
+  templateHashes: Map<string, string>
+): Promise<void> {
+  const files: Record<string, OriginFileEntry> = {};
+  const pending = [projectDir];
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current) continue;
+
+    const entries = await readdir(current, { withFileTypes: true });
+    for (const entry of entries) {
+      const absPath = join(current, entry.name);
+      const relPath = relative(projectDir, absPath).replaceAll("\\", "/");
+      const firstSegment = relPath.split("/")[0] ?? relPath;
+
+      if (ORIGIN_EXCLUDED_SEGMENTS.has(firstSegment) || ORIGIN_EXCLUDED_SEGMENTS.has(entry.name)) {
+        continue;
+      }
+
+      if (entry.isDirectory()) {
+        pending.push(absPath);
+        continue;
+      }
+
+      if (entry.isFile()) {
+        const content = await readFile(absPath, "utf-8");
+        files[relPath] = {
+          projectHash: hashContent(content),
+          templateHash: templateHashes.get(relPath) ?? hashContent(content),
+        };
+      }
+    }
+  }
+
+  const origin: Origin = {
+    createdAt: new Date().toISOString(),
+    files,
+  };
+  await writeOrigin(projectDir, origin);
 }
 
 async function initializeGit(projectDir: string) {

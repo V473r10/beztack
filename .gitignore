@@ -44,3 +44,7 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .next
+dist
+
+# local CLI/template-sync manual testing sandbox
+.beztack-sandbox/

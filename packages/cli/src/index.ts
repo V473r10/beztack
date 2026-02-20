@@ -3,3 +3,4 @@ export { initProject } from "./init-project.js";
 export type { AppName, ModuleDefinition } from "./modules.js";
 export { modules } from "./modules.js";
 export { removeModule } from "./remove-module.js";
+export { runTemplateCommand } from "./template-sync/index.js";
