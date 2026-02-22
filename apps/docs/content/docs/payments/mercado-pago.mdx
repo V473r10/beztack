@@ -1,0 +1,132 @@
+---
+title: Mercado Pago
+description: Payment and subscription flows with Mercado Pago
+---
+
+Beztack supports Mercado Pago as a first-class payment provider, including plan
+sync, subscriptions, checkout preference, direct payment processing, and
+webhook/event handling.
+
+## When to use Mercado Pago
+
+Use Mercado Pago when you need:
+
+- Native Mercado Pago plans/subscriptions
+- Direct card payment processing
+- Mercado Pago webhook-driven state updates
+- Real-time payment events for frontend UX
+
+See also: [Polar](/docs/payments/polar)
+
+## Required environment variables
+
+### API (`apps/api/.env`)
+
+```bash
+MERCADO_PAGO_ACCESS_TOKEN=APP_USR-...
+MERCADO_PAGO_WEBHOOK_SECRET=... # optional but recommended
+MERCADO_PAGO_INTEGRATOR_ID=...  # optional
+PAYMENT_PROVIDER=mercadopago
+APP_URL=http://localhost:3000
+```
+
+### UI (`apps/ui/.env`)
+
+```bash
+VITE_PAYMENT_PROVIDER=mercadopago
+VITE_MERCADO_PAGO_PUBLIC_KEY=APP_USR-...
+VITE_API_URL=http://localhost:3000
+```
+
+Implementation references:
+
+- Env schemas: `packages/env/src/api.ts`, `packages/env/src/ui.ts`
+- Provider factory: `apps/api/lib/payments/index.ts`
+- React provider wiring: `apps/ui/src/app.tsx`
+
+## Implemented API routes
+
+All routes are under `/api/payments/mercado-pago`.
+
+### Core payment routes
+
+- `POST /preference`  
+  Create checkout preference.
+- `POST /process-payment`  
+  Process direct card payments and emit payment events.
+- `POST /webhook`  
+  Validate/process Mercado Pago webhook payloads and persist updates.
+
+### Events
+
+- `GET /events`  
+  SSE stream for payment/subscription events.
+- `POST /events/simulate` (development only)  
+  Emit synthetic events for local testing.
+
+### Subscription routes
+
+- `POST /subscriptions`  
+  Create subscription, or return checkout URL when plan checkout mode is used.
+- `GET /subscriptions/search`  
+  Search subscriptions (auth-aware filters).
+- `GET /subscriptions/:id`  
+  Fetch one subscription.
+- `PUT /subscriptions/:id`  
+  Update status (owner/admin checks).
+- `GET /subscriptions/callback`  
+  Callback redirect for subscription completion.
+
+### Plan routes
+
+- `GET /subscriptions/plans`  
+  Read plans from local DB. Supports `?refresh=true` to sync from MP first.
+- `POST /subscriptions/plans` (admin)  
+  Create plan in Mercado Pago and persist it locally.
+- `GET /subscriptions/plans/:id`  
+  Read one plan from Mercado Pago.
+- `POST /subscriptions/plans/sync` (admin)  
+  Sync all plans from Mercado Pago into local DB.
+
+## Plan sync flow
+
+Beztack keeps a local plan mirror (`mpPlan`) to make plan selection and checkout
+flows predictable in the app.
+
+- `GET /subscriptions/plans` reads local plans and auto-syncs if empty.
+- `POST /subscriptions/plans/sync` performs an explicit admin-triggered sync.
+- `POST /subscriptions` can return `{ mode: "checkout", checkoutUrl }` when
+  a local synced plan contains `initPoint`.
+
+## Client integration
+
+In UI, Mercado Pago is enabled by environment flags and wrapped with
+`MercadoPagoProvider`.
+
+```tsx
+<MercadoPagoProvider apiBaseUrl={env.VITE_API_URL} publicKey={mpPublicKey}>
+  {children}
+</MercadoPagoProvider>
+```
+
+The package `@beztack/mercadopago/react` exposes:
+
+- Provider + context
+- Hooks (`usePlans`, `useSyncPlans`, `useSubscriptions`, etc.)
+- Components for subscriptions, status badges, billing history, and bricks
+
+## Testing checklist
+
+1. Configure sandbox credentials and `VITE_MERCADO_PAGO_PUBLIC_KEY`.
+2. Test checkout preference and direct payment endpoints.
+3. Trigger/receive webhook events and verify local DB updates.
+4. Validate plan sync (`/subscriptions/plans` + `/subscriptions/plans/sync`).
+5. Verify SSE events in the UI (`/events`).
+
+## Troubleshooting
+
+- `401/403` on plan sync/create: verify admin session.
+- Missing webhook updates: verify `MERCADO_PAGO_WEBHOOK_SECRET` and public URL.
+- Provider not active in UI: check `VITE_PAYMENT_PROVIDER=mercadopago` and
+  public key presence.
+- Wrong API base: confirm `VITE_API_URL` points to the running API.

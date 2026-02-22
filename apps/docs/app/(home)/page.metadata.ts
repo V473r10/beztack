@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Beztack - Desarrollo Full-Stack Simplificado",
+  title: "Beztack - Ship Full-Stack Apps Faster",
   description:
-    "Monorepo full-stack con Next.js, Nitro, autenticación robusta y pagos integrados. Todo lo que necesitas para construir tu próxima aplicación.",
+    "Production-ready TypeScript monorepo with React, Nitro, Better Auth, Polar and Mercado Pago payments, plus Template Sync workflows.",
   keywords: [
     "full-stack",
     "monorepo",
@@ -12,18 +12,20 @@ export const metadata: Metadata = {
     "typescript",
     "authentication",
     "payments",
+    "mercado pago",
+    "template sync",
     "nx",
   ],
   openGraph: {
-    title: "Beztack - Desarrollo Full-Stack Simplificado",
+    title: "Beztack - Ship Full-Stack Apps Faster",
     description:
-      "Monorepo full-stack con Next.js, Nitro, autenticación robusta y pagos integrados.",
+      "Production-ready TypeScript monorepo with modern apps, integrated payments, and Template Sync tooling.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Beztack - Desarrollo Full-Stack Simplificado",
+    title: "Beztack - Ship Full-Stack Apps Faster",
     description:
-      "Monorepo full-stack con Next.js, Nitro, autenticación robusta y pagos integrados.",
+      "TypeScript monorepo starter with Polar + Mercado Pago support and Template Sync built in.",
   },
 };

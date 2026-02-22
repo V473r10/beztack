@@ -3,7 +3,9 @@ title: Introduction
 description: Official Beztack Documentation
 ---
 
-Welcome to the **Beztack** docs! This project is a modern SaaS monorepo, built to be scalable, secure, and efficient.
+Welcome to the **Beztack** docs. This project is a production-ready
+TypeScript monorepo focused on fast delivery, clear architecture, and
+maintainable defaults.
 
 ## Tech Stack
 
@@ -12,16 +14,18 @@ We're using cutting-edge technologies to deliver the best developer and user exp
 - **Monorepo:** [Nx](https://nx.dev) for efficient workspace management.
 - **Frontend:** [React](https://react.dev) + [Vite](https://vitejs.dev) in `apps/ui`.
 - **Backend:** [Nitro](https://nitro.unjs.io) in `apps/api`.
-- **Landing:** Astro or similar in `apps/landing`.
-- **Docs:** [Fumadocs](https://fumadocs.dev) in `apps/docs`.
+- **Landing + Docs:** [Next.js](https://nextjs.org) +
+  [Fumadocs](https://fumadocs.dev) in `apps/docs`.
 - **Auth:** [Better Auth](https://better-auth.com).
-- **Payments:** Integrations with Polar (more coming soon).
+- **Payments:** Integrations with Polar and Mercado Pago.
+- **CLI Tooling:** Template Sync commands to plan, inspect, apply, and
+  rollback template updates.
 
 ## Project Structure
 
 The repo is organized into apps and shared packages:
 
-- `apps/`: Deployable applications (UI, API, Docs, Landing).
+- `apps/`: Deployable applications (UI, API, Docs).
 - `packages/`: Shared libraries and utilities.
 
 Check out the sidebar sections to dive deeper into each aspect of Beztack development.

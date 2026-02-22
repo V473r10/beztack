@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock,
   Code2,
+  CreditCard,
   Database,
   FileText,
   Globe,
@@ -27,9 +28,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Beztack - Launch Projects at Lightning Speed",
+  title: "Beztack - Ship Full-Stack Apps Faster",
   description:
-    "Modern TypeScript monorepo starter with Vite, React, shadcn, Nitro, better-auth, and drizzle. Ship faster with best practices built-in.",
+    "Production-ready TypeScript monorepo with React, Nitro, Better Auth, Polar and Mercado Pago payments, plus Template Sync workflows.",
 };
 
 export default function Home() {
@@ -104,7 +105,7 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             <TechBadge
-              logoUrl="https://svgl.app/library/vitejs.svg"
+              logoUrl="https://svgl.app/library/vite.svg"
               name="Vite"
             />
             <TechBadge
@@ -189,7 +190,7 @@ export default function Home() {
                     alt="Vite"
                     className="h-4 w-4"
                     height={16}
-                    src="https://svgl.app/library/vitejs.svg"
+                    src="https://svgl.app/library/vite.svg"
                     width={16}
                   />
                   <span className="font-semibold text-foreground">Vite</span>
@@ -419,20 +420,17 @@ export default function Home() {
                       Integrated Plugins
                     </h4>
                     <ul className="space-y-2">
-                      {[
-                        "2FA Support",
-                        "Admin & Roles",
-                        "Organizations",
-                        "Polar Integration",
-                      ].map((item) => (
-                        <li
-                          className="flex items-center gap-2 text-muted-foreground text-sm"
-                          key={item}
-                        >
-                          <Check className="h-4 w-4 text-green-500" />
-                          {item}
-                        </li>
-                      ))}
+                      {["2FA Support", "Admin & Roles", "Organizations"].map(
+                        (item) => (
+                          <li
+                            className="flex items-center gap-2 text-muted-foreground text-sm"
+                            key={item}
+                          >
+                            <Check className="h-4 w-4 text-green-500" />
+                            {item}
+                          </li>
+                        )
+                      )}
                     </ul>
                   </div>
 
@@ -523,6 +521,76 @@ export default function Home() {
                   <span className="text-foreground">.</span>
                   <span className="text-yellow-400">where</span>
                   <span className="text-foreground">(...)</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Payments Card */}
+            <Card className="group relative overflow-hidden border-border bg-card p-8 transition-all duration-300 hover:border-emerald-500/50 md:col-span-3">
+              <div className="pointer-events-none absolute top-0 right-0 p-6 opacity-[0.04] transition-opacity duration-500 group-hover:opacity-[0.1]">
+                <div className="flex items-center justify-center">
+                  <Image
+                    alt="Payments"
+                    className="h-28 w-28 rotate-12 object-contain"
+                    height={112}
+                    src="https://svgl.app/library/mercado-pago.svg"
+                    width={112}
+                  />
+                </div>
+
+                <div className="flex items-center justify-center">
+                  <Image
+                    alt="Payments"
+                    className="h-28 w-28 rotate-12 object-contain dark:block"
+                    height={112}
+                    src="https://svgl.app/library/polar-sh_dark.svg"
+                    width={112}
+                  />
+
+                  <Image
+                    alt="Payments"
+                    className="h-28 w-28 rotate-12 object-contain dark:hidden"
+                    height={112}
+                    src="https://svgl.app/library/polar-sh_light.svg"
+                    width={112}
+                  />
+                </div>
+              </div>
+
+              <div className="relative z-10 flex h-full flex-col">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-500">
+                    <CreditCard className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-bold font-heading text-2xl">Payments</h3>
+                </div>
+
+                <p className="mb-6 max-w-2xl text-muted-foreground">
+                  Choose the payment stack that fits your market and rollout.
+                  Beztack supports both provider-native flows and centralized
+                  integration points.
+                </p>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <h4 className="mb-3 font-semibold text-foreground text-sm">
+                      Included providers
+                    </h4>
+                    <ul className="space-y-2">
+                      {[
+                        "Polar - SaaS and digital products only",
+                        "Mercado Pago - Physical and digital products, services, subscriptions",
+                      ].map((item) => (
+                        <li
+                          className="flex items-center gap-2 text-muted-foreground text-sm"
+                          key={item}
+                        >
+                          <Check className="h-4 w-4 text-emerald-500" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -880,7 +948,7 @@ export default function Home() {
                   alt="Vite"
                   className="h-32 w-32 rotate-12 object-contain"
                   height={128}
-                  src="https://svgl.app/library/vitejs.svg"
+                  src="https://svgl.app/library/vite.svg"
                   width={128}
                 />
               </div>
@@ -905,7 +973,7 @@ export default function Home() {
                     alt="Vite"
                     className="h-4 w-4"
                     height={16}
-                    src="https://svgl.app/library/vitejs.svg"
+                    src="https://svgl.app/library/vite.svg"
                     width={16}
                   />
                   Vite
@@ -954,7 +1022,8 @@ export default function Home() {
                     pnpm workspaces
                   </span>{" "}
                   and <span className="font-semibold text-foreground">NX</span>.
-                  Efficient dependency management and task orchestration.
+                  Efficient dependency management, task orchestration, and
+                  repeatable template updates with Template Sync.
                 </p>
                 <div className="mt-auto flex gap-3">
                   <div className="flex items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
@@ -983,6 +1052,9 @@ export default function Home() {
                       width={16}
                     />
                     NX
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
+                    Template Sync
                   </div>
                 </div>
               </div>

@@ -12,11 +12,11 @@ Beztack is structured as a monorepo using **Nx**, which lets us efficiently shar
 ├── apps/               # Deployable applications
 │   ├── api/            # Backend (Nitro server)
 │   ├── docs/           # Documentation (Fumadocs)
-│   ├── landing/        # Landing page
 │   └── ui/             # Frontend (React + Vite)
 ├── packages/           # Shared libraries
 │   ├── api-types/      # Shared types between API and UI
-│   └── payments/       # Payment logic (MercadoPago/Polar)
+│   ├── cli/            # Project scaffolding + Template Sync CLI
+│   └── payments/       # Payment logic (Mercado Pago + Polar)
 └── tools/              # Configuration tools and scripts
 ```
 
@@ -30,7 +30,7 @@ A **React** app built with **Vite**.
 
 ### API (`apps/api`)
 A **Nitro** server (the engine behind Nuxt) that provides a fast and lightweight REST API.
-- **Routes:** File-based routing in `server/api`.
+- **Routes:** File-based routing in `server/routes`.
 - **Database:** Drizzle ORM (if applicable) or direct connection.
 - **Auth:** Better Auth Server.
 
@@ -39,4 +39,5 @@ A **Nitro** server (the engine behind Nuxt) that provides a fast and lightweight
 Reusable code lives in `packages/` to keep apps clean and DRY (Don't Repeat Yourself).
 
 - **`packages/api-types`**: Contains TypeScript definitions for the API. This gives the frontend autocomplete and type safety when consuming the backend.
-- **`packages/payments`**: Abstraction over payment providers (MercadoPago, Polar), letting you swap or update billing logic without affecting the rest of the system.
+- **`packages/payments`**: Abstraction over payment providers (Mercado Pago and Polar), letting you swap or update billing logic without affecting the rest of the system.
+- **`packages/cli`**: Project scaffolding plus Template Sync commands (`status`, `plan`, `apply`, `rollback`, `inspect`) for controlled template evolution.

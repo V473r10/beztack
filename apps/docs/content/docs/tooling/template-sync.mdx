@@ -1,0 +1,104 @@
+---
+title: Template Sync
+description: Plan, inspect, apply, and rollback Beztack template updates
+---
+
+Template Sync is a Beztack CLI workflow for evolving an existing project as the
+base template changes, without manually diffing the full repository.
+
+## Command overview
+
+Run commands from your workspace root:
+
+```bash
+pnpm dlx beztack template status
+pnpm dlx beztack template plan --to 1.2.0
+pnpm dlx beztack template apply --dry-run
+pnpm dlx beztack template rollback --snapshot <id>
+pnpm dlx beztack template inspect --port 3434
+```
+
+Available subcommands:
+
+- `status`: summarize current template state and pending changes
+- `plan`: generate an update plan and report
+- `apply`: apply planned changes (or dry run)
+- `rollback`: restore files from a snapshot
+- `inspect`: open local diff viewer for plan changes
+
+## Shared flags
+
+- `--refresh`: force refresh of local template cache
+- `--offline`: use local cache only
+- `--host <host>`: host for `template inspect` server
+- `--port <port>`: port for `template inspect` server
+
+Notes:
+
+- `--refresh` and `--offline` are mutually exclusive.
+- If cache is missing, `--offline` fails until cache is initialized once.
+
+## What gets generated
+
+Template Sync writes artifacts in your workspace:
+
+- `beztack.template.json`: manifest with current version and migration history
+- `beztack-sync-report.md`: generated plan/apply report
+- `.beztack/snapshots/*`: rollback snapshots for applied updates
+- `.beztack/inspect/*`: local inspect viewer files (`data.json`, `index.html`)
+
+## Typical workflow
+
+1. Check current state:
+
+```bash
+pnpm dlx beztack template status
+```
+
+2. Create a plan:
+
+```bash
+pnpm dlx beztack template plan --to <target-version>
+```
+
+3. Preview apply safely:
+
+```bash
+pnpm dlx beztack template apply --dry-run
+```
+
+4. Apply for real:
+
+```bash
+pnpm dlx beztack template apply
+```
+
+5. If needed, rollback:
+
+```bash
+pnpm dlx beztack template rollback --snapshot <snapshot-id>
+```
+
+## Inspect mode
+
+`template inspect` starts a local viewer that displays plan metadata,
+conflicts, and split diffs between workspace and template content.
+
+```bash
+pnpm dlx beztack template inspect --host 127.0.0.1 --port 3434
+```
+
+Use this when you need a visual review before applying changes.
+
+## Safety model
+
+- Apply creates snapshots before mutating files.
+- On apply errors, rollback is triggered automatically.
+- `custom-owned` paths are marked as conflicts and require manual review.
+
+## Troubleshooting
+
+- **Unknown command**: use `pnpm dlx beztack help` and verify `template` subcommand.
+- **Cache initialization errors**: run once without `--offline`.
+- **Unexpected conflicts**: run `template inspect` and review ownership strategy in
+  `beztack.template.json`.

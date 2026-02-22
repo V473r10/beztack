@@ -3,7 +3,7 @@ title: Getting Started
 description: Setting up your development environment
 ---
 
-This guide will help you set up the Beztack project on your local machine.
+This guide helps you bootstrap a Beztack project locally.
 
 ## Prerequisites
 
@@ -21,11 +21,25 @@ You can create a new Beztack project using the `create-beztack` command:
 pnpm create beztack
 ```
 
-The script will walk you through a few setup steps:
+The CLI will walk you through:
 - **Project name**: The name for your new project (lowercase with dashes)
 - **Project description**: A short description of your project
 - **Initialize Git repo?**: Choose if you want to set up a new Git repository
 - **Install dependencies?**: Choose if you want to automatically install dependencies using `pnpm install`
+
+## Useful CLI Commands
+
+After project creation, you can use the Beztack CLI for updates and tooling:
+
+```bash
+pnpm dlx beztack init
+pnpm dlx beztack template status
+pnpm dlx beztack template plan --to 1.2.0
+pnpm dlx beztack template apply --dry-run
+```
+
+Template Sync is useful when you want to preview and apply template changes
+without manually diffing your project.
 
 ## Initial Setup
 
@@ -44,7 +58,9 @@ cp  apps/docs/.env.example apps/docs/.env
 
 ### 2. Configure Required Variables
 
-Open the `.env` files in each app directory and set the variables.
+Open the `.env` files in each app directory and set the required variables.
+At minimum, configure your database/auth variables and the payment provider you
+plan to use (Polar or Mercado Pago).
 
 ### 3. Initialize the Database
 
