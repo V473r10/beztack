@@ -4,8 +4,7 @@
  */
 import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, getHeader, readRawBody } from "h3";
-import { db } from "@/db/db";
-import { organization, user } from "@/db/schema";
+import { db, organization, user } from "@beztack/db";
 import { getPaymentProvider } from "@/lib/payments";
 
 async function updateUserSubscription(

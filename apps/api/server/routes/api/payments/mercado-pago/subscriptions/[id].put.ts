@@ -1,8 +1,7 @@
 import { createMercadoPagoClient } from "@beztack/mercadopago/server";
 import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, getRouterParam, readBody } from "h3";
-import { db } from "@/db/db";
-import { mpSubscription } from "@/db/schema";
+import { db, mpSubscription } from "@beztack/db";
 import { env } from "@/env";
 import { requireOwnerOrAdmin } from "@/server/utils/require-auth";
 

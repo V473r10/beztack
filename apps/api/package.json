@@ -4,10 +4,7 @@
     "build": "nitro build",
     "dev": "nitro dev",
     "vercel-build": "pnpm build",
-    "start": "node .output/server/index.mjs",
-    "migrate": "pnpm exec drizzle-kit generate && pnpm exec drizzle-kit migrate",
-    "push": "pnpm exec drizzle-kit push",
-    "generate-auth-schema": "pnpm dlx @better-auth/cli generate --output ./db/auth-schema.generated.ts --config ./server/utils/auth.ts -y"
+    "start": "node .output/server/index.mjs"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -18,6 +15,7 @@
     "tsx": "^4.21.0"
   },
   "dependencies": {
+    "@beztack/db": "workspace:*",
     "@beztack/email": "workspace:*",
     "@beztack/env": "workspace:*",
     "@beztack/mercadopago": "workspace:*",

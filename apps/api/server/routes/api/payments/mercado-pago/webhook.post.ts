@@ -11,8 +11,7 @@ import {
 } from "@beztack/mercadopago/server";
 import { eq } from "drizzle-orm";
 import { defineEventHandler, getHeader, readBody } from "h3";
-import { db } from "@/db/db";
-import { schema } from "@/db/schema";
+import { db, schema } from "@beztack/db";
 import { env } from "@/env";
 import {
   createPaymentEvent,

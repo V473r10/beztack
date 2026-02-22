@@ -1,12 +1,1 @@
-import "dotenv/config";
-import { defineConfig } from "drizzle-kit";
-import { env } from "./env";
-
-export default defineConfig({
-  out: "./drizzle",
-  schema: "./db/schema.ts",
-  dialect: "postgresql",
-  dbCredentials: {
-    url: env.DATABASE_URL,
-  },
-});
+export { default } from "@beztack/db/drizzle-config"

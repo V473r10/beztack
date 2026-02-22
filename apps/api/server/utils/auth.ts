@@ -9,8 +9,7 @@ import {
   organization,
   twoFactor,
 } from "better-auth/plugins";
-import { db } from "@/db/db";
-import { schema } from "@/db/schema";
+import { db, schema } from "@beztack/db";
 import { env } from "@/env";
 
 const polarClient = new Polar({

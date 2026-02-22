@@ -8,8 +8,9 @@
     "dev": "nx run-many -t dev --parallel=10",
     "lint": "nx lint",
     "test": "nx test",
-    "migrate": "nx run api:migrate",
-    "push": "nx run api:push"
+    "migrate": "pnpm --filter @beztack/db migrate",
+    "push": "pnpm --filter @beztack/db push",
+    "generate-auth-schema": "pnpm --filter @beztack/db generate-auth-schema"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.2",

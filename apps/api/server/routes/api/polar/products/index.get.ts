@@ -1,15 +1,15 @@
 import { Polar } from "@polar-sh/sdk";
 import { eq } from "drizzle-orm";
 import { defineEventHandler } from "h3";
-import { db } from "@/db/db";
 import {
+  db,
   feature,
   limit,
   permission,
   planFeature,
   planLimit,
   planPermission,
-} from "@/db/schema";
+} from "@beztack/db";
 import { env } from "@/env";
 
 type ProductTier = {

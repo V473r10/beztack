@@ -1,7 +1,6 @@
 import { createMercadoPagoClient } from "@beztack/mercadopago/server";
 import { createError, defineEventHandler, readBody } from "h3";
-import { db } from "@/db/db";
-import { mpPlan } from "@/db/schema";
+import { db, mpPlan } from "@beztack/db";
 import { env } from "@/env";
 import { requireAdmin } from "@/server/utils/require-auth";
 

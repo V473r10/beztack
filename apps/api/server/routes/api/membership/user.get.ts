@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import { createError, defineEventHandler } from "h3";
-import { db } from "@/db/db";
-import { schema } from "@/db/schema";
+import { db, schema } from "@beztack/db";
 import { auth } from "@/server/utils/auth";
 
 /**

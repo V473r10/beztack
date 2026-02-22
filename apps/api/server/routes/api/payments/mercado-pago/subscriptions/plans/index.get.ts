@@ -1,8 +1,7 @@
 import { createMercadoPagoClient } from "@beztack/mercadopago/server";
 import { desc, eq } from "drizzle-orm";
 import { defineEventHandler, getQuery } from "h3";
-import { db } from "@/db/db";
-import { mpPlan } from "@/db/schema";
+import { db, mpPlan } from "@beztack/db";
 import { env } from "@/env";
 
 const mp = createMercadoPagoClient({
