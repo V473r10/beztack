@@ -14,8 +14,12 @@ export interface Origin {
 	files: Record<string, OriginFileEntry>
 }
 
-export function hashContent(content: string): string {
-	return createHash("sha256").update(content, "utf-8").digest("hex")
+export function hashContent(content: string | Buffer): string {
+	if (typeof content === "string") {
+		return createHash("sha256").update(content, "utf-8").digest("hex")
+	}
+
+	return createHash("sha256").update(content).digest("hex")
 }
 
 export async function readOrigin(

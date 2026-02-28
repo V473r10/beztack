@@ -4,6 +4,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { promisify } from "node:util";
 import { isTemplateExcludedPath } from "../../template-excludes.js";
+import { isBinaryFileContent } from "../../utils/file-content.js";
 import { hashContent, readOrigin } from "./origin.js";
 import type { FileChange } from "./types.js";
 
@@ -24,6 +25,12 @@ const EXCLUDED_SEGMENTS = new Set([
 interface DiffComputationResult {
   changes: FileChange[];
   skippedUnchangedTemplateFiles: number;
+}
+
+interface FileMapEntry {
+  isBinary: boolean;
+  textContent?: string;
+  binaryContent?: Buffer;
 }
 
 /**
@@ -47,55 +54,50 @@ export async function computeDiff(
   let skippedUnchangedTemplateFiles = 0;
 
   for (const path of allPaths) {
-    const currentContent = currentFiles.get(path);
-    const templateContent = templateFiles.get(path);
+    const currentFile = currentFiles.get(path);
+    const templateFile = templateFiles.get(path);
 
-    if (currentContent === undefined && templateContent !== undefined) {
-      changes.push({ path, type: "add", templateContent });
+    if (currentFile === undefined && templateFile !== undefined) {
+      changes.push(createAddChange(path, templateFile));
       continue;
     }
 
-    if (currentContent !== undefined && templateContent === undefined) {
-      changes.push({ path, type: "delete", currentContent });
+    if (currentFile !== undefined && templateFile === undefined) {
+      changes.push(createDeleteChange(path, currentFile));
       continue;
     }
 
-    if (
-      currentContent !== undefined &&
-      templateContent !== undefined &&
-      currentContent !== templateContent
-    ) {
-      const originEntry = origin?.files[path];
+    if (currentFile === undefined || templateFile === undefined) {
+      continue;
+    }
 
-      if (originEntry) {
-        const templateHash = hashContent(templateContent);
-        const templateChanged = templateHash !== originEntry.templateHash;
+    const currentHash = hashEntryContent(currentFile);
+    const templateHash = hashEntryContent(templateFile);
+    const hasChanged = currentHash !== templateHash;
 
-        if (!templateChanged) {
-          skippedUnchangedTemplateFiles += 1;
-          continue;
-        }
+    if (!hasChanged) {
+      continue;
+    }
 
-        const workspaceHash = hashContent(currentContent);
-        const userModified = workspaceHash !== originEntry.projectHash;
+    const originEntry = origin?.files[path];
 
-        changes.push({
-          path,
-          type: "modify",
-          currentContent,
-          templateContent,
-          userModified,
-        });
+    if (originEntry) {
+      const templateChanged = templateHash !== originEntry.templateHash;
+
+      if (!templateChanged) {
+        skippedUnchangedTemplateFiles += 1;
         continue;
       }
 
-      changes.push({
-        path,
-        type: "modify",
-        currentContent,
-        templateContent,
-      });
+      const userModified = currentHash !== originEntry.projectHash;
+
+      changes.push(
+        createModifyChange(path, currentFile, templateFile, userModified),
+      );
+      continue;
     }
+
+    changes.push(createModifyChange(path, currentFile, templateFile));
   }
 
   return {
@@ -104,17 +106,112 @@ export async function computeDiff(
   };
 }
 
-async function loadFileMap(root: string): Promise<Map<string, string>> {
+async function loadFileMap(root: string): Promise<Map<string, FileMapEntry>> {
   const entries = await listFiles(root);
-  const map = new Map<string, string>();
+  const map = new Map<string, FileMapEntry>();
 
   for (const absolutePath of entries) {
     const rel = normalizePath(relative(root, absolutePath));
-    const content = await readFile(absolutePath, "utf-8");
-    map.set(rel, content);
+    const content = await readFile(absolutePath);
+    const isBinary = isBinaryFileContent(rel, content);
+    if (isBinary) {
+      map.set(rel, {
+        isBinary: true,
+        binaryContent: content,
+      });
+      continue;
+    }
+
+    map.set(rel, {
+      isBinary: false,
+      textContent: content.toString("utf-8"),
+    });
   }
 
   return map;
+}
+
+function createAddChange(path: string, file: FileMapEntry): FileChange {
+  if (file.isBinary) {
+    return {
+      path,
+      type: "add",
+      isBinary: true,
+      templateBinaryContent: file.binaryContent,
+    };
+  }
+
+  return {
+    path,
+    type: "add",
+    isBinary: false,
+    templateContent: file.textContent,
+  };
+}
+
+function createDeleteChange(path: string, file: FileMapEntry): FileChange {
+  if (file.isBinary) {
+    return {
+      path,
+      type: "delete",
+      isBinary: true,
+      currentBinaryContent: file.binaryContent,
+    };
+  }
+
+  return {
+    path,
+    type: "delete",
+    isBinary: false,
+    currentContent: file.textContent,
+  };
+}
+
+function createModifyChange(
+  path: string,
+  currentFile: FileMapEntry,
+  templateFile: FileMapEntry,
+  userModified?: boolean,
+): FileChange {
+  const isBinary = currentFile.isBinary || templateFile.isBinary;
+  if (isBinary) {
+    return {
+      path,
+      type: "modify",
+      isBinary: true,
+      currentBinaryContent: toBuffer(currentFile),
+      templateBinaryContent: toBuffer(templateFile),
+      userModified,
+    };
+  }
+
+  return {
+    path,
+    type: "modify",
+    isBinary: false,
+    currentContent: currentFile.textContent,
+    templateContent: templateFile.textContent,
+    userModified,
+  };
+}
+
+function hashEntryContent(entry: FileMapEntry): string {
+  return hashContent(toHashableContent(entry));
+}
+
+function toHashableContent(entry: FileMapEntry): string | Buffer {
+  if (entry.isBinary) {
+    return entry.binaryContent ?? Buffer.alloc(0);
+  }
+  return entry.textContent ?? "";
+}
+
+function toBuffer(entry: FileMapEntry): Buffer {
+  if (entry.isBinary) {
+    return entry.binaryContent ?? Buffer.alloc(0);
+  }
+
+  return Buffer.from(entry.textContent ?? "", "utf-8");
 }
 
 async function listFiles(root: string): Promise<string[]> {

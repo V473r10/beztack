@@ -29,6 +29,7 @@ import {
 import { initProject } from "./init-project.js";
 import { modules } from "./modules.js";
 import { isTemplateExcludedPath } from "./template-excludes.js";
+import { isBinaryFileContent } from "./utils/file-content.js";
 
 const execAsyncBase = promisify(exec);
 const PROJECT_NAME_REGEX = /^[a-z0-9-]+$/;
@@ -335,7 +336,16 @@ async function copyDir(options: CopyDirOptions) {
         templateHashes,
       });
     } else {
-      const rawContent = await readFile(srcPath, "utf-8");
+      const rawBuffer = await readFile(srcPath);
+      const isBinary = isBinaryFileContent(normalizedRelPath, rawBuffer);
+
+      if (isBinary) {
+        templateHashes.set(normalizedRelPath, hashContent(rawBuffer));
+        await writeFile(destPath, rawBuffer);
+        continue;
+      }
+
+      const rawContent = rawBuffer.toString("utf-8");
       templateHashes.set(normalizedRelPath, hashContent(rawContent));
 
       let content = rawContent;
@@ -439,10 +449,11 @@ async function generateOrigin(
       }
 
       if (entry.isFile()) {
-        const content = await readFile(absPath, "utf-8");
+        const content = await readFile(absPath);
         files[relPath] = {
           projectHash: hashContent(content),
-          templateHash: templateHashes.get(relPath) ?? hashContent(content),
+          templateHash:
+            templateHashes.get(relPath) ?? hashContent(content),
         };
       }
     }

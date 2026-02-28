@@ -24,6 +24,7 @@ interface SerializableChange {
 	path: string
 	type: "add" | "modify" | "delete"
 	ownership: "template-owned" | "custom-owned" | "mixed"
+	isBinary: boolean
 	conflictReason?: string
 	currentContent: string
 	templateContent: string
@@ -84,9 +85,16 @@ export async function runInspect(options: InspectOptions): Promise<void> {
 			path: change.path,
 			type: change.type,
 			ownership: change.ownership,
+			isBinary: change.isBinary === true,
 			conflictReason: change.conflictReason,
-			currentContent: change.currentContent ?? "",
-			templateContent: change.templateContent ?? "",
+			currentContent:
+				change.isBinary === true
+					? "[binary content omitted]"
+					: (change.currentContent ?? ""),
+			templateContent:
+				change.isBinary === true
+					? "[binary content omitted]"
+					: (change.templateContent ?? ""),
 		})),
 	}
 

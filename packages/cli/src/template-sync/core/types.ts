@@ -19,6 +19,9 @@ export interface FileChange {
   type: ChangeType;
   currentContent?: string;
   templateContent?: string;
+  currentBinaryContent?: Buffer;
+  templateBinaryContent?: Buffer;
+  isBinary?: boolean;
   userModified?: boolean;
 }
 
