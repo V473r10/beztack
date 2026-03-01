@@ -8,6 +8,8 @@ import {
   outro,
   spinner,
 } from "@clack/prompts";
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import pc from "picocolors";
 import { createProject } from "./create.js";
 import type { CreateProjectOptions } from "./create.js";
@@ -279,8 +281,30 @@ function parseCreateCommandOptions(
   return options;
 }
 
+function isCliEntrypoint() {
+  const importMetaWithMain = import.meta as ImportMeta & {
+    main?: boolean;
+  };
+
+  if (typeof importMetaWithMain.main === "boolean") {
+    return importMetaWithMain.main;
+  }
+
+  const argvPath = process.argv[1];
+  if (!argvPath) {
+    return false;
+  }
+
+  try {
+    const modulePath = fileURLToPath(import.meta.url);
+    return realpathSync(modulePath) === realpathSync(argvPath);
+  } catch {
+    return false;
+  }
+}
+
 // Only run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isCliEntrypoint()) {
   // Parse debug flag before anything else
   if (parseDebugFlag()) {
     setDebugMode(true);

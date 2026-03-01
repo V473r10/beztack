@@ -1,6 +1,6 @@
 {
   "name": "create-beztack",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Proxy to beztack CLI - Create a new Beztack monorepo project",
   "type": "module",
   "license": "MIT",
