@@ -159,7 +159,7 @@ export function PlanChangeDialog({
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
 
   const { data: allTiers = [] } = useQuery<PolarPricingTier[]>({
-    queryKey: ["polar-products"],
+    queryKey: ["subscriptions", "products", "tiers"],
     queryFn: usePolarProducts,
   });
 

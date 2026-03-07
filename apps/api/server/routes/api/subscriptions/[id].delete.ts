@@ -5,9 +5,10 @@
 import { createError, defineEventHandler, getQuery, getRouterParam } from "h3";
 import { getPaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
+import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event);
+  const auth = await requireAuth(event);
   const provider = getPaymentProvider();
 
   const subscriptionId = getRouterParam(event, "id");
@@ -22,6 +23,21 @@ export default defineEventHandler(async (event) => {
   const immediately = query.immediately === "true";
 
   try {
+    const currentSubscription = await provider.getSubscription(subscriptionId);
+    if (!currentSubscription) {
+      throw createError({
+        statusCode: 404,
+        message: "Subscription not found",
+      });
+    }
+
+    if (!isSubscriptionOwnedByUser(currentSubscription, auth)) {
+      throw createError({
+        statusCode: 403,
+        message: "Access denied",
+      });
+    }
+
     const subscription = await provider.cancelSubscription(
       subscriptionId,
       immediately
@@ -35,6 +51,15 @@ export default defineEventHandler(async (event) => {
         : "Subscription will be canceled at the end of the billing period",
     };
   } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "statusCode" in error &&
+      typeof error.statusCode === "number"
+    ) {
+      throw error;
+    }
+
     throw createError({
       statusCode: 500,
       message:

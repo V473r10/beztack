@@ -24,6 +24,24 @@ async function updateOrganizationSubscription(
     .where(eq(organization.id, organizationId));
 }
 
+async function findUserIdByEmail(
+  email: string | undefined
+): Promise<string | null> {
+  if (!email) {
+    return null;
+  }
+
+  const [matchedUser] = await db
+    .select({
+      id: user.id,
+    })
+    .from(user)
+    .where(eq(user.email, email))
+    .limit(1);
+
+  return matchedUser?.id ?? null;
+}
+
 export default defineEventHandler(async (event) => {
   const provider = getPaymentProvider();
 
@@ -47,21 +65,37 @@ export default defineEventHandler(async (event) => {
     if (payload.subscription) {
       const sub = payload.subscription;
       const metadata = sub.metadata as
-        | { userId?: string; referenceId?: string; tier?: string }
+        | {
+            userId?: string;
+            organizationId?: string;
+            referenceId?: string;
+            tier?: string;
+          }
         | undefined;
 
-      if (metadata?.userId) {
-        await updateUserSubscription(metadata.userId, {
-          subscriptionTier: metadata.tier ?? "pro",
+      const userId =
+        metadata?.userId ?? (await findUserIdByEmail(sub.customerEmail));
+
+      if (userId) {
+        await updateUserSubscription(userId, {
+          subscriptionTier: metadata?.tier ?? "pro",
           subscriptionStatus: sub.status === "active" ? "active" : sub.status,
           subscriptionId: sub.id,
           subscriptionValidUntil: sub.currentPeriodEnd ?? null,
         });
       }
 
-      if (metadata?.referenceId) {
-        await updateOrganizationSubscription(metadata.referenceId, {
-          subscriptionTier: metadata.tier ?? "team",
+      const organizationId =
+        metadata?.organizationId ??
+        // legacy fallback: referenceId can be userId in old MP payloads, so guard it
+        (metadata?.referenceId &&
+        metadata.referenceId !== metadata.userId
+          ? metadata.referenceId
+          : undefined);
+
+      if (organizationId) {
+        await updateOrganizationSubscription(organizationId, {
+          subscriptionTier: metadata?.tier ?? "team",
           subscriptionStatus: sub.status === "active" ? "active" : sub.status,
           subscriptionId: sub.id,
           subscriptionValidUntil: sub.currentPeriodEnd ?? null,

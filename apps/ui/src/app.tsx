@@ -64,8 +64,9 @@ function getQueryClient() {
 function App() {
   const queryClient = getQueryClient();
   const mpPublicKey = env.VITE_MERCADO_PAGO_PUBLIC_KEY ?? "";
+  const isMercadoPagoProvider = env.VITE_PAYMENT_PROVIDER === "mercadopago";
   const isMercadoPagoEnabled =
-    env.VITE_PAYMENT_PROVIDER === "mercadopago" && mpPublicKey;
+    isMercadoPagoProvider && mpPublicKey;
 
   return (
     <ThemeProvider>
@@ -147,7 +148,12 @@ function App() {
                 <Route element={<AI />} path="ai" />
                 <Route element={<OCR />} path="ocr" />
                 <Route element={<NuqsDemo />} path="nuqs-demo" />
-                <Route element={<MercadoPagoDemo />} path="mercado-pago-demo" />
+                {isMercadoPagoProvider && (
+                  <Route
+                    element={<MercadoPagoDemo />}
+                    path="mercado-pago-demo"
+                  />
+                )}
                 {/* Redirect any unknown routes to home */}
                 <Route element={<Navigate replace to="/" />} path="*" />
               </Routes>

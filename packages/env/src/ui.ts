@@ -19,7 +19,7 @@ export const env = createEnv({
   client: {
     VITE_API_URL: z.string().url().default("http://localhost:3000"),
     VITE_BASE_PATH: z.string().default("/").optional(),
-    VITE_MERCADO_PAGO_PUBLIC_KEY: z.string().min(1).optional(),
+    VITE_MERCADO_PAGO_PUBLIC_KEY: z.string().default(""),
     VITE_PAYMENT_PROVIDER: z.enum(["polar", "mercadopago"]).default("polar"),
   },
 
@@ -35,3 +35,12 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 });
+
+if (
+  env.VITE_PAYMENT_PROVIDER === "mercadopago" &&
+  !env.VITE_MERCADO_PAGO_PUBLIC_KEY
+) {
+  throw new Error(
+    'Missing required environment variable "VITE_MERCADO_PAGO_PUBLIC_KEY" for PAYMENT_PROVIDER=mercadopago'
+  );
+}

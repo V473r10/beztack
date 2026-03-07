@@ -243,8 +243,22 @@ export function createPolarAdapter(config: {
     async listSubscriptions(
       options: ListSubscriptionsOptions
     ): Promise<Subscription[]> {
+      let customerId = options.customerId;
+
+      if (!customerId && options.customerEmail) {
+        const customer = await this.getCustomerByEmail(options.customerEmail);
+        if (!customer) {
+          return [];
+        }
+        customerId = customer.id;
+      }
+
+      if (!customerId) {
+        return [];
+      }
+
       const response = await client.subscriptions.list({
-        customerId: options.customerId,
+        customerId,
         limit: options.limit ?? DEFAULT_LIMIT,
       });
 

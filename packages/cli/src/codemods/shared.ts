@@ -4,6 +4,12 @@ import { Project } from "ts-morph";
 import { getWorkspaceRoot } from "../utils/workspace.js";
 
 export async function removeImportsForPackage(packageName: string) {
+  await removeImportsByPattern([
+    new RegExp(`^${packageName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:/|$)`),
+  ]);
+}
+
+export async function removeImportsByPattern(patterns: RegExp[]) {
   const workspaceRoot = getWorkspaceRoot();
   const project = new Project({
     tsConfigFilePath: join(workspaceRoot, "tsconfig.base.json"),
@@ -20,7 +26,7 @@ export async function removeImportsForPackage(packageName: string) {
 
     for (const imp of sf.getImportDeclarations()) {
       const mod = imp.getModuleSpecifierValue();
-      if (mod === packageName || mod.startsWith(`${packageName}/`)) {
+      if (patterns.some((pattern) => pattern.test(mod))) {
         imp.remove();
       }
     }

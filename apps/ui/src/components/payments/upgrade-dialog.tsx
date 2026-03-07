@@ -55,7 +55,7 @@ export function UpgradeDialog({
   );
 
   const { data: allTiers = [] } = useQuery<PolarPricingTier[]>({
-    queryKey: ["polar-products"],
+    queryKey: ["subscriptions", "products", "tiers"],
     queryFn: usePolarProducts,
   });
   const availableTiers = allTiers.filter((tier) =>

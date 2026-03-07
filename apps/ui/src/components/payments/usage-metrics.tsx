@@ -1,6 +1,5 @@
 // import { getUsagePercentage, isUsageNearLimit } from "@beztack/payments/client";
 
-import type { CustomerMeter } from "@polar-sh/sdk/models/components/customermeter.js";
 import {
   AlertCircle,
   ArrowUpRight,
@@ -18,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { CustomerMeter } from "@/contexts/membership-context";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { MembershipTierConfig } from "@/types/membership";
@@ -151,7 +151,7 @@ export function UsageMetrics({
   // Mock current usage data based on meters or use defaults
   const getCurrentUsage = (key: string) => {
     const meter = meters.find((m: CustomerMeter) => m.id?.includes(key));
-    return meter?.consumedUnits || 0;
+    return meter?.value || 0;
   };
 
   const usageData = Object.entries(tierConfig.limits || {}).map(

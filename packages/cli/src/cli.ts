@@ -6,6 +6,7 @@ import {
   isCancel,
   multiselect,
   outro,
+  select,
   spinner,
 } from "@clack/prompts";
 import { realpathSync } from "node:fs";
@@ -16,6 +17,7 @@ import type { CreateProjectOptions } from "./create.js";
 import { parseDebugFlag, setDebugMode } from "./debug.js";
 import { initProject } from "./init-project.js";
 import { modules } from "./modules.js";
+import type { PaymentProvider } from "./modules.js";
 import { runTemplateCommand } from "./template-sync/index.js";
 import { getWorkspaceRoot } from "./utils/workspace.js";
 
@@ -35,7 +37,7 @@ const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
     name: "init",
     description: "Configure modules in an existing project",
-    run: () => main(),
+    run: (args) => main(args),
   },
   {
     name: "template",
@@ -83,8 +85,9 @@ function getCommandHelpLines() {
 /**
  * Initialize modules in an existing project
  */
-export async function main() {
+export async function main(args: string[] = []) {
   intro(pc.bgCyan(pc.black(" Beztack Init ")));
+  const options = parseInitCommandOptions(args);
 
   const optionalModules = modules.filter((m) => !m.required);
 
@@ -97,31 +100,75 @@ export async function main() {
     process.exit(0);
   }
 
-  const selected = await multiselect({
-    message: "Select the modules you want to include:",
-    options: optionalModules.map((m) => ({
-      value: m.name,
-      label: m.label,
-      hint: m.description,
-    })),
-    required: false,
-  });
+  let paymentProvider = options.paymentProvider;
+  let enabledModuleNames = modules
+    .filter((m) => m.required)
+    .map((m) => m.name);
 
-  if (isCancel(selected)) {
-    cancel("Operation cancelled.");
-    process.exit(0);
+  if (options.nonInteractive) {
+    enabledModuleNames = [
+      ...enabledModuleNames,
+      ...(options.selectedModules ?? []),
+    ];
+  } else {
+    const selected = await multiselect({
+      message: "Select the modules you want to include:",
+      options: optionalModules.map((m) => ({
+        value: m.name,
+        label: m.label,
+        hint: m.description,
+      })),
+      required: false,
+    });
+
+    if (isCancel(selected)) {
+      cancel("Operation cancelled.");
+      process.exit(0);
+    }
+
+    enabledModuleNames = [...enabledModuleNames, ...(selected as string[])];
   }
 
-  const enabledModuleNames = [
-    ...modules.filter((m) => m.required).map((m) => m.name),
-    ...(selected as string[]),
-  ];
+  if (enabledModuleNames.includes("payments")) {
+    if (!paymentProvider && !options.nonInteractive) {
+      const provider = await select({
+        message: "Select the payment provider:",
+        options: [
+          {
+            value: "polar",
+            label: "Polar",
+            hint: "Better Auth checkout + portal workflow",
+          },
+          {
+            value: "mercadopago",
+            label: "Mercado Pago",
+            hint: "Mercado Pago native plans and payment flows",
+          },
+        ],
+      });
+
+      if (isCancel(provider)) {
+        cancel("Operation cancelled.");
+        process.exit(0);
+      }
+
+      paymentProvider = provider as PaymentProvider;
+    }
+
+    if (!paymentProvider) {
+      cancel("Payments module requires --payment-provider in non-interactive mode.");
+      process.exit(1);
+    }
+  }
 
   const s = spinner();
   s.start("Configuring modules...");
 
   try {
-    await initProject(enabledModuleNames);
+    await initProject({
+      enabledModules: enabledModuleNames,
+      paymentProvider,
+    });
     s.stop("Modules configured.");
   } catch (err) {
     s.stop("Failed to configure modules.");
@@ -179,19 +226,109 @@ ${pc.bold("Create Flags:")}
   --git | --no-git               Enable/disable git init
   --install | --no-install       Enable/disable dependency install
   --init | --no-init             Enable/disable module configuration
+  --modules <list>               Comma-separated optional modules
+  --payment-provider <provider>  Payment provider: polar|mercadopago
   --template-source <path-or-url>  Custom template source
 
 ${pc.bold("Examples:")}
   pnpm dlx beztack create
   pnpm dlx beztack create --yes --name my-app --no-install --no-git
+  pnpm dlx beztack create --yes --name my-app --modules payments,email --payment-provider mercadopago
   pnpm dlx beztack create --yes --name my-app --template-source ../beztack
   beztack init
+  beztack init --modules payments,ai --payment-provider polar
   beztack template status
   beztack template status --offline
   beztack template plan --to 1.2.0
   beztack template apply --dry-run --refresh
   beztack template inspect --port 3434
 `);
+}
+
+function parseModulesList(value: string): string[] {
+  const optionalModuleNames = new Set(
+    modules.filter((m) => !m.required).map((m) => m.name)
+  );
+
+  const parsed = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  for (const moduleName of parsed) {
+    if (!optionalModuleNames.has(moduleName)) {
+      throw new Error(
+        `Unknown optional module "${moduleName}". Valid values: ${[
+          ...optionalModuleNames,
+        ].join(", ")}`
+      );
+    }
+  }
+
+  return parsed;
+}
+
+function parsePaymentProvider(value: string): PaymentProvider {
+  if (value === "polar" || value === "mercadopago") {
+    return value;
+  }
+
+  throw new Error(
+    `Invalid payment provider "${value}". Use "polar" or "mercadopago".`
+  );
+}
+
+interface InitCommandOptions {
+  nonInteractive: boolean;
+  selectedModules?: string[];
+  paymentProvider?: PaymentProvider;
+}
+
+function parseInitCommandOptions(args: string[]): InitCommandOptions {
+  const options: InitCommandOptions = {
+    nonInteractive: false,
+  };
+
+  let hasFlags = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+    if (!token.startsWith("--")) {
+      throw new Error(`Unknown init argument: ${token}`);
+    }
+
+    hasFlags = true;
+
+    if (token === "--yes" || token === "--non-interactive") {
+      options.nonInteractive = true;
+      continue;
+    }
+
+    if (token === "--modules" || token === "--payment-provider") {
+      const value = args[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error(`Missing value for ${token}`);
+      }
+
+      if (token === "--modules") {
+        options.selectedModules = parseModulesList(value);
+      } else {
+        options.paymentProvider = parsePaymentProvider(value);
+      }
+
+      index += 1;
+      options.nonInteractive = true;
+      continue;
+    }
+
+    throw new Error(`Unknown init option: ${token}`);
+  }
+
+  if (hasFlags && !options.nonInteractive) {
+    options.nonInteractive = true;
+  }
+
+  return options;
 }
 
 function parseCreateCommandOptions(
@@ -218,6 +355,8 @@ function parseCreateCommandOptions(
     if (
       token === "--name" ||
       token === "--description" ||
+      token === "--modules" ||
+      token === "--payment-provider" ||
       token === "--template-source"
     ) {
       const value = args[index + 1];
@@ -227,6 +366,10 @@ function parseCreateCommandOptions(
 
       if (token === "--name") {
         options.name = value;
+      } else if (token === "--modules") {
+        options.selectedModules = parseModulesList(value);
+      } else if (token === "--payment-provider") {
+        options.paymentProvider = parsePaymentProvider(value);
       } else if (token === "--template-source") {
         options.templateSource = value;
       } else {

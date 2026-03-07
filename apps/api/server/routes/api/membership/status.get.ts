@@ -11,7 +11,9 @@ export default defineEventHandler(async (event) => {
   // Get organization context from query params or session
   const query = getQuery(event);
   const organizationId =
-    (query.organizationId as string) || user.session.activeOrganizationId;
+    (query.organizationId as string | undefined) ??
+    user.session.activeOrganizationId ??
+    undefined;
 
   try {
     // Get membership status

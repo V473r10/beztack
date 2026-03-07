@@ -12,10 +12,57 @@ import {
 import { db, schema } from "@beztack/db";
 import { env } from "@/env";
 
-const polarClient = new Polar({
-  accessToken: env.POLAR_ACCESS_TOKEN,
-  server: env.POLAR_SERVER,
-});
+const isPolarProvider = env.PAYMENT_PROVIDER === "polar";
+const paymentsSuccessUrl = env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
+
+const polarClient = isPolarProvider
+  ? new Polar({
+      accessToken: env.POLAR_ACCESS_TOKEN,
+      server: env.POLAR_SERVER,
+    })
+  : null;
+
+const polarPlugin =
+  isPolarProvider && polarClient
+    ? polar({
+        client: polarClient,
+        createCustomerOnSignUp: false,
+        use: [
+          checkout({
+            products: [
+              {
+                productId: env.POLAR_BASIC_MONTHLY_PRODUCT_ID,
+                slug: "basic-monthly",
+              },
+              {
+                productId: env.POLAR_BASIC_YEARLY_PRODUCT_ID,
+                slug: "basic-yearly",
+              },
+              {
+                productId: env.POLAR_PRO_MONTHLY_PRODUCT_ID,
+                slug: "pro-monthly",
+              },
+              {
+                productId: env.POLAR_PRO_YEARLY_PRODUCT_ID,
+                slug: "pro-yearly",
+              },
+              {
+                productId: env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
+                slug: "ultimate-monthly",
+              },
+              {
+                productId: env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
+                slug: "ultimate-yearly",
+              },
+            ],
+            successUrl: paymentsSuccessUrl,
+            authenticatedUsersOnly: true,
+          }),
+          portal(),
+          usage(),
+        ],
+      })
+    : null;
 
 // Determine project name: in development use APP_NAME from env (defaults to "beztack" in .env.example),
 // in new projects this falls back to the template placeholder and will be replaced by the initializer
@@ -79,44 +126,7 @@ export const auth = betterAuth({
         allowRemovingAllTeams: false, // Prevent removing the last team
       },
     }),
-    polar({
-      client: polarClient,
-      createCustomerOnSignUp: false,
-      use: [
-        checkout({
-          products: [
-            {
-              productId: env.POLAR_BASIC_MONTHLY_PRODUCT_ID,
-              slug: "basic-monthly",
-            },
-            {
-              productId: env.POLAR_BASIC_YEARLY_PRODUCT_ID,
-              slug: "basic-yearly",
-            },
-            {
-              productId: env.POLAR_PRO_MONTHLY_PRODUCT_ID,
-              slug: "pro-monthly",
-            },
-            {
-              productId: env.POLAR_PRO_YEARLY_PRODUCT_ID,
-              slug: "pro-yearly",
-            },
-            {
-              productId: env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
-              slug: "ultimate-monthly",
-            },
-            {
-              productId: env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
-              slug: "ultimate-yearly",
-            },
-          ],
-          successUrl: env.POLAR_SUCCESS_URL,
-          authenticatedUsersOnly: true,
-        }),
-        portal(),
-        usage(),
-      ],
-    }),
+    ...(polarPlugin ? [polarPlugin] : []),
   ],
   hooks: {
     after: createAuthMiddleware(async (ctx) => {

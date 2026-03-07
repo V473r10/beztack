@@ -1,4 +1,5 @@
 export type AppName = "api" | "ui" | "docs";
+export type PaymentProvider = "polar" | "mercadopago";
 
 export interface ModuleDefinition {
   name: string; // 'auth', 'payments', etc.
@@ -33,17 +34,38 @@ export const modules: ModuleDefinition[] = [
   {
     name: "payments",
     label: "Payments",
-    description: "Payment processing with Polar",
+    description: "Payment processing (Polar or Mercado Pago)",
     required: false,
     nxProjects: ["api", "ui"],
     hasApiModule: true,
     hasUiFeature: true,
-    npmDeps: ["@polar-sh/sdk", "@polar-sh/better-auth"],
+    npmDeps: [
+      "@polar-sh/sdk",
+      "@polar-sh/better-auth",
+      "@beztack/mercadopago",
+      "@mercadopago/sdk-react",
+      "mercadopago",
+    ],
     fileGlobs: [
       "apps/api/server/modules/payments/**/*",
+      "apps/api/server/routes/api/subscriptions/**/*",
       "apps/api/server/routes/api/polar/**/*",
+      "apps/api/server/routes/api/payments/mercado-pago/**/*",
+      "apps/api/lib/payments/**/*",
+      "apps/api/lib/webhooks.ts",
+      "apps/api/server/utils/mercadopago.ts",
+      "apps/api/server/utils/payment-events.ts",
       "apps/ui/src/features/payments/**/*",
       "apps/ui/src/app/billing/**/*",
+      "apps/ui/src/components/payments/**/*",
+      "apps/ui/src/contexts/membership-context.tsx",
+      "apps/ui/src/hooks/use-subscriptions.ts",
+      "apps/ui/src/hooks/use-polar-products.tsx",
+      "apps/ui/src/hooks/use-subscription-details.ts",
+      "apps/ui/src/hooks/use-payment-events.ts",
+      "apps/ui/src/types/membership.ts",
+      "apps/ui/src/types/polar-pricing.ts",
+      "apps/ui/src/app/examples/mercado-pago-demo.tsx",
     ],
     codemods: ["remove-payments-imports"],
   },

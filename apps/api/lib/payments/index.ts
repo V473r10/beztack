@@ -13,6 +13,14 @@ export * from "./types";
 
 let cachedAdapter: PaymentProviderAdapter | null = null;
 
+function getSuccessUrl(): string {
+  return env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
+}
+
+function getCancelUrl(): string {
+  return env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL;
+}
+
 /**
  * Get the configured payment provider adapter
  * Uses PAYMENT_PROVIDER env variable to determine which adapter to use
@@ -28,8 +36,8 @@ export function getPaymentProvider(): PaymentProviderAdapter {
     case "mercadopago": {
       cachedAdapter = createMercadoPagoAdapter({
         accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
-        successUrl: env.POLAR_SUCCESS_URL,
-        cancelUrl: env.POLAR_CANCEL_URL,
+        successUrl: getSuccessUrl(),
+        cancelUrl: getCancelUrl(),
         currency: "UYU",
       });
       break;
@@ -39,8 +47,8 @@ export function getPaymentProvider(): PaymentProviderAdapter {
         accessToken: env.POLAR_ACCESS_TOKEN,
         server: env.POLAR_SERVER,
         organizationId: env.POLAR_ORGANIZATION_ID,
-        successUrl: env.POLAR_SUCCESS_URL,
-        cancelUrl: env.POLAR_CANCEL_URL,
+        successUrl: getSuccessUrl(),
+        cancelUrl: getCancelUrl(),
       });
       break;
     }
@@ -59,8 +67,8 @@ export function getPaymentProviderByName(
     case "mercadopago": {
       return createMercadoPagoAdapter({
         accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
-        successUrl: env.POLAR_SUCCESS_URL,
-        cancelUrl: env.POLAR_CANCEL_URL,
+        successUrl: getSuccessUrl(),
+        cancelUrl: getCancelUrl(),
         currency: "UYU",
       });
     }
@@ -69,8 +77,8 @@ export function getPaymentProviderByName(
         accessToken: env.POLAR_ACCESS_TOKEN,
         server: env.POLAR_SERVER,
         organizationId: env.POLAR_ORGANIZATION_ID,
-        successUrl: env.POLAR_SUCCESS_URL,
-        cancelUrl: env.POLAR_CANCEL_URL,
+        successUrl: getSuccessUrl(),
+        cancelUrl: getCancelUrl(),
       });
     }
   }

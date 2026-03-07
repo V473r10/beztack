@@ -305,7 +305,7 @@ export default function Pricing() {
   const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<
     PolarPricingTier[]
   >({
-    queryKey: ["polar-products"],
+    queryKey: ["subscriptions", "products", "tiers"],
     queryFn: usePolarProducts,
   });
 

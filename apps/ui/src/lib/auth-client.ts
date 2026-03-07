@@ -21,6 +21,6 @@ export const authClient = createAuthClient({
         enabled: true,
       },
     }),
-    polarClient(),
+    ...(env.VITE_PAYMENT_PROVIDER === "polar" ? [polarClient()] : []),
   ],
 });

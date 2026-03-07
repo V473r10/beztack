@@ -1,7 +1,7 @@
 /**
  * Payments Module
  *
- * Payment processing with Polar integration.
+ * Payment processing with configurable provider integration.
  *
  * Features:
  * - Product checkout
@@ -12,5 +12,5 @@
 export const PaymentsModule = {
   name: "payments",
   required: false,
-  description: "Payment processing with Polar",
+  description: "Payment processing (Polar or Mercado Pago)",
 };

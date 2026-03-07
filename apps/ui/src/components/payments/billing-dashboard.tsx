@@ -1,6 +1,3 @@
-import type { CustomerMeter } from "@polar-sh/sdk/models/components/customermeter.js";
-import type { Order } from "@polar-sh/sdk/models/components/order.js";
-import type { Subscription } from "@polar-sh/sdk/models/components/subscription.js";
 import {
   AlertCircle,
   ArrowUpRight,
@@ -27,6 +24,11 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type {
+  CustomerMeter,
+  Order,
+  Subscription,
+} from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 import { MembershipBadge, MembershipStatus } from "./membership-badge";

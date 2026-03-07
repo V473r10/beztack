@@ -5,9 +5,10 @@
 import { createError, defineEventHandler, getRouterParam } from "h3";
 import { getPaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
+import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event);
+  const auth = await requireAuth(event);
   const provider = getPaymentProvider();
 
   const subscriptionId = getRouterParam(event, "id");
@@ -24,6 +25,13 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 404,
       message: "Subscription not found",
+    });
+  }
+
+  if (!isSubscriptionOwnedByUser(subscription, auth)) {
+    throw createError({
+      statusCode: 403,
+      message: "Access denied",
     });
   }
 

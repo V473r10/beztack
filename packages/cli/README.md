@@ -91,7 +91,7 @@ Template diff normalization ignores scaffold-only differences such as:
 | Module | Required | Description |
 |--------|----------|-------------|
 | **auth** | ✅ | Authentication with Better Auth |
-| **payments** | ❌ | Payment processing with Polar |
+| **payments** | ❌ | Payment processing (Polar or Mercado Pago) |
 | **email** | ❌ | Email sending with Resend and React Email |
 | **ai** | ❌ | AI integration with Vercel AI SDK |
 | **ocr** | ❌ | Optical Character Recognition with Tesseract.js |

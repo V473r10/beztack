@@ -16,6 +16,7 @@ import {
   group,
   isCancel,
   multiselect,
+  select,
   spinner,
   text,
 } from "@clack/prompts";
@@ -28,6 +29,7 @@ import {
 } from "./template-sync/core/origin.js";
 import { initProject } from "./init-project.js";
 import { modules } from "./modules.js";
+import type { PaymentProvider } from "./modules.js";
 import { isTemplateExcludedPath } from "./template-excludes.js";
 import { isBinaryFileContent } from "./utils/file-content.js";
 
@@ -68,6 +70,8 @@ interface ProjectConfig {
   initializeModules: boolean;
   nonInteractive: boolean;
   templateSource: string;
+  selectedModules?: string[];
+  paymentProvider?: PaymentProvider;
 }
 
 export interface CreateProjectOptions {
@@ -78,6 +82,8 @@ export interface CreateProjectOptions {
   initializeModules?: boolean;
   nonInteractive?: boolean;
   templateSource?: string;
+  selectedModules?: string[];
+  paymentProvider?: PaymentProvider;
 }
 
 export async function createProject(
@@ -93,7 +99,11 @@ export async function createProject(
   }
 
   if (config.initializeModules) {
-    await configureModules(projectDir, config.nonInteractive);
+    await configureModules(projectDir, {
+      nonInteractive: config.nonInteractive,
+      selectedModules: config.selectedModules,
+      paymentProvider: config.paymentProvider,
+    });
   }
 
   await generateOrigin(projectDir, templateHashes);
@@ -134,6 +144,8 @@ async function getProjectConfig(
       templateSource:
         options.templateSource ??
         "https://github.com/V473r10/beztack.git",
+      selectedModules: options.selectedModules,
+      paymentProvider: options.paymentProvider,
     };
   }
 
@@ -193,7 +205,11 @@ function validateProjectName(value: string): string | undefined {
 
 async function configureModules(
   projectDir: string,
-  nonInteractive: boolean
+  options: {
+    nonInteractive: boolean;
+    selectedModules?: string[];
+    paymentProvider?: PaymentProvider;
+  }
 ) {
   process.chdir(projectDir);
 
@@ -201,14 +217,31 @@ async function configureModules(
     .filter((moduleDefinition) => moduleDefinition.required)
     .map((moduleDefinition) => moduleDefinition.name);
 
-  if (nonInteractive) {
+  if (options.nonInteractive) {
+    const enabledModuleNames = [
+      ...requiredModuleNames,
+      ...(options.selectedModules ?? []),
+    ];
+
+    if (
+      enabledModuleNames.includes("payments") &&
+      !options.paymentProvider
+    ) {
+      throw new Error(
+        "Payments module requires --payment-provider (polar or mercadopago)"
+      );
+    }
+
     const spin = spinner();
-    spin.start("Configuring required modules...");
+    spin.start("Configuring modules...");
     try {
-      await initProject(requiredModuleNames);
-      spin.stop("Required modules configured");
+      await initProject({
+        enabledModules: enabledModuleNames,
+        paymentProvider: options.paymentProvider,
+      });
+      spin.stop("Modules configured");
     } catch (error) {
-      spin.stop("Failed to configure required modules");
+      spin.stop("Failed to configure modules");
       throw error;
     }
     return;
@@ -242,11 +275,40 @@ async function configureModules(
     ...(selected as string[]),
   ];
 
+  let paymentProvider: PaymentProvider | undefined;
+  if (enabledModuleNames.includes("payments")) {
+    const provider = await select({
+      message: "Select the payment provider:",
+      options: [
+        {
+          value: "polar",
+          label: "Polar",
+          hint: "Better Auth checkout + portal workflow",
+        },
+        {
+          value: "mercadopago",
+          label: "Mercado Pago",
+          hint: "Mercado Pago native plans and payment flows",
+        },
+      ],
+    });
+
+    if (isCancel(provider)) {
+      cancel("Operation cancelled.");
+      process.exit(0);
+    }
+
+    paymentProvider = provider as PaymentProvider;
+  }
+
   const spin = spinner();
   spin.start("Configuring modules...");
 
   try {
-    await initProject(enabledModuleNames);
+    await initProject({
+      enabledModules: enabledModuleNames,
+      paymentProvider,
+    });
     spin.stop("Modules configured.");
   } catch (error) {
     spin.stop("Failed to configure modules.");

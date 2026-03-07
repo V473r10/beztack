@@ -6,6 +6,7 @@ import { createError, defineEventHandler, getRouterParam, readBody } from "h3";
 import { z } from "zod";
 import { getPaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
+import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 const updateSchema = z.object({
   productId: z.string().optional(),
@@ -15,7 +16,7 @@ const updateSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event);
+  const auth = await requireAuth(event);
   const provider = getPaymentProvider();
 
   const subscriptionId = getRouterParam(event, "id");
@@ -27,6 +28,21 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const currentSubscription = await provider.getSubscription(subscriptionId);
+    if (!currentSubscription) {
+      throw createError({
+        statusCode: 404,
+        message: "Subscription not found",
+      });
+    }
+
+    if (!isSubscriptionOwnedByUser(currentSubscription, auth)) {
+      throw createError({
+        statusCode: 403,
+        message: "Access denied",
+      });
+    }
+
     const body = await readBody(event);
     const parsed = updateSchema.parse(body);
 
@@ -40,6 +56,15 @@ export default defineEventHandler(async (event) => {
       subscription,
     };
   } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "statusCode" in error &&
+      typeof error.statusCode === "number"
+    ) {
+      throw error;
+    }
+
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,
