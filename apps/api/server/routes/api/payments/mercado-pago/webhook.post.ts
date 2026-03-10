@@ -1,3 +1,4 @@
+import { db, schema } from "@beztack/db";
 import {
   createMercadoPagoClient,
   type MPChargebackResponse,
@@ -11,8 +12,8 @@ import {
 } from "@beztack/mercadopago/server";
 import { eq } from "drizzle-orm";
 import { defineEventHandler, getHeader, readBody } from "h3";
-import { db, schema } from "@beztack/db";
 import { env } from "@/env";
+import { decodeExternalReference } from "@/lib/payments/adapters/mercadopago";
 import {
   createPaymentEvent,
   mapInvoiceStatusToEventType,
@@ -215,22 +216,55 @@ async function handleSubscription(subscriptionId: string): Promise<void> {
   }
 
   const id = subscription.id;
+  const refMeta = decodeExternalReference(subscription.external_reference);
   const beztackUserId = await findBeztackUserId(
     subscription.external_reference,
     subscription.payer_email
   );
 
   const data = mapSubscriptionData(id, subscription, beztackUserId);
+  // Include organizationId from external_reference metadata
+  if (refMeta?.organizationId) {
+    (data as Record<string, unknown>).organizationId = refMeta.organizationId;
+  }
   await upsertSubscription(id, data);
 
+  // Denormalize subscription data to entity (user or organization)
+  const tier = refMeta?.tier ?? null;
+  const status = subscription.status ?? "unknown";
+  const nextPaymentDate = parseDate(subscription.next_payment_date);
+  const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
+
+  if (isOrgMode && refMeta?.organizationId) {
+    await db
+      .update(schema.organization)
+      .set({
+        subscriptionTier: tier,
+        subscriptionStatus: status,
+        subscriptionId: id,
+        subscriptionValidUntil: nextPaymentDate,
+      })
+      .where(eq(schema.organization.id, refMeta.organizationId));
+  } else if (!isOrgMode && beztackUserId) {
+    await db
+      .update(schema.user)
+      .set({
+        subscriptionTier: tier,
+        subscriptionStatus: status,
+        subscriptionId: id,
+        subscriptionValidUntil: nextPaymentDate,
+      })
+      .where(eq(schema.user.id, beztackUserId));
+  }
+
   // Emit real-time event
-  const eventType = mapSubscriptionStatusToEventType(subscription.status ?? "");
+  const eventType = mapSubscriptionStatusToEventType(status);
   if (eventType) {
     paymentEvents.emitPaymentEvent(
       createPaymentEvent(eventType, {
         id,
         userId: beztackUserId,
-        status: subscription.status ?? "unknown",
+        status,
         amount:
           subscription.auto_recurring?.transaction_amount?.toString() ?? null,
         currency: subscription.auto_recurring?.currency_id ?? null,

@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import AdminDashboard from "./app/admin/admin.tsx";
 import AdminAnalytics from "./app/admin/analytics.tsx";
 // import { AdminLayout } from "./app/admin/components/admin-layout.tsx";
+import { PlanSyncScreen } from "./app/admin/components/plan-sync/plan-sync-screen.tsx";
 import UsersPage from "./app/admin/users.tsx";
 import { AI } from "./app/ai/ai.tsx";
 import AuthLayout from "./app/auth/auth-layout.tsx";
@@ -65,8 +66,7 @@ function App() {
   const queryClient = getQueryClient();
   const mpPublicKey = env.VITE_MERCADO_PAGO_PUBLIC_KEY ?? "";
   const isMercadoPagoProvider = env.VITE_PAYMENT_PROVIDER === "mercadopago";
-  const isMercadoPagoEnabled =
-    isMercadoPagoProvider && mpPublicKey;
+  const isMercadoPagoEnabled = isMercadoPagoProvider && mpPublicKey;
 
   return (
     <ThemeProvider>
@@ -125,6 +125,7 @@ function App() {
                   <Route element={<AdminDashboard />} index />
                   <Route element={<UsersPage />} path="users" />
                   <Route element={<AdminAnalytics />} path="analytics" />
+                  <Route element={<PlanSyncScreen />} path="plans" />
                 </Route>
                 <Route
                   element={

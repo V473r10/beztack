@@ -5,8 +5,10 @@ import { authClient } from "./auth-client";
  * Check if the current user has admin permissions
  */
 export function useIsAdmin() {
+  console.log("useIsAdmin");
   const { data: session } = authClient.useSession();
 
+  console.log("session", session);
   // Check if user has admin role or is in adminUserIds
   return (
     session?.user?.role === "admin" ||

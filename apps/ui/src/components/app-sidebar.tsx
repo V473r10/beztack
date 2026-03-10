@@ -1,28 +1,21 @@
 import {
+  IconBrain,
   IconBuilding,
-  IconCamera,
   IconChartBar,
   IconCreditCard,
   IconCrown,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
   IconHelp,
   IconInnerShadowTop,
   IconListDetails,
-  IconReport,
+  IconScan,
   IconSearch,
   IconSettings,
   IconShield,
   IconUserCog,
-  IconUsers,
 } from "@tabler/icons-react";
 import type * as React from "react";
 import { Link } from "react-router";
-import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
@@ -43,97 +36,40 @@ const data = {
   navMain: [
     {
       title: "sidebar.dashboard",
-      url: "#",
+      url: "/",
       icon: IconDashboard,
     },
     {
-      title: "sidebar.lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      title: "AI",
+      url: "/ai",
+      icon: IconBrain,
     },
     {
-      title: "sidebar.analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "sidebar.projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "sidebar.team",
-      url: "#",
-      icon: IconUsers,
+      title: "OCR",
+      url: "/ocr",
+      icon: IconScan,
     },
   ],
-  navClouds: [
-    {
-      title: "sidebar.capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "sidebar.proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "sidebar.prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
+  navClouds: [],
   navSecondary: [
     {
       title: "Organizations",
-      url: "organizations",
+      url: "/organizations",
       icon: IconBuilding,
     },
     {
       title: "Billing",
-      url: "billing",
+      url: "/billing",
       icon: IconCreditCard,
     },
     {
       title: "Pricing",
-      url: "pricing",
+      url: "/pricing",
       icon: IconCrown,
     },
     {
       title: "sidebar.secondary.settings",
-      url: "settings",
+      url: "/settings",
       icon: IconSettings,
       id: TOUR_STEP_IDS.SETTINGS_BUTTON,
     },
@@ -164,24 +100,13 @@ const data = {
       url: "/admin/analytics",
       icon: IconChartBar,
     },
-  ],
-  documents: [
     {
-      name: "sidebar.documents.dataLibrary",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "sidebar.documents.reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "sidebar.documents.wordAssistant",
-      url: "#",
-      icon: IconFileWord,
+      title: "Plan Sync",
+      url: "/admin/plans",
+      icon: IconListDetails,
     },
   ],
+  documents: [],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -214,7 +139,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
         {isAdmin && (
           <NavSecondary items={data.navAdmin} title="Administration" />
         )}

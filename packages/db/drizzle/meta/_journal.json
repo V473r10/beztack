@@ -22,6 +22,13 @@
       "when": 1769376256388,
       "tag": "0002_aberrant_stone_men",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773099547948,
+      "tag": "0003_wealthy_punisher",
+      "breakpoints": true
     }
   ]
 }

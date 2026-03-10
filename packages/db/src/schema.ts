@@ -2,6 +2,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   numeric,
   pgTable,
   serial,
@@ -26,6 +27,11 @@ export const user = pgTable("user", {
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
+  // Subscription cache (denormalized, updated by webhooks)
+  subscriptionTier: text("subscription_tier"),
+  subscriptionStatus: text("subscription_status"),
+  subscriptionId: text("subscription_id"),
+  subscriptionValidUntil: timestamp("subscription_valid_until"),
 });
 
 export const session = pgTable("session", {
@@ -124,6 +130,15 @@ export const organization = pgTable("organization", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   metadata: text("metadata"),
+  // Subscription cache (denormalized, updated by webhooks)
+  subscriptionTier: text("subscription_tier"),
+  subscriptionStatus: text("subscription_status"),
+  subscriptionId: text("subscription_id"),
+  subscriptionValidUntil: timestamp("subscription_valid_until"),
+  polarCustomerId: text("polar_customer_id"),
+  usageMetrics: text("usage_metrics"),
+  // Role required to manage billing (default: "owner")
+  billingManagedByRole: text("billing_managed_by_role").default("owner"),
 });
 
 export const member = pgTable("member", {
@@ -339,6 +354,17 @@ export const mpPlan = pgTable(
     dateCreated: timestamp("date_created"),
     lastModified: timestamp("last_modified"),
 
+    // Local business fields (plan catalog)
+    canonicalTierId: text("canonical_tier_id"), // "free" | "basic" | "pro" | "ultimate"
+    displayName: text("display_name"),
+    description: text("description"),
+    features: jsonb("features").$type<string[]>(),
+    limits: jsonb("limits").$type<Record<string, number>>(),
+    permissions: jsonb("permissions").$type<string[]>(),
+    displayOrder: integer("display_order"),
+    highlighted: boolean("highlighted").default(false),
+    visible: boolean("visible").default(true),
+
     // Auditoría local
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -346,7 +372,10 @@ export const mpPlan = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("mp_plan_status_idx").on(table.status)]
+  (table) => [
+    index("mp_plan_status_idx").on(table.status),
+    index("mp_plan_tier_idx").on(table.canonicalTierId),
+  ]
 );
 
 export const mpSubscription = pgTable(
@@ -354,6 +383,7 @@ export const mpSubscription = pgTable(
   {
     id: text("id").primaryKey(),
     beztackUserId: text("beztack_user_id").references(() => user.id),
+    organizationId: text("organization_id").references(() => organization.id),
     preapprovalPlanId: text("preapproval_plan_id").references(() => mpPlan.id),
     externalReference: text("external_reference"),
     payerId: text("payer_id"),
@@ -391,6 +421,7 @@ export const mpSubscription = pgTable(
   },
   (table) => [
     index("mp_subscription_user_idx").on(table.beztackUserId),
+    index("mp_subscription_org_idx").on(table.organizationId),
     index("mp_subscription_plan_idx").on(table.preapprovalPlanId),
     index("mp_subscription_status_idx").on(table.status),
     index("mp_subscription_payer_email_idx").on(table.payerEmail),
@@ -535,6 +566,7 @@ export const schema = {
   planLimit,
   mpOrder,
   mpPayment,
+  mpPlan,
   mpSubscription,
   mpInvoice,
   mpRefund,

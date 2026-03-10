@@ -5,15 +5,17 @@
 import { defineEventHandler } from "h3";
 import { getPaymentProvider } from "@/lib/payments";
 import {
-  buildCanonicalCatalog,
   enrichProductWithCatalog,
+  getCatalogPlans,
 } from "@/lib/payments/catalog";
 
 export default defineEventHandler(async () => {
   const provider = getPaymentProvider();
   const providerProducts = await provider.listProducts();
-  const products = providerProducts.map(enrichProductWithCatalog);
-  const plans = buildCanonicalCatalog(products);
+  const products = await Promise.all(
+    providerProducts.map(enrichProductWithCatalog)
+  );
+  const plans = await getCatalogPlans();
 
   return {
     provider: provider.provider,

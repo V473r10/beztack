@@ -12,7 +12,7 @@ const ALLOWED_ORIGINS = [
   "https://beztack-api.vercel.app", // Allow API domain for proxy requests
   "https://beztack-api.codedicated.com",
   "https://beztack-ui.codedicated.com",
-  "https://app.beztack.com"
+  "https://app.beztack.com",
 ];
 
 /**
@@ -39,7 +39,7 @@ export default defineNitroPlugin((nitroApp) => {
         event.node.res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
         event.node.res.setHeader(
           "Access-Control-Allow-Methods",
-          "GET, POST, PUT, DELETE, OPTIONS"
+          "GET, POST, PUT, PATCH, DELETE, OPTIONS"
         );
         event.node.res.setHeader(
           "Access-Control-Allow-Headers",

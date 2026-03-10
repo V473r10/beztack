@@ -21,6 +21,9 @@ export const env = createEnv({
     VITE_BASE_PATH: z.string().default("/").optional(),
     VITE_MERCADO_PAGO_PUBLIC_KEY: z.string().default(""),
     VITE_PAYMENT_PROVIDER: z.enum(["polar", "mercadopago"]).default("polar"),
+    VITE_SUBSCRIPTION_MODE: z
+      .enum(["user", "organization"])
+      .default("organization"),
   },
 
   /**

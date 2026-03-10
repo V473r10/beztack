@@ -109,8 +109,7 @@ function encodeExternalReference(options: {
   customerId?: string;
   metadata?: Record<string, unknown>;
 }): string | undefined {
-  const userId =
-    readString(options.metadata, "userId") ?? options.customerId;
+  const userId = readString(options.metadata, "userId") ?? options.customerId;
   const organizationId = readString(options.metadata, "organizationId");
   const referenceId = readString(options.metadata, "referenceId");
   const tier = readString(options.metadata, "tier");
@@ -137,11 +136,11 @@ function encodeExternalReference(options: {
   return options.customerId ?? referenceId;
 }
 
-function decodeExternalReference(
+export function decodeExternalReference(
   rawExternalReference?: string
 ): ExternalReferenceMetadata | undefined {
   if (!rawExternalReference) {
-    return undefined;
+    return;
   }
 
   if (!rawExternalReference.startsWith(EXTERNAL_REFERENCE_PREFIX)) {
@@ -559,7 +558,8 @@ export function createMercadoPagoAdapter(config: {
         }
 
         if (payload.data?.id) {
-          subscription = (await this.getSubscription(payload.data.id)) ?? undefined;
+          subscription =
+            (await this.getSubscription(payload.data.id)) ?? undefined;
           if (subscription?.customerEmail) {
             customer = {
               id: subscription.customerId,

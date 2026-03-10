@@ -153,6 +153,17 @@
       "loss3": "Priority support",
       "confirmText": "I understand that I may lose access to certain features and my usage limits will be reduced.",
       "confirm": "Confirm Downgrade"
+    },
+    "inactive": {
+      "title": "Subscription Inactive",
+      "description": "Your subscription is no longer active. Some features may be limited.",
+      "expired": "Your subscription expired on {{date}}.",
+      "canceled": "Your subscription was canceled. You have access until {{date}}.",
+      "paused": "Your subscription is paused. Resume it to continue using premium features.",
+      "pastDue": "Your payment is past due. Please update your payment method to avoid service interruption.",
+      "reactivate": "Reactivate Subscription",
+      "viewPlans": "View Plans",
+      "contactSupport": "Contact Support"
     }
   },
   "common": {

@@ -4,7 +4,6 @@
  */
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
-import { CHECKOUT_PLAN_IDS, type CheckoutPlanId } from "@beztack/db";
 import { env } from "@/env";
 import { getPaymentProvider } from "@/lib/payments";
 import {
@@ -12,21 +11,25 @@ import {
   inferCanonicalPlanId,
   resolveProductByCanonicalPlan,
 } from "@/lib/payments/catalog";
+import type { Product } from "@/lib/payments/types";
 import { requireAuth } from "@/server/utils/membership";
+
+const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 
 const checkoutSchema = z.object({
   productId: z.string().min(1).optional(),
-  planId: z.enum(CHECKOUT_PLAN_IDS).optional(),
+  planId: z.enum(TIER_IDS).optional(),
   billingPeriod: z.enum(["monthly", "yearly"]).default("monthly"),
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional(),
+  organizationId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 function resolveCheckoutProduct(
-  products: Array<ReturnType<typeof enrichProductWithCatalog>>,
+  products: Product[],
   productId: string | undefined,
-  planId: CheckoutPlanId | undefined,
+  planId: string | undefined,
   billingPeriod: "monthly" | "yearly"
 ) {
   if (productId) {
@@ -45,7 +48,7 @@ function resolveCheckoutProduct(
 }
 
 export default defineEventHandler(async (event) => {
-  const { user } = await requireAuth(event);
+  const auth = await requireAuth(event);
   const provider = getPaymentProvider();
   const successUrl = env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
   const cancelUrl = env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL;
@@ -53,7 +56,7 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
     const parsed = checkoutSchema.parse(body);
-    if (!parsed.productId && !parsed.planId) {
+    if (!(parsed.productId || parsed.planId)) {
       throw createError({
         statusCode: 400,
         message: "Either productId or planId is required",
@@ -61,7 +64,9 @@ export default defineEventHandler(async (event) => {
     }
 
     const providerProducts = await provider.listProducts();
-    const products = providerProducts.map(enrichProductWithCatalog);
+    const products = await Promise.all(
+      providerProducts.map(enrichProductWithCatalog)
+    );
     const selectedProduct = resolveCheckoutProduct(
       products,
       parsed.productId,
@@ -78,16 +83,21 @@ export default defineEventHandler(async (event) => {
     }
 
     const inferredPlanId = inferCanonicalPlanId(selectedProduct);
+    const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
+    const organizationId = isOrgMode
+      ? (parsed.organizationId ?? auth.session?.activeOrganizationId)
+      : undefined;
 
     const result = await provider.createCheckout({
       productId: selectedProduct.id,
-      customerEmail: user.email,
-      customerId: user.id,
+      customerEmail: auth.user.email,
+      customerId: auth.user.id,
       successUrl: parsed.successUrl ?? successUrl,
       cancelUrl: parsed.cancelUrl ?? cancelUrl,
       metadata: {
         ...parsed.metadata,
-        userId: user.id,
+        userId: auth.user.id,
+        ...(organizationId ? { organizationId } : {}),
         tier:
           parsed.planId ??
           inferredPlanId ??

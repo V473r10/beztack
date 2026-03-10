@@ -153,6 +153,17 @@
       "loss3": "Soporte prioritario",
       "confirmText": "Entiendo que puedo perder acceso a ciertas funciones y mis límites de uso se reducirán.",
       "confirm": "Confirmar Reducción"
+    },
+    "inactive": {
+      "title": "Suscripción Inactiva",
+      "description": "Tu suscripción ya no está activa. Algunas funciones pueden estar limitadas.",
+      "expired": "Tu suscripción venció el {{date}}.",
+      "canceled": "Tu suscripción fue cancelada. Tenés acceso hasta el {{date}}.",
+      "paused": "Tu suscripción está pausada. Reactivala para seguir usando las funciones premium.",
+      "pastDue": "Tu pago está vencido. Actualizá tu método de pago para evitar la interrupción del servicio.",
+      "reactivate": "Reactivar Suscripción",
+      "viewPlans": "Ver Planes",
+      "contactSupport": "Contactar Soporte"
     }
   },
   "common": {

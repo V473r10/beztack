@@ -77,6 +77,9 @@ export const env = createEnv({
     // Payment Provider Switch
     PAYMENT_PROVIDER: z.enum(PAYMENT_PROVIDERS).default("polar"),
 
+    // Subscription Mode
+    SUBSCRIPTION_MODE: z.enum(["user", "organization"]).default("organization"),
+
     // UI URL
     APP_URL: z.string().url(),
 
@@ -119,8 +122,14 @@ if (activePaymentProvider === "polar") {
     "POLAR_BASIC_YEARLY_PRODUCT_ID",
     env.POLAR_BASIC_YEARLY_PRODUCT_ID
   );
-  assertRequired("POLAR_PRO_MONTHLY_PRODUCT_ID", env.POLAR_PRO_MONTHLY_PRODUCT_ID);
-  assertRequired("POLAR_PRO_YEARLY_PRODUCT_ID", env.POLAR_PRO_YEARLY_PRODUCT_ID);
+  assertRequired(
+    "POLAR_PRO_MONTHLY_PRODUCT_ID",
+    env.POLAR_PRO_MONTHLY_PRODUCT_ID
+  );
+  assertRequired(
+    "POLAR_PRO_YEARLY_PRODUCT_ID",
+    env.POLAR_PRO_YEARLY_PRODUCT_ID
+  );
   assertRequired(
     "POLAR_ULTIMATE_MONTHLY_PRODUCT_ID",
     env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID
@@ -131,8 +140,14 @@ if (activePaymentProvider === "polar") {
   );
   assertRequired("POLAR_ORGANIZATION_ID", env.POLAR_ORGANIZATION_ID);
 
-  assertUuid("POLAR_BASIC_MONTHLY_PRODUCT_ID", env.POLAR_BASIC_MONTHLY_PRODUCT_ID);
-  assertUuid("POLAR_BASIC_YEARLY_PRODUCT_ID", env.POLAR_BASIC_YEARLY_PRODUCT_ID);
+  assertUuid(
+    "POLAR_BASIC_MONTHLY_PRODUCT_ID",
+    env.POLAR_BASIC_MONTHLY_PRODUCT_ID
+  );
+  assertUuid(
+    "POLAR_BASIC_YEARLY_PRODUCT_ID",
+    env.POLAR_BASIC_YEARLY_PRODUCT_ID
+  );
   assertUuid("POLAR_PRO_MONTHLY_PRODUCT_ID", env.POLAR_PRO_MONTHLY_PRODUCT_ID);
   assertUuid("POLAR_PRO_YEARLY_PRODUCT_ID", env.POLAR_PRO_YEARLY_PRODUCT_ID);
   assertUuid(
