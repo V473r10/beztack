@@ -58,6 +58,9 @@ export function UpgradeDialog({
     queryKey: ["subscriptions", "products", "tiers"],
     queryFn: usePolarProducts,
   });
+
+  console.log("allTiers", allTiers);
+
   const availableTiers = allTiers.filter((tier) =>
     isTierHigher(tier.id, currentTier)
   );

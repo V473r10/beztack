@@ -52,17 +52,23 @@ function getTierId(product: Product): string {
   return normalizeTierId(product.name);
 }
 
+// TODO: Generalizar a cualquier proveedor de pagos
 export async function usePolarProducts(): Promise<PolarPricingTier[]> {
-  const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/products`, {
-    credentials: "include",
-  });
+  const response = await fetch(
+    `${env.VITE_API_URL}/api/subscriptions/products`,
+    {
+      credentials: "include",
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
   const payload = (await response.json()) as ProductsResponse;
+  console.log("payload", payload);
   const tiers = new Map<string, PolarPricingTier>();
+  console.log("tiers", tiers);
 
   for (const product of payload.products) {
     const tierId = getTierId(product);

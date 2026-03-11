@@ -12,10 +12,13 @@ import {
 export default defineEventHandler(async () => {
   const provider = getPaymentProvider();
   const providerProducts = await provider.listProducts();
+  console.log("providerProducts", providerProducts);
   const products = await Promise.all(
     providerProducts.map(enrichProductWithCatalog)
   );
+  console.log("products", products);
   const plans = await getCatalogPlans();
+  console.log("plans", plans);
 
   return {
     provider: provider.provider,
