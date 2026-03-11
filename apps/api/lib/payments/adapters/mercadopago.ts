@@ -76,7 +76,8 @@ type MPPreapprovalPlan = {
     currency_id: string;
   };
   date_created: string;
-  init_point: string;
+  init_point?: string | null;
+  back_url?: string | null;
 };
 
 type MPSearchResult = {
@@ -88,7 +89,7 @@ type MPSearchResult = {
   };
 };
 
-const EXTERNAL_REFERENCE_PREFIX = "beztack:";
+const EXTERNAL_REFERENCE_PREFIX = "beztack_";
 
 type ExternalReferenceMetadata = {
   userId?: string;
@@ -114,26 +115,27 @@ function encodeExternalReference(options: {
   const referenceId = readString(options.metadata, "referenceId");
   const tier = readString(options.metadata, "tier");
 
-  const params = new URLSearchParams();
+  // Use simpler format without special chars that break MercadoPago URLs
+  // Format: beztack_uid=user_org=org_tier=tier_ref=ref
+  const parts: string[] = [];
   if (userId) {
-    params.set("uid", userId);
+    parts.push(`uid=${userId}`);
   }
   if (organizationId) {
-    params.set("org", organizationId);
-  }
-  if (referenceId) {
-    params.set("ref", referenceId);
+    parts.push(`org=${organizationId}`);
   }
   if (tier) {
-    params.set("tier", tier);
+    parts.push(`tier=${tier}`);
+  }
+  if (referenceId) {
+    parts.push(`ref=${referenceId}`);
   }
 
-  const encoded = params.toString();
-  if (encoded) {
-    return `${EXTERNAL_REFERENCE_PREFIX}${encoded}`;
+  if (parts.length === 0) {
+    return options.customerId ?? referenceId;
   }
 
-  return options.customerId ?? referenceId;
+  return `${EXTERNAL_REFERENCE_PREFIX}${parts.join("_")}`;
 }
 
 export function decodeExternalReference(
@@ -263,29 +265,37 @@ export function createMercadoPagoAdapter(config: {
         `/preapproval_plan/${options.productId}`
       );
 
+      // Validate plan is active and has init_point
+      if (plan.status !== "active") {
+        throw new Error(
+          `Plan is not active (status: ${plan.status}). Only active plans can be used for checkout.`
+        );
+      }
+
+      if (!plan.init_point) {
+        throw new Error(
+          "Plan does not have a checkout URL (init_point is missing). Ensure the plan has a back_url configured in MercadoPago."
+        );
+      }
+
+      // Mercado Pago checkout uses hosted page (init_point) - no API call needed
+      // The user enters card details on Mercado Pago's site, not via our API
       const externalReference = encodeExternalReference({
         customerId: options.customerId,
         metadata: options.metadata,
       });
 
-      const subscription = await mpFetch<MPPreapproval>(
-        accessToken,
-        "/preapproval",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            preapproval_plan_id: options.productId,
-            payer_email: options.customerEmail,
-            back_url: options.successUrl,
-            external_reference: externalReference,
-            status: "pending",
-          }),
-        }
-      );
+      // Build checkout URL with external_reference if available
+      // Note: init_point already includes query params (?preapproval_plan_id=xxx)
+      // so we need to use & to append additional params
+      const separator = plan.init_point.includes("?") ? "&" : "?";
+      const checkoutUrl = externalReference
+        ? `${plan.init_point}${separator}external_reference=${encodeURIComponent(externalReference)}`
+        : plan.init_point;
 
       return {
-        id: subscription.id,
-        url: subscription.init_point || plan.init_point,
+        id: `${plan.id}_${Date.now()}`,
+        url: checkoutUrl,
       };
     },
 
