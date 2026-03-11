@@ -1,5 +1,6 @@
 import { type Icon, IconCirclePlusFilled, IconMail } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
@@ -44,9 +45,11 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={t(item.title)}>
-                {item.icon && <item.icon />}
-                <span>{t(item.title)}</span>
+              <SidebarMenuButton asChild tooltip={t(item.title)}>
+                <Link to={item.url}>
+                  {item.icon && <item.icon />}
+                  <span>{t(item.title)}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
