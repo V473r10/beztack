@@ -21,15 +21,6 @@ import { PricingCard } from "./pricing-card";
 // Constants
 const MIN_TIERS_FOR_THREE_COLUMN = 3;
 
-// Tier hierarchy helper - now local since tiers are dynamic
-const TIER_HIERARCHY: MembershipTier[] = ["free", "basic", "pro", "ultimate"];
-
-const isTierHigher = (tierA: string, tierB: string): boolean => {
-  const indexA = TIER_HIERARCHY.indexOf(tierA as MembershipTier);
-  const indexB = TIER_HIERARCHY.indexOf(tierB as MembershipTier);
-  return indexA > indexB;
-};
-
 export type UpgradeDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,15 +45,20 @@ export function UpgradeDialog({
     suggestedTier || "pro"
   );
 
-  const { data: allTiers = [] } = useQuery<PolarPricingTier[]>({
+  const { data: allTiersRaw = [] } = useQuery<PolarPricingTier[]>({
     queryKey: ["subscriptions", "products", "tiers"],
     queryFn: usePolarProducts,
   });
 
-  console.log("allTiers", allTiers);
+  // Sort tiers by displayOrder and filter available tiers
+  const allTiers = [...allTiersRaw].sort(
+    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
+  );
 
-  const availableTiers = allTiers.filter((tier) =>
-    isTierHigher(tier.id, currentTier)
+  const currentTierOrder =
+    allTiers.find((t) => t.id === currentTier)?.displayOrder ?? 0;
+  const availableTiers = allTiers.filter(
+    (tier) => (tier.displayOrder ?? 0) > currentTierOrder
   );
 
   const handleUpgrade = (tierId: string) => {

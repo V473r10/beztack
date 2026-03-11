@@ -12,6 +12,7 @@ export type PolarPricingTier = {
   readonly features?: readonly string[];
   readonly limits?: Record<string, number>;
   readonly permissions?: Record<string, boolean>;
+  readonly displayOrder?: number;
 };
 
 // Polar product structure from API

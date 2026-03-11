@@ -8,7 +8,6 @@ import { env } from "@/env";
 import { getPaymentProvider } from "@/lib/payments";
 import {
   enrichProductWithCatalog,
-  inferCanonicalPlanId,
   resolveProductByCanonicalPlan,
 } from "@/lib/payments/catalog";
 import type { Product } from "@/lib/payments/types";
@@ -82,7 +81,10 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const inferredPlanId = inferCanonicalPlanId(selectedProduct);
+    const productTierId =
+      typeof selectedProduct.metadata?.tier === "string"
+        ? selectedProduct.metadata.tier
+        : undefined;
     const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
     const organizationId = isOrgMode
       ? (parsed.organizationId ?? auth.session?.activeOrganizationId)
@@ -100,7 +102,7 @@ export default defineEventHandler(async (event) => {
         ...(organizationId ? { organizationId } : {}),
         tier:
           parsed.planId ??
-          inferredPlanId ??
+          productTierId ??
           (typeof parsed.metadata?.tier === "string"
             ? parsed.metadata.tier
             : undefined),

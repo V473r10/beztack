@@ -2,11 +2,9 @@ import { db, mpPlan } from "@beztack/db";
 import { eq } from "drizzle-orm";
 import type { Product } from "./types";
 
-export type CanonicalTierId = "free" | "basic" | "pro" | "ultimate";
-
 export type CatalogPlan = {
   id: string;
-  canonicalTierId: CanonicalTierId | null;
+  canonicalTierId: string | null;
   displayName: string;
   description: string | null;
   features: string[];
@@ -24,54 +22,6 @@ export type CatalogPlan = {
   displayOrder: number | null;
 };
 
-const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
-
-function isTierId(value: string): value is CanonicalTierId {
-  return (TIER_IDS as readonly string[]).includes(value);
-}
-
-function normalizeTierId(raw: string): CanonicalTierId | null {
-  const normalized = raw.trim().toLowerCase();
-
-  if (normalized.includes("ultimate") || normalized.includes("enterprise")) {
-    return "ultimate";
-  }
-  if (normalized.includes("pro")) {
-    return "pro";
-  }
-  if (normalized.includes("basic")) {
-    return "basic";
-  }
-  if (normalized.includes("free")) {
-    return "free";
-  }
-
-  return null;
-}
-
-export function inferCanonicalPlanId(product: Product): CanonicalTierId | null {
-  const metadata = product.metadata;
-
-  const planId =
-    typeof metadata?.planId === "string" ? metadata.planId : undefined;
-  if (planId) {
-    const normalized = normalizeTierId(planId);
-    if (normalized) {
-      return normalized;
-    }
-  }
-
-  const tier = typeof metadata?.tier === "string" ? metadata.tier : undefined;
-  if (tier) {
-    const normalized = normalizeTierId(tier);
-    if (normalized) {
-      return normalized;
-    }
-  }
-
-  return normalizeTierId(product.name);
-}
-
 /**
  * Fetch all visible plans from the DB and return them as CatalogPlan[]
  */
@@ -84,10 +34,7 @@ export async function getCatalogPlans(): Promise<CatalogPlan[]> {
 
   return plans.map((plan) => ({
     id: plan.id,
-    canonicalTierId:
-      plan.canonicalTierId && isTierId(plan.canonicalTierId)
-        ? plan.canonicalTierId
-        : null,
+    canonicalTierId: plan.canonicalTierId ?? null,
     displayName: plan.displayName ?? plan.reason,
     description: plan.description,
     features: (plan.features as string[] | null) ?? [],
@@ -124,10 +71,7 @@ export async function getCatalogPlanById(
 
   return {
     id: plan.id,
-    canonicalTierId:
-      plan.canonicalTierId && isTierId(plan.canonicalTierId)
-        ? plan.canonicalTierId
-        : null,
+    canonicalTierId: plan.canonicalTierId ?? null,
     displayName: plan.displayName ?? plan.reason,
     description: plan.description,
     features: (plan.features as string[] | null) ?? [],
@@ -148,20 +92,18 @@ export async function getCatalogPlanById(
 
 /**
  * Enrich a provider Product with catalog metadata from DB plan data.
- * Falls back to name-based tier inference if no DB match.
+ * Looks up the plan by product ID and uses DB canonicalTierId directly.
  */
 export async function enrichProductWithCatalog(
   product: Product
 ): Promise<Product> {
-  const tierId = inferCanonicalPlanId(product);
-  if (!tierId) {
+  const plan = await getCatalogPlanById(product.id);
+  if (!plan) {
     return product;
   }
 
-  const plans = await getCatalogPlans();
-  const matchingPlan = plans.find((p) => p.canonicalTierId === tierId);
-
   const metadata = product.metadata ?? {};
+  const tierId = plan.canonicalTierId ?? product.id;
 
   return {
     ...product,
@@ -169,15 +111,17 @@ export async function enrichProductWithCatalog(
       ...metadata,
       planId: tierId,
       tier: tierId,
-      features: matchingPlan?.features ?? [],
-      limits: matchingPlan?.limits ?? {},
-      permissions: matchingPlan?.permissions ?? [],
+      features: plan.features,
+      limits: plan.limits,
+      permissions: plan.permissions,
+      displayOrder: plan.displayOrder,
     },
   };
 }
 
 /**
  * Resolve a product by canonical tier and billing period
+ * Uses the tier/planId from product metadata (enriched from DB)
  */
 export function resolveProductByCanonicalPlan(
   products: Product[],
@@ -191,7 +135,10 @@ export function resolveProductByCanonicalPlan(
       continue;
     }
 
-    const productPlanId = inferCanonicalPlanId(product);
+    const productPlanId =
+      typeof product.metadata?.planId === "string"
+        ? product.metadata.planId
+        : undefined;
     if (productPlanId === planId) {
       return product;
     }

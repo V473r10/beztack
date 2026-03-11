@@ -18,38 +18,32 @@ type ProductsResponse = {
   products: Product[];
 };
 
-function normalizeTierId(rawValue: string): string {
-  const normalized = rawValue.toLowerCase();
-  if (normalized.includes("ultimate") || normalized.includes("enterprise")) {
-    return "ultimate";
-  }
-  if (normalized.includes("pro")) {
-    return "pro";
-  }
-  if (normalized.includes("basic")) {
-    return "basic";
-  }
-  return "free";
-}
-
 function getTierId(product: Product): string {
+  const tierId =
+    typeof product.metadata?.tier === "string"
+      ? product.metadata.tier
+      : undefined;
+  if (tierId) {
+    return tierId;
+  }
+
   const planId =
     typeof product.metadata?.planId === "string"
       ? product.metadata.planId
       : undefined;
   if (planId) {
-    return normalizeTierId(planId);
+    return planId;
   }
 
-  const tier =
-    typeof product.metadata?.tier === "string"
-      ? product.metadata.tier
-      : undefined;
-  if (tier) {
-    return normalizeTierId(tier);
-  }
+  return product.id;
+}
 
-  return normalizeTierId(product.name);
+function getDisplayOrder(product: Product): number {
+  const displayOrder = product.metadata?.displayOrder;
+  if (typeof displayOrder === "number") {
+    return displayOrder;
+  }
+  return 0;
 }
 
 // TODO: Generalizar a cualquier proveedor de pagos
@@ -66,14 +60,13 @@ export async function usePolarProducts(): Promise<PolarPricingTier[]> {
   }
 
   const payload = (await response.json()) as ProductsResponse;
-  console.log("payload", payload);
   const tiers = new Map<string, PolarPricingTier>();
-  console.log("tiers", tiers);
 
   for (const product of payload.products) {
     const tierId = getTierId(product);
     const baseName = product.name.split(" - ")[0] || product.name;
     const existing = tiers.get(tierId);
+    const displayOrder = getDisplayOrder(product);
 
     const metadata = product.metadata;
     const features = Array.isArray(metadata?.features)
@@ -103,6 +96,7 @@ export async function usePolarProducts(): Promise<PolarPricingTier[]> {
       features,
       limits,
       permissions,
+      displayOrder,
     };
 
     if (product.interval === "month") {
