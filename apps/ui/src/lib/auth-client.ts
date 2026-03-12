@@ -1,4 +1,4 @@
-import { polarClient } from "@polar-sh/better-auth/client";
+import { createPolarClientPlugin } from "@beztack/payments-polar/auth-client";
 import {
   adminClient,
   organizationClient,
@@ -21,6 +21,8 @@ export const authClient = createAuthClient({
         enabled: true,
       },
     }),
-    ...(env.VITE_PAYMENT_PROVIDER === "polar" ? [polarClient()] : []),
+    ...(env.VITE_PAYMENT_PROVIDER === "polar"
+      ? [createPolarClientPlugin()]
+      : []),
   ],
 });

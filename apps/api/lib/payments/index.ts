@@ -1,92 +1,76 @@
 /**
  * Payment Provider Factory
- * Provides a unified interface for payment providers (Polar, Mercado Pago)
+ *
+ * Thin wrapper around @beztack/payments that reads config from env.
+ * All provider-specific logic lives in packages/payments/{provider}.
  */
+
+import type {
+  PaymentProviderAdapter,
+  PaymentProviderName,
+} from "@beztack/payments";
+import {
+  createPaymentProvider,
+  getPaymentProvider as getCoreProvider,
+} from "@beztack/payments";
 import { env } from "@/env";
-import { createMercadoPagoAdapter } from "./adapters/mercadopago";
-import { createPolarAdapter } from "./adapters/polar";
-import type { PaymentProvider, PaymentProviderAdapter } from "./types";
 
-export { createMercadoPagoAdapter } from "./adapters/mercadopago";
-export { createPolarAdapter } from "./adapters/polar";
-export * from "./types";
+// Re-export all types from core so existing imports keep working
+export type {
+  BillingInterval,
+  CheckoutResult,
+  CreateCheckoutOptions,
+  CreateSubscriptionOptions,
+  Customer,
+  ListSubscriptionsOptions,
+  PaymentProviderAdapter,
+  PaymentProviderName,
+  Product,
+  Subscription,
+  SubscriptionStatus,
+  UpdateSubscriptionOptions,
+  WebhookEventType,
+  WebhookPayload,
+} from "@beztack/payments";
 
-let cachedAdapter: PaymentProviderAdapter | null = null;
+// Re-export for backwards compatibility
+export type PaymentProvider = PaymentProviderName;
 
-function getSuccessUrl(): string {
-  return env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
-}
+let initialized = false;
 
-function getCancelUrl(): string {
-  return env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL;
+function getEnvConfig(): Record<string, string> {
+  return {
+    // Shared
+    PAYMENTS_SUCCESS_URL: env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL,
+    PAYMENTS_CANCEL_URL: env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL,
+    // Polar
+    POLAR_ACCESS_TOKEN: env.POLAR_ACCESS_TOKEN,
+    POLAR_SERVER: env.POLAR_SERVER,
+    POLAR_ORGANIZATION_ID: env.POLAR_ORGANIZATION_ID,
+    POLAR_SUCCESS_URL: env.POLAR_SUCCESS_URL,
+    POLAR_CANCEL_URL: env.POLAR_CANCEL_URL,
+    // MercadoPago
+    MERCADO_PAGO_ACCESS_TOKEN: env.MERCADO_PAGO_ACCESS_TOKEN,
+    MERCADO_PAGO_WEBHOOK_SECRET: env.MERCADO_PAGO_WEBHOOK_SECRET,
+    MERCADO_PAGO_INTEGRATOR_ID: env.MERCADO_PAGO_INTEGRATOR_ID,
+  };
 }
 
 /**
- * Get the configured payment provider adapter
- * Uses PAYMENT_PROVIDER env variable to determine which adapter to use
+ * Get the configured payment provider adapter.
+ * Initializes lazily on first call using env vars.
  */
 export function getPaymentProvider(): PaymentProviderAdapter {
-  if (cachedAdapter) {
-    return cachedAdapter;
+  if (!initialized) {
+    const provider = (env.PAYMENT_PROVIDER ?? "polar") as PaymentProviderName;
+    // Fire-and-forget async init — the core factory caches the result
+    createPaymentProvider(provider, getEnvConfig()).catch(() => {
+      // Initialization errors will surface on first use via getCoreProvider()
+    });
+    initialized = true;
   }
 
-  const provider = (env.PAYMENT_PROVIDER ?? "polar") as PaymentProvider;
-
-  switch (provider) {
-    case "mercadopago": {
-      cachedAdapter = createMercadoPagoAdapter({
-        accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
-        successUrl: getSuccessUrl(),
-        cancelUrl: getCancelUrl(),
-        currency: "UYU",
-      });
-      break;
-    }
-    default: {
-      cachedAdapter = createPolarAdapter({
-        accessToken: env.POLAR_ACCESS_TOKEN,
-        server: env.POLAR_SERVER,
-        organizationId: env.POLAR_ORGANIZATION_ID,
-        successUrl: getSuccessUrl(),
-        cancelUrl: getCancelUrl(),
-      });
-      break;
-    }
-  }
-
-  return cachedAdapter;
+  return getCoreProvider();
 }
 
-/**
- * Get a specific payment provider adapter by name
- */
-export function getPaymentProviderByName(
-  provider: PaymentProvider
-): PaymentProviderAdapter {
-  switch (provider) {
-    case "mercadopago": {
-      return createMercadoPagoAdapter({
-        accessToken: env.MERCADO_PAGO_ACCESS_TOKEN,
-        successUrl: getSuccessUrl(),
-        cancelUrl: getCancelUrl(),
-        currency: "UYU",
-      });
-    }
-    default: {
-      return createPolarAdapter({
-        accessToken: env.POLAR_ACCESS_TOKEN,
-        server: env.POLAR_SERVER,
-        organizationId: env.POLAR_ORGANIZATION_ID,
-        successUrl: getSuccessUrl(),
-        cancelUrl: getCancelUrl(),
-      });
-    }
-  }
-}
-
-/**
- * Reset the cached adapter (useful for testing or config changes)
- */
-export function resetPaymentProvider(): void {
-  cachedAdapter = null;
-}
+export { resetPaymentProvider } from "@beztack/payments";

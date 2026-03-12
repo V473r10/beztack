@@ -1,0 +1,8 @@
+/**
+ * @beztack/payments-polar — Polar payment provider for Beztack
+ */
+
+export { createAdapter, createPolarAdapter } from "./adapter.js"
+export type { PolarAdapterConfig } from "./adapter.js"
+export { createPolarAuthPlugin } from "./auth-plugin.js"
+export type { PolarAuthPluginConfig } from "./auth-plugin.js"

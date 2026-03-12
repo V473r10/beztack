@@ -1,16 +1,12 @@
 {
-  "name": "@beztack/mercadopago",
+  "name": "@beztack/payments",
   "version": "0.0.1",
-  "description": "Mercado Pago SDK for Beztack - Server and React integrations",
+  "description": "Provider-agnostic payment abstraction for Beztack",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./server": {
-      "types": "./dist/server/index.d.ts",
-      "default": "./dist/server/index.js"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
@@ -21,13 +17,11 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "prepare": "pnpm build",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.0.0",
+    "better-auth": "^1.0.0",
     "react": "^18.0.0 || ^19.0.0",
     "zod": "^3.23.0"
   },
@@ -37,33 +31,17 @@
     },
     "react": {
       "optional": true
+    },
+    "better-auth": {
+      "optional": true
     }
-  },
-  "dependencies": {
-    "@beztack/payments": "workspace:*",
-    "@mercadopago/sdk-react": "^1.0.7"
   },
   "devDependencies": {
     "@tanstack/react-query": "^5.0.0",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "^16.3.2",
-    "@types/node": "^24.10.2",
     "@types/react": "^19.1.8",
-    "jsdom": "^27.4.0",
+    "better-auth": "^1.0.0",
     "react": "^19.0.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4",
     "zod": "^3.25.60"
-  },
-  "keywords": [
-    "mercadopago",
-    "payments",
-    "subscriptions",
-    "checkout",
-    "react",
-    "sdk"
-  ],
-  "author": "",
-  "license": "MIT",
-  "packageManager": "pnpm@10.12.1"
+  }
 }

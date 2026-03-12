@@ -5,6 +5,14 @@
  * Exports shared types and utilities
  */
 
+export type { MercadoPagoAdapterConfig } from "./adapter.js";
+// Core adapter (implements @beztack/payments interface)
+export {
+  createAdapter,
+  createMercadoPagoAdapter,
+  decodeExternalReference,
+} from "./adapter.js";
+
 export type { SupportedLocale, TranslationKeys } from "./i18n/index.js";
 // i18n
 export {

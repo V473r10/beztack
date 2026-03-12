@@ -1,4 +1,5 @@
 import { db, schema } from "@beztack/db";
+import { decodeExternalReference } from "@beztack/mercadopago";
 import {
   createMercadoPagoClient,
   type MPChargebackResponse,
@@ -13,7 +14,6 @@ import {
 import { eq } from "drizzle-orm";
 import { defineEventHandler, getHeader, readBody } from "h3";
 import { env } from "@/env";
-import { decodeExternalReference } from "@/lib/payments/adapters/mercadopago";
 import {
   createPaymentEvent,
   mapInvoiceStatusToEventType,

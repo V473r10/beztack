@@ -1,5 +1,6 @@
 /**
- * Mercado Pago Payment Provider Adapter
+ * MercadoPago adapter implementing the core PaymentProviderAdapter interface.
+ * This bridges @beztack/mercadopago's own client with @beztack/payments.
  */
 import type {
   BillingInterval,
@@ -14,9 +15,9 @@ import type {
   SubscriptionStatus,
   UpdateSubscriptionOptions,
   WebhookPayload,
-} from "../types";
+} from "@beztack/payments";
 
-const MP_API_BASE = "https://api.mercadopago.com";
+import { createMercadoPagoClient } from "./server/client.js";
 
 function mapMPStatus(status: string): SubscriptionStatus {
   switch (status) {
@@ -46,49 +47,6 @@ function mapMPInterval(frequencyType: string): BillingInterval {
   }
 }
 
-type MPPreapproval = {
-  id: string;
-  status: string;
-  reason: string;
-  payer_id: number;
-  payer_email?: string;
-  init_point: string;
-  date_created: string;
-  auto_recurring: {
-    frequency: number;
-    frequency_type: string;
-    transaction_amount: number;
-    currency_id: string;
-  };
-  external_reference?: string;
-  next_payment_date?: string;
-  end_date?: string;
-};
-
-type MPPreapprovalPlan = {
-  id: string;
-  status: string;
-  reason: string;
-  auto_recurring: {
-    frequency: number;
-    frequency_type: string;
-    transaction_amount: number;
-    currency_id: string;
-  };
-  date_created: string;
-  init_point?: string | null;
-  back_url?: string | null;
-};
-
-type MPSearchResult = {
-  results: MPPreapproval[];
-  paging: {
-    total: number;
-    limit: number;
-    offset: number;
-  };
-};
-
 const EXTERNAL_REFERENCE_PREFIX = "beztack_";
 
 type ExternalReferenceMetadata = {
@@ -115,8 +73,6 @@ function encodeExternalReference(options: {
   const referenceId = readString(options.metadata, "referenceId");
   const tier = readString(options.metadata, "tier");
 
-  // Use simpler format without special chars that break MercadoPago URLs
-  // Format: beztack_uid=user_org=org_tier=tier_ref=ref
   const parts: string[] = [];
   if (userId) {
     parts.push(`uid=${userId}`);
@@ -179,47 +135,110 @@ export function decodeExternalReference(
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
-async function mpFetch<T>(
-  accessToken: string,
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
-  const response = await fetch(`${MP_API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...options?.headers,
-    },
-  });
+function buildSubscriptionBody(
+  options: CreateSubscriptionOptions,
+  successUrl: string,
+  currency: string
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    payer_email: options.customerEmail,
+    back_url: options.backUrl ?? successUrl,
+    status: "pending",
+  };
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(
-      (error as { message?: string }).message ||
-        `Mercado Pago API error: ${response.status}`
-    );
+  if (options.productId) {
+    body.preapproval_plan_id = options.productId;
+  } else if (options.customPlan) {
+    body.reason = options.customPlan.reason;
+    body.auto_recurring = {
+      frequency: options.customPlan.intervalCount,
+      frequency_type:
+        options.customPlan.interval === "month" ? "months" : "days",
+      transaction_amount: options.customPlan.amount,
+      currency_id: options.customPlan.currency || currency,
+    };
   }
 
-  return response.json() as Promise<T>;
+  const externalReference = encodeExternalReference({
+    customerId: options.customerId,
+    metadata: options.metadata,
+  });
+  if (externalReference) {
+    body.external_reference = externalReference;
+  }
+
+  return body;
 }
 
-export function createMercadoPagoAdapter(config: {
+const SUBSCRIPTION_ACTION_MAP: Record<string, WebhookPayload["type"]> = {
+  created: "subscription.created",
+  updated: "subscription.updated",
+  cancelled: "subscription.canceled",
+  paused: "subscription.paused",
+  authorized: "subscription.active",
+};
+
+async function resolveWebhookPayload(
+  payload: { type: string; action: string; data: { id: string } },
+  getSubscription: (id: string) => Promise<Subscription | null>
+): Promise<WebhookPayload> {
+  let mappedType: WebhookPayload["type"] = "subscription.updated";
+  let subscription: Subscription | undefined;
+  let customer: Customer | undefined;
+
+  if (payload.type === "subscription_preapproval") {
+    mappedType =
+      SUBSCRIPTION_ACTION_MAP[payload.action] ?? "subscription.updated";
+
+    if (payload.data?.id) {
+      subscription = (await getSubscription(payload.data.id)) ?? undefined;
+      if (subscription?.customerEmail) {
+        customer = {
+          id: subscription.customerId,
+          email: subscription.customerEmail,
+          metadata: subscription.metadata,
+        };
+      }
+    }
+  } else if (payload.type === "payment") {
+    const isFailed =
+      payload.action.includes("rejected") || payload.action.includes("failed");
+    mappedType = isFailed ? "payment.failed" : "payment.success";
+  }
+
+  return {
+    type: mappedType,
+    provider: "mercadopago",
+    subscription,
+    customer,
+    rawPayload: payload,
+  };
+}
+
+export type MercadoPagoAdapterConfig = {
   accessToken: string;
   successUrl: string;
   cancelUrl?: string;
   currency?: string;
-}): PaymentProviderAdapter {
+  webhookSecret?: string;
+  integratorId?: string;
+};
+
+export function createMercadoPagoAdapter(
+  config: MercadoPagoAdapterConfig
+): PaymentProviderAdapter {
   const { accessToken, successUrl, currency = "UYU" } = config;
+  const client = createMercadoPagoClient({
+    accessToken,
+    webhookSecret: config.webhookSecret,
+    integratorId: config.integratorId,
+  });
 
   return {
     provider: "mercadopago",
 
     async listProducts(): Promise<Product[]> {
-      const plans = await mpFetch<{ results: MPPreapprovalPlan[] }>(
-        accessToken,
-        "/preapproval_plan/search"
-      );
+      const plans = await client.plans.list();
 
       return plans.results.map((plan) => ({
         id: plan.id,
@@ -236,10 +255,7 @@ export function createMercadoPagoAdapter(config: {
 
     async getProduct(productId: string): Promise<Product | null> {
       try {
-        const plan = await mpFetch<MPPreapprovalPlan>(
-          accessToken,
-          `/preapproval_plan/${productId}`
-        );
+        const plan = await client.plans.get(productId);
 
         return {
           id: plan.id,
@@ -260,12 +276,8 @@ export function createMercadoPagoAdapter(config: {
     async createCheckout(
       options: CreateCheckoutOptions
     ): Promise<CheckoutResult> {
-      const plan = await mpFetch<MPPreapprovalPlan>(
-        accessToken,
-        `/preapproval_plan/${options.productId}`
-      );
+      const plan = await client.plans.get(options.productId);
 
-      // Validate plan is active and has init_point
       if (plan.status !== "active") {
         throw new Error(
           `Plan is not active (status: ${plan.status}). Only active plans can be used for checkout.`
@@ -274,20 +286,15 @@ export function createMercadoPagoAdapter(config: {
 
       if (!plan.init_point) {
         throw new Error(
-          "Plan does not have a checkout URL (init_point is missing). Ensure the plan has a back_url configured in MercadoPago."
+          "Plan does not have a checkout URL (init_point is missing)."
         );
       }
 
-      // Mercado Pago checkout uses hosted page (init_point) - no API call needed
-      // The user enters card details on Mercado Pago's site, not via our API
       const externalReference = encodeExternalReference({
         customerId: options.customerId,
         metadata: options.metadata,
       });
 
-      // Build checkout URL with external_reference if available
-      // Note: init_point already includes query params (?preapproval_plan_id=xxx)
-      // so we need to use & to append additional params
       const separator = plan.init_point.includes("?") ? "&" : "?";
       const checkoutUrl = externalReference
         ? `${plan.init_point}${separator}external_reference=${encodeURIComponent(externalReference)}`
@@ -302,41 +309,10 @@ export function createMercadoPagoAdapter(config: {
     async createSubscription(
       options: CreateSubscriptionOptions
     ): Promise<Subscription> {
-      const body: Record<string, unknown> = {
-        payer_email: options.customerEmail,
-        back_url: options.backUrl ?? successUrl,
-        status: "pending",
-      };
+      const body = buildSubscriptionBody(options, successUrl, currency);
 
-      if (options.productId) {
-        body.preapproval_plan_id = options.productId;
-      } else if (options.customPlan) {
-        body.reason = options.customPlan.reason;
-        body.auto_recurring = {
-          frequency: options.customPlan.intervalCount,
-          frequency_type:
-            options.customPlan.interval === "month" ? "months" : "days",
-          transaction_amount: options.customPlan.amount,
-          currency_id: options.customPlan.currency || currency,
-        };
-      }
-
-      // Use customerId (Beztack userId) as external_reference, fallback to metadata
-      const externalReference = encodeExternalReference({
-        customerId: options.customerId,
-        metadata: options.metadata,
-      });
-      if (externalReference) {
-        body.external_reference = externalReference;
-      }
-
-      const subscription = await mpFetch<MPPreapproval>(
-        accessToken,
-        "/preapproval",
-        {
-          method: "POST",
-          body: JSON.stringify(body),
-        }
+      const subscription = await client.subscriptions.create(
+        body as Parameters<typeof client.subscriptions.create>[0]
       );
       const metadata = decodeExternalReference(subscription.external_reference);
 
@@ -357,18 +333,15 @@ export function createMercadoPagoAdapter(config: {
       subscriptionId: string
     ): Promise<Subscription | null> {
       try {
-        const sub = await mpFetch<MPPreapproval>(
-          accessToken,
-          `/preapproval/${subscriptionId}`
-        );
+        const sub = await client.subscriptions.get(subscriptionId);
         const metadata = decodeExternalReference(sub.external_reference);
 
         return {
-          id: sub.id,
-          status: mapMPStatus(sub.status),
+          id: sub.id ?? subscriptionId,
+          status: mapMPStatus(sub.status ?? "inactive"),
           productId: "",
           productName: sub.reason,
-          customerId: metadata?.userId ?? String(sub.payer_id),
+          customerId: metadata?.userId ?? String(sub.payer_id ?? ""),
           customerEmail: sub.payer_email,
           currentPeriodEnd: sub.next_payment_date
             ? new Date(sub.next_payment_date)
@@ -394,21 +367,17 @@ export function createMercadoPagoAdapter(config: {
         body.status = "cancelled";
       }
 
-      const updated = await mpFetch<MPPreapproval>(
-        accessToken,
-        `/preapproval/${subscriptionId}`,
-        {
-          method: "PUT",
-          body: JSON.stringify(body),
-        }
+      const updated = await client.subscriptions.update(
+        subscriptionId,
+        body as Parameters<typeof client.subscriptions.update>[1]
       );
 
       return {
-        id: updated.id,
-        status: mapMPStatus(updated.status),
+        id: updated.id ?? subscriptionId,
+        status: mapMPStatus(updated.status ?? "inactive"),
         productId: "",
         productName: updated.reason,
-        customerId: String(updated.payer_id),
+        customerId: String(updated.payer_id ?? ""),
         currentPeriodEnd: updated.next_payment_date
           ? new Date(updated.next_payment_date)
           : undefined,
@@ -419,21 +388,14 @@ export function createMercadoPagoAdapter(config: {
       subscriptionId: string,
       _immediately = false
     ): Promise<Subscription> {
-      const canceled = await mpFetch<MPPreapproval>(
-        accessToken,
-        `/preapproval/${subscriptionId}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({ status: "cancelled" }),
-        }
-      );
+      const canceled = await client.subscriptions.cancel(subscriptionId);
 
       return {
-        id: canceled.id,
+        id: canceled.id ?? subscriptionId,
         status: "canceled",
         productId: "",
         productName: canceled.reason,
-        customerId: String(canceled.payer_id),
+        customerId: String(canceled.payer_id ?? ""),
         currentPeriodEnd: canceled.next_payment_date
           ? new Date(canceled.next_payment_date)
           : undefined,
@@ -444,24 +406,12 @@ export function createMercadoPagoAdapter(config: {
     async listSubscriptions(
       options: ListSubscriptionsOptions
     ): Promise<Subscription[]> {
-      const params = new URLSearchParams();
-      if (options.customerEmail) {
-        params.set("payer_email", options.customerEmail);
-      }
-      if (options.status) {
-        params.set("status", options.status);
-      }
-      if (options.limit) {
-        params.set("limit", String(options.limit));
-      }
-      if (options.offset) {
-        params.set("offset", String(options.offset));
-      }
-
-      const result = await mpFetch<MPSearchResult>(
-        accessToken,
-        `/preapproval/search?${params.toString()}`
-      );
+      const result = await client.subscriptions.search({
+        payer_email: options.customerEmail,
+        status: options.status,
+        limit: options.limit,
+        offset: options.offset,
+      });
 
       return result.results.map((sub) => {
         const metadata = decodeExternalReference(sub.external_reference);
@@ -485,14 +435,9 @@ export function createMercadoPagoAdapter(config: {
       email: string,
       metadata?: Record<string, unknown>
     ): Promise<Customer> {
-      const customer = await mpFetch<{ id: string; email: string }>(
-        accessToken,
-        "/v1/customers",
-        {
-          method: "POST",
-          body: JSON.stringify({ email }),
-        }
-      );
+      const customer = await client.customers.create({
+        email,
+      });
 
       return {
         id: customer.id,
@@ -503,11 +448,7 @@ export function createMercadoPagoAdapter(config: {
 
     async getCustomer(customerId: string): Promise<Customer | null> {
       try {
-        const customer = await mpFetch<{ id: string; email: string }>(
-          accessToken,
-          `/v1/customers/${customerId}`
-        );
-
+        const customer = await client.customers.get(customerId);
         return {
           id: customer.id,
           email: customer.email,
@@ -519,18 +460,11 @@ export function createMercadoPagoAdapter(config: {
 
     async getCustomerByEmail(email: string): Promise<Customer | null> {
       try {
-        const result = await mpFetch<{
-          results: Array<{ id: string; email: string }>;
-        }>(
-          accessToken,
-          `/v1/customers/search?email=${encodeURIComponent(email)}`
-        );
-
+        const result = await client.customers.searchByEmail(email);
         const customer = result.results[0];
         if (!customer) {
           return null;
         }
-
         return {
           id: customer.id,
           email: customer.email,
@@ -550,52 +484,28 @@ export function createMercadoPagoAdapter(config: {
         data: { id: string };
       };
 
-      let mappedType: WebhookPayload["type"] = "subscription.updated";
-      let subscription: Subscription | undefined;
-      let customer: Customer | undefined;
-
-      if (payload.type === "subscription_preapproval") {
-        if (payload.action === "created") {
-          mappedType = "subscription.created";
-        } else if (payload.action === "updated") {
-          mappedType = "subscription.updated";
-        } else if (payload.action === "cancelled") {
-          mappedType = "subscription.canceled";
-        } else if (payload.action === "paused") {
-          mappedType = "subscription.paused";
-        } else if (payload.action === "authorized") {
-          mappedType = "subscription.active";
-        }
-
-        if (payload.data?.id) {
-          subscription =
-            (await this.getSubscription(payload.data.id)) ?? undefined;
-          if (subscription?.customerEmail) {
-            customer = {
-              id: subscription.customerId,
-              email: subscription.customerEmail,
-              metadata: subscription.metadata,
-            };
-          }
-        }
-      } else if (payload.type === "payment") {
-        if (
-          payload.action.includes("rejected") ||
-          payload.action.includes("failed")
-        ) {
-          mappedType = "payment.failed";
-        } else {
-          mappedType = "payment.success";
-        }
-      }
-
-      return {
-        type: mappedType,
-        provider: "mercadopago",
-        subscription,
-        customer,
-        rawPayload: payload,
-      };
+      const result = await resolveWebhookPayload(
+        payload,
+        this.getSubscription.bind(this)
+      );
+      return result;
     },
   };
+}
+
+/**
+ * Factory function matching the ProviderAdapterFactory signature.
+ * Used by the core factory registry.
+ */
+export function createAdapter(
+  config: Record<string, string>
+): PaymentProviderAdapter {
+  return createMercadoPagoAdapter({
+    accessToken: config.MERCADO_PAGO_ACCESS_TOKEN ?? "",
+    successUrl: config.PAYMENTS_SUCCESS_URL ?? config.POLAR_SUCCESS_URL ?? "",
+    cancelUrl: config.PAYMENTS_CANCEL_URL,
+    currency: config.MERCADO_PAGO_CURRENCY ?? "UYU",
+    webhookSecret: config.MERCADO_PAGO_WEBHOOK_SECRET,
+    integratorId: config.MERCADO_PAGO_INTEGRATOR_ID,
+  });
 }

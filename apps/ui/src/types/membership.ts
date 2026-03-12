@@ -1,7 +1,7 @@
 /**
- * Polar product object type
+ * Provider product object type (provider-agnostic)
  */
-type PolarProduct = {
+type PaymentProduct = {
   id: string;
   name: string;
   description?: string;
@@ -27,8 +27,8 @@ export type MembershipTierConfig = {
     readonly monthly: number;
     readonly yearly: number;
   };
-  readonly monthly?: PolarProduct; // Full Polar product object for monthly billing
-  readonly yearly?: PolarProduct; // Full Polar product object for yearly billing
+  readonly monthly?: PaymentProduct;
+  readonly yearly?: PaymentProduct;
   readonly features: string[];
   readonly limits: Record<string, number>;
   readonly permissions: string[];

@@ -1,6 +1,6 @@
+import { db, schema } from "@beztack/db";
 import { sendEmail } from "@beztack/email";
-import { checkout, polar, portal, usage } from "@polar-sh/better-auth";
-import { Polar } from "@polar-sh/sdk";
+import { createPolarAuthPlugin } from "@beztack/payments-polar/auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
@@ -9,60 +9,54 @@ import {
   organization,
   twoFactor,
 } from "better-auth/plugins";
-import { db, schema } from "@beztack/db";
 import { env } from "@/env";
 
 const isPolarProvider = env.PAYMENT_PROVIDER === "polar";
 const paymentsSuccessUrl = env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
 
-const polarClient = isPolarProvider
-  ? new Polar({
+const polarPlugin = isPolarProvider
+  ? createPolarAuthPlugin({
       accessToken: env.POLAR_ACCESS_TOKEN,
       server: env.POLAR_SERVER,
+      products: [
+        {
+          productId: env.POLAR_BASIC_MONTHLY_PRODUCT_ID,
+          slug: "basic-monthly",
+        },
+        {
+          productId: env.POLAR_BASIC_YEARLY_PRODUCT_ID,
+          slug: "basic-yearly",
+        },
+        {
+          productId: env.POLAR_PRO_MONTHLY_PRODUCT_ID,
+          slug: "pro-monthly",
+        },
+        {
+          productId: env.POLAR_PRO_YEARLY_PRODUCT_ID,
+          slug: "pro-yearly",
+        },
+        {
+          productId: env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
+          slug: "ultimate-monthly",
+        },
+        {
+          productId: env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
+          slug: "ultimate-yearly",
+        },
+      ],
+      successUrl: paymentsSuccessUrl,
+      authenticatedUsersOnly: true,
+      createCustomerOnSignUp: true,
+      getCustomerCreateParams: (data) => {
+        return {
+          metadata: {
+            source: "beztack-signup",
+            userId: data.user.id || "unknown",
+          },
+        };
+      },
     })
   : null;
-
-const polarPlugin =
-  isPolarProvider && polarClient
-    ? polar({
-        client: polarClient,
-        createCustomerOnSignUp: false,
-        use: [
-          checkout({
-            products: [
-              {
-                productId: env.POLAR_BASIC_MONTHLY_PRODUCT_ID,
-                slug: "basic-monthly",
-              },
-              {
-                productId: env.POLAR_BASIC_YEARLY_PRODUCT_ID,
-                slug: "basic-yearly",
-              },
-              {
-                productId: env.POLAR_PRO_MONTHLY_PRODUCT_ID,
-                slug: "pro-monthly",
-              },
-              {
-                productId: env.POLAR_PRO_YEARLY_PRODUCT_ID,
-                slug: "pro-yearly",
-              },
-              {
-                productId: env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
-                slug: "ultimate-monthly",
-              },
-              {
-                productId: env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
-                slug: "ultimate-yearly",
-              },
-            ],
-            successUrl: paymentsSuccessUrl,
-            authenticatedUsersOnly: true,
-          }),
-          portal(),
-          usage(),
-        ],
-      })
-    : null;
 
 // Determine project name: in development use APP_NAME from env (defaults to "beztack" in .env.example),
 // in new projects this falls back to the template placeholder and will be replaced by the initializer
