@@ -4,263 +4,147 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-beztack is an Nx workspace monorepo using pnpm as the package manager. The project contains:
-- **Frontend**: React application with Vite, Tailwind CSS, and Radix UI components
-- **Backend**: Nitro server with PostgreSQL database using Drizzle ORM
-- **Shared packages**: AI utilities (AWS Bedrock integration), OCR functionality, and payment processing with Polar
+Beztack is an Nx monorepo (pnpm) — a production-ready TypeScript starter for shipping apps fast. Three apps, shared packages, provider-agnostic payments.
 
-## Common Commands
+## Commands
 
 ### Development
 ```bash
-# Start all services
-pnpm dev
-
-# Start specific apps
-nx dev ui          # Start React frontend
-nx dev api         # Start Nitro backend
-
-# Build the project
-nx build
-
-# Run tests
-nx test
-
-# Lint code
-nx lint
+pnpm dev                    # Start all services in parallel
+nx dev ui                   # React frontend only
+nx dev api                  # Nitro backend only
+nx dev docs                 # Next.js docs site only
 ```
 
-### Database Operations
+### Build & Quality
 ```bash
-# Run database migrations
-pnpm migrate
-# or
-nx run api:migrate
+pnpm build                  # Build all apps
+nx build <project>          # Build specific project
+pnpm dlx ultracite fix      # Format and auto-fix code (Biome)
+pnpm dlx ultracite check    # Check for issues without fixing
+```
+
+### Testing
+```bash
+pnpm test                   # Run all tests via Nx
+vitest                      # Watch mode (in package dir)
+vitest run path/to/file.test.ts   # Run single test file
+vitest run -t "test name"         # Run tests matching name
+```
+
+### Database
+```bash
+pnpm migrate                # Generate and apply Drizzle migrations
+pnpm push                   # Push schema changes directly (dev shortcut)
+pnpm generate-auth-schema   # Regenerate Better Auth schema types
 ```
 
 ### Package Management
 ```bash
-# Install dependencies
-pnpm install
-
-# Add dependencies to specific workspace
-pnpm add <package> --filter @beztack/ui
-pnpm add <package> --filter @beztack/api
+pnpm add <package> --filter @beztack/ui    # Add to frontend
+pnpm add <package> --filter @beztack/api   # Add to backend
+pnpm add <package> --filter @beztack/db    # Add to database package
 ```
 
 ## Architecture
 
-### Workspace Structure
-- `apps/ui/` - React frontend application using Vite
-- `apps/api/` - Nitro server application
-- `packages/ai/` - AI SDK wrapper with Amazon Bedrock integration
-- `packages/ocr/` - OCR utilities using Tesseract.js
+```
+apps/
+├── ui/          # Frontend SPA (Vite + React 19)
+├── api/         # Backend Server (Nitro/h3)
+└── docs/        # Landing & Documentation (Next.js + Fumadocs)
+
+packages/
+├── ai/          # AI SDK (Vercel AI + Amazon Bedrock)
+├── cli/         # CLI tool for project scaffolding
+├── db/          # Database schema, client, migrations (Drizzle + PostgreSQL)
+├── email/       # Email templates (React Email + Resend)
+├── env/         # Centralized env validation (T3 Env + Zod)
+├── ocr/         # OCR utilities (Tesseract.js)
+├── payments/
+│   ├── core/    # Provider-agnostic types and PaymentProviderAdapter interface
+│   ├── polar/   # Polar payment provider (@beztack/payments-polar)
+│   └── mercado-pago/  # MercadoPago provider (@beztack/mercadopago)
+└── state/       # URL state management (nuqs)
+```
 
 ### Frontend (`@beztack/ui`)
-- **Framework**: React 19 with TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS v4
-- **UI Components**: Radix UI primitives with shadcn/ui patterns
-- **State Management**: TanStack Query for server state
-- **Forms**: React Hook Form with Zod validation
-- **Routing**: React Router v7
-- **Authentication**: Better Auth integration
+- React 19 + Vite + Tailwind CSS v4 + shadcn/ui (Radix UI primitives)
+- TanStack Query for server state, React Hook Form + Zod for forms
+- React Router v7, i18next for i18n, Motion for animations
+- Better Auth client for authentication
 
 ### Backend (`@beztack/api`)
-- **Framework**: Nitro (Universal JavaScript server)
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Better Auth
-- **Configuration**: Server source in `apps/api/server/`
+- Nitro (h3) with file-based routing and auto-imports
+- API routes in `apps/api/server/routes/` (e.g., `api/subscriptions/checkout.post.ts`)
+- Server utilities in `apps/api/server/utils/` (auth, membership, mercadopago, etc.)
+- App-level payment logic in `apps/api/lib/payments/`
+- Environment config via `@beztack/env` with `@/env` alias
 
-### Shared Packages
-- `@beztack/ai` - Exports AI SDK with pre-configured Amazon Bedrock provider
-- `@beztack/ocr` - Text extraction from images using Tesseract.js
-- `@beztack/payments` - Polar payment integration with Better Auth, membership tiers, and billing management
-- `@beztack/email` - React Email templates with Resend integration for transactional emails
+### Database (`@beztack/db`)
+- Schema at `packages/db/src/schema.ts` — shared across apps
+- Drizzle config at `packages/db/drizzle.config.ts`
+- Client exported from `packages/db/src/client.ts`
+- Migrations in `packages/db/drizzle/`
 
-## Development Guidelines
+### Payments (multi-provider)
+- `@beztack/payments` (core) — provider-agnostic types (`Product`, `Subscription`, `Customer`) and `PaymentProviderAdapter` interface
+- `@beztack/payments-polar` — Polar provider, Better Auth plugin via `createPolarAuthPlugin()`
+- `@beztack/mercadopago` — MercadoPago provider with server and React integrations
+- Apps import types from core; provider selection via `PAYMENT_PROVIDER` env var
+- API routes: `/api/subscriptions/*` (unified), `/api/polar/*`, `/api/payments/mercado-pago/*`
 
-### TypeScript Configuration
-- Uses strict mode with comprehensive type checking
-- Node.js-style module resolution (`nodenext`)
-- Composite project references for monorepo optimization
+### Auth (Better Auth)
+- Configured in `apps/api/server/utils/auth.ts`
+- Plugins: admin, organization, twoFactor, Polar (conditional on `PAYMENT_PROVIDER`)
+- Auth routes at `/api/auth/[...]`
+- DB adapter: Drizzle with `@beztack/db`
 
-### Code Organization
-- Server utilities in `apps/api/server/utils/`
-- React hooks in `apps/ui/src/hooks/`
-- Shared components in `apps/ui/src/components/`
-- Authentication utilities use Better Auth
+## Code Style (Biome/Ultracite)
 
-### Database Schema
-- Located at `apps/api/db/schema.ts`
-- Use `pnpm migrate` to generate and apply schema changes
-- Drizzle configuration in `apps/api/drizzle.config.ts`
+### Formatting
+- Double quotes, tabs for indentation, no semicolons (ASI), 80 char line width, trailing commas in multiline
 
-## Polar Payment Integration
-
-The project includes comprehensive Polar payment integration through the `@beztack/payments` package, providing developer-first monetization capabilities.
-
-### Configuration
-
-Set up environment variables in `.env`:
-
-```bash
-# Polar Payment Integration
-POLAR_ACCESS_TOKEN=polar_at_your_access_token_here
-POLAR_WEBHOOK_SECRET=whsec_your_webhook_secret_here
-POLAR_SERVER=sandbox  # or 'production'
-
-# Optional: Product Configuration
-POLAR_PRO_PRODUCT_ID=your-pro-product-id-here
-POLAR_ENTERPRISE_PRODUCT_ID=your-enterprise-product-id-here
-POLAR_BASIC_MONTHLY_PRODUCT_ID=your-pro-product-id
-POLAR_BASIC_YEARLY_PRODUCT_ID=your-pro-product-id
-POLAR_PRO_MONTHLY_PRODUCT_ID=your-team-product-id
-POLAR_PRO_YEARLY_PRODUCT_ID=your-team-product-id
-POLAR_ULTIMATE_MONTHLY_PRODUCT_ID=your-enterprise-product-id
-POLAR_ULTIMATE_YEARLY_PRODUCT_ID=your-enterprise-product-id
-POLAR_SUCCESS_URL=http://localhost:5173/success?checkout_id={CHECKOUT_ID}
-```
-
-### Membership Tiers
-
-- **Free**: Basic auth, 1GB storage, 1K API calls
-- **Pro**: 2FA, passkeys, 10GB storage, 10K API calls ($29/mo)
-- **Team**: Organizations, teams, 100GB storage, 50K API calls ($99/mo)  
-- **Enterprise**: Unlimited usage, custom features ($499/mo)
-
-### Backend Integration
-
-The API automatically includes Polar integration when environment variables are configured:
-
+### Import Order
 ```typescript
-// In apps/api/server/utils/auth.ts
-import { setupPolarForBetterAuth } from "@beztack/payments";
-
-export const auth = betterAuth({
-  plugins: [
-    // Polar plugin is conditionally added based on environment
-    setupPolarForBetterAuth(), // Includes checkout, portal, usage, webhooks
-  ],
-});
+// 1) External libs  2) Internal packages  3) Relative imports
+import { useState } from "react"
+import type { ReactNode } from "react"       // type-only imports
+import { db } from "@beztack/db"
+import type { User } from "@/types"
+import { Button } from "./button"
+import { resolve } from "node:path"           // node: protocol for builtins
 ```
 
-### Frontend Integration
+### Naming Conventions
+| Element | Convention | Example |
+|---------|------------|---------|
+| Components | PascalCase | `UserProfile.tsx` |
+| Functions/variables | camelCase | `getUserData()` |
+| Types | PascalCase | `type UserProps` |
+| Constants | UPPER_SNAKE | `const MAX_RETRIES` |
+| DB columns | snake_case | `created_at` |
+| Files | kebab-case | `user-profile.tsx` |
 
-Payment components are available throughout the UI:
+### TypeScript
+- Union types over enums: `type Status = "active" | "inactive"`
+- `as const` for literal types, `import type` / `export type` for types
+- Avoid: `any`, enums, non-null assertions (`!`), `@ts-ignore`
+- Use: `unknown` + type guards, optional chaining, `for...of` over `.forEach()`
 
-- `/pricing` - Membership tier comparison and signup
-- `/billing` - Subscription management and usage tracking
-- Contextual upgrade prompts for premium features
-- Real-time membership status updates
+### h3 API Route Pattern
+```typescript
+import { createError, defineEventHandler, readBody } from "h3"
+import { z } from "zod"
 
-### Key Features
+const schema = z.object({ email: z.string().email() })
 
-- **Checkout Integration**: Seamless subscription upgrades
-- **Webhook Processing**: Real-time subscription updates at `/api/polar/webhooks`
-- **Organization Support**: Team-level billing and subscriptions
-- **Usage Tracking**: Tier-based limits with progress indicators
-- **Membership Middleware**: API route protection based on subscription tier
-- **Customer Portal**: Self-service subscription management
-
-### Development Commands
-
-```bash
-# Test payment integration (requires Polar credentials)
-nx dev api    # Backend with webhook endpoints
-nx dev ui     # Frontend with payment components
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event)
+  const data = schema.parse(body)
+  return { success: true, data }
+})
 ```
 
-The integration works in sandbox mode by default and gracefully handles missing credentials during development.
-
-## Email Integration with React Email & Resend
-
-The project includes a comprehensive email system through the `@beztack/email` package, providing React-based email templates with Resend delivery.
-
-### Configuration
-
-Set up environment variables in `.env`:
-
-```bash
-# Resend Email Integration
-RESEND_API_KEY=re_your_api_key_here
-RESEND_FROM_EMAIL=hello@yourdomain.com
-RESEND_FROM_NAME=beztack  # Optional, defaults to 'beztack'
-```
-
-### Available Email Templates
-
-- **Welcome Email** (`/api/email/welcome`) - User onboarding
-- **Password Reset** (`/api/email/password-reset`) - Password recovery
-- **Subscription Confirmation** (`/api/email/subscription-confirmation`) - Payment confirmations
-- **Custom Email** (`/api/email`) - General purpose template
-
-### API Usage
-
-All endpoints accept POST requests with the following pattern:
-
-```bash
-# Welcome email
-POST /api/email/welcome
-{
-  "to": "user@example.com",
-  "username": "John Doe",
-  "loginUrl": "https://beztack.app/login"
-}
-
-# Password reset email  
-POST /api/email/password-reset
-{
-  "to": "user@example.com",
-  "username": "John Doe",
-  "resetUrl": "https://beztack.app/reset?token=abc123"
-}
-
-# Subscription confirmation
-POST /api/email/subscription-confirmation
-{
-  "to": "user@example.com",
-  "username": "John Doe",
-  "planName": "Pro",
-  "amount": "$29",
-  "billingPeriod": "mes",
-  "dashboardUrl": "https://beztack.app/billing"
-}
-```
-
-### Template Development
-
-Email templates are located in `packages/email/emails/` using React Email components:
-
-```bash
-# Preview templates during development
-cd packages/email
-pnpm dev  # Starts preview server on :3001
-```
-
-### Key Features
-
-- **HTML templates** with professional styling and responsive design
-- **React components available** (requires JSX runtime configuration in server)
-- **Robust error handling** with detailed validation and logging
-- **Multi-recipient support** for bulk emails
-- **Environment validation** ensures required credentials
-- **Spanish localization** for user-facing content
-
-### Template Options
-
-**Recommended: HTML Templates**
-- Use `welcomeEmailTemplate()`, `passwordResetTemplate()` functions
-- Work immediately with any server setup
-- Professional styling and responsive design
-- Full customization with parameters
-
-**Advanced: React Components** 
-- Use `WelcomeEmail`, `PasswordResetEmail` components with `sendWithReact()`
-- Require JSX runtime configuration in Nitro server
-- Full React ecosystem support
-- More complex but more flexible
-
-### React Templates Limitation
-
-React email templates currently require additional JSX runtime setup in Nitro server environment. The HTML template functions provide the same professional appearance and work immediately without additional configuration.
+### Lefthook
+Pre-commit hooks run `ultracite fix` on staged files via lint-staged. Fix linting issues before committing.

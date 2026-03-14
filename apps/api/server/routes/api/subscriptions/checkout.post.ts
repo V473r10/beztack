@@ -6,10 +6,8 @@ import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { env } from "@/env";
 import { getPaymentProvider } from "@/lib/payments";
-import {
-  enrichProductWithCatalog,
-  resolveProductByCanonicalPlan,
-} from "@/lib/payments/catalog";
+import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
+import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
 import type { Product } from "@/lib/payments/types";
 import { requireAuth } from "@/server/utils/membership";
 
@@ -63,9 +61,11 @@ export default defineEventHandler(async (event) => {
     }
 
     const providerProducts = await provider.listProducts();
-    const products = await Promise.all(
-      providerProducts.map(enrichProductWithCatalog)
-    );
+    // Polar: products already have metadata from API; MP: enrich with DB catalog data
+    const products =
+      provider.provider === "polar"
+        ? providerProducts
+        : await Promise.all(providerProducts.map(enrichProductWithCatalog));
     const selectedProduct = resolveCheckoutProduct(
       products,
       parsed.productId,
