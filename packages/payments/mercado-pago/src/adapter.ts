@@ -6,6 +6,7 @@ import type {
   BillingInterval,
   CheckoutResult,
   CreateCheckoutOptions,
+  CreateProductOptions,
   CreateSubscriptionOptions,
   Customer,
   ListSubscriptionsOptions,
@@ -13,6 +14,7 @@ import type {
   Product,
   Subscription,
   SubscriptionStatus,
+  UpdateProductOptions,
   UpdateSubscriptionOptions,
   WebhookPayload,
 } from "@beztack/payments";
@@ -244,6 +246,7 @@ export function createMercadoPagoAdapter(
         id: plan.id,
         name: plan.reason,
         description: plan.reason,
+        type: "plan" as const,
         price: {
           amount: plan.auto_recurring.transaction_amount,
           currency: plan.auto_recurring.currency_id,
@@ -261,6 +264,7 @@ export function createMercadoPagoAdapter(
           id: plan.id,
           name: plan.reason,
           description: plan.reason,
+          type: "plan" as const,
           price: {
             amount: plan.auto_recurring.transaction_amount,
             currency: plan.auto_recurring.currency_id,
@@ -271,6 +275,89 @@ export function createMercadoPagoAdapter(
       } catch {
         return null;
       }
+    },
+
+    async createProduct(options: CreateProductOptions): Promise<Product> {
+      const plan = await client.plans.create({
+        reason: options.name,
+        auto_recurring: {
+          frequency: options.intervalCount,
+          frequency_type: options.interval === "month" ? "months" : "days",
+          transaction_amount: options.price.amount,
+          currency_id: options.price.currency || currency,
+        },
+      });
+
+      return {
+        id: plan.id,
+        name: plan.reason,
+        description: options.description ?? plan.reason,
+        type: "plan" as const,
+        price: {
+          amount: plan.auto_recurring.transaction_amount,
+          currency: plan.auto_recurring.currency_id,
+        },
+        interval: mapMPInterval(plan.auto_recurring.frequency_type),
+        intervalCount: plan.auto_recurring.frequency,
+        metadata: options.metadata,
+      };
+    },
+
+    async updateProduct(
+      productId: string,
+      options: UpdateProductOptions
+    ): Promise<Product> {
+      if (options.status === "inactive") {
+        await client.plans.deactivate(productId);
+        const deactivated = await client.plans.get(productId);
+
+        return {
+          id: deactivated.id,
+          name: deactivated.reason,
+          description: deactivated.reason,
+          type: "plan" as const,
+          price: {
+            amount: deactivated.auto_recurring.transaction_amount,
+            currency: deactivated.auto_recurring.currency_id,
+          },
+          interval: mapMPInterval(deactivated.auto_recurring.frequency_type),
+          intervalCount: deactivated.auto_recurring.frequency,
+          metadata: options.metadata,
+        };
+      }
+
+      const updateBody: Record<string, unknown> = {};
+
+      if (options.name) {
+        updateBody.reason = options.name;
+      }
+
+      if (options.price?.amount) {
+        updateBody.auto_recurring = {
+          transaction_amount: options.price.amount,
+        };
+      }
+
+      const updated = await client.plans.update(productId, updateBody);
+
+      return {
+        id: updated.id,
+        name: updated.reason,
+        description: updated.reason,
+        type: "plan" as const,
+        price: {
+          amount: updated.auto_recurring.transaction_amount,
+          currency: updated.auto_recurring.currency_id,
+        },
+        interval: mapMPInterval(updated.auto_recurring.frequency_type),
+        intervalCount: updated.auto_recurring.frequency,
+        metadata: options.metadata,
+      };
+    },
+
+    async deleteProduct(productId: string): Promise<void> {
+      // MercadoPago does not support hard deletion — deactivate instead
+      await client.plans.deactivate(productId);
     },
 
     async createCheckout(

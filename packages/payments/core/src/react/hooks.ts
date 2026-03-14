@@ -31,12 +31,20 @@ function getTierId(product: Product): string {
   return product.id;
 }
 
+const TIER_ORDER: Record<string, number> = {
+  free: 0,
+  basic: 1,
+  pro: 2,
+  ultimate: 3,
+};
+
 function getDisplayOrder(product: Product): number {
   const displayOrder = product.metadata?.displayOrder;
   if (typeof displayOrder === "number") {
     return displayOrder;
   }
-  return 0;
+  const tierId = getTierId(product);
+  return TIER_ORDER[tierId] ?? 0;
 }
 
 function extractPermissions(

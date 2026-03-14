@@ -11,10 +11,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePolarProducts } from "@/hooks/use-polar-products";
+import { useMembership } from "@/contexts/membership-context";
+import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
-import type { PolarPricingTier } from "@/types/polar-pricing";
+import type { PricingTier } from "@/types/pricing";
 import { MembershipBadge } from "./membership-badge";
 import { PricingCard } from "./pricing-card";
 
@@ -45,20 +46,20 @@ export function UpgradeDialog({
     suggestedTier || "pro"
   );
 
-  const { data: allTiersRaw = [] } = useQuery<PolarPricingTier[]>({
+  const { getPlanChangeType } = useMembership();
+
+  const { data: allTiersRaw = [] } = useQuery<PricingTier[]>({
     queryKey: ["subscriptions", "products", "tiers"],
-    queryFn: usePolarProducts,
+    queryFn: usePricingTiers,
   });
 
-  // Sort tiers by displayOrder and filter available tiers
+  // Sort tiers by displayOrder and filter to upgrades only
   const allTiers = [...allTiersRaw].sort(
     (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
   );
 
-  const currentTierOrder =
-    allTiers.find((t) => t.id === currentTier)?.displayOrder ?? 0;
   const availableTiers = allTiers.filter(
-    (tier) => (tier.displayOrder ?? 0) > currentTierOrder
+    (tier) => getPlanChangeType(tier.id) === "upgrade"
   );
 
   const handleUpgrade = (tierId: string) => {

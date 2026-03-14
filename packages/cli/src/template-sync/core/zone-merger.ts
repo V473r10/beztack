@@ -8,7 +8,7 @@ export interface MergeResult {
 
 export function mergeWithProtectedZones(
   currentContent: string,
-  templateContent: string,
+  templateContent: string
 ): MergeResult {
   const protectedBlocks = extractZones(currentContent);
   if (protectedBlocks.size === 0) {
@@ -25,7 +25,7 @@ export function mergeWithProtectedZones(
     const templateBlock = extractZoneByName(templateContent, zoneName);
     if (!templateBlock) {
       conflicts.push(
-        `Protected zone '${zoneName}' no longer exists in template output.`,
+        `Protected zone '${zoneName}' no longer exists in template output.`
       );
       continue;
     }
@@ -73,7 +73,10 @@ function extractZones(content: string): Map<string, string> {
   return map;
 }
 
-function extractZoneByName(content: string, zoneName: string): string | undefined {
+function extractZoneByName(
+  content: string,
+  zoneName: string
+): string | undefined {
   const lines = content.split("\n");
   const buffer: string[] = [];
   let inside = false;
@@ -94,5 +97,5 @@ function extractZoneByName(content: string, zoneName: string): string | undefine
     }
   }
 
-  return undefined;
+  return;
 }

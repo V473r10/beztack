@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
   cancel,
   intro,
@@ -9,15 +11,13 @@ import {
   select,
   spinner,
 } from "@clack/prompts";
-import { realpathSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import pc from "picocolors";
-import { createProject } from "./create.js";
 import type { CreateProjectOptions } from "./create.js";
+import { createProject } from "./create.js";
 import { parseDebugFlag, setDebugMode } from "./debug.js";
 import { initProject } from "./init-project.js";
-import { modules } from "./modules.js";
 import type { PaymentProvider } from "./modules.js";
+import { modules } from "./modules.js";
 import { runTemplateCommand } from "./template-sync/index.js";
 import { getWorkspaceRoot } from "./utils/workspace.js";
 
@@ -101,9 +101,7 @@ export async function main(args: string[] = []) {
   }
 
   let paymentProvider = options.paymentProvider;
-  let enabledModuleNames = modules
-    .filter((m) => m.required)
-    .map((m) => m.name);
+  let enabledModuleNames = modules.filter((m) => m.required).map((m) => m.name);
 
   if (options.nonInteractive) {
     enabledModuleNames = [
@@ -130,7 +128,7 @@ export async function main(args: string[] = []) {
   }
 
   if (enabledModuleNames.includes("payments")) {
-    if (!paymentProvider && !options.nonInteractive) {
+    if (!(paymentProvider || options.nonInteractive)) {
       const provider = await select({
         message: "Select the payment provider:",
         options: [
@@ -156,7 +154,9 @@ export async function main(args: string[] = []) {
     }
 
     if (!paymentProvider) {
-      cancel("Payments module requires --payment-provider in non-interactive mode.");
+      cancel(
+        "Payments module requires --payment-provider in non-interactive mode."
+      );
       process.exit(1);
     }
   }
@@ -331,9 +331,7 @@ function parseInitCommandOptions(args: string[]): InitCommandOptions {
   return options;
 }
 
-function parseCreateCommandOptions(
-  args: string[]
-): CreateProjectOptions {
+function parseCreateCommandOptions(args: string[]): CreateProjectOptions {
   const options: CreateProjectOptions = {};
   let hasCreateFlags = false;
   let yesMode = false;
@@ -408,10 +406,7 @@ function parseCreateCommandOptions(
     throw new Error(`Unknown create option: ${token}`);
   }
 
-  if (
-    hasCreateFlags &&
-    options.nonInteractive !== true
-  ) {
+  if (hasCreateFlags && options.nonInteractive !== true) {
     options.nonInteractive = true;
   }
 
@@ -455,16 +450,12 @@ if (isCliEntrypoint()) {
   }
 
   const rawArgs = process.argv.slice(2);
-  const args = rawArgs.filter(
-    (arg) => arg !== "--debug" && arg !== "-d"
-  );
+  const args = rawArgs.filter((arg) => arg !== "--debug" && arg !== "-d");
   const commandToken = args[0] || "create";
   const commandDefinition = commandMap.get(commandToken);
 
   if (!commandDefinition) {
-    process.stderr.write(
-      `${pc.red("Unknown command:")} ${commandToken}\n`
-    );
+    process.stderr.write(`${pc.red("Unknown command:")} ${commandToken}\n`);
     showHelp();
     process.exit(1);
   }

@@ -5,6 +5,10 @@
 
   "type": "module",
   "exports": {
+    "./db": {
+      "types": "./dist/db.d.ts",
+      "default": "./dist/db.js"
+    },
     "./api": {
       "types": "./dist/api.d.ts",
       "default": "./dist/api.js"

@@ -6,6 +6,7 @@ import type {
   BillingInterval,
   CheckoutResult,
   CreateCheckoutOptions,
+  CreateProductOptions,
   CreateSubscriptionOptions,
   Customer,
   ListSubscriptionsOptions,
@@ -13,12 +14,14 @@ import type {
   Product,
   Subscription,
   SubscriptionStatus,
+  UpdateProductOptions,
   UpdateSubscriptionOptions,
   WebhookPayload,
 } from "@beztack/payments";
 import { Polar } from "@polar-sh/sdk";
 
 const CENTS_TO_DOLLARS = 100;
+const MIN_PRICE_CENTS = 50;
 const DEFAULT_LIMIT = 50;
 
 function mapPolarStatus(status: string): SubscriptionStatus {
@@ -82,22 +85,22 @@ function mapPolarProduct(product: PolarProductResponse): Product {
   const price = product.prices?.[0];
   const metadata = (product.metadata ?? {}) as Record<string, unknown>;
   const interval = product.isRecurring
-    ? product.recurringInterval ?? price?.recurringInterval ?? "month"
+    ? (product.recurringInterval ?? price?.recurringInterval ?? "month")
     : "month";
 
   return {
     id: product.id,
     name: product.name,
     description: product.description ?? undefined,
+    type: product.isRecurring ? "plan" : "product",
     price: {
       amount: (price?.priceAmount ?? 0) / CENTS_TO_DOLLARS,
-      currency: price?.priceCurrency ?? "USD",
+      currency: (price?.priceCurrency ?? "usd").toUpperCase(),
     },
     interval: mapPolarInterval(interval),
     intervalCount: 1,
     metadata: {
       ...metadata,
-      type: product.isRecurring ? "plan" : "product",
       isRecurring: product.isRecurring ?? false,
     },
   };
@@ -135,6 +138,76 @@ export function createPolarAdapter(
       } catch {
         return null;
       }
+    },
+
+    async createProduct(options: CreateProductOptions): Promise<Product> {
+      const product = await client.products.create({
+        name: options.name,
+        description: options.description,
+        recurringInterval: options.type === "plan" ? options.interval : null,
+        prices: [
+          {
+            amountType: "fixed" as const,
+            priceAmount: Math.max(
+              Math.round(options.price.amount * CENTS_TO_DOLLARS),
+              MIN_PRICE_CENTS
+            ),
+            priceCurrency: options.price.currency.toLowerCase(),
+          },
+        ],
+        metadata: options.metadata as
+          | Record<string, string | number | boolean>
+          | undefined,
+      });
+
+      return mapPolarProduct(product);
+    },
+
+    async updateProduct(
+      productId: string,
+      options: UpdateProductOptions
+    ): Promise<Product> {
+      const productUpdate: Record<string, unknown> = {};
+
+      if (options.name !== undefined) {
+        productUpdate.name = options.name;
+      }
+      if (options.description !== undefined) {
+        productUpdate.description = options.description;
+      }
+      if (options.metadata !== undefined) {
+        productUpdate.metadata = options.metadata;
+      }
+      if (options.status !== undefined) {
+        productUpdate.isArchived = options.status === "inactive";
+      }
+      if (options.price !== undefined) {
+        productUpdate.prices = [
+          {
+            amountType: "fixed" as const,
+            priceAmount: Math.max(
+              Math.round(options.price.amount * CENTS_TO_DOLLARS),
+              MIN_PRICE_CENTS
+            ),
+            priceCurrency: options.price.currency.toLowerCase(),
+          },
+        ];
+      }
+
+      const product = await client.products.update({
+        id: productId,
+        productUpdate,
+      });
+
+      return mapPolarProduct(product);
+    },
+
+    async deleteProduct(productId: string): Promise<void> {
+      // Polar does not support hard deletes; archive the product instead
+      await client.products.update({
+        id: productId,
+        productUpdate: { isArchived: true },
+      });
     },
 
     async createCheckout(

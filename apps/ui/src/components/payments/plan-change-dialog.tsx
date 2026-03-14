@@ -41,10 +41,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
-import { usePolarProducts } from "@/hooks/use-polar-products";
+import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
-import type { PolarPricingTier } from "@/types/polar-pricing";
+import type { PricingTier } from "@/types/pricing";
 import { formatCurrency } from "./pricing-card";
 
 const MAX_FEATURES_TO_SHOW = 4;
@@ -135,7 +135,7 @@ export type PlanChangeDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentTier: MembershipTier;
-  targetTier: PolarPricingTier | null;
+  targetTier: PricingTier | null;
   changeType: PlanChangeType;
   billingPeriod: "monthly" | "yearly";
   onBillingPeriodChange: (period: "monthly" | "yearly") => void;
@@ -158,9 +158,9 @@ export function PlanChangeDialog({
   const [confirmDowngrade, setConfirmDowngrade] = useState(false);
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
 
-  const { data: allTiers = [] } = useQuery<PolarPricingTier[]>({
+  const { data: allTiers = [] } = useQuery<PricingTier[]>({
     queryKey: ["subscriptions", "products", "tiers"],
-    queryFn: usePolarProducts,
+    queryFn: usePricingTiers,
   });
 
   const currentTierData = allTiers.find((tier) => tier.id === currentTier);

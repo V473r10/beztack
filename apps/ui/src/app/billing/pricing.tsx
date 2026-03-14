@@ -36,9 +36,9 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { useMembership } from "@/contexts/membership-context";
-import { usePolarProducts } from "@/hooks/use-polar-products";
+import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { cn } from "@/lib/utils";
-import type { PolarPricingTier } from "@/types/polar-pricing";
+import type { PricingTier } from "@/types/pricing";
 
 const SAVE_PERCENTAGE = 17;
 const LOADING_SKELETON_COUNT = 3;
@@ -55,8 +55,8 @@ type FeatureRow = {
 
 type GroupedFeatures = Record<string, FeatureRow[]>;
 
-function buildTierData(allTiers: PolarPricingTier[]) {
-  const tierMap: Record<string, PolarPricingTier> = {};
+function buildTierData(allTiers: PricingTier[]) {
+  const tierMap: Record<string, PricingTier> = {};
   const allFeatures = new Set<string>();
   const allLimits = new Set<string>();
   const allPermissions = new Set<string>();
@@ -78,7 +78,7 @@ function buildTierData(allTiers: PolarPricingTier[]) {
 }
 
 function processFeatures(
-  tierMap: Record<string, PolarPricingTier>,
+  tierMap: Record<string, PricingTier>,
   allFeatures: Set<string>,
   featureId: { current: number },
   t: (key: string, fallback?: string) => string
@@ -100,7 +100,7 @@ function processFeatures(
 }
 
 function processLimits(
-  tierMap: Record<string, PolarPricingTier>,
+  tierMap: Record<string, PricingTier>,
   allLimits: Set<string>,
   featureId: { current: number },
   t: (key: string, fallback?: string) => string
@@ -138,7 +138,7 @@ function processLimits(
 }
 
 function processPermissions(
-  tierMap: Record<string, PolarPricingTier>,
+  tierMap: Record<string, PricingTier>,
   allPermissions: Set<string>,
   featureId: { current: number },
   t: (key: string, fallback?: string) => string
@@ -163,7 +163,7 @@ function processPermissions(
 }
 
 type ProcessAllCategoriesParams = {
-  tierMap: Record<string, PolarPricingTier>;
+  tierMap: Record<string, PricingTier>;
   allFeatures: Set<string>;
   allLimits: Set<string>;
   allPermissions: Set<string>;
@@ -287,9 +287,7 @@ export default function Pricing() {
     "monthly"
   );
   const [showPlanChangeDialog, setShowPlanChangeDialog] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<PolarPricingTier | null>(
-    null
-  );
+  const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
   const {
     currentTier,
     activeSubscription,
@@ -303,10 +301,10 @@ export default function Pricing() {
   const hasActiveSubscription = Boolean(activeSubscription);
 
   const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<
-    PolarPricingTier[]
+    PricingTier[]
   >({
     queryKey: ["subscriptions", "products", "tiers"],
-    queryFn: usePolarProducts,
+    queryFn: usePricingTiers,
   });
 
   const groupedFeatures = useMemo(() => {
@@ -336,7 +334,7 @@ export default function Pricing() {
     }
   };
 
-  const handlePlanChange = useCallback((tier: PolarPricingTier) => {
+  const handlePlanChange = useCallback((tier: PricingTier) => {
     setSelectedTier(tier);
     setShowPlanChangeDialog(true);
   }, []);

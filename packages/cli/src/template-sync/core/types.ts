@@ -1,7 +1,4 @@
-export type OwnershipStrategy =
-  | "template-owned"
-  | "custom-owned"
-  | "mixed";
+export type OwnershipStrategy = "template-owned" | "custom-owned" | "mixed";
 
 export interface TemplateManifest {
   templateId: string;

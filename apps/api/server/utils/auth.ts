@@ -10,6 +10,7 @@ import {
   twoFactor,
 } from "better-auth/plugins";
 import { env } from "@/env";
+import { getPolarProductMappings } from "@/lib/payments/config";
 
 const isPolarProvider = env.PAYMENT_PROVIDER === "polar";
 const paymentsSuccessUrl = env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
@@ -18,32 +19,7 @@ const polarPlugin = isPolarProvider
   ? createPolarAuthPlugin({
       accessToken: env.POLAR_ACCESS_TOKEN,
       server: env.POLAR_SERVER,
-      products: [
-        {
-          productId: env.POLAR_BASIC_MONTHLY_PRODUCT_ID,
-          slug: "basic-monthly",
-        },
-        {
-          productId: env.POLAR_BASIC_YEARLY_PRODUCT_ID,
-          slug: "basic-yearly",
-        },
-        {
-          productId: env.POLAR_PRO_MONTHLY_PRODUCT_ID,
-          slug: "pro-monthly",
-        },
-        {
-          productId: env.POLAR_PRO_YEARLY_PRODUCT_ID,
-          slug: "pro-yearly",
-        },
-        {
-          productId: env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID,
-          slug: "ultimate-monthly",
-        },
-        {
-          productId: env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID,
-          slug: "ultimate-yearly",
-        },
-      ],
+      products: getPolarProductMappings(),
       successUrl: paymentsSuccessUrl,
       authenticatedUsersOnly: true,
       createCustomerOnSignUp: true,

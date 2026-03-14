@@ -21,16 +21,16 @@ import {
   text,
 } from "@clack/prompts";
 import { debugLog, debugOutput } from "./debug.js";
+import { initProject } from "./init-project.js";
+import type { PaymentProvider } from "./modules.js";
+import { modules } from "./modules.js";
+import { isTemplateExcludedPath } from "./template-excludes.js";
 import {
   hashContent,
-  writeOrigin,
   type Origin,
   type OriginFileEntry,
+  writeOrigin,
 } from "./template-sync/core/origin.js";
-import { initProject } from "./init-project.js";
-import { modules } from "./modules.js";
-import type { PaymentProvider } from "./modules.js";
-import { isTemplateExcludedPath } from "./template-excludes.js";
 import { isBinaryFileContent } from "./utils/file-content.js";
 
 const execAsyncBase = promisify(exec);
@@ -86,9 +86,7 @@ export interface CreateProjectOptions {
   paymentProvider?: PaymentProvider;
 }
 
-export async function createProject(
-  options: CreateProjectOptions = {}
-) {
+export async function createProject(options: CreateProjectOptions = {}) {
   const config = await getProjectConfig(options);
   const projectDir = resolve(process.cwd(), config.name);
 
@@ -129,9 +127,7 @@ async function getProjectConfig(
     const name = options.name ?? "my-beztack-app";
     const validationError = validateProjectName(name);
     if (typeof validationError === "string") {
-      throw new Error(
-        `Invalid project name "${name}": ${validationError}`
-      );
+      throw new Error(`Invalid project name "${name}": ${validationError}`);
     }
 
     return {
@@ -142,8 +138,7 @@ async function getProjectConfig(
       initializeModules: options.initializeModules ?? true,
       nonInteractive: true,
       templateSource:
-        options.templateSource ??
-        "https://github.com/V473r10/beztack.git",
+        options.templateSource ?? "https://github.com/V473r10/beztack.git",
       selectedModules: options.selectedModules,
       paymentProvider: options.paymentProvider,
     };
@@ -223,10 +218,7 @@ async function configureModules(
       ...(options.selectedModules ?? []),
     ];
 
-    if (
-      enabledModuleNames.includes("payments") &&
-      !options.paymentProvider
-    ) {
+    if (enabledModuleNames.includes("payments") && !options.paymentProvider) {
       throw new Error(
         "Payments module requires --payment-provider (polar or mercadopago)"
       );
@@ -247,8 +239,8 @@ async function configureModules(
     return;
   }
 
-  const optionalModules = modules.filter((moduleDefinition) =>
-    !moduleDefinition.required
+  const optionalModules = modules.filter(
+    (moduleDefinition) => !moduleDefinition.required
   );
 
   if (optionalModules.length === 0) {
@@ -501,7 +493,10 @@ async function generateOrigin(
       const relPath = relative(projectDir, absPath).replaceAll("\\", "/");
       const firstSegment = relPath.split("/")[0] ?? relPath;
 
-      if (ORIGIN_EXCLUDED_SEGMENTS.has(firstSegment) || ORIGIN_EXCLUDED_SEGMENTS.has(entry.name)) {
+      if (
+        ORIGIN_EXCLUDED_SEGMENTS.has(firstSegment) ||
+        ORIGIN_EXCLUDED_SEGMENTS.has(entry.name)
+      ) {
         continue;
       }
 
@@ -514,8 +509,7 @@ async function generateOrigin(
         const content = await readFile(absPath);
         files[relPath] = {
           projectHash: hashContent(content),
-          templateHash:
-            templateHashes.get(relPath) ?? hashContent(content),
+          templateHash: templateHashes.get(relPath) ?? hashContent(content),
         };
       }
     }

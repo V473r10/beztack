@@ -1,6 +1,6 @@
+import { env } from "@beztack/env/db";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { env } from "@beztack/env/api";
 
 const connectionString = env.DATABASE_URL;
 const client = postgres(connectionString);

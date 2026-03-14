@@ -4,7 +4,7 @@ import type { UpdatePlan } from "./types.js";
 
 export async function writePlanReport(
   workspaceRoot: string,
-  plan: UpdatePlan,
+  plan: UpdatePlan
 ): Promise<string> {
   const reportPath = join(workspaceRoot, "beztack-sync-report.md");
   const lines: string[] = [
@@ -22,9 +22,7 @@ export async function writePlanReport(
     lines.push("No changes detected.");
   } else {
     for (const change of plan.changes) {
-      lines.push(
-        `- [${change.type}] ${change.path} (${change.ownership})`,
-      );
+      lines.push(`- [${change.type}] ${change.path} (${change.ownership})`);
     }
   }
 
@@ -35,7 +33,7 @@ export async function writePlanReport(
   } else {
     for (const conflict of plan.conflicts) {
       lines.push(
-        `- ${conflict.path}: ${conflict.conflictReason || "unknown conflict"}`,
+        `- ${conflict.path}: ${conflict.conflictReason || "unknown conflict"}`
       );
     }
   }

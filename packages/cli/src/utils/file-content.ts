@@ -60,7 +60,7 @@ const TEXT_FILE_NAMES = new Set([
   "README",
 ]);
 
-const TEXT_ANALYSIS_SAMPLE_BYTES = 8_000;
+const TEXT_ANALYSIS_SAMPLE_BYTES = 8000;
 
 type ContentClassification = "text" | "binary" | "unknown";
 

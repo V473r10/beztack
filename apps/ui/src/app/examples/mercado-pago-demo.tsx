@@ -982,11 +982,7 @@ export default defineEventHandler(async (event) => {
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
-          <img
-            alt="Mercado Pago"
-            className="h-48 w-auto"
-            src="/Insignia.png"
-          />
+          <img alt="Mercado Pago" className="h-48 w-auto" src="/Insignia.png" />
         </CardContent>
       </Card>
     </div>

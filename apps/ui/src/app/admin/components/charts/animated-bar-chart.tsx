@@ -21,7 +21,12 @@ type AnimatedBarChartProps = {
 
 // Constants for chart styling
 const BAR_CORNER_RADIUS = 4;
-const BAR_BORDER_RADIUS: [number, number, number, number] = [BAR_CORNER_RADIUS, BAR_CORNER_RADIUS, 0, 0];
+const BAR_BORDER_RADIUS: [number, number, number, number] = [
+  BAR_CORNER_RADIUS,
+  BAR_CORNER_RADIUS,
+  0,
+  0,
+];
 
 export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
   return (

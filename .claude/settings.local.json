@@ -47,7 +47,10 @@
       "Bash(npx ultracite check:*)",
       "Bash(npm run lint)",
       "Bash(npx nx lint:*)",
-      "Bash(npx biome check:*)"
+      "Bash(npx biome check:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm exec:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,13 +1,4 @@
 /**
- * Provider-agnostic pricing tiers hook
- *
- * Delegates to @beztack/payments/react. The "usePolarProducts" name is kept
- * for backwards compatibility — all consumers import this function as a queryFn.
+ * @deprecated Use usePricingTiers from "@/hooks/use-pricing-tiers" instead.
  */
-import { fetchPricingTiers } from "@beztack/payments/react";
-import { env } from "@/env";
-import type { PolarPricingTier } from "@/types/polar-pricing";
-
-export function usePolarProducts(): Promise<PolarPricingTier[]> {
-  return fetchPricingTiers(env.VITE_API_URL);
-}
+export { usePricingTiers as usePolarProducts } from "./use-pricing-tiers";

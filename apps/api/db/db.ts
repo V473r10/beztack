@@ -1,1 +1,1 @@
-export { db } from "@beztack/db"
+export { db } from "@beztack/db";

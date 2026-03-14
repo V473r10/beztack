@@ -10,6 +10,8 @@ export function AdminRoute({ children }: { children: ReactNode }) {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
 
+  console.log("AdminRoute", { session, isPending, isAdmin });
+
   useEffect(() => {
     if (!(isPending || session)) {
       // User not authenticated, redirect to sign in

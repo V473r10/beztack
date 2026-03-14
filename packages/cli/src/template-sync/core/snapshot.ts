@@ -22,7 +22,7 @@ export async function createSnapshot(workspaceRoot: string): Promise<string> {
 
 export async function rollbackSnapshot(
   workspaceRoot: string,
-  snapshotId: string,
+  snapshotId: string
 ): Promise<void> {
   const snapshotRoot = join(workspaceRoot, SNAPSHOT_DIR, snapshotId);
   const snapshotFiles = await listWorkspaceFiles(snapshotRoot, {
@@ -30,8 +30,8 @@ export async function rollbackSnapshot(
   });
   const snapshotRelativePaths = new Set(
     snapshotFiles.map((absPath) =>
-      relative(snapshotRoot, absPath).replaceAll("\\", "/"),
-    ),
+      relative(snapshotRoot, absPath).replaceAll("\\", "/")
+    )
   );
 
   for (const absPath of snapshotFiles) {
@@ -68,7 +68,7 @@ interface ListWorkspaceFilesOptions {
 
 async function listWorkspaceFiles(
   root: string,
-  options: ListWorkspaceFilesOptions,
+  options: ListWorkspaceFilesOptions
 ): Promise<string[]> {
   const pending = [root];
   const files: string[] = [];

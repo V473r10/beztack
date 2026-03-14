@@ -24,7 +24,7 @@ export function getManifestPath(workspaceRoot: string): string {
  * @returns {Promise<TemplateManifest>} - The template manifest.
  */
 export async function readManifest(
-  workspaceRoot: string,
+  workspaceRoot: string
 ): Promise<TemplateManifest> {
   const manifestPath = getManifestPath(workspaceRoot);
 
@@ -40,18 +40,22 @@ export async function readManifest(
     const message =
       error instanceof Error ? error.message : "Unknown manifest error";
     throw new Error(
-      `Failed to read template manifest at ${manifestPath}: ${message}`,
+      `Failed to read template manifest at ${manifestPath}: ${message}`
     );
   }
 }
 
 export async function writeManifest(
   workspaceRoot: string,
-  manifest: TemplateManifest,
+  manifest: TemplateManifest
 ): Promise<void> {
   const manifestPath = getManifestPath(workspaceRoot);
   const normalized = normalizeManifest(manifest);
-  await writeFile(manifestPath, `${JSON.stringify(normalized, null, 2)}\n`, "utf-8");
+  await writeFile(
+    manifestPath,
+    `${JSON.stringify(normalized, null, 2)}\n`,
+    "utf-8"
+  );
 }
 
 function normalizeManifest(input: Partial<TemplateManifest>): TemplateManifest {
@@ -75,7 +79,7 @@ function normalizeManifest(input: Partial<TemplateManifest>): TemplateManifest {
     appliedMigrations: Array.isArray(input.appliedMigrations)
       ? input.appliedMigrations.filter(
           (migration): migration is string =>
-            typeof migration === "string" && migration.length > 0,
+            typeof migration === "string" && migration.length > 0
         )
       : DEFAULT_MANIFEST.appliedMigrations,
   };

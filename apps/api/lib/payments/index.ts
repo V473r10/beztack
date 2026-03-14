@@ -20,6 +20,7 @@ export type {
   BillingInterval,
   CheckoutResult,
   CreateCheckoutOptions,
+  CreateProductOptions,
   CreateSubscriptionOptions,
   Customer,
   ListSubscriptionsOptions,
@@ -28,6 +29,7 @@ export type {
   Product,
   Subscription,
   SubscriptionStatus,
+  UpdateProductOptions,
   UpdateSubscriptionOptions,
   WebhookEventType,
   WebhookPayload,
@@ -67,6 +69,21 @@ export function getPaymentProvider(): PaymentProviderAdapter {
     createPaymentProvider(provider, getEnvConfig()).catch(() => {
       // Initialization errors will surface on first use via getCoreProvider()
     });
+    initialized = true;
+  }
+
+  return getCoreProvider();
+}
+
+/**
+ * Ensure the payment provider is fully initialized before returning.
+ * Unlike getPaymentProvider() which uses fire-and-forget async init,
+ * this awaits initialization so the adapter is guaranteed ready.
+ */
+export async function ensurePaymentProvider(): Promise<PaymentProviderAdapter> {
+  if (!initialized) {
+    const provider = (env.PAYMENT_PROVIDER ?? "polar") as PaymentProviderName;
+    await createPaymentProvider(provider, getEnvConfig());
     initialized = true;
   }
 
