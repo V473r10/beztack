@@ -2,29 +2,27 @@
  * Seed script to populate the plan catalog with default tier data.
  *
  * Run after schema migration:
- *   pnpm tsx packages/db/scripts/seed-plan-catalog.ts
+ *   pnpm tsx packages/db/scripts/seed-plan-catalog.ts polar
+ *   pnpm tsx packages/db/scripts/seed-plan-catalog.ts mercadopago
  *
- * This script upserts plans by canonical tier ID + provider.
+ * This script upserts plans by canonical tier ID + provider + interval.
  */
 import { and, eq } from "drizzle-orm";
 import { db } from "../src/client";
 import { plan } from "../src/schema";
 
-type SeedPlan = {
+type BaseTier = {
   canonicalTierId: string;
   displayName: string;
   description: string;
   features: string[];
   limits: Record<string, number>;
   permissions: string[];
-  price: number;
-  currency: string;
-  interval: string;
   displayOrder: number;
   highlighted: boolean;
 };
 
-const SEED_PLANS: SeedPlan[] = [
+const BASE_TIERS: BaseTier[] = [
   {
     canonicalTierId: "free",
     displayName: "Free",
@@ -32,9 +30,6 @@ const SEED_PLANS: SeedPlan[] = [
     features: ["basic_dashboard"],
     limits: { users: 1, projects: 1, storage: 1, apiCalls: 1000 },
     permissions: ["dashboard.read"],
-    price: 0,
-    currency: "USD",
-    interval: "month",
     displayOrder: 0,
     highlighted: false,
   },
@@ -55,9 +50,6 @@ const SEED_PLANS: SeedPlan[] = [
       "projects.write",
       "billing.read",
     ],
-    price: 900,
-    currency: "USD",
-    interval: "month",
     displayOrder: 1,
     highlighted: false,
   },
@@ -82,9 +74,6 @@ const SEED_PLANS: SeedPlan[] = [
       "billing.write",
       "analytics.read",
     ],
-    price: 2900,
-    currency: "USD",
-    interval: "month",
     displayOrder: 2,
     highlighted: true,
   },
@@ -121,22 +110,62 @@ const SEED_PLANS: SeedPlan[] = [
       "admin.read",
       "admin.write",
     ],
-    price: 9900,
-    currency: "USD",
-    interval: "month",
     displayOrder: 3,
     highlighted: false,
   },
 ];
+
+/** Prices in cents (or smallest currency unit) per provider */
+const POLAR_PRICING: Record<string, { monthly: number; yearly: number }> = {
+  free: { monthly: 0, yearly: 0 },
+  basic: { monthly: 900, yearly: 9000 }, // $9/mo, $90/yr
+  pro: { monthly: 2900, yearly: 29_000 }, // $29/mo, $290/yr
+  ultimate: { monthly: 9900, yearly: 99_000 }, // $99/mo, $990/yr
+};
+
+const MP_PRICING: Record<string, { monthly: number; yearly: number }> = {
+  free: { monthly: 0, yearly: 0 },
+  basic: { monthly: 4500, yearly: 45_000 }, // 45/mo, 450/yr UYU
+  pro: { monthly: 8000, yearly: 80_000 }, // 80/mo, 800/yr UYU
+  ultimate: { monthly: 15_000, yearly: 150_000 }, // 150/mo, 1500/yr UYU
+};
+
+type Interval = "month" | "year";
+
+type SeedPlan = BaseTier & {
+  price: number;
+  currency: string;
+  interval: Interval;
+};
+
+function buildSeedPlans(provider: string): SeedPlan[] {
+  const isMP = provider === "mercadopago";
+  const pricing = isMP ? MP_PRICING : POLAR_PRICING;
+  const currency = isMP ? "UYU" : "USD";
+  const plans: SeedPlan[] = [];
+
+  for (const tier of BASE_TIERS) {
+    const prices = pricing[tier.canonicalTierId] ?? { monthly: 0, yearly: 0 };
+
+    plans.push({ ...tier, price: prices.monthly, currency, interval: "month" });
+
+    if (prices.yearly > 0) {
+      plans.push({ ...tier, price: prices.yearly, currency, interval: "year" });
+    }
+  }
+
+  return plans;
+}
 
 async function main() {
   const provider = process.argv[2] ?? "polar";
   // biome-ignore lint/suspicious/noConsole: seed script
   console.info(`[seed] Starting plan catalog seed for provider: ${provider}`);
 
+  const seedPlans = buildSeedPlans(provider);
   let upserted = 0;
 
-  for (const seed of SEED_PLANS) {
+  for (const seed of seedPlans) {
     const id = `${provider}_${seed.canonicalTierId}_${seed.interval}`;
 
     const [existing] = await db

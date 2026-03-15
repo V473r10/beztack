@@ -126,7 +126,7 @@
   "billing": {
     "monthly": "Mensual",
     "yearly": "Anual",
-    "save17": "Ahorra 17%",
+    "savePercent": "Ahorra {{percent}}%",
     "planChange": {
       "upgradeTitle": "Mejora tu Plan",
       "downgradeTitle": "Cambiar tu Plan",

@@ -40,7 +40,6 @@ import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
 
-const SAVE_PERCENTAGE = 17;
 const LOADING_SKELETON_COUNT = 3;
 
 type FeatureValue = boolean | string | number;
@@ -307,6 +306,11 @@ export default function Pricing() {
     queryFn: usePricingTiers,
   });
 
+  const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
+  const savingsPercent = Math.max(
+    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0)
+  );
+
   const groupedFeatures = useMemo(() => {
     if (!allTiers.length) {
       return {};
@@ -428,45 +432,49 @@ export default function Pricing() {
             Start free and scale as you grow. No hidden fees, no surprises.
           </p>
 
-          <motion.div
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-4 flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <div className="rounded-full border border-border/50 bg-muted/30 p-1 backdrop-blur-sm">
-              <Tabs
-                className="w-fit"
-                onValueChange={(value) =>
-                  setBillingPeriod(value as "monthly" | "yearly")
-                }
-                value={billingPeriod}
-              >
-                <TabsList className="grid w-full grid-cols-2 bg-transparent">
-                  <TabsTrigger
-                    className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    value="monthly"
-                  >
-                    Monthly
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="relative rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    value="yearly"
-                  >
-                    Yearly
-                    <Badge
-                      className="ml-2 h-5 border-green-200 bg-green-100 px-1.5 text-green-700 text-xs dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      variant="outline"
+          {hasYearlyPlans && (
+            <motion.div
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-4 flex items-center justify-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <div className="rounded-full border border-border/50 bg-muted/30 p-1 backdrop-blur-sm">
+                <Tabs
+                  className="w-fit"
+                  onValueChange={(value) =>
+                    setBillingPeriod(value as "monthly" | "yearly")
+                  }
+                  value={billingPeriod}
+                >
+                  <TabsList className="grid w-full grid-cols-2 bg-transparent">
+                    <TabsTrigger
+                      className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                      value="monthly"
                     >
-                      -{SAVE_PERCENTAGE}%
-                    </Badge>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </motion.div>
+                      Monthly
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="relative rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                      value="yearly"
+                    >
+                      Yearly
+                      {savingsPercent > 0 && (
+                        <Badge
+                          className="ml-2 h-5 border-green-200 bg-green-100 px-1.5 text-green-700 text-xs dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          variant="outline"
+                        >
+                          -{savingsPercent}%
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            </motion.div>
+          )}
 
-          {billingPeriod === "yearly" && (
+          {hasYearlyPlans && billingPeriod === "yearly" && (
             <motion.p
               animate={{ opacity: 1 }}
               className="text-green-600 text-sm dark:text-green-400"

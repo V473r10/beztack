@@ -283,6 +283,7 @@ export type PricingTier = {
   readonly limits?: Record<string, number>;
   readonly permissions?: Record<string, boolean>;
   readonly displayOrder?: number;
+  readonly yearlySavingsPercent?: number;
 };
 
 /**

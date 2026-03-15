@@ -161,5 +161,14 @@ export async function fetchPricingTiers(
     tiers.set(tierId, updated);
   }
 
+  for (const [id, tier] of tiers) {
+    if (tier.price.monthly > 0 && tier.price.yearly > 0) {
+      const annualIfMonthly = tier.price.monthly * 12;
+      const pct =
+        ((annualIfMonthly - tier.price.yearly) / annualIfMonthly) * 100;
+      tiers.set(id, { ...tier, yearlySavingsPercent: Math.round(pct) });
+    }
+  }
+
   return Array.from(tiers.values());
 }

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Building2, Sparkles } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,6 @@ export type UpgradeDialogProps = {
   currentTier: MembershipTier;
   onUpgrade: (tierId: string, billingPeriod: "monthly" | "yearly") => void;
   isLoading?: boolean;
-  suggestedTier?: MembershipTier;
 };
 
 export function UpgradeDialog({
@@ -37,14 +36,11 @@ export function UpgradeDialog({
   currentTier,
   onUpgrade,
   isLoading = false,
-  suggestedTier,
 }: UpgradeDialogProps) {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
     "monthly"
   );
-  const [selectedTier, setSelectedTier] = useState<string>(
-    suggestedTier || "pro"
-  );
+  const [selectedTier, setSelectedTier] = useState<string>();
 
   const { getPlanChangeType } = useMembership();
 
@@ -56,6 +52,12 @@ export function UpgradeDialog({
   // Sort tiers by displayOrder and filter to upgrades only
   const allTiers = [...allTiersRaw].sort(
     (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
+  );
+
+  const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
+  const savingsPercent = Math.max(
+    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0),
+    0
   );
 
   const availableTiers = allTiers.filter(
@@ -114,28 +116,32 @@ export function UpgradeDialog({
 
         <div className="space-y-6 pt-4">
           {/* Billing Period Toggle */}
-          <div className="flex items-center justify-center">
-            <Tabs
-              className="w-fit"
-              onValueChange={(value) =>
-                setBillingPeriod(value as "monthly" | "yearly")
-              }
-              value={billingPeriod}
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                <TabsTrigger className="relative" value="yearly">
-                  Yearly
-                  <Badge
-                    className="ml-2 h-5 px-1.5 text-xs"
-                    variant="secondary"
-                  >
-                    Save 17%
-                  </Badge>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+          {hasYearlyPlans && (
+            <div className="flex items-center justify-center">
+              <Tabs
+                className="w-fit"
+                onValueChange={(value) =>
+                  setBillingPeriod(value as "monthly" | "yearly")
+                }
+                value={billingPeriod}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                  <TabsTrigger className="relative" value="yearly">
+                    Yearly
+                    {savingsPercent > 0 && (
+                      <Badge
+                        className="ml-2 h-5 px-1.5 text-xs"
+                        variant="secondary"
+                      >
+                        -{savingsPercent}%
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
 
           {/* Pricing Cards */}
           <div
@@ -160,35 +166,6 @@ export function UpgradeDialog({
               />
             ))}
           </div>
-
-          {/* Upgrade Path */}
-          {suggestedTier && (
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-sm">
-                    Recommended Upgrade
-                  </span>
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  Based on your usage patterns, the{" "}
-                  {availableTiers.find((t) => t.id === suggestedTier)?.name}{" "}
-                  plan would be perfect for your needs.
-                </div>
-                <Button
-                  className="w-fit"
-                  disabled={isLoading}
-                  onClick={() => handleUpgrade(suggestedTier)}
-                  size="sm"
-                >
-                  Upgrade to{" "}
-                  {availableTiers.find((t) => t.id === suggestedTier)?.name}
-                  <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Enterprise CTA */}
           {!availableTiers.find((t) => t.id === "ultimate") &&

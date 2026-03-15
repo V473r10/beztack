@@ -429,7 +429,6 @@ export function BillingDashboard({
         onOpenChange={setShowUpgradeDialog}
         onUpgrade={handleUpgrade}
         open={showUpgradeDialog}
-        suggestedTier="pro"
       />
     </>
   );

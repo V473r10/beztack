@@ -163,6 +163,12 @@ export function PlanChangeDialog({
     queryFn: usePricingTiers,
   });
 
+  const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
+  const savingsPercent = Math.max(
+    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0),
+    0
+  );
+
   const currentTierData = allTiers.find((tier) => tier.id === currentTier);
 
   if (!targetTier) {
@@ -344,32 +350,39 @@ export function PlanChangeDialog({
           <Separator />
 
           {/* Billing Period Selection */}
-          <div className="space-y-2">
-            <Label>
-              {t("billing.planChange.billingPeriod", "Billing Period")}
-            </Label>
-            <Select
-              onValueChange={(value) =>
-                onBillingPeriodChange(value as "monthly" | "yearly")
-              }
-              value={billingPeriod}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">
-                  {t("billing.monthly", "Monthly")}
-                </SelectItem>
-                <SelectItem value="yearly">
-                  {t("billing.yearly", "Yearly")}
-                  <Badge className="ml-2" variant="secondary">
-                    {t("billing.save17", "Save 17%")}
-                  </Badge>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {hasYearlyPlans && (
+            <div className="space-y-2">
+              <Label>
+                {t("billing.planChange.billingPeriod", "Billing Period")}
+              </Label>
+              <Select
+                onValueChange={(value) =>
+                  onBillingPeriodChange(value as "monthly" | "yearly")
+                }
+                value={billingPeriod}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">
+                    {t("billing.monthly", "Monthly")}
+                  </SelectItem>
+                  <SelectItem value="yearly">
+                    {t("billing.yearly", "Yearly")}
+                    {savingsPercent > 0 && (
+                      <Badge className="ml-2" variant="secondary">
+                        {t("billing.savePercent", {
+                          defaultValue: "Save {{percent}}%",
+                          percent: savingsPercent,
+                        })}
+                      </Badge>
+                    )}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Price difference info */}
           <div className="rounded-lg border bg-muted/20 p-4">
