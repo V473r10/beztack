@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import type { EventHandlerRequest, H3Event } from "h3";
 import { createError } from "h3";
 import { env } from "@/env";
-import { getPaymentProvider } from "@/lib/payments";
+import { ensurePaymentProvider } from "@/lib/payments";
 import type { Subscription } from "@/lib/payments/types";
 
 export type Benefit = {
@@ -264,7 +264,7 @@ async function getMembershipInfoFromProvider(
   }
 
   try {
-    const provider = getPaymentProvider();
+    const provider = await ensurePaymentProvider();
     const subscriptions = await provider.listSubscriptions({
       customerEmail: dbUser.email,
       limit: 100,

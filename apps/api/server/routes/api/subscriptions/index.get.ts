@@ -3,13 +3,13 @@
  * Works with both Polar and Mercado Pago based on PAYMENT_PROVIDER config
  */
 import { defineEventHandler, getQuery } from "h3";
-import { getPaymentProvider } from "@/lib/payments";
+import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
 import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
-  const provider = getPaymentProvider();
+  const provider = await ensurePaymentProvider();
 
   const query = getQuery(event);
   const limit = query.limit ? Number(query.limit) : undefined;

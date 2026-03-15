@@ -13,7 +13,7 @@ import {
 } from "@beztack/db";
 import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, getHeader, readRawBody } from "h3";
-import { getPaymentProvider } from "@/lib/payments";
+import { ensurePaymentProvider } from "@/lib/payments";
 
 async function updateUserSubscription(
   userId: string,
@@ -49,7 +49,7 @@ async function findUserIdByEmail(
 }
 
 export default defineEventHandler(async (event) => {
-  const provider = getPaymentProvider();
+  const provider = await ensurePaymentProvider();
 
   try {
     const rawBody = await readRawBody(event);

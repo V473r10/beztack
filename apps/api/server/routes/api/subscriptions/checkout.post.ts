@@ -5,7 +5,7 @@
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { env } from "@/env";
-import { getPaymentProvider } from "@/lib/payments";
+import { ensurePaymentProvider } from "@/lib/payments";
 import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
 import type { Product } from "@/lib/payments/types";
@@ -46,7 +46,7 @@ function resolveCheckoutProduct(
 
 export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
-  const provider = getPaymentProvider();
+  const provider = await ensurePaymentProvider();
   const successUrl = env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
   const cancelUrl = env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL;
 

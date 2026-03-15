@@ -49,6 +49,28 @@ function mapMPInterval(frequencyType: string): BillingInterval {
   }
 }
 
+/**
+ * Convert our interval to MercadoPago's frequency/frequency_type.
+ * MP only supports "months" and "days", so "year" becomes 12 months.
+ */
+const MONTHS_PER_YEAR = 12;
+
+function toMPRecurring(
+  interval: BillingInterval,
+  intervalCount = 1
+): { frequency: number; frequency_type: "months" | "days" } {
+  if (interval === "year") {
+    return {
+      frequency: MONTHS_PER_YEAR * intervalCount,
+      frequency_type: "months",
+    };
+  }
+  return {
+    frequency: intervalCount,
+    frequency_type: interval === "day" ? "days" : "months",
+  };
+}
+
 const EXTERNAL_REFERENCE_PREFIX = "beztack_";
 
 type ExternalReferenceMetadata = {
@@ -153,9 +175,10 @@ function buildSubscriptionBody(
   } else if (options.customPlan) {
     body.reason = options.customPlan.reason;
     body.auto_recurring = {
-      frequency: options.customPlan.intervalCount,
-      frequency_type:
-        options.customPlan.interval === "month" ? "months" : "days",
+      ...toMPRecurring(
+        options.customPlan.interval,
+        options.customPlan.intervalCount
+      ),
       transaction_amount: options.customPlan.amount,
       currency_id: options.customPlan.currency || currency,
     };
@@ -281,8 +304,7 @@ export function createMercadoPagoAdapter(
       const plan = await client.plans.create({
         reason: options.name,
         auto_recurring: {
-          frequency: options.intervalCount,
-          frequency_type: options.interval === "month" ? "months" : "days",
+          ...toMPRecurring(options.interval, options.intervalCount),
           transaction_amount: options.price.amount,
           currency_id: currency,
         },

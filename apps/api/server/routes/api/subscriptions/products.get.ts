@@ -6,11 +6,11 @@
  * them into PricingTiers, so no server-side filtering is needed.
  */
 import { defineEventHandler } from "h3";
-import { getPaymentProvider } from "@/lib/payments";
+import { ensurePaymentProvider } from "@/lib/payments";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
 
 export default defineEventHandler(async () => {
-  const provider = getPaymentProvider();
+  const provider = await ensurePaymentProvider();
   const providerProducts = await provider.listProducts();
 
   // Enrich all provider products with catalog metadata from DB
