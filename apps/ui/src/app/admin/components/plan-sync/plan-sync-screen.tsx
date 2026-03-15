@@ -559,7 +559,7 @@ function PlanEditCard({
 
   if (isEditing) {
     return (
-      <Card className="border-primary/50 shadow-md ring-1 ring-primary/20">
+      <Card className="w-full border-primary/50 shadow-md ring-1 ring-primary/20">
         <CardHeader className="border-b bg-muted/30 pb-4">
           <div className="flex items-start justify-between">
             <div>
@@ -785,13 +785,13 @@ function PlanEditCard({
   return (
     <Card
       className={cn(
-        "flex flex-col overflow-hidden transition-all duration-200",
+        "flex w-full flex-col overflow-hidden ring-1 ring-transparent transition-all duration-200",
         isActive
           ? "border-border hover:border-primary/40 hover:shadow-md"
           : "border-dashed bg-muted/20 opacity-80",
         isHighlighted &&
           isActive &&
-          "border-primary/50 shadow-sm ring-1 ring-primary/10"
+          "border-primary/50 shadow-sm ring-primary/10"
       )}
     >
       <CardHeader className="pb-4">
@@ -1426,7 +1426,7 @@ function CreatePlanSheet({
 
 function PlansSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6">
       {SKELETON_ITEMS.map((i) => (
         <Card className="flex flex-col" key={i}>
           <CardHeader className="flex-row items-start justify-between gap-4 pb-4">
@@ -1626,7 +1626,7 @@ export function PlanSyncScreen() {
     }
 
     return (
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid min-w-4xl grid-cols-1 gap-6">
         {plans.map((view) => {
           const key = getPlanKey(view);
           return (
