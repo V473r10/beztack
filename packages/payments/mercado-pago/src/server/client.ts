@@ -107,6 +107,9 @@ async function attemptFetch<T>(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+  console.log("Making request to:", `${baseUrl}${endpoint}`);
+  console.log("Options:", options);
+
   try {
     const response = await fetch(`${baseUrl}${endpoint}`, {
       ...options,

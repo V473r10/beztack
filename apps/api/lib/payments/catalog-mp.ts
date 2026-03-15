@@ -111,9 +111,15 @@ export async function getCatalogPlanByProviderPlanId(
 export async function enrichProductWithCatalog(
   product: Product
 ): Promise<Product> {
-  const catalogPlan =
-    (await getCatalogPlanByProviderPlanId(product.id)) ??
-    (await getCatalogPlanById(product.id));
+  let catalogPlan: CatalogPlan | null = null;
+  try {
+    catalogPlan =
+      (await getCatalogPlanByProviderPlanId(product.id)) ??
+      (await getCatalogPlanById(product.id));
+  } catch {
+    // DB may not have the plan table yet — return un-enriched product
+    return product;
+  }
   if (!catalogPlan) {
     return product;
   }

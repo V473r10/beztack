@@ -245,7 +245,7 @@ export function createMercadoPagoAdapter(
       return plans.results.map((plan) => ({
         id: plan.id,
         name: plan.reason,
-        description: plan.reason,
+        description: undefined,
         type: "plan" as const,
         price: {
           amount: plan.auto_recurring.transaction_amount,
@@ -263,7 +263,7 @@ export function createMercadoPagoAdapter(
         return {
           id: plan.id,
           name: plan.reason,
-          description: plan.reason,
+          description: undefined,
           type: "plan" as const,
           price: {
             amount: plan.auto_recurring.transaction_amount,
@@ -284,14 +284,15 @@ export function createMercadoPagoAdapter(
           frequency: options.intervalCount,
           frequency_type: options.interval === "month" ? "months" : "days",
           transaction_amount: options.price.amount,
-          currency_id: options.price.currency || currency,
+          currency_id: currency,
         },
+        back_url: successUrl,
       });
 
       return {
         id: plan.id,
         name: plan.reason,
-        description: options.description ?? plan.reason,
+        description: options.description,
         type: "plan" as const,
         price: {
           amount: plan.auto_recurring.transaction_amount,
@@ -314,7 +315,7 @@ export function createMercadoPagoAdapter(
         return {
           id: deactivated.id,
           name: deactivated.reason,
-          description: deactivated.reason,
+          description: undefined,
           type: "plan" as const,
           price: {
             amount: deactivated.auto_recurring.transaction_amount,
@@ -343,7 +344,7 @@ export function createMercadoPagoAdapter(
       return {
         id: updated.id,
         name: updated.reason,
-        description: updated.reason,
+        description: undefined,
         type: "plan" as const,
         price: {
           amount: updated.auto_recurring.transaction_amount,

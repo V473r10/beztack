@@ -48,9 +48,10 @@ function computeDiffs(local: DbPlan, remote: Product): SyncDiff[] {
   }
 
   // description (local) vs description (remote)
+  // Skip if remote has no description — provider may not support it (e.g. MercadoPago)
   const localDesc = local.description ?? undefined;
   const remoteDesc = remote.description ?? undefined;
-  if (localDesc !== remoteDesc) {
+  if (remoteDesc !== undefined && localDesc !== remoteDesc) {
     diffs.push({
       field: "description",
       localValue: localDesc,
