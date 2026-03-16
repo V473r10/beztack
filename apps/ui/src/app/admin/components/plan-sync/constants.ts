@@ -18,6 +18,8 @@ export const INTERVAL_OPTIONS = [
   { value: "week", label: "Week" },
 ];
 
+export const MP_INTERVAL_OPTIONS = [{ value: "month", label: "Month" }];
+
 export const MAX_FEATURES_DISPLAY = 4;
 export const QUERY_KEY = ["admin-plans-sync"] as const;
 // biome-ignore lint/style/noMagicNumbers: Skeleton items array

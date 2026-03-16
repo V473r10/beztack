@@ -211,6 +211,7 @@ async function mpFetch<T>(
     });
 
     if (result.success) {
+      console.log("MP Fetch Result:", result.data);
       return result.data;
     }
 

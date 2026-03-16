@@ -65,8 +65,14 @@ function extractPermissions(
 
 function buildProviderProduct(
   product: Product,
-  interval: string
+  interval: string,
+  provider: string
 ): ProviderProduct {
+  const priceAmount =
+    provider === "polar"
+      ? Math.round(product.price.amount * CENTS_MULTIPLIER)
+      : product.price.amount;
+
   return {
     id: product.id,
     name: product.name,
@@ -76,7 +82,7 @@ function buildProviderProduct(
     prices: [
       {
         id: product.id,
-        priceAmount: Math.round(product.price.amount * CENTS_MULTIPLIER),
+        priceAmount,
         priceCurrency: product.price.currency,
         recurringInterval: interval,
       },
@@ -114,12 +120,16 @@ function buildBaseTier(
   };
 }
 
-function applyIntervalToTier(tier: PricingTier, product: Product): PricingTier {
+function applyIntervalToTier(
+  tier: PricingTier,
+  product: Product,
+  provider: string
+): PricingTier {
   if (product.interval === "month") {
     return {
       ...tier,
       price: { ...tier.price, monthly: product.price.amount },
-      monthly: buildProviderProduct(product, "month"),
+      monthly: buildProviderProduct(product, "month", provider),
     };
   }
 
@@ -127,7 +137,7 @@ function applyIntervalToTier(tier: PricingTier, product: Product): PricingTier {
     return {
       ...tier,
       price: { ...tier.price, yearly: product.price.amount },
-      yearly: buildProviderProduct(product, "year"),
+      yearly: buildProviderProduct(product, "year", provider),
     };
   }
 
@@ -157,7 +167,7 @@ export async function fetchPricingTiers(
     const displayOrder = getDisplayOrder(product);
     const existing = tiers.get(tierId);
     const baseTier = existing ?? buildBaseTier(product, tierId, displayOrder);
-    const updated = applyIntervalToTier(baseTier, product);
+    const updated = applyIntervalToTier(baseTier, product, payload.provider);
     tiers.set(tierId, updated);
   }
 

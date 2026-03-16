@@ -21,13 +21,17 @@ import {
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { env } from "@/env";
 import {
   INITIAL_CREATE_STATE,
   INTERVAL_OPTIONS,
+  MP_INTERVAL_OPTIONS,
   TIER_OPTIONS,
 } from "../constants";
 import { useCreatePlanMutation } from "../hooks";
 import type { CreatePlanState } from "../types";
+
+const isMercadoPago = env.VITE_PAYMENT_PROVIDER === "mercadopago";
 
 export function CreatePlanSheet({
   open,
@@ -172,33 +176,42 @@ export function CreatePlanSheet({
             <div className="space-y-2">
               <Label>Interval</Label>
               <Select
+                disabled={isMercadoPago}
                 onValueChange={(v) => setForm((s) => ({ ...s, interval: v }))}
-                value={form.interval}
+                value={isMercadoPago ? "month" : form.interval}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select interval" />
                 </SelectTrigger>
                 <SelectContent>
-                  {INTERVAL_OPTIONS.map((i) => (
-                    <SelectItem key={i.value} value={i.value}>
-                      {i.label}
-                    </SelectItem>
-                  ))}
+                  {(isMercadoPago ? MP_INTERVAL_OPTIONS : INTERVAL_OPTIONS).map(
+                    (i) => (
+                      <SelectItem key={i.value} value={i.value}>
+                        {i.label}
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Interval Count</Label>
               <Input
+                disabled={isMercadoPago}
                 onChange={(e) =>
                   setForm((s) => ({ ...s, intervalCount: e.target.value }))
                 }
                 placeholder="1"
                 type="number"
-                value={form.intervalCount}
+                value={isMercadoPago ? "1" : form.intervalCount}
               />
             </div>
           </div>
+          {isMercadoPago && (
+            <p className="text-muted-foreground text-xs">
+              MercadoPago only supports monthly billing
+            </p>
+          )}
 
           <div className="space-y-2">
             <Label className="flex justify-between">

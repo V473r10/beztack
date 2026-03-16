@@ -51,20 +51,12 @@ function mapMPInterval(frequencyType: string): BillingInterval {
 
 /**
  * Convert our interval to MercadoPago's frequency/frequency_type.
- * MP only supports "months" and "days", so "year" becomes 12 months.
+ * MP only supports "months" and "days".
  */
-const MONTHS_PER_YEAR = 12;
-
 function toMPRecurring(
   interval: BillingInterval,
   intervalCount = 1
 ): { frequency: number; frequency_type: "months" | "days" } {
-  if (interval === "year") {
-    return {
-      frequency: MONTHS_PER_YEAR * intervalCount,
-      frequency_type: "months",
-    };
-  }
   return {
     frequency: intervalCount,
     frequency_type: interval === "day" ? "days" : "months",
@@ -262,8 +254,8 @@ export function createMercadoPagoAdapter(
   return {
     provider: "mercadopago",
 
-    async listProducts(): Promise<Product[]> {
-      const plans = await client.plans.list();
+    async listProducts(status = "active"): Promise<Product[]> {
+      const plans = await client.plans.list({ status });
 
       return plans.results.map((plan) => ({
         id: plan.id,

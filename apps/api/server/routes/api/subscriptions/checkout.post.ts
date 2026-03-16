@@ -53,6 +53,17 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
     const parsed = checkoutSchema.parse(body);
+
+    if (
+      provider.provider === "mercadopago" &&
+      parsed.billingPeriod === "yearly"
+    ) {
+      throw createError({
+        statusCode: 400,
+        message: "Yearly billing is not available with MercadoPago",
+      });
+    }
+
     if (!(parsed.productId || parsed.planId)) {
       throw createError({
         statusCode: 400,

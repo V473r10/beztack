@@ -115,7 +115,11 @@ const BASE_TIERS: BaseTier[] = [
   },
 ];
 
-/** Prices in cents (or smallest currency unit) per provider */
+/**
+ * Prices per provider:
+ * - Polar: in cents (900 = $9 USD)
+ * - MercadoPago: in display currency (45 = 45 UYU)
+ */
 const POLAR_PRICING: Record<string, { monthly: number; yearly: number }> = {
   free: { monthly: 0, yearly: 0 },
   basic: { monthly: 900, yearly: 9000 }, // $9/mo, $90/yr
@@ -123,11 +127,11 @@ const POLAR_PRICING: Record<string, { monthly: number; yearly: number }> = {
   ultimate: { monthly: 9900, yearly: 99_000 }, // $99/mo, $990/yr
 };
 
-const MP_PRICING: Record<string, { monthly: number; yearly: number }> = {
-  free: { monthly: 0, yearly: 0 },
-  basic: { monthly: 4500, yearly: 45_000 }, // 45/mo, 450/yr UYU
-  pro: { monthly: 8000, yearly: 80_000 }, // 80/mo, 800/yr UYU
-  ultimate: { monthly: 15_000, yearly: 150_000 }, // 150/mo, 1500/yr UYU
+const MP_PRICING: Record<string, { monthly: number }> = {
+  free: { monthly: 0 },
+  basic: { monthly: 45 }, // 45/mo UYU
+  pro: { monthly: 80 }, // 80/mo UYU
+  ultimate: { monthly: 150 }, // 150/mo UYU
 };
 
 type Interval = "month" | "year";
@@ -145,12 +149,21 @@ function buildSeedPlans(provider: string): SeedPlan[] {
   const plans: SeedPlan[] = [];
 
   for (const tier of BASE_TIERS) {
-    const prices = pricing[tier.canonicalTierId] ?? { monthly: 0, yearly: 0 };
+    const prices = pricing[tier.canonicalTierId] ?? { monthly: 0 };
 
     plans.push({ ...tier, price: prices.monthly, currency, interval: "month" });
 
-    if (prices.yearly > 0) {
-      plans.push({ ...tier, price: prices.yearly, currency, interval: "year" });
+    if (
+      !isMP &&
+      "yearly" in prices &&
+      (prices as { yearly: number }).yearly > 0
+    ) {
+      plans.push({
+        ...tier,
+        price: (prices as { yearly: number }).yearly,
+        currency,
+        interval: "year",
+      });
     }
   }
 

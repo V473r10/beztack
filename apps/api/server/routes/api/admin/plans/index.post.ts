@@ -4,7 +4,7 @@
 import { randomUUID } from "node:crypto";
 import { db, plan } from "@beztack/db";
 import type { BillingInterval } from "@beztack/payments";
-import { defineEventHandler, readBody } from "h3";
+import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAdmin } from "@/server/utils/require-auth";
@@ -32,6 +32,22 @@ export default defineEventHandler(async (event) => {
 
   const rawBody = await readBody(event);
   const data = createSchema.parse(rawBody);
+
+  if (adapter.provider === "mercadopago") {
+    if (data.interval !== "month") {
+      throw createError({
+        statusCode: 400,
+        message: "MercadoPago only supports monthly billing intervals",
+      });
+    }
+    if (data.intervalCount !== 1) {
+      throw createError({
+        statusCode: 400,
+        message:
+          "MercadoPago only supports an interval count of 1 for monthly billing",
+      });
+    }
+  }
 
   const remoteProduct = await adapter.createProduct({
     name: data.displayName,
