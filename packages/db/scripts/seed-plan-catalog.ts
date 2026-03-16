@@ -129,9 +129,9 @@ const POLAR_PRICING: Record<string, { monthly: number; yearly: number }> = {
 
 const MP_PRICING: Record<string, { monthly: number }> = {
   free: { monthly: 0 },
-  basic: { monthly: 45 }, // 45/mo UYU
-  pro: { monthly: 80 }, // 80/mo UYU
-  ultimate: { monthly: 150 }, // 150/mo UYU
+  basic: { monthly: 4500 }, // 4500/mo UYU
+  pro: { monthly: 8000 }, // 8000/mo UYU
+  ultimate: { monthly: 15_000 }, // 15000/mo UYU
 };
 
 type Interval = "month" | "year";

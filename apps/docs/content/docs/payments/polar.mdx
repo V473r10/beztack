@@ -6,12 +6,16 @@ description: Payment and subscription system with Polar
 Beztack includes Polar as one of the supported payment providers, with Better
 Auth integration and subscription-oriented flows.
 
+> For an overview of the provider-agnostic payment system, see [Payments Core](/docs/payments/payments-core).
+
 ## When to use Polar vs Mercado Pago
 
 - Use **Polar** when your product is centered on Better Auth checkout/portal
   workflows and recurring SaaS subscriptions.
+    -  Don't use **Polar** if you want to sell physical products/services.
 - Use **Mercado Pago** when you need direct Mercado Pago APIs, plan sync, card
   processing, and MP-specific events.
+    - Don't use **Mercado Pago** if you want to sell worldwide.
 
 See also: [Mercado Pago](/docs/payments/mercado-pago)
 
@@ -39,25 +43,26 @@ POLAR_ORGANIZATION_ID=00000000-0000-0000-0000-000000000000
 Implementation references:
 
 - Better Auth + Polar plugin config: `apps/api/server/utils/auth.ts`
-- Polar route handlers: `apps/api/server/routes/api/polar/*`
+- Unified subscription routes: `apps/api/server/routes/api/subscriptions/*`
 
 ## Core flows
 
+All payment flows use the **unified subscription routes**, shared across all providers:
+
 ### 1) Products and pricing data
 
-- `GET /api/polar/products`
-- Returns tier-oriented product data from Polar plus local DB feature/limit/
-  permission metadata.
+- `GET /api/subscriptions/products`
+- Returns tier-oriented product data from the active provider plus local DB feature/limit/permission metadata.
 
 ### 2) Checkout
 
-- `POST /api/polar/checkout`
-- Creates a Polar checkout session for a selected product.
+- `POST /api/subscriptions/checkout`
+- Creates a checkout session for a selected product.
 
 Minimal example:
 
 ```typescript
-const response = await fetch("/api/polar/checkout", {
+const response = await fetch("/api/subscriptions/checkout", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ productId: "<polar-product-id>" }),
@@ -67,15 +72,16 @@ const data = await response.json()
 window.location.href = data.checkoutUrl
 ```
 
-### 3) Subscription updates
+### 3) Subscription management
 
-- `PATCH /api/polar/subscription`
-- Validates ownership and updates a subscription product with proration.
+- `GET /api/subscriptions` — List subscriptions for the current user.
+- `GET /api/subscriptions/:id` — Get a specific subscription.
+- `PATCH /api/subscriptions/:id` — Update a subscription (e.g., change plan with proration).
+- `DELETE /api/subscriptions/:id` — Cancel a subscription.
 
 ### 4) Customer portal
 
-- `GET /api/polar/customer-portal`
-- Returns a customer portal URL from Polar.
+Polar supports a customer portal session via `createPortalSession()` on the adapter.
 
 ### 5) Usage tracking
 
@@ -86,7 +92,7 @@ you can report usage events from your app and enforce limits in product logic.
 
 ### Webhook endpoint
 
-- `POST /api/polar/webhooks`
+- `POST /api/subscriptions/webhooks`
 - Uses shared webhook validation/processing utilities and updates user/org
   subscription state for key events (`order paid`, `subscription active`,
   `subscription canceled`, `customer state changed`).

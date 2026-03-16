@@ -7,6 +7,8 @@ Beztack supports Mercado Pago as a first-class payment provider, including plan
 sync, subscriptions, checkout preference, direct payment processing, and
 webhook/event handling.
 
+> For an overview of the provider-agnostic payment system, see [Payments Core](/docs/payments/payments-core).
+
 ## When to use Mercado Pago
 
 Use Mercado Pago when you need:
@@ -44,59 +46,44 @@ Implementation references:
 - Provider factory: `apps/api/lib/payments/index.ts`
 - React provider wiring: `apps/ui/src/app.tsx`
 
-## Implemented API routes
+## API Routes
 
-All routes are under `/api/payments/mercado-pago`.
+### Unified routes (shared across all providers)
 
-### Core payment routes
+These routes are provider-agnostic and work with whichever provider is active:
 
-- `POST /preference`  
-  Create checkout preference.
-- `POST /process-payment`  
-  Process direct card payments and emit payment events.
-- `POST /webhook`  
-  Validate/process Mercado Pago webhook payloads and persist updates.
+- `GET /api/subscriptions/products` — List products/plans from the active provider.
+- `POST /api/subscriptions/checkout` — Create a checkout session.
+- `GET /api/subscriptions` — List subscriptions for the current user.
+- `GET /api/subscriptions/:id` — Get a specific subscription.
+- `PATCH /api/subscriptions/:id` — Update a subscription.
+- `DELETE /api/subscriptions/:id` — Cancel a subscription.
+- `POST /api/subscriptions/webhooks` — Process webhook payloads (unified handler).
 
-### Events
+### MercadoPago-specific route
 
-- `GET /events`  
-  SSE stream for payment/subscription events.
-- `POST /events/simulate` (development only)  
-  Emit synthetic events for local testing.
+- `POST /api/payments/mercado-pago/webhook` — Validate and process MercadoPago-specific webhook payloads.
 
-### Subscription routes
+### Admin plan management routes
 
-- `POST /subscriptions`  
-  Create subscription, or return checkout URL when plan checkout mode is used.
-- `GET /subscriptions/search`  
-  Search subscriptions (auth-aware filters).
-- `GET /subscriptions/:id`  
-  Fetch one subscription.
-- `PUT /subscriptions/:id`  
-  Update status (owner/admin checks).
-- `GET /subscriptions/callback`  
-  Callback redirect for subscription completion.
-
-### Plan routes
-
-- `GET /subscriptions/plans`  
-  Read plans from local DB. Supports `?refresh=true` to sync from MP first.
-- `POST /subscriptions/plans` (admin)  
-  Create plan in Mercado Pago and persist it locally.
-- `GET /subscriptions/plans/:id`  
-  Read one plan from Mercado Pago.
-- `POST /subscriptions/plans/sync` (admin)  
-  Sync all plans from Mercado Pago into local DB.
+- `GET /api/admin/plans` — List all plans from the local DB.
+- `POST /api/admin/plans` — Create a new plan.
+- `POST /api/admin/plans/import` — Import plans from the provider.
+- `POST /api/admin/plans/sync` — Sync all plans from the provider into the local DB.
+- `GET /api/admin/plans/sync-status` — Check the current sync status.
+- `PATCH /api/admin/plans/:id` — Update a plan.
+- `DELETE /api/admin/plans/:id` — Delete a plan.
 
 ## Plan sync flow
 
-Beztack keeps a local plan mirror (`mpPlan`) to make plan selection and checkout
-flows predictable in the app.
+Beztack keeps a local plan mirror in the `plan` table (provider-agnostic, with a
+`providerPlanId` field linking to the remote product ID) to make plan selection
+and checkout flows predictable in the app.
 
-- `GET /subscriptions/plans` reads local plans and auto-syncs if empty.
-- `POST /subscriptions/plans/sync` performs an explicit admin-triggered sync.
-- `POST /subscriptions` can return `{ mode: "checkout", checkoutUrl }` when
-  a local synced plan contains `initPoint`.
+- `GET /api/admin/plans` reads local plans.
+- `POST /api/admin/plans/sync` performs an explicit admin-triggered sync from the provider.
+- `POST /api/admin/plans/import` imports plans from the provider into the local DB.
+- `GET /api/admin/plans/sync-status` reports the current sync state.
 
 ## Client integration
 
@@ -118,10 +105,10 @@ The package `@beztack/mercadopago/react` exposes:
 ## Testing checklist
 
 1. Configure sandbox credentials and `VITE_MERCADO_PAGO_PUBLIC_KEY`.
-2. Test checkout preference and direct payment endpoints.
+2. Test checkout via `POST /api/subscriptions/checkout`.
 3. Trigger/receive webhook events and verify local DB updates.
-4. Validate plan sync (`/subscriptions/plans` + `/subscriptions/plans/sync`).
-5. Verify SSE events in the UI (`/events`).
+4. Validate plan sync via admin routes (`/api/admin/plans/sync`).
+5. Verify SSE events in the UI (if using the events endpoint).
 
 ## Troubleshooting
 
