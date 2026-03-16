@@ -374,13 +374,10 @@ const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
 };
 
 export const formatCurrency = (amount: number, currency = "USD"): string => {
-  const CENTS_TO_DOLLARS = 100;
-  const dollars = amount / CENTS_TO_DOLLARS;
-
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: dollars % 1 === 0 ? 0 : 2,
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
-  }).format(dollars);
+  }).format(amount);
 };

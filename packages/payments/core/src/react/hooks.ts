@@ -65,14 +65,8 @@ function extractPermissions(
 
 function buildProviderProduct(
   product: Product,
-  interval: string,
-  provider: string
+  interval: string
 ): ProviderProduct {
-  const priceAmount =
-    provider === "polar"
-      ? Math.round(product.price.amount * CENTS_MULTIPLIER)
-      : product.price.amount;
-
   return {
     id: product.id,
     name: product.name,
@@ -82,7 +76,7 @@ function buildProviderProduct(
     prices: [
       {
         id: product.id,
-        priceAmount,
+        priceAmount: product.price.amount,
         priceCurrency: product.price.currency,
         recurringInterval: interval,
       },
@@ -120,24 +114,37 @@ function buildBaseTier(
   };
 }
 
+/**
+ * Convert a provider-native amount to display units.
+ * Polar returns cents (900 → $9), MercadoPago returns whole currency (4500 → $4.500).
+ */
+function toDisplayAmount(amount: number, provider: string): number {
+  if (provider === "polar") {
+    return amount / CENTS_MULTIPLIER;
+  }
+  return amount;
+}
+
 function applyIntervalToTier(
   tier: PricingTier,
   product: Product,
   provider: string
 ): PricingTier {
+  const displayAmount = toDisplayAmount(product.price.amount, provider);
+
   if (product.interval === "month") {
     return {
       ...tier,
-      price: { ...tier.price, monthly: product.price.amount },
-      monthly: buildProviderProduct(product, "month", provider),
+      price: { ...tier.price, monthly: displayAmount },
+      monthly: buildProviderProduct(product, "month"),
     };
   }
 
   if (product.interval === "year") {
     return {
       ...tier,
-      price: { ...tier.price, yearly: product.price.amount },
-      yearly: buildProviderProduct(product, "year", provider),
+      price: { ...tier.price, yearly: displayAmount },
+      yearly: buildProviderProduct(product, "year"),
     };
   }
 

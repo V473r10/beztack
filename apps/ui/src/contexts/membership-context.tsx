@@ -145,7 +145,16 @@ export type MembershipContextValue = {
   getPlanChangeType: (targetTierId: string) => PlanChangeType;
 };
 
-const MembershipContext = createContext<MembershipContextValue | null>(null);
+function createMembershipContext() {
+	return createContext<MembershipContextValue | null>(null)
+}
+
+const MembershipContext: ReturnType<typeof createMembershipContext> =
+	import.meta.hot?.data.membershipContext ?? createMembershipContext()
+
+if (import.meta.hot) {
+	import.meta.hot.data.membershipContext = MembershipContext
+}
 
 function parseTierIdFromName(raw: string | undefined): MembershipTier {
   const name = raw?.toLowerCase() ?? "";
@@ -189,9 +198,26 @@ function parseTierIdFromProduct(product: Product): MembershipTier {
   return parseTierIdFromName(product.name);
 }
 
+const CENTS_DIVISOR = 100;
+
+/**
+ * Convert a provider-native amount to display units.
+ * Polar returns cents (900 → 9), MercadoPago returns whole currency (4500 → 4500).
+ */
+function toDisplayAmount(
+  amount: number,
+  provider: "polar" | "mercadopago"
+): number {
+  if (provider === "polar") {
+    return amount / CENTS_DIVISOR;
+  }
+  return amount;
+}
+
 function buildTierConfigFromPlansAndProducts(
   products: Product[],
-  plans?: CatalogPlan[]
+  plans: CatalogPlan[] | undefined,
+  provider: "polar" | "mercadopago"
 ): MembershipTierConfig[] {
   const tiers: Record<MembershipTier, MutableTierConfig> = {
     free: {
@@ -258,8 +284,9 @@ function buildTierConfigFromPlansAndProducts(
       const isYearly =
         plan.frequencyType === "years" ||
         (plan.frequencyType === "months" && plan.frequency === MONTHS_PER_YEAR);
+      const displayPrice = toDisplayAmount(plan.price.amount, provider);
       if (isYearly) {
-        current.price.yearly = plan.price.amount;
+        current.price.yearly = displayPrice;
         current.yearly = {
           id: plan.id,
           name: plan.displayName,
@@ -269,7 +296,7 @@ function buildTierConfigFromPlansAndProducts(
           billing_period: "yearly",
         };
       } else {
-        current.price.monthly = plan.price.amount;
+        current.price.monthly = displayPrice;
         current.monthly = {
           id: plan.id,
           name: plan.displayName,
@@ -295,7 +322,7 @@ function buildTierConfigFromPlansAndProducts(
     }
 
     if (product.interval === "month" && !current.monthly) {
-      current.price.monthly = product.price.amount;
+      current.price.monthly = toDisplayAmount(product.price.amount, provider);
       current.monthly = {
         id: product.id,
         name: product.name,
@@ -307,7 +334,7 @@ function buildTierConfigFromPlansAndProducts(
     }
 
     if (product.interval === "year" && !current.yearly) {
-      current.price.yearly = product.price.amount;
+      current.price.yearly = toDisplayAmount(product.price.amount, provider);
       current.yearly = {
         id: product.id,
         name: product.name,
@@ -346,11 +373,11 @@ function buildTierConfigFromPlansAndProducts(
 }
 
 export function useMembership() {
-  const context = useContext(MembershipContext);
-  if (!context) {
-    throw new Error("useMembership must be used within a MembershipProvider");
-  }
-  return context;
+	const context = useContext(MembershipContext)
+	if (!context) {
+		throw new Error("useMembership must be used within a MembershipProvider")
+	}
+	return context
 }
 
 export type MembershipProviderProps = {
@@ -572,9 +599,10 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   );
 
   const dbPlans = productsQuery.data?.plans;
+  const provider = productsQuery.data?.provider ?? "polar";
   const tierConfigs = useMemo(
-    () => buildTierConfigFromPlansAndProducts(products, dbPlans),
-    [products, dbPlans]
+    () => buildTierConfigFromPlansAndProducts(products, dbPlans, provider),
+    [products, dbPlans, provider]
   );
 
   const tierConfig =
