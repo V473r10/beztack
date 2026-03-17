@@ -28,6 +28,7 @@ export function isSubscriptionOwnedByUser(
   subscription: Subscription,
   auth: AuthenticatedUser
 ): boolean {
+  console.log("Checking if subscription is owned by user", subscription, auth);
   const authRole =
     (auth as { role?: unknown }).role ?? (auth.user as { role?: unknown }).role;
 

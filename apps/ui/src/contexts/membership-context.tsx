@@ -146,14 +146,14 @@ export type MembershipContextValue = {
 };
 
 function createMembershipContext() {
-	return createContext<MembershipContextValue | null>(null)
+  return createContext<MembershipContextValue | null>(null);
 }
 
 const MembershipContext: ReturnType<typeof createMembershipContext> =
-	import.meta.hot?.data.membershipContext ?? createMembershipContext()
+  import.meta.hot?.data.membershipContext ?? createMembershipContext();
 
 if (import.meta.hot) {
-	import.meta.hot.data.membershipContext = MembershipContext
+  import.meta.hot.data.membershipContext = MembershipContext;
 }
 
 function parseTierIdFromName(raw: string | undefined): MembershipTier {
@@ -373,11 +373,11 @@ function buildTierConfigFromPlansAndProducts(
 }
 
 export function useMembership() {
-	const context = useContext(MembershipContext)
-	if (!context) {
-		throw new Error("useMembership must be used within a MembershipProvider")
-	}
-	return context
+  const context = useContext(MembershipContext);
+  if (!context) {
+    throw new Error("useMembership must be used within a MembershipProvider");
+  }
+  return context;
 }
 
 export type MembershipProviderProps = {
@@ -575,6 +575,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const products = productsQuery.data?.products || [];
   const subscriptions = subscriptionsQuery.data?.subscriptions || [];
 
+  console.log("Subscriptions: ", subscriptions);
+
   const activeSubscription =
     subscriptions.find((sub) => {
       if (sub.status === "active") {
@@ -592,13 +594,24 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       return false;
     }) || null;
 
+  console.log("Active subscription: ", activeSubscription);
+
+  // TODO: Mercado Pago no tiene metadata, no estamos obteniendo ningún tier, esto hay que sacarlo de la base.
+
   const currentTier = parseTierIdFromName(
     (activeSubscription?.metadata?.tier as string | undefined) ||
       (activeSubscription?.metadata?.planId as string | undefined) ||
       activeSubscription?.productName
   );
 
+  console.log("Current tier: ", currentTier);
+
   const dbPlans = productsQuery.data?.plans;
+
+  console.log("Products Query: ", productsQuery.data);
+
+  console.log("DB Plans: ", dbPlans);
+
   const provider = productsQuery.data?.provider ?? "polar";
   const tierConfigs = useMemo(
     () => buildTierConfigFromPlansAndProducts(products, dbPlans, provider),

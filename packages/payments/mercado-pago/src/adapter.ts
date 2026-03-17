@@ -18,8 +18,8 @@ import type {
   UpdateSubscriptionOptions,
   WebhookPayload,
 } from "@beztack/payments";
-
 import { createMercadoPagoClient } from "./server/client.js";
+import type { MPPreapproval } from "./types.js";
 
 function mapMPStatus(status: string): SubscriptionStatus {
   switch (status) {
@@ -71,6 +71,22 @@ type ExternalReferenceMetadata = {
   referenceId?: string;
   tier?: string;
 };
+
+function maskEmail(email?: string): string | undefined {
+  if (!email) {
+    return;
+  }
+
+  const [localPart, domain] = email.split("@");
+
+  if (!(localPart && domain)) {
+    return "***";
+  }
+
+  const visibleLocalPart = localPart.slice(0, 2);
+
+  return `${visibleLocalPart}***@${domain}`;
+}
 
 function readString(
   source: Record<string, unknown> | undefined,
@@ -240,6 +256,114 @@ export type MercadoPagoAdapterConfig = {
   webhookSecret?: string;
   integratorId?: string;
 };
+
+function getListSubscriptionsDebugContext(
+  options: ListSubscriptionsOptions
+): Record<string, string | number | null> {
+  return {
+    customerId: options.customerId ?? null,
+    customerEmail: maskEmail(options.customerEmail) ?? null,
+    requestedStatus: options.status ?? null,
+    limit: options.limit ?? null,
+    offset: options.offset ?? null,
+  };
+}
+
+function logListSubscriptionsStart(
+  options: ListSubscriptionsOptions,
+  searchParams: {
+    payer_email?: string;
+    status?: SubscriptionStatus;
+    limit?: number;
+    offset?: number;
+  }
+): void {
+  // biome-ignore lint/suspicious/noConsole: Debugging Mercado Pago subscription search inputs
+  console.log("[MercadoPagoAdapter] listSubscriptions:start", {
+    ...getListSubscriptionsDebugContext(options),
+    searchParams: {
+      payer_email: maskEmail(searchParams.payer_email) ?? null,
+      status: searchParams.status ?? null,
+      limit: searchParams.limit ?? null,
+      offset: searchParams.offset ?? null,
+    },
+  });
+}
+
+function logIgnoredCustomerId(customerId: string): void {
+  // biome-ignore lint/suspicious/noConsole: Debugging unsupported customerId filter in Mercado Pago subscription search
+  console.log("[MercadoPagoAdapter] listSubscriptions:ignored-filter", {
+    filter: "customerId",
+    customerId,
+    reason:
+      "Mercado Pago search only supports payer_email, status, limit and offset",
+  });
+}
+
+function mapSearchResult(sub: MPPreapproval): {
+  subscription: Subscription;
+  debug: Record<string, unknown>;
+} {
+  const metadata = decodeExternalReference(sub.external_reference);
+  const subscription = {
+    id: sub.id,
+    status: mapMPStatus(sub.status),
+    productId: "",
+    productName: sub.reason,
+    customerId: metadata?.userId ?? String(sub.payer_id),
+    customerEmail: sub.payer_email,
+    currentPeriodEnd: sub.next_payment_date
+      ? new Date(sub.next_payment_date)
+      : undefined,
+    metadata,
+  } satisfies Subscription;
+
+  return {
+    subscription,
+    debug: {
+      id: sub.id,
+      rawStatus: sub.status,
+      mappedStatus: subscription.status,
+      payerId: sub.payer_id,
+      payerEmail: maskEmail(sub.payer_email) ?? null,
+      preapprovalPlanId: sub.preapproval_plan_id ?? null,
+      nextPaymentDate: sub.next_payment_date ?? null,
+      externalReference: sub.external_reference ?? null,
+      metadata,
+    },
+  };
+}
+
+function logListSubscriptionsSuccess(
+  options: ListSubscriptionsOptions,
+  total: number,
+  mappedResults: ReturnType<typeof mapSearchResult>[]
+): void {
+  // biome-ignore lint/suspicious/noConsole: Debugging Mercado Pago subscription search results
+  console.log("[MercadoPagoAdapter] listSubscriptions:success", {
+    ...getListSubscriptionsDebugContext(options),
+    total,
+    count: mappedResults.length,
+    subscriptions: mappedResults.map(({ debug }) => debug),
+  });
+}
+
+function logListSubscriptionsError(
+  options: ListSubscriptionsOptions,
+  error: unknown
+): void {
+  // biome-ignore lint/suspicious/noConsole: Debugging Mercado Pago subscription search failures
+  console.log("[MercadoPagoAdapter] listSubscriptions:error", {
+    ...getListSubscriptionsDebugContext(options),
+    error:
+      error instanceof Error
+        ? {
+            name: error.name,
+            message: error.message,
+          }
+        : error,
+  });
+}
 
 export function createMercadoPagoAdapter(
   config: MercadoPagoAdapterConfig
@@ -508,29 +632,37 @@ export function createMercadoPagoAdapter(
     async listSubscriptions(
       options: ListSubscriptionsOptions
     ): Promise<Subscription[]> {
-      const result = await client.subscriptions.search({
+      const searchParams = {
         payer_email: options.customerEmail,
         status: options.status,
         limit: options.limit,
         offset: options.offset,
-      });
+      };
 
-      return result.results.map((sub) => {
-        const metadata = decodeExternalReference(sub.external_reference);
+      logListSubscriptionsStart(options, searchParams);
 
-        return {
-          id: sub.id,
-          status: mapMPStatus(sub.status),
-          productId: "",
-          productName: sub.reason,
-          customerId: metadata?.userId ?? String(sub.payer_id),
-          customerEmail: sub.payer_email,
-          currentPeriodEnd: sub.next_payment_date
-            ? new Date(sub.next_payment_date)
-            : undefined,
-          metadata,
-        };
-      });
+      if (options.customerId) {
+        logIgnoredCustomerId(options.customerId);
+      }
+
+      try {
+        const result = await client.subscriptions.search(searchParams);
+        const mappedResults = result.results.map(mapSearchResult);
+        const subscriptions = mappedResults.map(
+          ({ subscription }) => subscription
+        );
+
+        logListSubscriptionsSuccess(
+          options,
+          result.paging.total,
+          mappedResults
+        );
+
+        return subscriptions;
+      } catch (error) {
+        logListSubscriptionsError(options, error);
+        throw error;
+      }
     },
 
     async createCustomer(

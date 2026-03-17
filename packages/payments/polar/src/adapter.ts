@@ -23,6 +23,32 @@ import { Polar } from "@polar-sh/sdk";
 const CENTS_TO_DOLLARS = 100;
 const MIN_PRICE_CENTS = 50;
 const DEFAULT_LIMIT = 50;
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function maskEmail(email?: string): string | undefined {
+  if (!email) {
+    return undefined;
+  }
+
+  const [localPart, domain] = email.split("@");
+
+  if (!localPart || !domain) {
+    return "***";
+  }
+
+  const visibleLocalPart = localPart.slice(0, 2);
+
+  return `${visibleLocalPart}***@${domain}`;
+}
+
+function isUuid(value?: string): boolean {
+  if (!value) {
+    return false;
+  }
+
+  return UUID_REGEX.test(value);
+}
 
 function mapPolarStatus(status: string): SubscriptionStatus {
   switch (status) {
@@ -216,6 +242,7 @@ export function createPolarAdapter(
       const checkout = await client.checkouts.create({
         products: [options.productId],
         successUrl: options.successUrl,
+        externalCustomerId: options.customerId,
         customerEmail: options.customerEmail,
         metadata: options.metadata as
           | Record<string, string | number | boolean>
@@ -238,6 +265,7 @@ export function createPolarAdapter(
       const checkout = await client.checkouts.create({
         products: [options.productId],
         successUrl: config.successUrl,
+        externalCustomerId: options.customerId,
         customerEmail: options.customerEmail,
         metadata: options.metadata as
           | Record<string, string | number | boolean>
@@ -338,31 +366,84 @@ export function createPolarAdapter(
     async listSubscriptions(
       options: ListSubscriptionsOptions
     ): Promise<Subscription[]> {
-      let customerId = options.customerId;
+      let customerId = isUuid(options.customerId)
+        ? options.customerId
+        : undefined;
+      const externalCustomerId =
+        options.customerId && !isUuid(options.customerId)
+          ? options.customerId
+          : undefined;
 
-      if (!customerId && options.customerEmail) {
+      // biome-ignore lint/suspicious/noConsole: Debugging subscription listing flow
+      console.log("[PolarAdapter] listSubscriptions:start", {
+        customerId: customerId ?? null,
+        externalCustomerId: externalCustomerId ?? null,
+        customerEmail: maskEmail(options.customerEmail),
+        limit: options.limit ?? DEFAULT_LIMIT,
+        requestedStatus: options.status ?? null,
+        requestedOffset: options.offset ?? null,
+      });
+
+      if (!customerId && !externalCustomerId && options.customerEmail) {
+        // biome-ignore lint/suspicious/noConsole: Debugging customer resolution for subscription listing
+        console.log("[PolarAdapter] listSubscriptions:resolve-customer", {
+          customerEmail: maskEmail(options.customerEmail),
+        });
+
         const customer = await this.getCustomerByEmail(options.customerEmail);
         if (!customer) {
+          // biome-ignore lint/suspicious/noConsole: Debugging empty subscription results when customer is missing
+          console.log("[PolarAdapter] listSubscriptions:customer-not-found", {
+            customerEmail: maskEmail(options.customerEmail),
+          });
+
           return [];
         }
         customerId = customer.id;
+
+        // biome-ignore lint/suspicious/noConsole: Debugging resolved customer used to list subscriptions
+        console.log("[PolarAdapter] listSubscriptions:customer-resolved", {
+          customerId,
+          customerEmail: maskEmail(customer.email),
+        });
       }
 
       if (!customerId) {
-        return [];
+        if (externalCustomerId) {
+          // biome-ignore lint/suspicious/noConsole: Debugging listSubscriptions lookup by external customer id
+          console.log("[PolarAdapter] listSubscriptions:using-external-id", {
+            externalCustomerId,
+          });
+        } else {
+          // biome-ignore lint/suspicious/noConsole: Debugging invalid listSubscriptions calls without customer identifiers
+          console.log("[PolarAdapter] listSubscriptions:missing-customer", {
+            customerEmail: maskEmail(options.customerEmail),
+          });
+
+          return [];
+        }
+      }
+
+      if (options.status || options.offset) {
+        // biome-ignore lint/suspicious/noConsole: Debugging unsupported filters in Polar subscription listing
+        console.log("[PolarAdapter] listSubscriptions:ignored-filters", {
+          requestedStatus: options.status ?? null,
+          requestedOffset: options.offset ?? null,
+        });
       }
 
       const response = await client.subscriptions.list({
         customerId,
+        externalCustomerId,
         limit: options.limit ?? DEFAULT_LIMIT,
       });
 
-      return response.result.items.map((sub) => ({
+      const subscriptions = response.result.items.map((sub) => ({
         id: sub.id,
         status: mapPolarStatus(sub.status),
         productId: sub.productId,
         productName: sub.product?.name,
-        customerId: sub.customerId,
+        customerId: sub.customer?.externalId ?? sub.customerId,
         customerEmail: sub.customer?.email,
         currentPeriodStart: sub.currentPeriodStart
           ? new Date(sub.currentPeriodStart)
@@ -373,6 +454,22 @@ export function createPolarAdapter(
         cancelAtPeriodEnd: sub.cancelAtPeriodEnd ?? undefined,
         metadata: sub.metadata as Record<string, unknown> | undefined,
       }));
+
+      // biome-ignore lint/suspicious/noConsole: Debugging Polar subscription list response
+      console.log("[PolarAdapter] listSubscriptions:success", {
+        customerId,
+        externalCustomerId,
+        count: subscriptions.length,
+        subscriptions: subscriptions.map((subscription) => ({
+          id: subscription.id,
+          status: subscription.status,
+          productId: subscription.productId,
+          currentPeriodEnd: subscription.currentPeriodEnd?.toISOString(),
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd ?? false,
+        })),
+      });
+
+      return subscriptions;
     },
 
     async createCustomer(

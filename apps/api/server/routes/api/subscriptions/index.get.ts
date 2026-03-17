@@ -23,6 +23,8 @@ export default defineEventHandler(async (event) => {
     offset,
   });
 
+  console.log("Subscriptions: ", subscriptions);
+
   // DB-assisted fallback: if provider search found nothing,
   // discover via local DB and verify against provider API
   if (subscriptions.length === 0) {
@@ -35,6 +37,6 @@ export default defineEventHandler(async (event) => {
 
   return {
     provider: provider.provider,
-    subscriptions: ownedSubscriptions,
+    subscriptions,
   };
 });
