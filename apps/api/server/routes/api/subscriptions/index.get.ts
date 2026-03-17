@@ -5,6 +5,7 @@
 import { defineEventHandler, getQuery } from "h3";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
+import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 export default defineEventHandler(async (event) => {
@@ -15,11 +16,18 @@ export default defineEventHandler(async (event) => {
   const limit = query.limit ? Number(query.limit) : undefined;
   const offset = query.offset ? Number(query.offset) : undefined;
 
-  const subscriptions = await provider.listSubscriptions({
+  let subscriptions = await provider.listSubscriptions({
     customerEmail: auth.user.email,
+    customerId: auth.user.id,
     limit,
     offset,
   });
+
+  // DB-assisted fallback: if provider search found nothing,
+  // discover via local DB and verify against provider API
+  if (subscriptions.length === 0) {
+    subscriptions = await discoverSubscriptionsFromDb(auth.user.id, provider);
+  }
 
   const ownedSubscriptions = subscriptions.filter((subscription) =>
     isSubscriptionOwnedByUser(subscription, auth)

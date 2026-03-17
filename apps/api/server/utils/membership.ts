@@ -6,6 +6,7 @@ import { createError } from "h3";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import type { Subscription } from "@/lib/payments/types";
+import { discoverSubscriptionsFromDb } from "./subscription-discovery";
 
 export type Benefit = {
   type: string;
@@ -265,10 +266,16 @@ async function getMembershipInfoFromProvider(
 
   try {
     const provider = await ensurePaymentProvider();
-    const subscriptions = await provider.listSubscriptions({
+    let subscriptions = await provider.listSubscriptions({
       customerEmail: dbUser.email,
       limit: 100,
     });
+
+    // DB-assisted fallback: if provider search found nothing,
+    // discover via local DB and verify against provider API
+    if (subscriptions.length === 0) {
+      subscriptions = await discoverSubscriptionsFromDb(userId, provider);
+    }
 
     const scopedSubscriptions = subscriptions.filter((subscription) =>
       belongsToOrganization(subscription, organizationId)
