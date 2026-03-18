@@ -18,6 +18,7 @@ export async function discoverSubscriptionsFromDb(
     .select({
       id: subscriptionTable.id,
       providerSubscriptionId: subscriptionTable.providerSubscriptionId,
+      metadata: subscriptionTable.metadata,
     })
     .from(subscriptionTable)
     .where(
@@ -33,6 +34,10 @@ export async function discoverSubscriptionsFromDb(
     const subId = dbSub.providerSubscriptionId ?? dbSub.id;
     const fresh = await provider.getSubscription(subId);
     if (fresh) {
+      const dbTier = (dbSub.metadata as Record<string, unknown>)?.tier;
+      if (!fresh.metadata?.tier && typeof dbTier === "string") {
+        fresh.metadata = { ...fresh.metadata, tier: dbTier };
+      }
       results.push(fresh);
     }
   }

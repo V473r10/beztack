@@ -25,16 +25,14 @@ function mapMPStatus(status: string): SubscriptionStatus {
   switch (status) {
     case "authorized":
     case "active":
-      return "active";
+      return "authorized";
     case "paused":
       return "paused";
     case "cancelled":
     case "canceled":
-      return "canceled";
-    case "pending":
-      return "pending";
+      return "cancelled";
     default:
-      return "inactive";
+      return "cancelled";
   }
 }
 
@@ -123,7 +121,7 @@ function encodeExternalReference(options: {
     return options.customerId ?? referenceId;
   }
 
-  return `${EXTERNAL_REFERENCE_PREFIX}${parts.join("_")}`;
+  return `${EXTERNAL_REFERENCE_PREFIX}${parts.join("&")}`;
 }
 
 export function decodeExternalReference(
@@ -618,7 +616,7 @@ export function createMercadoPagoAdapter(
 
       return {
         id: canceled.id ?? subscriptionId,
-        status: "canceled",
+        status: "cancelled",
         productId: "",
         productName: canceled.reason,
         customerId: String(canceled.payer_id ?? ""),
@@ -634,7 +632,7 @@ export function createMercadoPagoAdapter(
     ): Promise<Subscription[]> {
       const searchParams = {
         payer_email: options.customerEmail,
-        status: options.status,
+        status: options.status ? options.status : "authorized",
         limit: options.limit,
         offset: options.offset,
       };

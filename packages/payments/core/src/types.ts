@@ -7,13 +7,7 @@
 
 export type PaymentProviderName = "polar" | "mercadopago";
 
-export type SubscriptionStatus =
-  | "active"
-  | "inactive"
-  | "pending"
-  | "canceled"
-  | "paused"
-  | "past_due";
+export type SubscriptionStatus = "authorized" | "cancelled" | "paused";
 
 export type BillingInterval = "month" | "year" | "day" | "week";
 
