@@ -10,7 +10,6 @@ import { decodeExternalReference } from "@beztack/mercadopago";
 import {
   createMercadoPagoClient,
   parseDate,
-  toStringId,
   type WebhookPayload,
 } from "@beztack/mercadopago/server";
 import { eq } from "drizzle-orm";

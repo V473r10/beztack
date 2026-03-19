@@ -18,21 +18,23 @@ import type {
   UpdateSubscriptionOptions,
   WebhookPayload,
 } from "@beztack/payments";
+import {
+  decodeExternalReference,
+  encodeExternalReference,
+} from "./helpers/external-reference.js";
 import { createMercadoPagoClient } from "./server/client.js";
 import type { MPPreapproval } from "./types.js";
 
 function mapMPStatus(status: string): SubscriptionStatus {
   switch (status) {
     case "authorized":
-    case "active":
-      return "authorized";
+      return "active";
     case "paused":
       return "paused";
     case "cancelled":
-    case "canceled":
-      return "cancelled";
+      return "canceled";
     default:
-      return "cancelled";
+      return "canceled";
   }
 }
 
@@ -61,15 +63,6 @@ function toMPRecurring(
   };
 }
 
-const EXTERNAL_REFERENCE_PREFIX = "beztack_";
-
-type ExternalReferenceMetadata = {
-  userId?: string;
-  organizationId?: string;
-  referenceId?: string;
-  tier?: string;
-};
-
 function maskEmail(email?: string): string | undefined {
   if (!email) {
     return;
@@ -86,90 +79,17 @@ function maskEmail(email?: string): string | undefined {
   return `${visibleLocalPart}***@${domain}`;
 }
 
-function readString(
-  source: Record<string, unknown> | undefined,
-  key: string
-): string | undefined {
-  const value = source?.[key];
-  return typeof value === "string" ? value : undefined;
-}
-
-function encodeExternalReference(options: {
-  customerId?: string;
-  metadata?: Record<string, unknown>;
-}): string | undefined {
-  const userId = readString(options.metadata, "userId") ?? options.customerId;
-  const organizationId = readString(options.metadata, "organizationId");
-  const referenceId = readString(options.metadata, "referenceId");
-  const tier = readString(options.metadata, "tier");
-
-  const parts: string[] = [];
-  if (userId) {
-    parts.push(`uid=${userId}`);
-  }
-  if (organizationId) {
-    parts.push(`org=${organizationId}`);
-  }
-  if (tier) {
-    parts.push(`tier=${tier}`);
-  }
-  if (referenceId) {
-    parts.push(`ref=${referenceId}`);
-  }
-
-  if (parts.length === 0) {
-    return options.customerId ?? referenceId;
-  }
-
-  return `${EXTERNAL_REFERENCE_PREFIX}${parts.join("&")}`;
-}
-
-export function decodeExternalReference(
-  rawExternalReference?: string
-): ExternalReferenceMetadata | undefined {
-  if (!rawExternalReference) {
-    return;
-  }
-
-  if (!rawExternalReference.startsWith(EXTERNAL_REFERENCE_PREFIX)) {
-    return {
-      userId: rawExternalReference,
-      referenceId: rawExternalReference,
-    };
-  }
-
-  const raw = rawExternalReference.slice(EXTERNAL_REFERENCE_PREFIX.length);
-  const params = new URLSearchParams(raw);
-  const metadata: ExternalReferenceMetadata = {};
-
-  const userId = params.get("uid");
-  if (userId) {
-    metadata.userId = userId;
-  }
-
-  const organizationId = params.get("org");
-  if (organizationId) {
-    metadata.organizationId = organizationId;
-  }
-
-  const referenceId = params.get("ref");
-  if (referenceId) {
-    metadata.referenceId = referenceId;
-  }
-
-  const tier = params.get("tier");
-  if (tier) {
-    metadata.tier = tier;
-  }
-
-  return Object.keys(metadata).length > 0 ? metadata : undefined;
-}
-
 function buildSubscriptionBody(
   options: CreateSubscriptionOptions,
   successUrl: string,
   currency: string
 ): Record<string, unknown> {
+  console.log("[MercadoPagoAdapter] buildSubscriptionBody", {
+    options,
+    successUrl,
+    currency,
+  });
+
   const body: Record<string, unknown> = {
     payer_email: options.customerEmail,
     back_url: options.backUrl ?? successUrl,
@@ -194,6 +114,11 @@ function buildSubscriptionBody(
     customerId: options.customerId,
     metadata: options.metadata,
   });
+
+  console.log("[MercadoPagoAdapter] buildSubscriptionBody: externalReference", {
+    externalReference,
+  });
+
   if (externalReference) {
     body.external_reference = externalReference;
   }
@@ -302,17 +227,30 @@ function mapSearchResult(sub: MPPreapproval): {
   subscription: Subscription;
   debug: Record<string, unknown>;
 } {
-  const metadata = decodeExternalReference(sub.external_reference);
+  const decodedRef = decodeExternalReference(sub.external_reference);
+  const metadata = {
+    ...decodedRef,
+    billingAmount: sub.auto_recurring?.transaction_amount,
+    billingCurrency: sub.auto_recurring?.currency_id,
+    billingInterval: mapMPInterval(
+      sub.auto_recurring?.frequency_type ?? "months"
+    ),
+    billingFrequency: sub.auto_recurring?.frequency,
+  };
   const subscription = {
     id: sub.id,
     status: mapMPStatus(sub.status),
-    productId: "",
+    productId: sub.preapproval_plan_id ?? "",
     productName: sub.reason,
-    customerId: metadata?.userId ?? String(sub.payer_id),
+    customerId: decodedRef?.userId ?? String(sub.payer_id),
     customerEmail: sub.payer_email,
+    currentPeriodStart: sub.date_created
+      ? new Date(sub.date_created)
+      : undefined,
     currentPeriodEnd: sub.next_payment_date
       ? new Date(sub.next_payment_date)
       : undefined,
+    cancelAtPeriodEnd: false,
     metadata,
   } satisfies Subscription;
 
@@ -327,7 +265,7 @@ function mapSearchResult(sub: MPPreapproval): {
       preapprovalPlanId: sub.preapproval_plan_id ?? null,
       nextPaymentDate: sub.next_payment_date ?? null,
       externalReference: sub.external_reference ?? null,
-      metadata,
+      metadata: decodedRef,
     },
   };
 }
@@ -500,6 +438,9 @@ export function createMercadoPagoAdapter(
     async createCheckout(
       options: CreateCheckoutOptions
     ): Promise<CheckoutResult> {
+      console.log("[MercadoPagoAdapter] createCheckout", {
+        options,
+      });
       const plan = await client.plans.get(options.productId);
 
       if (plan.status !== "active") {
@@ -507,6 +448,10 @@ export function createMercadoPagoAdapter(
           `Plan is not active (status: ${plan.status}). Only active plans can be used for checkout.`
         );
       }
+
+      console.log("[MercadoPagoAdapter] createCheckout: plan", {
+        plan,
+      });
 
       if (!plan.init_point) {
         throw new Error(
@@ -519,10 +464,18 @@ export function createMercadoPagoAdapter(
         metadata: options.metadata,
       });
 
+      console.log("[MercadoPagoAdapter] createCheckout: externalReference", {
+        externalReference,
+      });
+
       const separator = plan.init_point.includes("?") ? "&" : "?";
       const checkoutUrl = externalReference
         ? `${plan.init_point}${separator}external_reference=${encodeURIComponent(externalReference)}`
         : plan.init_point;
+
+      console.log("[MercadoPagoAdapter] createCheckout: checkoutUrl", {
+        checkoutUrl,
+      });
 
       return {
         id: `${plan.id}_${Date.now()}`,
@@ -544,11 +497,16 @@ export function createMercadoPagoAdapter(
         id: subscription.id,
         status: mapMPStatus(subscription.status),
         productId: options.productId ?? "",
+        productName: subscription.reason,
         customerId: metadata?.userId ?? String(subscription.payer_id),
         customerEmail: subscription.payer_email,
+        currentPeriodStart: subscription.date_created
+          ? new Date(subscription.date_created)
+          : undefined,
         currentPeriodEnd: subscription.next_payment_date
           ? new Date(subscription.next_payment_date)
           : undefined,
+        cancelAtPeriodEnd: false,
         metadata: metadata ?? options.metadata,
       };
     },
@@ -563,14 +521,26 @@ export function createMercadoPagoAdapter(
         return {
           id: sub.id ?? subscriptionId,
           status: mapMPStatus(sub.status ?? "inactive"),
-          productId: "",
+          productId: sub.preapproval_plan_id ?? "",
           productName: sub.reason,
           customerId: metadata?.userId ?? String(sub.payer_id ?? ""),
           customerEmail: sub.payer_email,
+          currentPeriodStart: sub.date_created
+            ? new Date(sub.date_created)
+            : undefined,
           currentPeriodEnd: sub.next_payment_date
             ? new Date(sub.next_payment_date)
             : undefined,
-          metadata,
+          cancelAtPeriodEnd: false,
+          metadata: {
+            ...metadata,
+            billingAmount: sub.auto_recurring?.transaction_amount,
+            billingCurrency: sub.auto_recurring?.currency_id,
+            billingInterval: mapMPInterval(
+              sub.auto_recurring?.frequency_type ?? "months"
+            ),
+            billingFrequency: sub.auto_recurring?.frequency,
+          },
         };
       } catch {
         return null;
@@ -595,16 +565,21 @@ export function createMercadoPagoAdapter(
         subscriptionId,
         body as Parameters<typeof client.subscriptions.update>[1]
       );
+      const updatedMetadata = decodeExternalReference(
+        updated.external_reference
+      );
 
       return {
         id: updated.id ?? subscriptionId,
         status: mapMPStatus(updated.status ?? "inactive"),
-        productId: "",
+        productId: updated.preapproval_plan_id ?? "",
         productName: updated.reason,
-        customerId: String(updated.payer_id ?? ""),
+        customerId: updatedMetadata?.userId ?? String(updated.payer_id ?? ""),
+        customerEmail: updated.payer_email,
         currentPeriodEnd: updated.next_payment_date
           ? new Date(updated.next_payment_date)
           : undefined,
+        metadata: updatedMetadata,
       };
     },
 
@@ -613,17 +588,22 @@ export function createMercadoPagoAdapter(
       _immediately = false
     ): Promise<Subscription> {
       const canceled = await client.subscriptions.cancel(subscriptionId);
+      const canceledMetadata = decodeExternalReference(
+        canceled.external_reference
+      );
 
       return {
         id: canceled.id ?? subscriptionId,
         status: "cancelled",
-        productId: "",
+        productId: canceled.preapproval_plan_id ?? "",
         productName: canceled.reason,
-        customerId: String(canceled.payer_id ?? ""),
+        customerId: canceledMetadata?.userId ?? String(canceled.payer_id ?? ""),
+        customerEmail: canceled.payer_email,
         currentPeriodEnd: canceled.next_payment_date
           ? new Date(canceled.next_payment_date)
           : undefined,
         cancelAtPeriodEnd: false,
+        metadata: canceledMetadata,
       };
     },
 
@@ -637,10 +617,10 @@ export function createMercadoPagoAdapter(
         offset: options.offset,
       };
 
-      logListSubscriptionsStart(options, searchParams);
+      // logListSubscriptionsStart(options, searchParams);
 
       if (options.customerId) {
-        logIgnoredCustomerId(options.customerId);
+        // logIgnoredCustomerId(options.customerId);
       }
 
       try {
@@ -658,7 +638,7 @@ export function createMercadoPagoAdapter(
 
         return subscriptions;
       } catch (error) {
-        logListSubscriptionsError(options, error);
+        // logListSubscriptionsError(options, error);
         throw error;
       }
     },
