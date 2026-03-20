@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { env } from "@/env";
 import { authClient } from "@/lib/auth-client";
@@ -17,6 +17,12 @@ const CUSTOMER_STATE_STALE_TIME =
   MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * FIVE_MINUTES;
 const SUBSCRIPTIONS_STALE_TIME =
   MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * TWO_MINUTES;
+
+const EMPTY_PRODUCTS: Product[] = [];
+const EMPTY_SUBSCRIPTIONS: Subscription[] = [];
+const EMPTY_ORDERS: Order[] = [];
+const EMPTY_METERS: CustomerMeter[] = [];
+const EMPTY_BENEFITS: string[] = [];
 
 type DeepMutable<T> = {
   -readonly [P in keyof T]: T[P] extends object ? DeepMutable<T[P]> : T[P];
@@ -572,12 +578,12 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
   });
 
-  const products = productsQuery.data?.products || [];
-  const subscriptions = subscriptionsQuery.data?.subscriptions || [];
-
-  console.log("Subscriptions: ", subscriptions);
+  const products = productsQuery.data?.products ?? EMPTY_PRODUCTS;
+  const subscriptions =
+    subscriptionsQuery.data?.subscriptions ?? EMPTY_SUBSCRIPTIONS;
 
   const activeSubscription =
+    // TODO: We have a miss guardrail on creating a subscription so, a customer can have multiple subscriptions right now
     subscriptions.find((sub) => {
       if (sub.status === "active") {
         return true;
@@ -594,8 +600,6 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       return false;
     }) || null;
 
-  console.log("Active subscription: ", activeSubscription);
-
   // TODO: Mercado Pago no tiene metadata, no estamos obteniendo ningún tier, esto hay que sacarlo de la base.
 
   const currentTier = parseTierIdFromName(
@@ -604,13 +608,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       activeSubscription?.productName
   );
 
-  console.log("Current tier: ", currentTier);
-
   const dbPlans = productsQuery.data?.plans;
-
-  console.log("Products Query: ", productsQuery.data);
-
-  console.log("DB Plans: ", dbPlans);
 
   const provider = productsQuery.data?.provider ?? "polar";
   const tierConfigs = useMemo(
@@ -632,13 +630,16 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     (productsQuery.error as Error | null) ||
     (subscriptionsQuery.error as Error | null);
 
+  const checkoutRef = useRef(checkoutMutation.mutateAsync);
+  checkoutRef.current = checkoutMutation.mutateAsync;
+
   const upgradeToTier = useCallback(
     async (
       tierId: string,
       billingPeriod: "monthly" | "yearly" = "monthly",
       organizationId?: string
     ) => {
-      await checkoutMutation.mutateAsync({
+      await checkoutRef.current({
         productId: tierId,
         billingPeriod,
         metadata: {
@@ -646,8 +647,14 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         },
       });
     },
-    [checkoutMutation]
+    []
   );
+
+  const planChangeRef = useRef(planChangeMutation.mutateAsync);
+  planChangeRef.current = planChangeMutation.mutateAsync;
+
+  const activeSubIdRef = useRef(activeSubscription?.id);
+  activeSubIdRef.current = activeSubscription?.id;
 
   const changePlan = useCallback(
     async (
@@ -656,22 +663,25 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         prorationBehavior?: "invoice" | "prorate";
       }
     ): Promise<PlanChangeResult> => {
-      if (!activeSubscription) {
+      if (!activeSubIdRef.current) {
         throw new Error("No active subscription to change");
       }
 
-      return planChangeMutation.mutateAsync({
-        subscriptionId: activeSubscription.id,
+      return planChangeRef.current({
+        subscriptionId: activeSubIdRef.current,
         productId,
         prorationBehavior: options?.prorationBehavior || "prorate",
       });
     },
-    [activeSubscription, planChangeMutation]
+    []
   );
 
+  const billingPortalRef = useRef(billingPortalMutation.mutateAsync);
+  billingPortalRef.current = billingPortalMutation.mutateAsync;
+
   const openBillingPortal = useCallback(async () => {
-    await billingPortalMutation.mutateAsync();
-  }, [billingPortalMutation]);
+    await billingPortalRef.current();
+  }, []);
 
   const refreshMembership = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
@@ -739,26 +749,45 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     [currentTier]
   );
 
-  const value: MembershipContextValue = {
-    currentTier,
-    tierConfig,
-    isLoading,
-    error,
-    subscriptions,
-    activeSubscription,
-    orders: [],
-    meters: [],
-    benefits: [],
-    upgradeToTier,
-    changePlan,
-    openBillingPortal,
-    refreshMembership,
-    hasFeature,
-    hasPermission,
-    isWithinLimit,
-    canUpgrade,
-    getPlanChangeType,
-  };
+  const value = useMemo<MembershipContextValue>(
+    () => ({
+      currentTier,
+      tierConfig,
+      isLoading,
+      error,
+      subscriptions,
+      activeSubscription,
+      orders: EMPTY_ORDERS,
+      meters: EMPTY_METERS,
+      benefits: EMPTY_BENEFITS,
+      upgradeToTier,
+      changePlan,
+      openBillingPortal,
+      refreshMembership,
+      hasFeature,
+      hasPermission,
+      isWithinLimit,
+      canUpgrade,
+      getPlanChangeType,
+    }),
+    [
+      currentTier,
+      tierConfig,
+      isLoading,
+      error,
+      subscriptions,
+      activeSubscription,
+      upgradeToTier,
+      changePlan,
+      openBillingPortal,
+      refreshMembership,
+      hasFeature,
+      hasPermission,
+      isWithinLimit,
+      canUpgrade,
+      getPlanChangeType,
+    ]
+  );
 
   return (
     <MembershipContext.Provider value={value}>
