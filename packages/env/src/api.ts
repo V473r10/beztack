@@ -44,7 +44,7 @@ export const env = createEnv({
     // Better Auth
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().url(),
-    APP_NAME: z.string().min(1).default("beztack"),
+    APP_NAME: z.string().min(1),
 
     // Polar
     POLAR_ACCESS_TOKEN: z.string().default(""),
