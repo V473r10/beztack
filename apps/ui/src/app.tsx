@@ -66,88 +66,82 @@ function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <PaymentProviderWrapper>
-          <MembershipProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Home />} index />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Settings />} path="settings" />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<OrganizationsPage />} path="organizations" />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Billing />} path="billing" />
-                </Route>
-                <Route
-                  element={
-                    <AdminRoute>
-                      <MainLayout />
-                    </AdminRoute>
-                  }
-                  path="admin"
-                >
-                  <Route element={<AdminDashboard />} index />
-                  <Route element={<UsersPage />} path="users" />
-                  <Route element={<AdminAnalytics />} path="analytics" />
-                  <Route element={<PlanSyncScreen />} path="plans" />
-                </Route>
-                <Route
-                  element={
-                    <PublicRoute>
-                      <AuthLayout />
-                    </PublicRoute>
-                  }
-                  path="auth"
-                >
-                  <Route element={<SignIn />} path="sign-in" />
-                  <Route element={<TwoFactor />} path="sign-in/two-factor" />
-                  <Route element={<SignUp />} path="sign-up" />
-                  <Route element={<Navigate replace to="sign-in" />} index />
-                </Route>
-                <Route element={<Pricing />} path="pricing" />
-                <Route element={<CheckoutSuccess />} path="checkout-success" />
-                <Route
-                  element={<SubscriptionWelcome />}
-                  path="subscription-welcome"
-                />
-                <Route element={<AI />} path="ai" />
-                <Route element={<OCR />} path="ocr" />
-                <Route element={<NuqsDemo />} path="nuqs-demo" />
-                {/* Redirect any unknown routes to home */}
-                <Route element={<Navigate replace to="/" />} path="*" />
-              </Routes>
-            </BrowserRouter>
-            <Toaster />
-          </MembershipProvider>
-        </PaymentProviderWrapper>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              element={
+                <PublicRoute>
+                  <AuthLayout />
+                </PublicRoute>
+              }
+              path="auth"
+            >
+              <Route element={<SignIn />} path="sign-in" />
+              <Route element={<TwoFactor />} path="sign-in/two-factor" />
+              <Route element={<SignUp />} path="sign-up" />
+              <Route element={<Navigate replace to="sign-in" />} index />
+            </Route>
+
+            {/* Todas las demás rutas con providers */}
+            <Route
+              element={
+                <PaymentProviderWrapper>
+                  <MembershipProvider>
+                    <Routes>
+                      <Route
+                        element={
+                          <ProtectedRoute>
+                            <MainLayout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route element={<Home />} index />
+                        <Route element={<Settings />} path="settings" />
+                        <Route
+                          element={<OrganizationsPage />}
+                          path="organizations"
+                        />
+                        <Route element={<Billing />} path="billing" />
+                      </Route>
+
+                      <Route
+                        element={
+                          <AdminRoute>
+                            <MainLayout />
+                          </AdminRoute>
+                        }
+                        path="admin"
+                      >
+                        <Route element={<AdminDashboard />} index />
+                        <Route element={<UsersPage />} path="users" />
+                        <Route element={<AdminAnalytics />} path="analytics" />
+                        <Route element={<PlanSyncScreen />} path="plans" />
+                      </Route>
+
+                      <Route element={<Pricing />} path="pricing" />
+                      <Route
+                        element={<CheckoutSuccess />}
+                        path="checkout-success"
+                      />
+                      <Route
+                        element={<SubscriptionWelcome />}
+                        path="subscription-welcome"
+                      />
+                      <Route element={<AI />} path="ai" />
+                      <Route element={<OCR />} path="ocr" />
+                      <Route element={<NuqsDemo />} path="nuqs-demo" />
+
+                      {/* Redirect any unknown routes to home */}
+                      <Route element={<Navigate replace to="/" />} path="*" />
+                    </Routes>
+                    <Toaster />
+                  </MembershipProvider>
+                </PaymentProviderWrapper>
+              }
+              path="/*"
+            />
+          </Routes>
+        </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>
   );
