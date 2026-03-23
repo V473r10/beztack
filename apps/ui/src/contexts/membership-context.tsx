@@ -397,7 +397,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   activeSubIdRef.current = activeSubscription?.id;
 
   const changePlan = useCallback(
-    async (
+    (
       productId: string,
       options?: {
         prorationBehavior?: "invoice" | "prorate";
