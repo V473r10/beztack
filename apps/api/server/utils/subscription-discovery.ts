@@ -1,5 +1,5 @@
 import { db, subscription as subscriptionTable } from "@beztack/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import type {
   PaymentProviderAdapter,
   Subscription,
@@ -24,7 +24,8 @@ export async function discoverSubscriptionsFromDb(
     .where(
       and(
         eq(subscriptionTable.userId, userId),
-        eq(subscriptionTable.provider, provider.provider)
+        eq(subscriptionTable.provider, provider.provider),
+        gt(subscriptionTable.currentPeriodEnd, new Date())
       )
     );
 

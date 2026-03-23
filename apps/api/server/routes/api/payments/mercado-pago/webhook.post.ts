@@ -15,9 +15,9 @@ import {
 import { eq } from "drizzle-orm";
 import { defineEventHandler, getHeader, readBody } from "h3";
 import { env } from "@/env";
+import { ensurePaymentProvider } from "@/lib/payments";
 import {
   createPaymentEvent,
-  mapPaymentStatusToEventType,
   mapSubscriptionStatusToEventType,
   paymentEvents,
 } from "@/server/utils/payment-events";
@@ -93,12 +93,17 @@ async function processWebhook(type: string, resourceId: string): Promise<void> {
 }
 
 async function handlePayment(paymentId: string): Promise<void> {
+  const provider = await ensurePaymentProvider();
   const mpPayment = await mp.payments.get(paymentId);
+
+  console.log("Payment:", mpPayment);
+
   if (!mpPayment.id) {
     throw new Error(`Payment ${paymentId} not found`);
   }
 
   const id = String(mpPayment.id);
+  // TODO: clear `beztack` reference on var name
   const beztackUserId = await findBeztackUserId(
     mpPayment.external_reference,
     mpPayment.payer?.email
@@ -119,19 +124,96 @@ async function handlePayment(paymentId: string): Promise<void> {
     },
   });
 
-  const eventType = mapPaymentStatusToEventType(mpPayment.status ?? "");
-  if (eventType) {
-    paymentEvents.emitPaymentEvent(
-      createPaymentEvent(eventType, {
-        id,
-        userId: beztackUserId,
-        status: mpPayment.status ?? "unknown",
-        amount: mpPayment.transaction_amount?.toString() ?? null,
-        currency: mpPayment.currency_id ?? null,
-        description: mpPayment.description ?? null,
-        payerEmail: mpPayment.payer?.email ?? null,
-      })
-    );
+  console.log("Payment Status:", mpPayment.status);
+  // After first approved payment on a prorated upgrade, adjust to full price
+  if (mpPayment.status === "approved") {
+    // TODO: Pasar el Full Ammount también, está en el external_reference
+    const metadata = decodeExternalReference(mpPayment.external_reference);
+
+    console.table({
+      metadata,
+    });
+
+    console.log("Full Amount:", metadata?.fullAmount);
+    const subscriptionId = (
+      mpPayment as {
+        point_of_interaction?: {
+          transaction_data?: {
+            subscription_id?: string;
+          };
+        };
+      }
+    ).point_of_interaction?.transaction_data?.subscription_id;
+    if (metadata?.fullAmount && subscriptionId) {
+      await adjustProratedSubscriptionAmount(
+        subscriptionId,
+        metadata.fullAmount
+      );
+    }
+
+    console.log("Previous Subscription ID:", metadata?.previousSubscriptionId);
+    // Cancel the old subscription
+    if (metadata?.previousSubscriptionId) {
+      await provider.cancelSubscription(metadata.previousSubscriptionId, true);
+      console.log("Old subscription cancelled");
+    }
+  }
+}
+
+/**
+ * If this payment belongs to a prorated upgrade subscription,
+ * update the subscription's transaction_amount to the full new tier price.
+ * This runs once after the first (discounted) payment is approved.
+ */
+async function adjustProratedSubscriptionAmount(
+  subId: string,
+  fullAmount: number
+): Promise<void> {
+  console.log("Adjusting subscription amount:", subId, fullAmount);
+  // Update the subscription's recurring amount to the full price
+  const result = await mp.subscriptions.update(subId, {
+    auto_recurring: {
+      transaction_amount: fullAmount,
+    },
+  });
+
+  console.log("Subscription update result:", result);
+
+  if (result.auto_recurring?.transaction_amount !== fullAmount) {
+    console.error("Failed to update subscription amount", result);
+    return;
+  }
+
+  console.log("Subscription updated:", result);
+}
+
+async function denormalizeSubscriptionState(opts: {
+  id: string;
+  tier: string | null;
+  status: string;
+  nextPaymentDate: Date | null;
+  organizationId: string | undefined;
+  userId: string | null;
+}): Promise<void> {
+  const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
+
+  const updates = {
+    subscriptionTier: opts.tier,
+    subscriptionStatus: opts.status,
+    subscriptionId: opts.id,
+    subscriptionValidUntil: opts.nextPaymentDate,
+  };
+
+  if (isOrgMode && opts.organizationId) {
+    await db
+      .update(schema.organization)
+      .set(updates)
+      .where(eq(schema.organization.id, opts.organizationId));
+  } else if (!isOrgMode && opts.userId) {
+    await db
+      .update(schema.user)
+      .set(updates)
+      .where(eq(schema.user.id, opts.userId));
   }
 }
 
@@ -167,29 +249,15 @@ async function handleSubscription(subscriptionId: string): Promise<void> {
   const tier = refMeta?.tier ?? null;
   const status = sub.status ?? "unknown";
   const nextPaymentDate = parseDate(sub.next_payment_date);
-  const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
 
-  if (isOrgMode && refMeta?.organizationId) {
-    await db
-      .update(schema.organization)
-      .set({
-        subscriptionTier: tier,
-        subscriptionStatus: status,
-        subscriptionId: id,
-        subscriptionValidUntil: nextPaymentDate,
-      })
-      .where(eq(schema.organization.id, refMeta.organizationId));
-  } else if (!isOrgMode && beztackUserId) {
-    await db
-      .update(schema.user)
-      .set({
-        subscriptionTier: tier,
-        subscriptionStatus: status,
-        subscriptionId: id,
-        subscriptionValidUntil: nextPaymentDate,
-      })
-      .where(eq(schema.user.id, beztackUserId));
-  }
+  await denormalizeSubscriptionState({
+    id,
+    tier,
+    status,
+    nextPaymentDate,
+    organizationId: refMeta?.organizationId,
+    userId: beztackUserId,
+  });
 
   const eventType = mapSubscriptionStatusToEventType(status);
   if (eventType) {
@@ -224,6 +292,7 @@ async function upsert(table: any, idCol: any, id: string, data: any) {
   }
 }
 
+// TODO: clear `beztack` reference on function name
 async function findBeztackUserId(
   externalReference: string | undefined | null,
   payerEmail: string | undefined | null

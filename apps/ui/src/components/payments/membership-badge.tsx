@@ -140,6 +140,11 @@ export function MembershipStatus({
           Renews {expiresAt.toLocaleDateString()}
         </span>
       )}
+      {expiresAt && !isActive && expiresAt > new Date() && (
+        <span className="text-muted-foreground text-xs">
+          You will keep your membership until {expiresAt.toLocaleDateString()}
+        </span>
+      )}
     </div>
   );
 }

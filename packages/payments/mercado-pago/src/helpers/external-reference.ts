@@ -5,6 +5,10 @@ type ExternalReferenceMetadata = {
   organizationId?: string;
   referenceId?: string;
   tier?: string;
+  proratedUpgrade?: boolean;
+  fullAmount?: number;
+  targetPlanId?: string;
+  previousSubscriptionId?: string;
 };
 
 function readString(
@@ -26,12 +30,17 @@ export function encodeExternalReference(options: {
   const organizationId = readString(options.metadata, "organizationId");
   const referenceId = readString(options.metadata, "referenceId");
   const tier = readString(options.metadata, "tier");
+  const previousSubscriptionId = readString(
+    options.metadata,
+    "previousSubscriptionId"
+  );
 
   console.table({
     userId,
     organizationId,
     referenceId,
     tier,
+    previousSubscriptionId,
   });
 
   const parts: string[] = [];
@@ -46,6 +55,30 @@ export function encodeExternalReference(options: {
   }
   if (referenceId) {
     parts.push(`ref=${referenceId}`);
+  }
+
+  const proratedUpgrade =
+    options.metadata?.proratedUpgrade === true ||
+    options.metadata?.proratedUpgrade === "true";
+  if (proratedUpgrade) {
+    parts.push("prorated=1");
+  }
+
+  if (previousSubscriptionId) {
+    parts.push(`prev=${previousSubscriptionId}`);
+  }
+
+  const fullAmount = options.metadata?.fullAmount;
+  if (typeof fullAmount === "number" || typeof fullAmount === "string") {
+    parts.push(`fullamt=${fullAmount}`);
+  }
+
+  const targetPlanId =
+    typeof options.metadata?.targetPlanId === "string"
+      ? options.metadata.targetPlanId
+      : undefined;
+  if (targetPlanId) {
+    parts.push(`tplan=${targetPlanId}`);
   }
 
   console.table({
@@ -112,6 +145,26 @@ export function decodeExternalReference(
   const tier = params.get("tier");
   if (tier) {
     metadata.tier = tier;
+  }
+
+  const prorated = params.get("prorated");
+  if (prorated === "1") {
+    metadata.proratedUpgrade = true;
+  }
+
+  const previousSubscriptionId = params.get("prev");
+  if (previousSubscriptionId) {
+    metadata.previousSubscriptionId = previousSubscriptionId;
+  }
+
+  const fullAmount = params.get("fullamt");
+  if (fullAmount) {
+    metadata.fullAmount = Number(fullAmount);
+  }
+
+  const targetPlanId = params.get("tplan");
+  if (targetPlanId) {
+    metadata.targetPlanId = targetPlanId;
   }
 
   return Object.keys(metadata).length > 0 ? metadata : undefined;

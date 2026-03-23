@@ -621,6 +621,9 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
       status?: "paused" | "authorized" | "cancelled";
       reason?: string;
       external_reference?: string;
+      auto_recurring?: {
+        transaction_amount?: number;
+      };
     }
   ): Promise<MPSubscriptionResponse> => {
     return mpFetch<MPSubscriptionResponse>(

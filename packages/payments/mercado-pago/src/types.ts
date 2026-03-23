@@ -223,6 +223,11 @@ export type MPPaymentResponse = {
   net_received_amount?: number;
   installments?: number;
   statement_descriptor?: string;
+  point_of_interaction?: {
+    transaction_data?: {
+      subscription_id?: string;
+    };
+  };
   card?: {
     first_six_digits?: string;
     last_four_digits?: string;

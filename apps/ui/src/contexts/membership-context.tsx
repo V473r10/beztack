@@ -433,6 +433,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       productId: string;
       billingPeriod: "monthly" | "yearly";
       metadata?: Record<string, unknown>;
+      upgrade?: boolean;
     }) => {
       const selectedProduct = productsQuery.data?.products.find(
         (product) => product.id === params.productId
@@ -455,6 +456,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
             billingPeriod: params.billingPeriod,
             successUrl: `${window.location.origin}/checkout-success`,
             cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
+            upgrade: params.upgrade,
             metadata: {
               billingPeriod: params.billingPeriod,
               ...params.metadata,
@@ -642,12 +644,13 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       await checkoutRef.current({
         productId: tierId,
         billingPeriod,
+        upgrade: !!activeSubscription,
         metadata: {
           organizationId,
         },
       });
     },
-    []
+    [activeSubscription]
   );
 
   const planChangeRef = useRef(planChangeMutation.mutateAsync);

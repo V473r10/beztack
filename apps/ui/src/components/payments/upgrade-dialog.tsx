@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Building2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Building2, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,15 +12,37 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMembership } from "@/contexts/membership-context";
+import { env } from "@/env";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { estimateProration } from "@/lib/proration";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
 import type { PricingTier } from "@/types/pricing";
 import { MembershipBadge } from "./membership-badge";
-import { PricingCard } from "./pricing-card";
+import { formatCurrency, PricingCard } from "./pricing-card";
 
 // Constants
 const MIN_TIERS_FOR_THREE_COLUMN = 3;
+
+type ProrationPreviewResponse = {
+  currentAmount: number;
+  newAmount: number;
+  unusedCredit: number;
+  proratedFirstPayment: number;
+  fullMonthlyAmount: number;
+  currency: string;
+  daysRemaining: number;
+  totalDays: number;
+  currentTier: string;
+  targetTier: string;
+};
+
+type ProrationDisplay = {
+  unusedCredit: number;
+  proratedAmount: number;
+  fullAmount: number;
+  daysRemaining: number;
+};
 
 export type UpgradeDialogProps = {
   open: boolean;
@@ -42,12 +64,87 @@ export function UpgradeDialog({
   );
   const [selectedTier, setSelectedTier] = useState<string>();
 
-  const { getPlanChangeType } = useMembership();
+  const { getPlanChangeType, activeSubscription } = useMembership();
+  const [hoveredTierId, setHoveredTierId] = useState<string>();
 
   const { data: allTiersRaw = [] } = useQuery<PricingTier[]>({
     queryKey: ["subscriptions", "products", "tiers"],
     queryFn: usePricingTiers,
   });
+
+  // Fetch server-side proration preview when a tier is hovered/selected
+  const previewTargetId = hoveredTierId ?? selectedTier;
+  const { data: serverPreview, isLoading: isPreviewLoading } =
+    useQuery<ProrationPreviewResponse>({
+      queryKey: ["proration-preview", previewTargetId, billingPeriod],
+      queryFn: async () => {
+        const params = new URLSearchParams();
+        if (previewTargetId) {
+          params.set("targetTierId", previewTargetId);
+        }
+        params.set("billingPeriod", billingPeriod);
+        const response = await fetch(
+          `${env.VITE_API_URL}/api/subscriptions/preview-upgrade?${params.toString()}`,
+          { credentials: "include" }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch proration preview");
+        }
+        return response.json() as Promise<ProrationPreviewResponse>;
+      },
+      enabled: !!activeSubscription && !!previewTargetId,
+      staleTime: 30_000,
+    });
+
+  // Client-side estimate as instant placeholder
+  const clientEstimate = useMemo(() => {
+    if (!(activeSubscription && previewTargetId)) {
+      return null;
+    }
+
+    const targetTier = allTiersRaw.find((t) => t.id === previewTargetId);
+    if (!targetTier) {
+      return null;
+    }
+
+    const currentAmount =
+      typeof activeSubscription.metadata?.billingAmount === "number"
+        ? activeSubscription.metadata.billingAmount
+        : 0;
+    const newAmount = targetTier.price[billingPeriod];
+    const periodStart = activeSubscription.currentPeriodStart ?? new Date();
+    const periodEnd = activeSubscription.currentPeriodEnd ?? new Date();
+
+    return estimateProration({
+      currentAmount,
+      newAmount,
+      currentPeriodStart:
+        periodStart instanceof Date ? periodStart : new Date(periodStart),
+      currentPeriodEnd:
+        periodEnd instanceof Date ? periodEnd : new Date(periodEnd),
+    });
+  }, [activeSubscription, previewTargetId, allTiersRaw, billingPeriod]);
+
+  // Normalize server and client shapes into a common display type
+  const prorationData: ProrationDisplay | null = useMemo(() => {
+    if (serverPreview) {
+      return {
+        unusedCredit: serverPreview.unusedCredit,
+        proratedAmount: serverPreview.proratedFirstPayment,
+        fullAmount: serverPreview.fullMonthlyAmount,
+        daysRemaining: serverPreview.daysRemaining,
+      };
+    }
+    if (clientEstimate) {
+      return {
+        unusedCredit: clientEstimate.unusedCredit,
+        proratedAmount: clientEstimate.proratedAmount,
+        fullAmount: clientEstimate.fullAmount,
+        daysRemaining: clientEstimate.daysRemaining,
+      };
+    }
+    return null;
+  }, [serverPreview, clientEstimate]);
 
   // Sort tiers by displayOrder and filter to upgrades only
   const allTiers = [...allTiersRaw].sort(
@@ -67,6 +164,12 @@ export function UpgradeDialog({
   const handleUpgrade = (tierId: string) => {
     setSelectedTier(tierId);
     onUpgrade(tierId, billingPeriod);
+  };
+
+  const handleTierHover = (tierId: string | undefined) => {
+    if (activeSubscription) {
+      setHoveredTierId(tierId);
+    }
   };
 
   // Helper function to calculate yearly savings (inline for now)
@@ -143,6 +246,43 @@ export function UpgradeDialog({
             </div>
           )}
 
+          {/* Proration Preview */}
+          {activeSubscription && prorationData && previewTargetId && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">Upgrade Preview</span>
+                    {isPreviewLoading && (
+                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                    <span>
+                      Credit from current plan:{" "}
+                      <span className="font-medium text-green-600 dark:text-green-400">
+                        -{formatCurrency(prorationData.unusedCredit)}
+                      </span>
+                    </span>
+                    <ArrowRight className="h-3 w-3" />
+                    <span>{prorationData.daysRemaining} days remaining</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-muted-foreground text-xs line-through">
+                    {formatCurrency(prorationData.fullAmount)}
+                  </div>
+                  <div className="font-bold text-lg">
+                    {formatCurrency(prorationData.proratedAmount)}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    then {formatCurrency(prorationData.fullAmount)}/mo
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Pricing Cards */}
           <div
             className={cn(
@@ -161,7 +301,10 @@ export function UpgradeDialog({
                 isLoading={isLoading && selectedTier === tier.id}
                 isPopular={tier.id === "pro"}
                 key={tier.id}
-                onSelect={handleUpgrade}
+                onSelect={(id: string) => {
+                  handleTierHover(tier.id);
+                  handleUpgrade(id);
+                }}
                 tier={tier}
               />
             ))}

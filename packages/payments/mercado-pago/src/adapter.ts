@@ -84,11 +84,11 @@ function buildSubscriptionBody(
   successUrl: string,
   currency: string
 ): Record<string, unknown> {
-  console.log("[MercadoPagoAdapter] buildSubscriptionBody", {
-    options,
-    successUrl,
-    currency,
-  });
+  // console.log("[MercadoPagoAdapter] buildSubscriptionBody", {
+  //   options,
+  //   successUrl,
+  //   currency,
+  // });
 
   const body: Record<string, unknown> = {
     payer_email: options.customerEmail,
@@ -115,9 +115,9 @@ function buildSubscriptionBody(
     metadata: options.metadata,
   });
 
-  console.log("[MercadoPagoAdapter] buildSubscriptionBody: externalReference", {
-    externalReference,
-  });
+  // console.log("[MercadoPagoAdapter] buildSubscriptionBody: externalReference", {
+  //   externalReference,
+  // });
 
   if (externalReference) {
     body.external_reference = externalReference;
@@ -438,9 +438,9 @@ export function createMercadoPagoAdapter(
     async createCheckout(
       options: CreateCheckoutOptions
     ): Promise<CheckoutResult> {
-      console.log("[MercadoPagoAdapter] createCheckout", {
-        options,
-      });
+      // console.log("[MercadoPagoAdapter] createCheckout", {
+      //   options,
+      // });
       const plan = await client.plans.get(options.productId);
 
       if (plan.status !== "active") {
@@ -449,9 +449,9 @@ export function createMercadoPagoAdapter(
         );
       }
 
-      console.log("[MercadoPagoAdapter] createCheckout: plan", {
-        plan,
-      });
+      // console.log("[MercadoPagoAdapter] createCheckout: plan", {
+      //   plan,
+      // });
 
       if (!plan.init_point) {
         throw new Error(
@@ -464,18 +464,18 @@ export function createMercadoPagoAdapter(
         metadata: options.metadata,
       });
 
-      console.log("[MercadoPagoAdapter] createCheckout: externalReference", {
-        externalReference,
-      });
+      // console.log("[MercadoPagoAdapter] createCheckout: externalReference", {
+      //   externalReference,
+      // });
 
       const separator = plan.init_point.includes("?") ? "&" : "?";
       const checkoutUrl = externalReference
         ? `${plan.init_point}${separator}external_reference=${encodeURIComponent(externalReference)}`
         : plan.init_point;
 
-      console.log("[MercadoPagoAdapter] createCheckout: checkoutUrl", {
-        checkoutUrl,
-      });
+      // console.log("[MercadoPagoAdapter] createCheckout: checkoutUrl", {
+      //   checkoutUrl,
+      // });
 
       return {
         id: `${plan.id}_${Date.now()}`,
@@ -493,7 +493,7 @@ export function createMercadoPagoAdapter(
       );
       const metadata = decodeExternalReference(subscription.external_reference);
 
-      return {
+      const result = {
         id: subscription.id,
         status: mapMPStatus(subscription.status),
         productId: options.productId ?? "",
@@ -507,8 +507,13 @@ export function createMercadoPagoAdapter(
           ? new Date(subscription.next_payment_date)
           : undefined,
         cancelAtPeriodEnd: false,
-        metadata: metadata ?? options.metadata,
+        metadata: {
+          initPoint: subscription.init_point,
+          ...(metadata ?? options.metadata),
+        },
       };
+
+      return result;
     },
 
     async getSubscription(
@@ -594,7 +599,7 @@ export function createMercadoPagoAdapter(
 
       return {
         id: canceled.id ?? subscriptionId,
-        status: "cancelled",
+        status: "canceled",
         productId: canceled.preapproval_plan_id ?? "",
         productName: canceled.reason,
         customerId: canceledMetadata?.userId ?? String(canceled.payer_id ?? ""),

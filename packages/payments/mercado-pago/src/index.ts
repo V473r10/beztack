@@ -17,6 +17,9 @@ export {
   encodeExternalReference,
 } from "./helpers/external-reference.js";
 
+export type { ProrationInput, ProrationResult } from "./helpers/proration.js";
+export { calculateProration } from "./helpers/proration.js";
+
 export type { SupportedLocale, TranslationKeys } from "./i18n/index.js";
 // i18n
 export {
