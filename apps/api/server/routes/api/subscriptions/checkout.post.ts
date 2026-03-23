@@ -77,8 +77,6 @@ async function handleProratedUpgrade(options: {
     periodEnd,
   });
 
-  console.log("Proration calculated:", proration);
-
   // Create new subscription with prorated first payment
   const newSub = await provider.createSubscription({
     customerEmail: userEmail,
@@ -98,8 +96,6 @@ async function handleProratedUpgrade(options: {
       previousSubscriptionId: activeSub.id,
     },
   });
-
-  console.log("New subscription created:", newSub);
 
   const checkoutUrl =
     typeof newSub.metadata?.initPoint === "string"
@@ -272,9 +268,6 @@ export default defineEventHandler(async (event) => {
         });
       }
 
-      console.log("Active subscription found:", activeSub);
-
-      console.log("Handling prorated upgrade...");
       const result = await handleProratedUpgrade({
         provider,
         activeSub,
@@ -282,8 +275,6 @@ export default defineEventHandler(async (event) => {
         metadata: checkoutMetadata,
         userEmail: auth.user.email,
       });
-
-      console.log("Prorated upgrade handled successfully");
 
       return {
         provider: provider.provider,
