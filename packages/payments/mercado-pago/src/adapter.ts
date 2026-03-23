@@ -180,18 +180,6 @@ export type MercadoPagoAdapterConfig = {
   integratorId?: string;
 };
 
-function getListSubscriptionsDebugContext(
-  options: ListSubscriptionsOptions
-): Record<string, string | number | null> {
-  return {
-    customerId: options.customerId ?? null,
-    customerEmail: maskEmail(options.customerEmail) ?? null,
-    requestedStatus: options.status ?? null,
-    limit: options.limit ?? null,
-    offset: options.offset ?? null,
-  };
-}
-
 function mapSearchResult(sub: MPPreapproval): {
   subscription: Subscription;
   debug: Record<string, unknown>;
@@ -237,20 +225,6 @@ function mapSearchResult(sub: MPPreapproval): {
       metadata: decodedRef,
     },
   };
-}
-
-function logListSubscriptionsSuccess(
-  options: ListSubscriptionsOptions,
-  total: number,
-  mappedResults: ReturnType<typeof mapSearchResult>[]
-): void {
-  // biome-ignore lint/suspicious/noConsole: Debugging Mercado Pago subscription search results
-  console.log("[MercadoPagoAdapter] listSubscriptions:success", {
-    ...getListSubscriptionsDebugContext(options),
-    total,
-    count: mappedResults.length,
-    subscriptions: mappedResults.map(({ debug }) => debug),
-  });
 }
 
 export function createMercadoPagoAdapter(
@@ -574,30 +548,13 @@ export function createMercadoPagoAdapter(
         offset: options.offset,
       };
 
-      // logListSubscriptionsStart(options, searchParams);
+      const result = await client.subscriptions.search(searchParams);
+      const mappedResults = result.results.map(mapSearchResult);
+      const subscriptions = mappedResults.map(
+        ({ subscription }) => subscription
+      );
 
-      if (options.customerId) {
-        // logIgnoredCustomerId(options.customerId);
-      }
-
-      try {
-        const result = await client.subscriptions.search(searchParams);
-        const mappedResults = result.results.map(mapSearchResult);
-        const subscriptions = mappedResults.map(
-          ({ subscription }) => subscription
-        );
-
-        logListSubscriptionsSuccess(
-          options,
-          result.paging.total,
-          mappedResults
-        );
-
-        return subscriptions;
-      } catch (error) {
-        // logListSubscriptionsError(options, error);
-        throw error;
-      }
+      return subscriptions;
     },
 
     async createCustomer(
