@@ -432,8 +432,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       if (!tierConfig) {
         return false;
       }
-      return tierConfig.features.some((value) =>
-        value.toLowerCase().includes(feature.toLowerCase())
+      return tierConfig.features.some((featureValue) =>
+        featureValue.toLowerCase().includes(feature.toLowerCase())
       );
     },
     [tierConfig]
