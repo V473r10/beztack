@@ -192,37 +192,6 @@ function getListSubscriptionsDebugContext(
   };
 }
 
-function logListSubscriptionsStart(
-  options: ListSubscriptionsOptions,
-  searchParams: {
-    payer_email?: string;
-    status?: SubscriptionStatus;
-    limit?: number;
-    offset?: number;
-  }
-): void {
-  // biome-ignore lint/suspicious/noConsole: Debugging Mercado Pago subscription search inputs
-  console.log("[MercadoPagoAdapter] listSubscriptions:start", {
-    ...getListSubscriptionsDebugContext(options),
-    searchParams: {
-      payer_email: maskEmail(searchParams.payer_email) ?? null,
-      status: searchParams.status ?? null,
-      limit: searchParams.limit ?? null,
-      offset: searchParams.offset ?? null,
-    },
-  });
-}
-
-function logIgnoredCustomerId(customerId: string): void {
-  // biome-ignore lint/suspicious/noConsole: Debugging unsupported customerId filter in Mercado Pago subscription search
-  console.log("[MercadoPagoAdapter] listSubscriptions:ignored-filter", {
-    filter: "customerId",
-    customerId,
-    reason:
-      "Mercado Pago search only supports payer_email, status, limit and offset",
-  });
-}
-
 function mapSearchResult(sub: MPPreapproval): {
   subscription: Subscription;
   debug: Record<string, unknown>;
@@ -281,23 +250,6 @@ function logListSubscriptionsSuccess(
     total,
     count: mappedResults.length,
     subscriptions: mappedResults.map(({ debug }) => debug),
-  });
-}
-
-function logListSubscriptionsError(
-  options: ListSubscriptionsOptions,
-  error: unknown
-): void {
-  // biome-ignore lint/suspicious/noConsole: Debugging Mercado Pago subscription search failures
-  console.log("[MercadoPagoAdapter] listSubscriptions:error", {
-    ...getListSubscriptionsDebugContext(options),
-    error:
-      error instanceof Error
-        ? {
-            name: error.name,
-            message: error.message,
-          }
-        : error,
   });
 }
 
