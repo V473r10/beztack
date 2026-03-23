@@ -23,9 +23,6 @@ export function encodeExternalReference(options: {
   customerId?: string;
   metadata?: Record<string, unknown>;
 }): string | undefined {
-  console.log("[MercadoPagoAdapter] encodeExternalReference", {
-    options,
-  });
   const userId = readString(options.metadata, "userId") ?? options.customerId;
   const organizationId = readString(options.metadata, "organizationId");
   const referenceId = readString(options.metadata, "referenceId");
@@ -34,14 +31,6 @@ export function encodeExternalReference(options: {
     options.metadata,
     "previousSubscriptionId"
   );
-
-  console.table({
-    userId,
-    organizationId,
-    referenceId,
-    tier,
-    previousSubscriptionId,
-  });
 
   const parts: string[] = [];
   if (userId) {
@@ -81,23 +70,10 @@ export function encodeExternalReference(options: {
     parts.push(`tplan=${targetPlanId}`);
   }
 
-  console.table({
-    parts,
-  });
-
   if (parts.length === 0) {
-    console.log("[MercadoPagoAdapter] encodeExternalReference: no parts");
     return options.customerId ?? referenceId;
   }
-
-  console.log("[MercadoPagoAdapter] encodeExternalReference: parts", {
-    parts,
-  });
-
   const result = `${EXTERNAL_REFERENCE_PREFIX}${parts.join("&")}`;
-  console.log("[MercadoPagoAdapter] encodeExternalReference: result", {
-    result,
-  });
 
   return result;
 }
@@ -105,18 +81,11 @@ export function encodeExternalReference(options: {
 export function decodeExternalReference(
   rawExternalReference?: string
 ): ExternalReferenceMetadata | undefined {
-  console.log("[MercadoPagoAdapter] decodeExternalReference", {
-    rawExternalReference,
-  });
   if (!rawExternalReference) {
-    console.log(
-      "[MercadoPagoAdapter] decodeExternalReference: no rawExternalReference"
-    );
     return;
   }
 
   if (!rawExternalReference.startsWith(EXTERNAL_REFERENCE_PREFIX)) {
-    console.log("[MercadoPagoAdapter] decodeExternalReference: not prefixed");
     return {
       userId: rawExternalReference,
       referenceId: rawExternalReference,

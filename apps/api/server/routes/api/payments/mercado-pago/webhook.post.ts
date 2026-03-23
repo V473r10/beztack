@@ -96,8 +96,6 @@ async function handlePayment(paymentId: string): Promise<void> {
   const provider = await ensurePaymentProvider();
   const mpPayment = await mp.payments.get(paymentId);
 
-  console.log("Payment:", mpPayment);
-
   if (!mpPayment.id) {
     throw new Error(`Payment ${paymentId} not found`);
   }
@@ -124,17 +122,10 @@ async function handlePayment(paymentId: string): Promise<void> {
     },
   });
 
-  console.log("Payment Status:", mpPayment.status);
   // After first approved payment on a prorated upgrade, adjust to full price
   if (mpPayment.status === "approved") {
     // TODO: Pasar el Full Ammount también, está en el external_reference
     const metadata = decodeExternalReference(mpPayment.external_reference);
-
-    console.table({
-      metadata,
-    });
-
-    console.log("Full Amount:", metadata?.fullAmount);
     const subscriptionId = (
       mpPayment as {
         point_of_interaction?: {
@@ -151,11 +142,9 @@ async function handlePayment(paymentId: string): Promise<void> {
       );
     }
 
-    console.log("Previous Subscription ID:", metadata?.previousSubscriptionId);
     // Cancel the old subscription
     if (metadata?.previousSubscriptionId) {
       await provider.cancelSubscription(metadata.previousSubscriptionId, true);
-      console.log("Old subscription cancelled");
     }
   }
 }
@@ -169,7 +158,6 @@ async function adjustProratedSubscriptionAmount(
   subId: string,
   fullAmount: number
 ): Promise<void> {
-  console.log("Adjusting subscription amount:", subId, fullAmount);
   // Update the subscription's recurring amount to the full price
   const result = await mp.subscriptions.update(subId, {
     auto_recurring: {
@@ -177,14 +165,9 @@ async function adjustProratedSubscriptionAmount(
     },
   });
 
-  console.log("Subscription update result:", result);
-
   if (result.auto_recurring?.transaction_amount !== fullAmount) {
-    console.error("Failed to update subscription amount", result);
     return;
   }
-
-  console.log("Subscription updated:", result);
 }
 
 async function denormalizeSubscriptionState(opts: {
