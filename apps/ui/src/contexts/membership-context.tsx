@@ -80,7 +80,7 @@ export type MembershipContextValue = {
     }
   ) => Promise<PlanChangeResult>;
   openBillingPortal: (returnUrl?: string) => Promise<void>;
-  refreshMembership: () => void;
+  refreshMembership: () => Promise<void>;
   hasFeature: (feature: string) => boolean;
   hasPermission: (permission: string) => boolean;
   isWithinLimit: (limitKey: string, currentUsage: number) => boolean;
@@ -423,8 +423,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     await billingPortalRef.current();
   }, []);
 
-  const refreshMembership = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+  const refreshMembership = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
   }, [queryClient]);
 
   const hasFeature = useCallback(

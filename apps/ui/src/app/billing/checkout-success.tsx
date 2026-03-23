@@ -47,7 +47,7 @@ export default function CheckoutSuccess() {
 
   // Refresh membership data when component mounts
   useEffect(() => {
-    refreshMembership();
+    refreshMembership().catch((error: unknown) => String(error));
   }, [refreshMembership]);
 
   const handleGoToDashboard = () => {
