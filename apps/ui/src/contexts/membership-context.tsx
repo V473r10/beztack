@@ -273,8 +273,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       toast.success("Plan updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to change plan");
+    onError: (mutationError: Error) => {
+      toast.error(mutationError.message || "Failed to change plan");
     },
   });
 
@@ -312,8 +312,10 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     onSuccess: () => {
       toast.success("Opening billing portal...");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to open billing portal");
+    onError: (billingPortalError: Error) => {
+      toast.error(
+        billingPortalError.message || "Failed to open billing portal"
+      );
     },
   });
 
