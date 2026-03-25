@@ -22,10 +22,18 @@ export default defineEventHandler(async (event) => {
     offset,
   });
 
-  // DB-assisted fallback: if provider search found nothing,
-  // discover via local DB and verify against provider API
   if (subscriptions.length === 0) {
     subscriptions = await discoverSubscriptionsFromDb(auth.user.id, provider);
+  } else {
+    // Merge DB-discovered subscriptions (e.g. cancelled but still within
+    // their billing period) that the provider search missed.
+    const dbSubs = await discoverSubscriptionsFromDb(auth.user.id, provider);
+    const existingIds = new Set(subscriptions.map((s) => s.id));
+    for (const dbSub of dbSubs) {
+      if (!existingIds.has(dbSub.id)) {
+        subscriptions.push(dbSub);
+      }
+    }
   }
 
   return {

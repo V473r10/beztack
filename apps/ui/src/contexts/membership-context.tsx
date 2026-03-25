@@ -323,23 +323,28 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const subscriptions =
     subscriptionsQuery.data?.subscriptions ?? EMPTY_SUBSCRIPTIONS;
 
-  const activeSubscription =
-    // TODO: We have a miss guardrail on creating a subscription so, a customer can have multiple subscriptions right now
-    subscriptions.find((sub) => {
-      if (sub.status === "active") {
-        return true;
-      }
+  const activeSubscription = (() => {
+    const isValidSub = (sub: Subscription) =>
+      sub.status === "active" ||
+      (sub.status === "canceled" &&
+        sub.currentPeriodEnd !== undefined &&
+        new Date(sub.currentPeriodEnd) > new Date());
 
-      if (
-        sub.status === "canceled" &&
-        sub.currentPeriodEnd &&
-        new Date(sub.currentPeriodEnd) > new Date()
-      ) {
-        return true;
-      }
+    const validSubs = subscriptions.filter(isValidSub);
 
-      return false;
-    }) || null;
+    // When a downgrade is pending, prefer the original (non-downgrade)
+    // subscription so the UI shows the current tier until it expires.
+    if (validSubs.length > 1) {
+      const nonDowngrade = validSubs.find(
+        (sub) => sub.metadata?.proratedDowngrade !== true
+      );
+      if (nonDowngrade) {
+        return nonDowngrade;
+      }
+    }
+
+    return validSubs.at(0) ?? null;
+  })();
 
   // TODO: Mercado Pago no tiene metadata, no estamos obteniendo ningún tier, esto hay que sacarlo de la base.
 

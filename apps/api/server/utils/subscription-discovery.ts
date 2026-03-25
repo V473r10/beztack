@@ -35,9 +35,9 @@ export async function discoverSubscriptionsFromDb(
     const subId = dbSub.providerSubscriptionId ?? dbSub.id;
     const fresh = await provider.getSubscription(subId);
     if (fresh) {
-      const dbTier = (dbSub.metadata as Record<string, unknown>)?.tier;
-      if (!fresh.metadata?.tier && typeof dbTier === "string") {
-        fresh.metadata = { ...fresh.metadata, tier: dbTier };
+      const dbMeta = dbSub.metadata as Record<string, unknown> | undefined;
+      if (dbMeta) {
+        fresh.metadata = { ...dbMeta, ...fresh.metadata };
       }
       results.push(fresh);
     }

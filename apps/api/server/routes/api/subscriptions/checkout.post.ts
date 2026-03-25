@@ -355,16 +355,6 @@ export default defineEventHandler(async (event) => {
       );
       const isDowngrade = selectedProduct.price.amount < currentBilling.amount;
 
-      // biome-ignore lint/suspicious/noConsole: temporary debug log
-      console.log("[checkout] plan change detection", {
-        selectedProductPrice: selectedProduct.price.amount,
-        currentBillingAmount: currentBilling.amount,
-        isDowngrade,
-        activeSubId: activeSub.id,
-        activeSubProductId: activeSub.productId,
-        metaBillingAmount: activeSub.metadata?.billingAmount,
-      });
-
       if (isDowngrade) {
         const result = await handleProratedDowngrade({
           provider,

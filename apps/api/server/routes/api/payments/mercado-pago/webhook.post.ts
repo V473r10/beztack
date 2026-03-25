@@ -232,6 +232,28 @@ async function handleDowngradeTransition(
   return tier;
 }
 
+function buildSubscriptionDbMetadata(
+  refMeta: ReturnType<typeof decodeExternalReference>,
+  payerEmail?: string,
+  reason?: string
+): Record<string, unknown> {
+  const meta: Record<string, unknown> = {
+    payerEmail,
+    reason,
+    tier: refMeta?.tier,
+  };
+  if (refMeta?.proratedDowngrade) {
+    meta.proratedDowngrade = true;
+  }
+  if (refMeta?.previousTier) {
+    meta.previousTier = refMeta.previousTier;
+  }
+  if (refMeta?.previousSubscriptionId) {
+    meta.previousSubscriptionId = refMeta.previousSubscriptionId;
+  }
+  return meta;
+}
+
 async function handleSubscription(subscriptionId: string): Promise<void> {
   const sub = await mp.subscriptions.get(subscriptionId);
   if (!sub.id) {
@@ -254,11 +276,7 @@ async function handleSubscription(subscriptionId: string): Promise<void> {
     status: sub.status ?? "unknown",
     externalReference: sub.external_reference ?? null,
     currentPeriodEnd: parseDate(sub.next_payment_date),
-    metadata: {
-      payerEmail: sub.payer_email,
-      reason: sub.reason,
-      tier: refMeta?.tier,
-    },
+    metadata: buildSubscriptionDbMetadata(refMeta, sub.payer_email, sub.reason),
   });
 
   const tier = refMeta?.tier ?? null;
