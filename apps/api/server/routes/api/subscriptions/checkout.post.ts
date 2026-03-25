@@ -12,6 +12,7 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
 import type { Product } from "@/lib/payments/types";
+import { resolveCurrentBillingAmount } from "@/server/utils/billing-amount-resolver";
 import { requireAuth } from "@/server/utils/membership";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 
@@ -68,25 +69,15 @@ async function handleProratedUpgrade(options: {
   userEmail: string;
 }): Promise<{ id: string; url: string }> {
   const { provider, activeSub, selectedProduct, metadata, userEmail } = options;
-  const currentAmount =
-    typeof activeSub.metadata?.billingAmount === "number"
-      ? activeSub.metadata.billingAmount
-      : 0;
-  const currentCurrency =
-    typeof activeSub.metadata?.billingCurrency === "string"
-      ? activeSub.metadata.billingCurrency
-      : "UYU";
-  const currentInterval =
-    typeof activeSub.metadata?.billingInterval === "string"
-      ? activeSub.metadata.billingInterval
-      : "month";
+
+  const currentBilling = await resolveCurrentBillingAmount(activeSub, provider);
 
   const periodStart = activeSub.currentPeriodStart ?? new Date();
   const periodEnd = activeSub.currentPeriodEnd ?? new Date();
   const newAmount = selectedProduct.price.amount;
 
   const proration = calculateProration({
-    currentAmount,
+    currentAmount: currentBilling.amount,
     newAmount,
     periodStart,
     periodEnd,
@@ -99,8 +90,8 @@ async function handleProratedUpgrade(options: {
     customPlan: {
       reason: selectedProduct.name,
       amount: proration.proratedAmount,
-      currency: currentCurrency,
-      interval: currentInterval as "month" | "year" | "day" | "week",
+      currency: currentBilling.currency,
+      interval: currentBilling.interval as "month" | "year" | "day" | "week",
       intervalCount: 1,
     },
     metadata: {

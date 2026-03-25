@@ -17,6 +17,7 @@ import { createError, defineEventHandler, getQuery } from "h3";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
+import { resolveCurrentBillingAmount } from "@/server/utils/billing-amount-resolver";
 import { requireAuth } from "@/server/utils/membership";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 
@@ -124,17 +125,9 @@ export default defineEventHandler(async (event) => {
     auth.user.email
   );
 
-  const currentAmount =
-    typeof activeSub.metadata?.billingAmount === "number"
-      ? activeSub.metadata.billingAmount
-      : 0;
-  const currentCurrency =
-    typeof activeSub.metadata?.billingCurrency === "string"
-      ? activeSub.metadata.billingCurrency
-      : "UYU";
+  const currentBilling = await resolveCurrentBillingAmount(activeSub, provider);
 
   const periodStart = activeSub.currentPeriodStart ?? new Date();
-  // Con mercado pago no estamos trayendo el currentPeriodEnd
   const periodEnd = activeSub.currentPeriodEnd ?? new Date();
 
   const targetProduct = await resolveTargetProduct(
@@ -145,19 +138,19 @@ export default defineEventHandler(async (event) => {
   );
 
   const proration = calculateProration({
-    currentAmount,
+    currentAmount: currentBilling.amount,
     newAmount: targetProduct.price.amount,
     periodStart,
     periodEnd,
   });
 
   return {
-    currentAmount,
+    currentAmount: currentBilling.amount,
     newAmount: targetProduct.price.amount,
     unusedCredit: proration.unusedCredit,
     proratedFirstPayment: proration.proratedAmount,
     fullMonthlyAmount: proration.fullAmount,
-    currency: currentCurrency,
+    currency: currentBilling.currency,
     daysRemaining: proration.daysRemaining,
     totalDays: proration.totalDays,
     currentTier: extractTierName(activeSub.metadata, activeSub.productName),
