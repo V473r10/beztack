@@ -111,6 +111,10 @@ export type CreateSubscriptionOptions = {
     currency: string;
     interval: BillingInterval;
     intervalCount: number;
+    freeTrial?: {
+      frequency: number;
+      frequencyType: "days" | "months";
+    };
   };
 };
 

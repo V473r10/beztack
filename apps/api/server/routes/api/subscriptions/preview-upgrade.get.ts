@@ -142,24 +142,52 @@ export default defineEventHandler(async (event) => {
     billingPeriod
   );
 
+  const newAmount = targetProduct.price.amount;
+  const isDowngrade = newAmount < currentBilling.amount;
+
   const proration = calculateProration({
     currentAmount: currentBilling.amount,
-    newAmount: targetProduct.price.amount,
+    newAmount,
     periodStart,
     periodEnd,
   });
 
+  const currentTier = extractTierName(
+    activeSub.metadata,
+    activeSub.productName
+  );
+  const targetTier = extractTierName(
+    targetProduct.metadata,
+    targetProduct.name
+  );
+
+  if (isDowngrade) {
+    return {
+      direction: "downgrade" as const,
+      currentAmount: currentBilling.amount,
+      newAmount,
+      trialDays: proration.daysRemaining,
+      savings: currentBilling.amount - newAmount,
+      currency: currentBilling.currency,
+      currentTier,
+      targetTier,
+      currentSubscriptionId: activeSub.id,
+      targetProductId: targetProduct.id,
+    };
+  }
+
   return {
+    direction: "upgrade" as const,
     currentAmount: currentBilling.amount,
-    newAmount: targetProduct.price.amount,
+    newAmount,
     unusedCredit: proration.unusedCredit,
     proratedFirstPayment: proration.proratedAmount,
     fullMonthlyAmount: proration.fullAmount,
     currency: currentBilling.currency,
     daysRemaining: proration.daysRemaining,
     totalDays: proration.totalDays,
-    currentTier: extractTierName(activeSub.metadata, activeSub.productName),
-    targetTier: extractTierName(targetProduct.metadata, targetProduct.name),
+    currentTier,
+    targetTier,
     currentSubscriptionId: activeSub.id,
     targetProductId: targetProduct.id,
   };

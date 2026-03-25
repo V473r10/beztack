@@ -127,6 +127,76 @@ async function handleProratedUpgrade(options: {
   };
 }
 
+const MILLISECONDS_PER_DAY = 86_400_000;
+
+async function handleProratedDowngrade(options: {
+  provider: PaymentProviderAdapter;
+  activeSub: Subscription;
+  selectedProduct: Product;
+  metadata: Record<string, unknown>;
+  userEmail: string;
+}): Promise<{ id: string; url: string }> {
+  const { provider, activeSub, selectedProduct, metadata, userEmail } = options;
+
+  const currentBilling = await resolveCurrentBillingAmount(activeSub, provider);
+
+  const periodEnd =
+    activeSub.currentPeriodEnd ??
+    estimatePeriodEnd(activeSub, currentBilling.interval);
+
+  const now = new Date();
+  const daysRemaining = Math.max(
+    Math.ceil((periodEnd.getTime() - now.getTime()) / MILLISECONDS_PER_DAY),
+    1
+  );
+
+  const currentTier =
+    typeof activeSub.metadata?.tier === "string"
+      ? activeSub.metadata.tier
+      : undefined;
+
+  const newSub = await provider.createSubscription({
+    customerEmail: userEmail,
+    customerId: activeSub.customerId,
+    customPlan: {
+      reason: selectedProduct.name,
+      amount: selectedProduct.price.amount,
+      currency: currentBilling.currency,
+      interval: currentBilling.interval as "month" | "year" | "day" | "week",
+      intervalCount: 1,
+      freeTrial: {
+        frequency: daysRemaining,
+        frequencyType: "days",
+      },
+    },
+    metadata: {
+      ...metadata,
+      proratedDowngrade: true,
+      previousSubscriptionId: activeSub.id,
+      previousTier: currentTier,
+      targetPlanId: selectedProduct.id,
+    },
+  });
+
+  const checkoutUrl =
+    typeof newSub.metadata?.initPoint === "string"
+      ? newSub.metadata.initPoint
+      : undefined;
+
+  if (!checkoutUrl) {
+    throw createError({
+      statusCode: 500,
+      message:
+        "Mercado Pago did not return a checkout URL for the downgrade subscription",
+    });
+  }
+
+  return {
+    id: newSub.id,
+    url: checkoutUrl,
+  };
+}
+
 type CheckoutInput = z.infer<typeof checkoutSchema>;
 
 function resolveCheckoutProduct(
@@ -264,7 +334,7 @@ export default defineEventHandler(async (event) => {
       productTierId
     );
 
-    // Prorated upgrade flow (MercadoPago only)
+    // Prorated plan change flow (MercadoPago only)
     if (parsed.upgrade && provider.provider === "mercadopago") {
       const activeSub = await findActiveSubscription(
         provider,
@@ -275,8 +345,41 @@ export default defineEventHandler(async (event) => {
       if (!activeSub) {
         throw createError({
           statusCode: 400,
-          message: "No active subscription found to upgrade from",
+          message: "No active subscription found to change from",
         });
+      }
+
+      const currentBilling = await resolveCurrentBillingAmount(
+        activeSub,
+        provider
+      );
+      const isDowngrade = selectedProduct.price.amount < currentBilling.amount;
+
+      // biome-ignore lint/suspicious/noConsole: temporary debug log
+      console.log("[checkout] plan change detection", {
+        selectedProductPrice: selectedProduct.price.amount,
+        currentBillingAmount: currentBilling.amount,
+        isDowngrade,
+        activeSubId: activeSub.id,
+        activeSubProductId: activeSub.productId,
+        metaBillingAmount: activeSub.metadata?.billingAmount,
+      });
+
+      if (isDowngrade) {
+        const result = await handleProratedDowngrade({
+          provider,
+          activeSub,
+          selectedProduct,
+          metadata: checkoutMetadata,
+          userEmail: auth.user.email,
+        });
+
+        return {
+          provider: provider.provider,
+          checkoutId: result.id,
+          checkoutUrl: result.url,
+          downgrade: true,
+        };
       }
 
       const result = await handleProratedUpgrade({

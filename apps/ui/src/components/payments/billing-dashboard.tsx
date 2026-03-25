@@ -362,15 +362,13 @@ export function BillingDashboard({
                 Manage Billing
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
-              {currentTier !== "ultimate" && (
-                <Button
-                  disabled={isLoading}
-                  onClick={() => setShowUpgradeDialog(true)}
-                >
-                  <ArrowUpRight className="mr-2 h-4 w-4" />
-                  Upgrade Plan
-                </Button>
-              )}
+              <Button
+                disabled={isLoading}
+                onClick={() => setShowUpgradeDialog(true)}
+              >
+                <ArrowUpRight className="mr-2 h-4 w-4" />
+                Change Plan
+              </Button>
             </div>
           </CardContent>
         </Card>

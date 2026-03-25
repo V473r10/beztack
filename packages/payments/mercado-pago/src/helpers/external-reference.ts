@@ -6,6 +6,8 @@ type ExternalReferenceMetadata = {
   referenceId?: string;
   tier?: string;
   proratedUpgrade?: boolean;
+  proratedDowngrade?: boolean;
+  previousTier?: string;
   fullAmount?: number;
   targetPlanId?: string;
   previousSubscriptionId?: string;
@@ -19,63 +21,64 @@ function readString(
   return typeof value === "string" ? value : undefined;
 }
 
-export function encodeExternalReference(options: {
-  customerId?: string;
-  metadata?: Record<string, unknown>;
-}): string | undefined {
-  const userId = readString(options.metadata, "userId") ?? options.customerId;
-  const organizationId = readString(options.metadata, "organizationId");
-  const referenceId = readString(options.metadata, "referenceId");
-  const tier = readString(options.metadata, "tier");
-  const previousSubscriptionId = readString(
-    options.metadata,
-    "previousSubscriptionId"
-  );
+function isTruthy(value: unknown): boolean {
+  return value === true || value === "true";
+}
 
+function pushStringPart(
+  parts: string[],
+  key: string,
+  value: string | undefined
+): void {
+  if (value) {
+    parts.push(`${key}=${value}`);
+  }
+}
+
+function buildReferenceParts(
+  metadata: Record<string, unknown> | undefined,
+  customerId: string | undefined
+): string[] {
+  const userId = readString(metadata, "userId") ?? customerId;
   const parts: string[] = [];
-  if (userId) {
-    parts.push(`uid=${userId}`);
-  }
-  if (organizationId) {
-    parts.push(`org=${organizationId}`);
-  }
-  if (tier) {
-    parts.push(`tier=${tier}`);
-  }
-  if (referenceId) {
-    parts.push(`ref=${referenceId}`);
-  }
 
-  const proratedUpgrade =
-    options.metadata?.proratedUpgrade === true ||
-    options.metadata?.proratedUpgrade === "true";
-  if (proratedUpgrade) {
+  pushStringPart(parts, "uid", userId);
+  pushStringPart(parts, "org", readString(metadata, "organizationId"));
+  pushStringPart(parts, "tier", readString(metadata, "tier"));
+  pushStringPart(parts, "ref", readString(metadata, "referenceId"));
+
+  if (isTruthy(metadata?.proratedUpgrade)) {
     parts.push("prorated=1");
   }
-
-  if (previousSubscriptionId) {
-    parts.push(`prev=${previousSubscriptionId}`);
+  if (isTruthy(metadata?.proratedDowngrade)) {
+    parts.push("downgrade=1");
   }
 
-  const fullAmount = options.metadata?.fullAmount;
+  pushStringPart(parts, "prevtier", readString(metadata, "previousTier"));
+  pushStringPart(parts, "prev", readString(metadata, "previousSubscriptionId"));
+
+  const fullAmount = metadata?.fullAmount;
   if (typeof fullAmount === "number" || typeof fullAmount === "string") {
     parts.push(`fullamt=${fullAmount}`);
   }
 
-  const targetPlanId =
-    typeof options.metadata?.targetPlanId === "string"
-      ? options.metadata.targetPlanId
-      : undefined;
-  if (targetPlanId) {
-    parts.push(`tplan=${targetPlanId}`);
-  }
+  pushStringPart(parts, "tplan", readString(metadata, "targetPlanId"));
+
+  return parts;
+}
+
+export function encodeExternalReference(options: {
+  customerId?: string;
+  metadata?: Record<string, unknown>;
+}): string | undefined {
+  const parts = buildReferenceParts(options.metadata, options.customerId);
 
   if (parts.length === 0) {
+    const referenceId = readString(options.metadata, "referenceId");
     return options.customerId ?? referenceId;
   }
-  const result = `${EXTERNAL_REFERENCE_PREFIX}${parts.join("&")}`;
 
-  return result;
+  return `${EXTERNAL_REFERENCE_PREFIX}${parts.join("&")}`;
 }
 
 export function decodeExternalReference(
@@ -119,6 +122,16 @@ export function decodeExternalReference(
   const prorated = params.get("prorated");
   if (prorated === "1") {
     metadata.proratedUpgrade = true;
+  }
+
+  const downgrade = params.get("downgrade");
+  if (downgrade === "1") {
+    metadata.proratedDowngrade = true;
+  }
+
+  const previousTier = params.get("prevtier");
+  if (previousTier) {
+    metadata.previousTier = previousTier;
   }
 
   const previousSubscriptionId = params.get("prev");

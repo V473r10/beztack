@@ -87,7 +87,7 @@ function buildSubscriptionBody(
     body.preapproval_plan_id = options.productId;
   } else if (options.customPlan) {
     body.reason = options.customPlan.reason;
-    body.auto_recurring = {
+    const autoRecurring: Record<string, unknown> = {
       ...toMPRecurring(
         options.customPlan.interval,
         options.customPlan.intervalCount
@@ -95,6 +95,16 @@ function buildSubscriptionBody(
       transaction_amount: options.customPlan.amount,
       currency_id: options.customPlan.currency || currency,
     };
+    if (options.customPlan.freeTrial) {
+      autoRecurring.free_trial = {
+        frequency: options.customPlan.freeTrial.frequency,
+        frequency_type:
+          options.customPlan.freeTrial.frequencyType === "days"
+            ? "days"
+            : "months",
+      };
+    }
+    body.auto_recurring = autoRecurring;
   }
 
   const externalReference = encodeExternalReference({

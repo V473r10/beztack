@@ -142,9 +142,21 @@ async function handlePayment(paymentId: string): Promise<void> {
       );
     }
 
-    // Cancel the old subscription
-    if (metadata?.previousSubscriptionId) {
+    // Cancel the old subscription (upgrade flow)
+    if (metadata?.previousSubscriptionId && !metadata.proratedDowngrade) {
       await provider.cancelSubscription(metadata.previousSubscriptionId, true);
+    }
+
+    // Downgrade: first real payment means trial ended, denormalize to new tier
+    if (metadata?.proratedDowngrade && metadata.tier && subscriptionId) {
+      await denormalizeSubscriptionState({
+        id: subscriptionId,
+        tier: metadata.tier,
+        status: "authorized",
+        nextPaymentDate: null,
+        organizationId: metadata.organizationId,
+        userId: beztackUserId,
+      });
     }
   }
 }
@@ -200,6 +212,26 @@ async function denormalizeSubscriptionState(opts: {
   }
 }
 
+async function handleDowngradeTransition(
+  refMeta: ReturnType<typeof decodeExternalReference>,
+  status: string,
+  tier: string | null
+): Promise<string | null> {
+  const isDowngradeAuthorized =
+    refMeta?.proratedDowngrade && status === "authorized";
+
+  if (isDowngradeAuthorized && refMeta.previousSubscriptionId) {
+    const provider = await ensurePaymentProvider();
+    await provider.cancelSubscription(refMeta.previousSubscriptionId, true);
+  }
+
+  if (isDowngradeAuthorized && refMeta.previousTier) {
+    return refMeta.previousTier;
+  }
+
+  return tier;
+}
+
 async function handleSubscription(subscriptionId: string): Promise<void> {
   const sub = await mp.subscriptions.get(subscriptionId);
   if (!sub.id) {
@@ -233,9 +265,11 @@ async function handleSubscription(subscriptionId: string): Promise<void> {
   const status = sub.status ?? "unknown";
   const nextPaymentDate = parseDate(sub.next_payment_date);
 
+  const effectiveTier = await handleDowngradeTransition(refMeta, status, tier);
+
   await denormalizeSubscriptionState({
     id,
-    tier,
+    tier: effectiveTier,
     status,
     nextPaymentDate,
     organizationId: refMeta?.organizationId,
