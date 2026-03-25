@@ -35,14 +35,26 @@ async function resolveActiveSubscription(
   }
 
   const activeSub = subscriptions.find((sub) => sub.status === "active");
-  if (!activeSub) {
-    throw createError({
-      statusCode: 400,
-      message: "No active subscription found to upgrade from",
-    });
+  if (activeSub) {
+    return activeSub;
   }
 
-  return activeSub;
+  // Upgrade-specific: also check for pending subscriptions
+  const pendingSubs = await provider.listSubscriptions({
+    customerEmail: email,
+    customerId: userId,
+    status: "pending",
+  });
+
+  const pendingSub = pendingSubs.at(0);
+  if (pendingSub) {
+    return pendingSub;
+  }
+
+  throw createError({
+    statusCode: 400,
+    message: "No active subscription found to upgrade from",
+  });
 }
 
 async function resolveTargetProduct(

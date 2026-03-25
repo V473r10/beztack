@@ -42,7 +42,22 @@ async function findActiveSubscription(
     subscriptions = await discoverSubscriptionsFromDb(userId, provider);
   }
 
-  return subscriptions.find((sub) => sub.status === "active") ?? null;
+  // Prefer authorized (active) subscription
+  const active = subscriptions.find((sub) => sub.status === "active");
+  if (active) {
+    return active;
+  }
+
+  // Upgrade-specific: also check for pending subscriptions (just created,
+  // first payment not yet processed by MercadoPago).
+  // Note: "pending" string matches between core SubscriptionStatus and MP API.
+  const pendingSubs = await provider.listSubscriptions({
+    customerEmail: email,
+    customerId: userId,
+    status: "pending",
+  });
+
+  return pendingSubs.at(0) ?? null;
 }
 
 async function handleProratedUpgrade(options: {
