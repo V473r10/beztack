@@ -13,7 +13,6 @@ import type {
   PaymentProviderAdapter,
   Product,
   Subscription,
-  SubscriptionStatus,
   UpdateProductOptions,
   UpdateSubscriptionOptions,
   WebhookPayload,
@@ -22,21 +21,9 @@ import {
   decodeExternalReference,
   encodeExternalReference,
 } from "./helpers/external-reference.js";
+import { mapMPStatus } from "./helpers/status-mapping.js";
 import { createMercadoPagoClient } from "./server/client.js";
 import type { MPPreapproval } from "./types.js";
-
-function mapMPStatus(status: string): SubscriptionStatus {
-  switch (status) {
-    case "authorized":
-      return "active";
-    case "paused":
-      return "paused";
-    case "cancelled":
-      return "canceled";
-    default:
-      return "canceled";
-  }
-}
 
 function mapMPInterval(frequencyType: string): BillingInterval {
   switch (frequencyType) {
