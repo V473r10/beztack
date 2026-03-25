@@ -1,5 +1,34 @@
 import type { PaymentProviderAdapter, Subscription } from "@beztack/payments";
 
+const INTERVAL_MS: Record<string, number> = {
+	day: 86_400_000,
+	week: 604_800_000,
+	month: 2_592_000_000, // 30 days
+	year: 31_536_000_000, // 365 days
+};
+
+/**
+ * Estimate periodEnd when MercadoPago hasn't returned next_payment_date yet.
+ * Uses currentPeriodStart + billing interval from metadata.
+ */
+export function estimatePeriodEnd(
+	activeSub: Subscription,
+	interval: string
+): Date {
+	const start = activeSub.currentPeriodStart;
+	if (!start) {
+		return new Date();
+	}
+
+	const ms = INTERVAL_MS[interval] ?? INTERVAL_MS.month;
+	const frequency =
+		typeof activeSub.metadata?.billingFrequency === "number"
+			? activeSub.metadata.billingFrequency
+			: 1;
+
+	return new Date(start.getTime() + ms * frequency);
+}
+
 /**
  * Resolve the current billing amount for a subscription.
  *
@@ -12,8 +41,8 @@ import type { PaymentProviderAdapter, Subscription } from "@beztack/payments";
  * Default currency is "UYU" — matches the current deployment (Uruguay).
  */
 export const resolveCurrentBillingAmount = async (
-  activeSub: Subscription,
-  provider: PaymentProviderAdapter
+	activeSub: Subscription,
+	provider: PaymentProviderAdapter
 ): Promise<{ amount: number; currency: string; interval: string }> => {
   const metaAmount =
     typeof activeSub.metadata?.billingAmount === "number"

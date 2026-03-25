@@ -17,7 +17,10 @@ import { createError, defineEventHandler, getQuery } from "h3";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
-import { resolveCurrentBillingAmount } from "@/server/utils/billing-amount-resolver";
+import {
+  estimatePeriodEnd,
+  resolveCurrentBillingAmount,
+} from "@/server/utils/billing-amount-resolver";
 import { requireAuth } from "@/server/utils/membership";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 
@@ -128,7 +131,9 @@ export default defineEventHandler(async (event) => {
   const currentBilling = await resolveCurrentBillingAmount(activeSub, provider);
 
   const periodStart = activeSub.currentPeriodStart ?? new Date();
-  const periodEnd = activeSub.currentPeriodEnd ?? new Date();
+  const periodEnd =
+    activeSub.currentPeriodEnd ??
+    estimatePeriodEnd(activeSub, currentBilling.interval);
 
   const targetProduct = await resolveTargetProduct(
     provider,

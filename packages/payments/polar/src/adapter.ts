@@ -28,12 +28,12 @@ const UUID_REGEX =
 
 function maskEmail(email?: string): string | undefined {
   if (!email) {
-    return undefined;
+    return;
   }
 
   const [localPart, domain] = email.split("@");
 
-  if (!localPart || !domain) {
+  if (!(localPart && domain)) {
     return "***";
   }
 
@@ -384,7 +384,7 @@ export function createPolarAdapter(
         requestedOffset: options.offset ?? null,
       });
 
-      if (!customerId && !externalCustomerId && options.customerEmail) {
+      if (!(customerId || externalCustomerId) && options.customerEmail) {
         // biome-ignore lint/suspicious/noConsole: Debugging customer resolution for subscription listing
         console.log("[PolarAdapter] listSubscriptions:resolve-customer", {
           customerEmail: maskEmail(options.customerEmail),
