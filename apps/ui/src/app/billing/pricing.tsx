@@ -36,11 +36,10 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { useMembership } from "@/contexts/membership-context";
-import { usePolarProducts } from "@/hooks/use-polar-products";
+import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { cn } from "@/lib/utils";
-import type { PolarPricingTier } from "@/types/polar-pricing";
+import type { PricingTier } from "@/types/pricing";
 
-const SAVE_PERCENTAGE = 17;
 const LOADING_SKELETON_COUNT = 3;
 
 type FeatureValue = boolean | string | number;
@@ -55,8 +54,8 @@ type FeatureRow = {
 
 type GroupedFeatures = Record<string, FeatureRow[]>;
 
-function buildTierData(allTiers: PolarPricingTier[]) {
-  const tierMap: Record<string, PolarPricingTier> = {};
+function buildTierData(allTiers: PricingTier[]) {
+  const tierMap: Record<string, PricingTier> = {};
   const allFeatures = new Set<string>();
   const allLimits = new Set<string>();
   const allPermissions = new Set<string>();
@@ -78,7 +77,7 @@ function buildTierData(allTiers: PolarPricingTier[]) {
 }
 
 function processFeatures(
-  tierMap: Record<string, PolarPricingTier>,
+  tierMap: Record<string, PricingTier>,
   allFeatures: Set<string>,
   featureId: { current: number },
   t: (key: string, fallback?: string) => string
@@ -100,7 +99,7 @@ function processFeatures(
 }
 
 function processLimits(
-  tierMap: Record<string, PolarPricingTier>,
+  tierMap: Record<string, PricingTier>,
   allLimits: Set<string>,
   featureId: { current: number },
   t: (key: string, fallback?: string) => string
@@ -138,7 +137,7 @@ function processLimits(
 }
 
 function processPermissions(
-  tierMap: Record<string, PolarPricingTier>,
+  tierMap: Record<string, PricingTier>,
   allPermissions: Set<string>,
   featureId: { current: number },
   t: (key: string, fallback?: string) => string
@@ -163,7 +162,7 @@ function processPermissions(
 }
 
 type ProcessAllCategoriesParams = {
-  tierMap: Record<string, PolarPricingTier>;
+  tierMap: Record<string, PricingTier>;
   allFeatures: Set<string>;
   allLimits: Set<string>;
   allPermissions: Set<string>;
@@ -287,9 +286,7 @@ export default function Pricing() {
     "monthly"
   );
   const [showPlanChangeDialog, setShowPlanChangeDialog] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<PolarPricingTier | null>(
-    null
-  );
+  const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
   const {
     currentTier,
     activeSubscription,
@@ -303,11 +300,16 @@ export default function Pricing() {
   const hasActiveSubscription = Boolean(activeSubscription);
 
   const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<
-    PolarPricingTier[]
+    PricingTier[]
   >({
     queryKey: ["subscriptions", "products", "tiers"],
-    queryFn: usePolarProducts,
+    queryFn: usePricingTiers,
   });
+
+  const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
+  const savingsPercent = Math.max(
+    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0)
+  );
 
   const groupedFeatures = useMemo(() => {
     if (!allTiers.length) {
@@ -336,7 +338,7 @@ export default function Pricing() {
     }
   };
 
-  const handlePlanChange = useCallback((tier: PolarPricingTier) => {
+  const handlePlanChange = useCallback((tier: PricingTier) => {
     setSelectedTier(tier);
     setShowPlanChangeDialog(true);
   }, []);
@@ -430,45 +432,49 @@ export default function Pricing() {
             Start free and scale as you grow. No hidden fees, no surprises.
           </p>
 
-          <motion.div
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-4 flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <div className="rounded-full border border-border/50 bg-muted/30 p-1 backdrop-blur-sm">
-              <Tabs
-                className="w-fit"
-                onValueChange={(value) =>
-                  setBillingPeriod(value as "monthly" | "yearly")
-                }
-                value={billingPeriod}
-              >
-                <TabsList className="grid w-full grid-cols-2 bg-transparent">
-                  <TabsTrigger
-                    className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    value="monthly"
-                  >
-                    Monthly
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="relative rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    value="yearly"
-                  >
-                    Yearly
-                    <Badge
-                      className="ml-2 h-5 border-green-200 bg-green-100 px-1.5 text-green-700 text-xs dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      variant="outline"
+          {hasYearlyPlans && (
+            <motion.div
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-4 flex items-center justify-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <div className="rounded-full border border-border/50 bg-muted/30 p-1 backdrop-blur-sm">
+                <Tabs
+                  className="w-fit"
+                  onValueChange={(value) =>
+                    setBillingPeriod(value as "monthly" | "yearly")
+                  }
+                  value={billingPeriod}
+                >
+                  <TabsList className="grid w-full grid-cols-2 bg-transparent">
+                    <TabsTrigger
+                      className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                      value="monthly"
                     >
-                      -{SAVE_PERCENTAGE}%
-                    </Badge>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </motion.div>
+                      Monthly
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="relative rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                      value="yearly"
+                    >
+                      Yearly
+                      {savingsPercent > 0 && (
+                        <Badge
+                          className="ml-2 h-5 border-green-200 bg-green-100 px-1.5 text-green-700 text-xs dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          variant="outline"
+                        >
+                          -{savingsPercent}%
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            </motion.div>
+          )}
 
-          {billingPeriod === "yearly" && (
+          {hasYearlyPlans && billingPeriod === "yearly" && (
             <motion.p
               animate={{ opacity: 1 }}
               className="text-green-600 text-sm dark:text-green-400"

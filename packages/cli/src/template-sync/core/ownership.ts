@@ -7,7 +7,7 @@ interface Rule {
 
 export function resolveOwnership(
   path: string,
-  strategyByPath: Record<string, OwnershipStrategy>,
+  strategyByPath: Record<string, OwnershipStrategy>
 ): OwnershipStrategy {
   const rules = Object.entries(strategyByPath).map(([pattern, strategy]) => ({
     pattern,
@@ -32,7 +32,10 @@ function matchesGlob(path: string, pattern: string): boolean {
   return matchSegments(pathSegments, patternSegments);
 }
 
-function matchSegments(pathSegments: string[], patternSegments: string[]): boolean {
+function matchSegments(
+  pathSegments: string[],
+  patternSegments: string[]
+): boolean {
   if (patternSegments.length === 0) {
     return pathSegments.length === 0;
   }

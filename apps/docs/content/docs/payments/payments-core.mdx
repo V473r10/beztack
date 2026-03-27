@@ -1,0 +1,99 @@
+---
+title: Payments Core
+description: Provider-agnostic payment architecture
+---
+
+Beztack uses a **provider-agnostic** payment system. Apps import types and the
+factory only from `@beztack/payments` (core) — never from provider packages
+directly. This lets you swap or add payment providers without changing app-level
+code.
+
+## How it works
+
+1. The `PAYMENT_PROVIDER` env var selects the active provider (`"polar"` or `"mercadopago"`).
+2. At runtime, `createPaymentProvider()` dynamically imports only the selected provider package.
+3. All API routes call the adapter interface — they never reference provider-specific APIs.
+
+## PaymentProviderAdapter interface
+
+Every provider must implement this interface (defined in `packages/payments/core/src/types.ts`):
+
+| Method | Description |
+|--------|-------------|
+| `listProducts()` | List all products/plans from the provider |
+| `getProduct(id)` | Get a single product by ID |
+| `createProduct(options)` | Create a new product |
+| `updateProduct(id, options)` | Update an existing product |
+| `deleteProduct(id)` | Delete a product |
+| `createCheckout(options)` | Create a checkout session, returns a URL |
+| `createSubscription(options)` | Create a subscription directly |
+| `getSubscription(id)` | Get a subscription by ID |
+| `updateSubscription(id, options)` | Update a subscription (change plan, proration) |
+| `cancelSubscription(id, immediately?)` | Cancel a subscription |
+| `listSubscriptions(options)` | List subscriptions with filters |
+| `createCustomer(email, metadata?)` | Create a customer record |
+| `getCustomer(id)` | Get a customer by ID |
+| `getCustomerByEmail(email)` | Look up a customer by email |
+| `parseWebhook(rawBody, signature)` | Parse and validate a webhook payload |
+| `createPortalSession?(id, returnUrl)` | Create a customer portal session (optional) |
+
+## Core types
+
+Defined in `packages/payments/core/src/types.ts`:
+
+- **`Product`** — Unified product/plan representation with price, interval, and metadata.
+- **`Plan`** — A `Product` with `type: "plan"` (recurring subscription).
+- **`Subscription`** — Unified subscription with status, customer, and period info.
+- **`Customer`** — Unified customer with email and optional external ID.
+- **`BillingInterval`** — `"month" | "year" | "day" | "week"`.
+- **`SubscriptionStatus`** — `"active" | "inactive" | "pending" | "canceled" | "paused" | "past_due"`.
+- **`WebhookPayload`** — Unified webhook event with type, provider, and parsed data.
+- **`WebhookEventType`** — Unified event types like `"subscription.created"`, `"payment.success"`, etc.
+- **`PricingTier`** — UI display structure with monthly/yearly prices, features, and limits.
+- **`CheckoutResult`** — Checkout session result with `id` and `url`.
+
+## Factory and provider selection
+
+The factory (`packages/payments/core/src/factory.ts`) uses a registry pattern with dynamic imports:
+
+```typescript
+import { createPaymentProvider } from "@beztack/payments"
+
+// Create and cache the adapter (usually done once at app startup)
+const adapter = await createPaymentProvider("mercadopago", {
+  MERCADO_PAGO_ACCESS_TOKEN: "...",
+})
+
+// Use the adapter
+const products = await adapter.listProducts()
+```
+
+Key functions:
+
+- **`createPaymentProvider(provider, config)`** — Create (or return cached) adapter instance.
+- **`getPaymentProvider()`** — Synchronous getter for the cached adapter. Throws if not initialized.
+- **`resetPaymentProvider()`** — Clear the cache (useful for testing).
+- **`getRegisteredProviders()`** — List registered provider names.
+
+In API routes, use `ensurePaymentProvider()` from `apps/api/lib/payments/index.ts`
+which handles reading the env config and initializing the adapter.
+
+## Webhook utilities
+
+Defined in `packages/payments/core/src/webhooks.ts`:
+
+- **`verifyWebhookSignature(payload, signature, secret)`** — HMAC SHA-256 signature verification.
+- **`createDefaultWebhookHandlers(customHandlers?)`** — Creates a handler map for common webhook events (`order.paid`, `subscription.active`, `subscription.canceled`, etc.). Pass custom callbacks to override defaults.
+
+## Adding a new provider
+
+1. Create a new package under `packages/payments/` (e.g., `packages/payments/stripe/`).
+2. Implement the `PaymentProviderAdapter` interface and export a `createAdapter` factory function.
+3. Register the provider in `packages/payments/core/src/factory.ts` by adding a `registry.set(...)` line with a dynamic import.
+4. Add the provider name to the `PaymentProviderName` union type in `types.ts`.
+5. Update env validation in `packages/env/` to include the new provider's variables.
+
+## Provider-specific docs
+
+- [Polar](/docs/payments/polar) — Better Auth integration, portal sessions, usage tracking.
+- [Mercado Pago](/docs/payments/mercado-pago) — Plan sync, card processing, SSE events.

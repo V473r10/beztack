@@ -17,8 +17,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { CustomerMeter } from "@/contexts/membership-context";
 import { Progress } from "@/components/ui/progress";
+import type { CustomerMeter } from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
 import type { MembershipTierConfig } from "@/types/membership";
 

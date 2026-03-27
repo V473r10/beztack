@@ -1,11 +1,11 @@
 import { exec as execCb } from "node:child_process";
-import { rm, readFile, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { glob } from "glob";
 import { regenerateEntrypoints } from "./generate-entrypoints.js";
-import { modules } from "./modules.js";
 import type { PaymentProvider } from "./modules.js";
+import { modules } from "./modules.js";
 import { removeModule } from "./remove-module.js";
 import { getWorkspaceRoot } from "./utils/workspace.js";
 
@@ -50,10 +50,7 @@ function shouldEnablePayments(moduleNames: string[]): boolean {
 }
 
 function validatePaymentProvider(config: InitProjectConfig): void {
-  if (
-    shouldEnablePayments(config.enabledModules) &&
-    !config.paymentProvider
-  ) {
+  if (shouldEnablePayments(config.enabledModules) && !config.paymentProvider) {
     throw new Error(
       "Payments module requires --payment-provider (polar or mercadopago)"
     );
@@ -85,20 +82,14 @@ async function updateProviderInEnvExamples(
   paymentProvider: PaymentProvider
 ): Promise<void> {
   const workspaceRoot = getWorkspaceRoot();
-  const envFiles = [
-    "apps/api/.env.example",
-    "apps/ui/.env.example",
-  ] as const;
+  const envFiles = ["apps/api/.env.example", "apps/ui/.env.example"] as const;
 
   for (const envFile of envFiles) {
     const path = join(workspaceRoot, envFile);
     const original = await readFile(path, "utf-8");
 
     const updated = original
-      .replace(
-        /^PAYMENT_PROVIDER=.*$/m,
-        `PAYMENT_PROVIDER=${paymentProvider}`
-      )
+      .replace(/^PAYMENT_PROVIDER=.*$/m, `PAYMENT_PROVIDER=${paymentProvider}`)
       .replace(
         /^VITE_PAYMENT_PROVIDER=.*$/m,
         `VITE_PAYMENT_PROVIDER=${paymentProvider}`
@@ -128,10 +119,7 @@ export async function initProject(input: string[] | InitProjectConfig) {
   }
 
   // 2. If payments is enabled, prune non-selected provider routes and sync env examples
-  if (
-    shouldEnablePayments(enabledModuleNames) &&
-    config.paymentProvider
-  ) {
+  if (shouldEnablePayments(enabledModuleNames) && config.paymentProvider) {
     await applyProviderPruning(config.paymentProvider);
     await updateProviderInEnvExamples(config.paymentProvider);
   }

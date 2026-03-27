@@ -28,9 +28,9 @@ export function isSubscriptionOwnedByUser(
   subscription: Subscription,
   auth: AuthenticatedUser
 ): boolean {
+  console.log("Checking if subscription is owned by user", subscription, auth);
   const authRole =
-    (auth as { role?: unknown }).role ??
-    (auth.user as { role?: unknown }).role
+    (auth as { role?: unknown }).role ?? (auth.user as { role?: unknown }).role;
 
   if (hasAdminRole(authRole)) {
     return true;
@@ -42,7 +42,8 @@ export function isSubscriptionOwnedByUser(
 
   if (
     subscription.customerEmail &&
-    normalizeEmail(subscription.customerEmail) === normalizeEmail(auth.user.email)
+    normalizeEmail(subscription.customerEmail) ===
+      normalizeEmail(auth.user.email)
   ) {
     return true;
   }

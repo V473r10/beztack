@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Building2, Sparkles } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowRight,
+  Building2,
+  Clock,
+  Loader2,
+  TrendingDown,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,15 +17,62 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePolarProducts } from "@/hooks/use-polar-products";
+import { useMembership } from "@/contexts/membership-context";
+import { env } from "@/env";
+import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { estimateProration } from "@/lib/proration";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
-import type { PolarPricingTier } from "@/types/polar-pricing";
+import type { PricingTier } from "@/types/pricing";
 import { MembershipBadge } from "./membership-badge";
-import { PricingCard } from "./pricing-card";
+import { formatCurrency, PricingCard } from "./pricing-card";
 
 // Constants
 const MIN_TIERS_FOR_THREE_COLUMN = 3;
+
+type UpgradePreviewResponse = {
+  direction: "upgrade";
+  currentAmount: number;
+  newAmount: number;
+  unusedCredit: number;
+  proratedFirstPayment: number;
+  fullMonthlyAmount: number;
+  currency: string;
+  daysRemaining: number;
+  totalDays: number;
+  currentTier: string;
+  targetTier: string;
+};
+
+type DowngradePreviewResponse = {
+  direction: "downgrade";
+  currentAmount: number;
+  newAmount: number;
+  trialDays: number;
+  savings: number;
+  currency: string;
+  currentTier: string;
+  targetTier: string;
+};
+
+type PlanChangePreviewResponse =
+  | UpgradePreviewResponse
+  | DowngradePreviewResponse;
+
+type PlanChangeDisplay =
+  | {
+      direction: "upgrade";
+      unusedCredit: number;
+      proratedAmount: number;
+      fullAmount: number;
+      daysRemaining: number;
+    }
+  | {
+      direction: "downgrade";
+      trialDays: number;
+      savings: number;
+      newAmount: number;
+    };
 
 export type UpgradeDialogProps = {
   open: boolean;
@@ -27,7 +80,6 @@ export type UpgradeDialogProps = {
   currentTier: MembershipTier;
   onUpgrade: (tierId: string, billingPeriod: "monthly" | "yearly") => void;
   isLoading?: boolean;
-  suggestedTier?: MembershipTier;
 };
 
 export function UpgradeDialog({
@@ -36,34 +88,141 @@ export function UpgradeDialog({
   currentTier,
   onUpgrade,
   isLoading = false,
-  suggestedTier,
 }: UpgradeDialogProps) {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
     "monthly"
   );
-  const [selectedTier, setSelectedTier] = useState<string>(
-    suggestedTier || "pro"
-  );
+  const [selectedTier, setSelectedTier] = useState<string>();
 
-  const { data: allTiersRaw = [] } = useQuery<PolarPricingTier[]>({
+  const { getPlanChangeType, activeSubscription } = useMembership();
+  const [hoveredTierId, setHoveredTierId] = useState<string>();
+
+  const { data: allTiersRaw = [] } = useQuery<PricingTier[]>({
     queryKey: ["subscriptions", "products", "tiers"],
-    queryFn: usePolarProducts,
+    queryFn: usePricingTiers,
   });
 
-  // Sort tiers by displayOrder and filter available tiers
+  // Fetch server-side proration preview when a tier is hovered/selected
+  const previewTargetId = hoveredTierId ?? selectedTier;
+  const previewChangeType = previewTargetId
+    ? getPlanChangeType(previewTargetId)
+    : "same";
+
+  const { data: serverPreview, isLoading: isPreviewLoading } =
+    useQuery<PlanChangePreviewResponse>({
+      queryKey: ["proration-preview", previewTargetId, billingPeriod],
+      queryFn: async () => {
+        const params = new URLSearchParams();
+        if (previewTargetId) {
+          params.set("targetTierId", previewTargetId);
+        }
+        params.set("billingPeriod", billingPeriod);
+        const response = await fetch(
+          `${env.VITE_API_URL}/api/subscriptions/preview-upgrade?${params.toString()}`,
+          { credentials: "include" }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch plan change preview");
+        }
+        return response.json() as Promise<PlanChangePreviewResponse>;
+      },
+      enabled: !!activeSubscription && !!previewTargetId,
+      staleTime: 30_000,
+    });
+
+  // Client-side estimate as instant placeholder
+  const clientEstimate = useMemo(() => {
+    if (!(activeSubscription && previewTargetId)) {
+      return null;
+    }
+
+    const targetTier = allTiersRaw.find((t) => t.id === previewTargetId);
+    if (!targetTier) {
+      return null;
+    }
+
+    const currentAmount =
+      typeof activeSubscription.metadata?.billingAmount === "number"
+        ? activeSubscription.metadata.billingAmount
+        : 0;
+    const newAmount = targetTier.price[billingPeriod];
+    const periodStart = activeSubscription.currentPeriodStart ?? new Date();
+    const periodEnd = activeSubscription.currentPeriodEnd ?? new Date();
+
+    return estimateProration({
+      currentAmount,
+      newAmount,
+      currentPeriodStart:
+        periodStart instanceof Date ? periodStart : new Date(periodStart),
+      currentPeriodEnd:
+        periodEnd instanceof Date ? periodEnd : new Date(periodEnd),
+    });
+  }, [activeSubscription, previewTargetId, allTiersRaw, billingPeriod]);
+
+  // Normalize server and client shapes into a common display type
+  const planChangeDisplay: PlanChangeDisplay | null = useMemo(() => {
+    if (serverPreview) {
+      if (serverPreview.direction === "downgrade") {
+        return {
+          direction: "downgrade",
+          trialDays: serverPreview.trialDays,
+          savings: serverPreview.savings,
+          newAmount: serverPreview.newAmount,
+        };
+      }
+      return {
+        direction: "upgrade",
+        unusedCredit: serverPreview.unusedCredit,
+        proratedAmount: serverPreview.proratedFirstPayment,
+        fullAmount: serverPreview.fullMonthlyAmount,
+        daysRemaining: serverPreview.daysRemaining,
+      };
+    }
+    if (clientEstimate) {
+      return {
+        direction: previewChangeType === "downgrade" ? "downgrade" : "upgrade",
+        ...(previewChangeType === "downgrade"
+          ? {
+              trialDays: clientEstimate.daysRemaining,
+              savings: clientEstimate.unusedCredit,
+              newAmount: clientEstimate.fullAmount,
+            }
+          : {
+              unusedCredit: clientEstimate.unusedCredit,
+              proratedAmount: clientEstimate.proratedAmount,
+              fullAmount: clientEstimate.fullAmount,
+              daysRemaining: clientEstimate.daysRemaining,
+            }),
+      } as PlanChangeDisplay;
+    }
+    return null;
+  }, [serverPreview, clientEstimate, previewChangeType]);
+
+  // Sort tiers by displayOrder and filter to plan changes (upgrades + downgrades)
   const allTiers = [...allTiersRaw].sort(
     (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
   );
 
-  const currentTierOrder =
-    allTiers.find((t) => t.id === currentTier)?.displayOrder ?? 0;
-  const availableTiers = allTiers.filter(
-    (tier) => (tier.displayOrder ?? 0) > currentTierOrder
+  const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
+  const savingsPercent = Math.max(
+    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0),
+    0
   );
+
+  const availableTiers = allTiers.filter((tier) => {
+    const changeType = getPlanChangeType(tier.id);
+    return changeType === "upgrade" || changeType === "downgrade";
+  });
 
   const handleUpgrade = (tierId: string) => {
     setSelectedTier(tierId);
     onUpgrade(tierId, billingPeriod);
+  };
+
+  const handleTierHover = (tierId: string | undefined) => {
+    if (activeSubscription) {
+      setHoveredTierId(tierId);
+    }
   };
 
   // Helper function to calculate yearly savings (inline for now)
@@ -77,10 +236,10 @@ export function UpgradeDialog({
       <Dialog onOpenChange={onOpenChange} open={open}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Already at Maximum Tier</DialogTitle>
+            <DialogTitle>No Plan Changes Available</DialogTitle>
             <DialogDescription>
-              You're currently on the highest available plan. Contact our sales
-              team for custom enterprise solutions.
+              There are no other plans available. Contact our sales team for
+              custom enterprise solutions.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 pt-4">
@@ -99,9 +258,9 @@ export function UpgradeDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader className="space-y-4">
           <div className="space-y-2">
-            <DialogTitle className="text-2xl">Upgrade Your Plan</DialogTitle>
+            <DialogTitle className="text-2xl">Change Your Plan</DialogTitle>
             <DialogDescription className="text-base">
-              Unlock more features and higher limits with a premium plan
+              Choose a plan that fits your needs
             </DialogDescription>
           </div>
 
@@ -113,28 +272,116 @@ export function UpgradeDialog({
 
         <div className="space-y-6 pt-4">
           {/* Billing Period Toggle */}
-          <div className="flex items-center justify-center">
-            <Tabs
-              className="w-fit"
-              onValueChange={(value) =>
-                setBillingPeriod(value as "monthly" | "yearly")
-              }
-              value={billingPeriod}
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                <TabsTrigger className="relative" value="yearly">
-                  Yearly
-                  <Badge
-                    className="ml-2 h-5 px-1.5 text-xs"
-                    variant="secondary"
-                  >
-                    Save 17%
-                  </Badge>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+          {hasYearlyPlans && (
+            <div className="flex items-center justify-center">
+              <Tabs
+                className="w-fit"
+                onValueChange={(value) =>
+                  setBillingPeriod(value as "monthly" | "yearly")
+                }
+                value={billingPeriod}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                  <TabsTrigger className="relative" value="yearly">
+                    Yearly
+                    {savingsPercent > 0 && (
+                      <Badge
+                        className="ml-2 h-5 px-1.5 text-xs"
+                        variant="secondary"
+                      >
+                        -{savingsPercent}%
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
+
+          {/* Plan Change Preview */}
+          {activeSubscription &&
+            planChangeDisplay &&
+            previewTargetId &&
+            planChangeDisplay.direction === "upgrade" && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">
+                        Upgrade Preview
+                      </span>
+                      {isPreviewLoading && (
+                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                      <span>
+                        Credit from current plan:{" "}
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          -{formatCurrency(planChangeDisplay.unusedCredit)}
+                        </span>
+                      </span>
+                      <ArrowRight className="h-3 w-3" />
+                      <span>
+                        {planChangeDisplay.daysRemaining} days remaining
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-muted-foreground text-xs line-through">
+                      {formatCurrency(planChangeDisplay.fullAmount)}
+                    </div>
+                    <div className="font-bold text-lg">
+                      {formatCurrency(planChangeDisplay.proratedAmount)}
+                    </div>
+                    <div className="text-muted-foreground text-xs">
+                      then {formatCurrency(planChangeDisplay.fullAmount)}/mo
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {activeSubscription &&
+            planChangeDisplay &&
+            previewTargetId &&
+            planChangeDisplay.direction === "downgrade" && (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="font-medium text-sm">
+                        Downgrade Preview
+                      </span>
+                      {isPreviewLoading && (
+                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                      <Clock className="h-3 w-3" />
+                      <span>
+                        Current benefits kept for {planChangeDisplay.trialDays}{" "}
+                        more days
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-lg">
+                      {formatCurrency(planChangeDisplay.newAmount)}/mo
+                    </div>
+                    <div className="text-muted-foreground text-xs">
+                      Save{" "}
+                      <span className="font-medium text-green-600 dark:text-green-400">
+                        {formatCurrency(planChangeDisplay.savings)}
+                      </span>
+                      /mo
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
           {/* Pricing Cards */}
           <div
@@ -149,45 +396,21 @@ export function UpgradeDialog({
             {availableTiers.map((tier) => (
               <PricingCard
                 billingPeriod={billingPeriod}
+                changeType={getPlanChangeType(tier.id)}
                 currentTier={currentTier}
                 disabled={isLoading}
+                hasActiveSubscription={!!activeSubscription}
                 isLoading={isLoading && selectedTier === tier.id}
                 isPopular={tier.id === "pro"}
                 key={tier.id}
-                onSelect={handleUpgrade}
+                onSelect={(id: string) => {
+                  handleTierHover(tier.id);
+                  handleUpgrade(id);
+                }}
                 tier={tier}
               />
             ))}
           </div>
-
-          {/* Upgrade Path */}
-          {suggestedTier && (
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-sm">
-                    Recommended Upgrade
-                  </span>
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  Based on your usage patterns, the{" "}
-                  {availableTiers.find((t) => t.id === suggestedTier)?.name}{" "}
-                  plan would be perfect for your needs.
-                </div>
-                <Button
-                  className="w-fit"
-                  disabled={isLoading}
-                  onClick={() => handleUpgrade(suggestedTier)}
-                  size="sm"
-                >
-                  Upgrade to{" "}
-                  {availableTiers.find((t) => t.id === suggestedTier)?.name}
-                  <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Enterprise CTA */}
           {!availableTiers.find((t) => t.id === "ultimate") &&

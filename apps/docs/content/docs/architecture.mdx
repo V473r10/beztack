@@ -3,41 +3,73 @@ title: Architecture
 description: System structure and components
 ---
 
-Beztack is structured as a monorepo using **Nx**, which lets us efficiently share code between the frontend and backend.
+Beztack is structured as a monorepo using **Nx** with **pnpm**, which lets us efficiently share code between apps through shared packages.
 
 ## Directory Structure
 
 ```txt
 /
-├── apps/               # Deployable applications
-│   ├── api/            # Backend (Nitro server)
-│   ├── docs/           # Documentation (Fumadocs)
-│   └── ui/             # Frontend (React + Vite)
-├── packages/           # Shared libraries
-│   ├── api-types/      # Shared types between API and UI
-│   ├── cli/            # Project scaffolding + Template Sync CLI
-│   └── payments/       # Payment logic (Mercado Pago + Polar)
-└── tools/              # Configuration tools and scripts
+├── apps/                          # Deployable applications
+│   ├── api/                       # Backend (Nitro server)
+│   ├── docs/                      # Landing & Documentation (Next.js + Fumadocs)
+│   └── ui/                        # Frontend (React + Vite)
+├── packages/                      # Shared libraries
+│   ├── ai/                        # AI SDK (Vercel AI + Amazon Bedrock)
+│   ├── cli/                       # Project scaffolding + Template Sync CLI
+│   ├── db/                        # Database schema, client, migrations (Drizzle + PostgreSQL)
+│   ├── email/                     # Email templates (React Email + Resend)
+│   ├── env/                       # Centralized env validation (T3 Env + Zod)
+│   ├── ocr/                       # OCR utilities (Tesseract.js)
+│   ├── payments/
+│   │   ├── core/                  # Provider-agnostic types and PaymentProviderAdapter interface
+│   │   ├── polar/                 # Polar payment provider
+│   │   └── mercado-pago/          # MercadoPago payment provider
+│   └── state/                     # URL state management (nuqs)
 ```
 
 ## Applications
 
 ### UI (`apps/ui`)
-A **React** app built with **Vite**.
-- **Styling:** TailwindCSS.
-- **State:** React Query / Context API.
+A **React 19** app built with **Vite**.
+- **Styling:** Tailwind CSS v4 + shadcn/ui (Radix UI primitives).
+- **Server State:** TanStack Query (React Query).
+- **Forms:** React Hook Form + Zod validation.
+- **Routing:** React Router v7.
+- **i18n:** i18next for internationalization.
+- **Animations:** Motion.
 - **Auth:** Better Auth client.
 
 ### API (`apps/api`)
 A **Nitro** server (the engine behind Nuxt) that provides a fast and lightweight REST API.
-- **Routes:** File-based routing in `server/routes`.
-- **Database:** Drizzle ORM (if applicable) or direct connection.
-- **Auth:** Better Auth Server.
+- **Routes:** File-based routing in `server/routes/`.
+- **Unified payment routes:** `/api/subscriptions/*` for all providers.
+- **Admin routes:** `/api/admin/plans/*` for plan management.
+- **Database:** Drizzle ORM with PostgreSQL via `@beztack/db`.
+- **Auth:** Better Auth server with admin, organization, twoFactor, and Polar plugins.
+- **Utilities:** Server utilities in `server/utils/` (auth, membership, payment provider).
+
+### Docs (`apps/docs`)
+A **Next.js** app with **Fumadocs** for the landing page and documentation.
 
 ## Shared Packages
 
-Reusable code lives in `packages/` to keep apps clean and DRY (Don't Repeat Yourself).
+Reusable code lives in `packages/` to keep apps clean and DRY.
 
-- **`packages/api-types`**: Contains TypeScript definitions for the API. This gives the frontend autocomplete and type safety when consuming the backend.
-- **`packages/payments`**: Abstraction over payment providers (Mercado Pago and Polar), letting you swap or update billing logic without affecting the rest of the system.
-- **`packages/cli`**: Project scaffolding plus Template Sync commands (`status`, `plan`, `apply`, `rollback`, `inspect`) for controlled template evolution.
+| Package | Description |
+|---------|-------------|
+| `@beztack/ai` | AI SDK integration with Vercel AI and Amazon Bedrock |
+| `@beztack/cli` | Project scaffolding + Template Sync commands (`status`, `plan`, `apply`, `rollback`, `inspect`) |
+| `@beztack/db` | Database schema, Drizzle ORM client, and migrations for PostgreSQL |
+| `@beztack/email` | Email templates built with React Email, sent via Resend |
+| `@beztack/env` | Centralized environment variable validation using T3 Env + Zod |
+| `@beztack/ocr` | OCR utilities powered by Tesseract.js |
+| `@beztack/payments` | Provider-agnostic payment types and `PaymentProviderAdapter` interface |
+| `@beztack/payments-polar` | Polar payment provider implementation |
+| `@beztack/mercadopago` | MercadoPago payment provider implementation |
+| `@beztack/state` | URL-based state management using nuqs |
+
+## Payments Architecture
+
+Beztack uses a **provider-agnostic** payment system. Apps import types and the factory only from `@beztack/payments` (core) — never from provider packages directly. The active provider is selected at runtime via the `PAYMENT_PROVIDER` environment variable.
+
+See [Payments Core](/docs/payments/payments-core) for full details on the adapter interface, types, and how to add new providers.

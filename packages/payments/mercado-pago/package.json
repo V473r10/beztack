@@ -40,6 +40,7 @@
     }
   },
   "dependencies": {
+    "@beztack/payments": "workspace:*",
     "@mercadopago/sdk-react": "^1.0.7"
   },
   "devDependencies": {

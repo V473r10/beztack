@@ -1,6 +1,6 @@
+import { db, schema } from "@beztack/db";
 import { and, eq } from "drizzle-orm";
 import { createError, defineEventHandler } from "h3";
-import { db, schema } from "@beztack/db";
 import { auth } from "@/server/utils/auth";
 
 /**

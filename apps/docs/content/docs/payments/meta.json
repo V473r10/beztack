@@ -1,5 +1,5 @@
 {
   "title": "Payments",
-  "pages": ["polar", "mercado-pago"],
+  "pages": ["payments-core", "polar", "mercado-pago"],
   "defaultOpen": true
 }

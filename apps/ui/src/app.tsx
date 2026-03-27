@@ -1,4 +1,3 @@
-import { MercadoPagoProvider } from "@beztack/mercadopago/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { Toaster } from "sonner";
@@ -16,7 +15,6 @@ import Billing from "./app/billing/billing.tsx";
 import CheckoutSuccess from "./app/billing/checkout-success.tsx";
 import Pricing from "./app/billing/pricing.tsx";
 import SubscriptionWelcome from "./app/billing/subscription-welcome.tsx";
-import MercadoPagoDemo from "./app/examples/mercado-pago-demo.tsx";
 import NuqsDemo from "./app/examples/nuqs-demo.tsx";
 import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
@@ -24,11 +22,11 @@ import OrganizationsPage from "./app/organizations/organizations.tsx";
 import { Settings } from "./app/settings/settings.tsx";
 import { AdminRoute } from "./components/admin-route.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
+import { PaymentProviderWrapper } from "./components/payment-provider-wrapper.tsx";
 import { ProtectedRoute } from "./components/protected-route.tsx";
 import { PublicRoute } from "./components/public-route.tsx";
 import { MembershipProvider } from "./contexts/membership-context.tsx";
 import { ThemeProvider } from "./contexts/theme-context.tsx";
-import { env } from "./env";
 
 // Constants
 const SECONDS_PER_MINUTE = 60;
@@ -64,127 +62,88 @@ function getQueryClient() {
 
 function App() {
   const queryClient = getQueryClient();
-  const mpPublicKey = env.VITE_MERCADO_PAGO_PUBLIC_KEY ?? "";
-  const isMercadoPagoProvider = env.VITE_PAYMENT_PROVIDER === "mercadopago";
-  const isMercadoPagoEnabled = isMercadoPagoProvider && mpPublicKey;
 
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <MercadoPagoProviderWrapper
-          enabled={!!isMercadoPagoEnabled}
-          publicKey={mpPublicKey}
-        >
-          <MembershipProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Home />} index />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Settings />} path="settings" />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<OrganizationsPage />} path="organizations" />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route element={<Billing />} path="billing" />
-                </Route>
-                <Route
-                  element={
-                    <AdminRoute>
-                      <MainLayout />
-                    </AdminRoute>
-                  }
-                  path="admin"
-                >
-                  <Route element={<AdminDashboard />} index />
-                  <Route element={<UsersPage />} path="users" />
-                  <Route element={<AdminAnalytics />} path="analytics" />
-                  <Route element={<PlanSyncScreen />} path="plans" />
-                </Route>
-                <Route
-                  element={
-                    <PublicRoute>
-                      <AuthLayout />
-                    </PublicRoute>
-                  }
-                  path="auth"
-                >
-                  <Route element={<SignIn />} path="sign-in" />
-                  <Route element={<TwoFactor />} path="sign-in/two-factor" />
-                  <Route element={<SignUp />} path="sign-up" />
-                  <Route element={<Navigate replace to="sign-in" />} index />
-                </Route>
-                <Route element={<Pricing />} path="pricing" />
-                <Route element={<CheckoutSuccess />} path="checkout-success" />
-                <Route
-                  element={<SubscriptionWelcome />}
-                  path="subscription-welcome"
-                />
-                <Route element={<AI />} path="ai" />
-                <Route element={<OCR />} path="ocr" />
-                <Route element={<NuqsDemo />} path="nuqs-demo" />
-                {isMercadoPagoProvider && (
-                  <Route
-                    element={<MercadoPagoDemo />}
-                    path="mercado-pago-demo"
-                  />
-                )}
-                {/* Redirect any unknown routes to home */}
-                <Route element={<Navigate replace to="/" />} path="*" />
-              </Routes>
-            </BrowserRouter>
-            <Toaster />
-          </MembershipProvider>
-        </MercadoPagoProviderWrapper>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              element={
+                <PublicRoute>
+                  <AuthLayout />
+                </PublicRoute>
+              }
+              path="auth"
+            >
+              <Route element={<SignIn />} path="sign-in" />
+              <Route element={<TwoFactor />} path="sign-in/two-factor" />
+              <Route element={<SignUp />} path="sign-up" />
+              <Route element={<Navigate replace to="sign-in" />} index />
+            </Route>
+
+            {/* Todas las demás rutas con providers */}
+            <Route
+              element={
+                <PaymentProviderWrapper>
+                  <MembershipProvider>
+                    <Routes>
+                      <Route
+                        element={
+                          <ProtectedRoute>
+                            <MainLayout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route element={<Home />} index />
+                        <Route element={<Settings />} path="settings" />
+                        <Route
+                          element={<OrganizationsPage />}
+                          path="organizations"
+                        />
+                        <Route element={<Billing />} path="billing" />
+                      </Route>
+
+                      <Route
+                        element={
+                          <AdminRoute>
+                            <MainLayout />
+                          </AdminRoute>
+                        }
+                        path="admin"
+                      >
+                        <Route element={<AdminDashboard />} index />
+                        <Route element={<UsersPage />} path="users" />
+                        <Route element={<AdminAnalytics />} path="analytics" />
+                        <Route element={<PlanSyncScreen />} path="plans" />
+                      </Route>
+
+                      <Route element={<Pricing />} path="pricing" />
+                      <Route
+                        element={<CheckoutSuccess />}
+                        path="checkout-success"
+                      />
+                      <Route
+                        element={<SubscriptionWelcome />}
+                        path="subscription-welcome"
+                      />
+                      <Route element={<AI />} path="ai" />
+                      <Route element={<OCR />} path="ocr" />
+                      <Route element={<NuqsDemo />} path="nuqs-demo" />
+
+                      {/* Redirect any unknown routes to home */}
+                      <Route element={<Navigate replace to="/" />} path="*" />
+                    </Routes>
+                    <Toaster />
+                  </MembershipProvider>
+                </PaymentProviderWrapper>
+              }
+              path="/*"
+            />
+          </Routes>
+        </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>
-  );
-}
-
-// Wrapper component to conditionally render MercadoPagoProvider
-function MercadoPagoProviderWrapper({
-  enabled,
-  publicKey,
-  children,
-}: {
-  enabled: boolean;
-  publicKey: string;
-  children: React.ReactNode;
-}) {
-  if (!enabled) {
-    return <>{children}</>;
-  }
-
-  return (
-    <MercadoPagoProvider apiBaseUrl={env.VITE_API_URL} publicKey={publicKey}>
-      {children}
-    </MercadoPagoProvider>
   );
 }
 

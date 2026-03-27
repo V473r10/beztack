@@ -1,0 +1,43 @@
+{
+  "name": "@beztack/payments-polar",
+  "version": "0.0.1",
+  "description": "Polar payment provider adapter for Beztack",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth-plugin.d.ts",
+      "default": "./dist/auth-plugin.js"
+    },
+    "./auth-client": {
+      "types": "./dist/react/auth-plugin.d.ts",
+      "default": "./dist/react/auth-plugin.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepare": "pnpm build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@beztack/payments": "workspace:*",
+    "@polar-sh/better-auth": "^1.6.0",
+    "@polar-sh/sdk": "^0.34.17"
+  },
+  "peerDependencies": {
+    "better-auth": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "better-auth": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "better-auth": "^1.0.0",
+    "typescript": "^5.9.3"
+  }
+}

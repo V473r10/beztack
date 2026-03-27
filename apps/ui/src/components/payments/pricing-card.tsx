@@ -26,17 +26,17 @@ import {
 import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
-import type { PolarPricingTier } from "@/types/polar-pricing";
+import type { PricingTier } from "@/types/pricing";
 
 export type PricingCardProps = {
-  tier: PolarPricingTier;
+  tier: PricingTier;
   billingPeriod: "monthly" | "yearly";
   currentTier?: string;
   changeType?: PlanChangeType;
   hasActiveSubscription?: boolean;
   isPopular?: boolean;
   onSelect?: (tierId: string) => void;
-  onPlanChange?: (tier: PolarPricingTier) => void;
+  onPlanChange?: (tier: PricingTier) => void;
   isLoading?: boolean;
   disabled?: boolean;
   index?: number;
@@ -374,13 +374,10 @@ const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
 };
 
 export const formatCurrency = (amount: number, currency = "USD"): string => {
-  const CENTS_TO_DOLLARS = 100;
-  const dollars = amount / CENTS_TO_DOLLARS;
-
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: dollars % 1 === 0 ? 0 : 2,
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
-  }).format(dollars);
+  }).format(amount);
 };

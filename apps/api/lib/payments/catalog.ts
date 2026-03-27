@@ -1,5 +1,3 @@
-import { db, mpPlan } from "@beztack/db";
-import { eq } from "drizzle-orm";
 import type { Product } from "./types";
 
 export type CatalogPlan = {
@@ -22,100 +20,70 @@ export type CatalogPlan = {
   displayOrder: number | null;
 };
 
-/**
- * Fetch all visible plans from the DB and return them as CatalogPlan[]
- */
-export async function getCatalogPlans(): Promise<CatalogPlan[]> {
-  const plans = await db
-    .select()
-    .from(mpPlan)
-    .where(eq(mpPlan.visible, true))
-    .orderBy(mpPlan.displayOrder);
-
-  return plans.map((plan) => ({
-    id: plan.id,
-    canonicalTierId: plan.canonicalTierId ?? null,
-    displayName: plan.displayName ?? plan.reason,
-    description: plan.description,
-    features: (plan.features as string[] | null) ?? [],
-    limits: (plan.limits as Record<string, number> | null) ?? {},
-    permissions: (plan.permissions as string[] | null) ?? [],
-    price: {
-      amount: Number(plan.transactionAmount),
-      currency: plan.currencyId,
-    },
-    frequency: plan.frequency,
-    frequencyType: plan.frequencyType,
-    initPoint: plan.initPoint,
-    highlighted: plan.highlighted ?? false,
-    visible: plan.visible ?? true,
-    displayOrder: plan.displayOrder,
-  }));
-}
-
-/**
- * Fetch a single plan by its MP ID
- */
-export async function getCatalogPlanById(
-  planId: string
-): Promise<CatalogPlan | null> {
-  const [plan] = await db
-    .select()
-    .from(mpPlan)
-    .where(eq(mpPlan.id, planId))
-    .limit(1);
-
-  if (!plan) {
-    return null;
+function getStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
   }
 
-  return {
-    id: plan.id,
-    canonicalTierId: plan.canonicalTierId ?? null,
-    displayName: plan.displayName ?? plan.reason,
-    description: plan.description,
-    features: (plan.features as string[] | null) ?? [],
-    limits: (plan.limits as Record<string, number> | null) ?? {},
-    permissions: (plan.permissions as string[] | null) ?? [],
-    price: {
-      amount: Number(plan.transactionAmount),
-      currency: plan.currencyId,
-    },
-    frequency: plan.frequency,
-    frequencyType: plan.frequencyType,
-    initPoint: plan.initPoint,
-    highlighted: plan.highlighted ?? false,
-    visible: plan.visible ?? true,
-    displayOrder: plan.displayOrder,
-  };
+  return value.filter((entry): entry is string => typeof entry === "string");
 }
 
-/**
- * Enrich a provider Product with catalog metadata from DB plan data.
- * Looks up the plan by product ID and uses DB canonicalTierId directly.
- */
-export async function enrichProductWithCatalog(
-  product: Product
-): Promise<Product> {
-  const plan = await getCatalogPlanById(product.id);
-  if (!plan) {
-    return product;
+function getNumberRecord(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") {
+    return {};
   }
 
-  const metadata = product.metadata ?? {};
-  const tierId = plan.canonicalTierId ?? product.id;
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, number] =>
+        typeof entry[1] === "number" && Number.isFinite(entry[1])
+    )
+  );
+}
+
+function mapIntervalToFrequencyType(
+  interval: Product["interval"]
+): CatalogPlan["frequencyType"] {
+  switch (interval) {
+    case "year":
+      return "years";
+    case "week":
+      return "weeks";
+    case "day":
+      return "days";
+    default:
+      return "months";
+  }
+}
+
+export function buildCatalogPlanFromProduct(product: Product): CatalogPlan {
+  const metadata = product.metadata;
+  const canonicalTierId =
+    typeof metadata?.planId === "string"
+      ? metadata.planId
+      : typeof metadata?.tier === "string"
+        ? metadata.tier
+        : null;
 
   return {
-    ...product,
-    metadata: {
-      ...metadata,
-      planId: tierId,
-      tier: tierId,
-      features: plan.features,
-      limits: plan.limits,
-      permissions: plan.permissions,
-      displayOrder: plan.displayOrder,
+    id: product.id,
+    canonicalTierId,
+    displayName: product.name,
+    description: product.description ?? null,
+    features: getStringArray(metadata?.features),
+    limits: getNumberRecord(metadata?.limits),
+    permissions: getStringArray(metadata?.permissions),
+    price: {
+      amount: product.price.amount,
+      currency: product.price.currency,
     },
+    frequency: product.intervalCount,
+    frequencyType: mapIntervalToFrequencyType(product.interval),
+    initPoint: null,
+    highlighted: metadata?.highlighted === true,
+    visible: metadata?.visible !== false,
+    displayOrder:
+      typeof metadata?.displayOrder === "number" ? metadata.displayOrder : null,
   };
 }
 

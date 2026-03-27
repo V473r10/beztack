@@ -1,5 +1,9 @@
 import { extractFonts } from "@/lib/css-parser";
-import { ROOT_CSS_REGEX, CSS_VARIABLE_REGEX, type ColorTheme } from "./theme-types";
+import {
+  type ColorTheme,
+  CSS_VARIABLE_REGEX,
+  ROOT_CSS_REGEX,
+} from "./theme-types";
 
 // Helper functions for theme management
 export function createThemeLink(colorTheme: ColorTheme): HTMLLinkElement {
@@ -10,7 +14,9 @@ export function createThemeLink(colorTheme: ColorTheme): HTMLLinkElement {
   return link;
 }
 
-export function parseVariablesFromCSS(cssContent: string): Record<string, string> {
+export function parseVariablesFromCSS(
+  cssContent: string
+): Record<string, string> {
   const variables: Record<string, string> = {};
   const rootMatch = cssContent.match(ROOT_CSS_REGEX);
 

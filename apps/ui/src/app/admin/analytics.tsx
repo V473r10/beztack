@@ -224,7 +224,7 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
             {isLoading ? (
-              <div className="h-[300px] animate-pulse rounded bg-gradient-to-r from-muted/50 to-muted" />
+              <div className="h-[300px] animate-pulse rounded bg-linear-to-r from-muted/50 to-muted" />
             ) : (
               <div>
                 {growthData && growthData.length > 0 ? (
@@ -256,7 +256,7 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent>
             {isLoadingMetrics ? (
-              <div className="h-[250px] animate-pulse rounded bg-gradient-to-r from-muted/50 to-muted" />
+              <div className="h-[250px] animate-pulse rounded bg-linear-to-r from-muted/50 to-muted" />
             ) : (
               <div>
                 {(() => {

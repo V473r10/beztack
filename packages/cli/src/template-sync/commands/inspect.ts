@@ -1,251 +1,257 @@
-import { createServer } from "node:http"
-import { mkdir, readFile, writeFile } from "node:fs/promises"
-import { extname, join, resolve } from "node:path"
-import pc from "picocolors"
-import { readManifest } from "../core/manifest.js"
-import { buildUpdatePlan } from "../core/planner.js"
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import { extname, join, resolve } from "node:path";
+import pc from "picocolors";
+import { readManifest } from "../core/manifest.js";
+import { buildUpdatePlan } from "../core/planner.js";
 import {
-	ensureTemplateRoot,
-	resolveTemplateRoot,
-} from "../core/post-checks.js"
-import { writePlanReport } from "../core/report.js"
-import { readTemplateVersion } from "../core/template-version.js"
+  ensureTemplateRoot,
+  resolveTemplateRoot,
+} from "../core/post-checks.js";
+import { writePlanReport } from "../core/report.js";
+import { readTemplateVersion } from "../core/template-version.js";
 
 interface InspectOptions {
-	workspaceRoot: string
-	templateRoot?: string
-	refresh: boolean
-	offline: boolean
-	host?: string
-	port?: number
+  workspaceRoot: string;
+  templateRoot?: string;
+  refresh: boolean;
+  offline: boolean;
+  host?: string;
+  port?: number;
 }
 
 interface SerializableChange {
-	path: string
-	type: "add" | "modify" | "delete"
-	ownership: "template-owned" | "custom-owned" | "mixed"
-	isBinary: boolean
-	conflictReason?: string
-	currentContent: string
-	templateContent: string
+  path: string;
+  type: "add" | "modify" | "delete";
+  ownership: "template-owned" | "custom-owned" | "mixed";
+  isBinary: boolean;
+  conflictReason?: string;
+  currentContent: string;
+  templateContent: string;
 }
 
 interface InspectPayload {
-	generatedAt: string
-	workspaceRoot: string
-	templateRoot: string
-	fromVersion: string
-	toVersion: string
-	totalChanges: number
-	conflicts: number
-	skippedUnchangedTemplateFiles: number
-	changes: SerializableChange[]
+  generatedAt: string;
+  workspaceRoot: string;
+  templateRoot: string;
+  fromVersion: string;
+  toVersion: string;
+  totalChanges: number;
+  conflicts: number;
+  skippedUnchangedTemplateFiles: number;
+  changes: SerializableChange[];
 }
 
-const DEFAULT_HOST = "127.0.0.1"
-const DEFAULT_PORT = 3434
+const DEFAULT_HOST = "127.0.0.1";
+const DEFAULT_PORT = 3434;
 
 export async function runInspect(options: InspectOptions): Promise<void> {
-	if (
-		typeof options.port === "number" &&
-		(!Number.isInteger(options.port) || options.port < 0 || options.port > 65535)
-	) {
-		throw new Error("Invalid --port value. Use an integer between 0 and 65535.")
-	}
+  if (
+    typeof options.port === "number" &&
+    (!Number.isInteger(options.port) ||
+      options.port < 0 ||
+      options.port > 65_535)
+  ) {
+    throw new Error(
+      "Invalid --port value. Use an integer between 0 and 65535."
+    );
+  }
 
-	const templateRoot = await resolveTemplateRoot({
-		workspaceRoot: options.workspaceRoot,
-		templateRoot: options.templateRoot,
-		refresh: options.refresh,
-		offline: options.offline,
-	})
-	await ensureTemplateRoot(templateRoot)
+  const templateRoot = await resolveTemplateRoot({
+    workspaceRoot: options.workspaceRoot,
+    templateRoot: options.templateRoot,
+    refresh: options.refresh,
+    offline: options.offline,
+  });
+  await ensureTemplateRoot(templateRoot);
 
-	const manifest = await readManifest(options.workspaceRoot)
-	const targetVersion = await readTemplateVersion(templateRoot)
-	const plan = await buildUpdatePlan({
-		workspaceRoot: options.workspaceRoot,
-		templateRoot,
-		manifest,
-	})
-	const reportPath = await writePlanReport(options.workspaceRoot, plan)
-	const inspectRoot = join(options.workspaceRoot, ".beztack", "inspect")
-	await mkdir(inspectRoot, { recursive: true })
+  const manifest = await readManifest(options.workspaceRoot);
+  const targetVersion = await readTemplateVersion(templateRoot);
+  const plan = await buildUpdatePlan({
+    workspaceRoot: options.workspaceRoot,
+    templateRoot,
+    manifest,
+  });
+  const reportPath = await writePlanReport(options.workspaceRoot, plan);
+  const inspectRoot = join(options.workspaceRoot, ".beztack", "inspect");
+  await mkdir(inspectRoot, { recursive: true });
 
-	const payload: InspectPayload = {
-		generatedAt: new Date().toISOString(),
-		workspaceRoot: options.workspaceRoot,
-		templateRoot,
-		fromVersion: manifest.currentVersion,
-		toVersion: targetVersion,
-		totalChanges: plan.changes.length,
-		conflicts: plan.conflicts.length,
-		skippedUnchangedTemplateFiles: plan.skippedUnchangedTemplateFiles,
-		changes: plan.changes.map((change) => ({
-			path: change.path,
-			type: change.type,
-			ownership: change.ownership,
-			isBinary: change.isBinary === true,
-			conflictReason: change.conflictReason,
-			currentContent:
-				change.isBinary === true
-					? "[binary content omitted]"
-					: (change.currentContent ?? ""),
-			templateContent:
-				change.isBinary === true
-					? "[binary content omitted]"
-					: (change.templateContent ?? ""),
-		})),
-	}
+  const payload: InspectPayload = {
+    generatedAt: new Date().toISOString(),
+    workspaceRoot: options.workspaceRoot,
+    templateRoot,
+    fromVersion: manifest.currentVersion,
+    toVersion: targetVersion,
+    totalChanges: plan.changes.length,
+    conflicts: plan.conflicts.length,
+    skippedUnchangedTemplateFiles: plan.skippedUnchangedTemplateFiles,
+    changes: plan.changes.map((change) => ({
+      path: change.path,
+      type: change.type,
+      ownership: change.ownership,
+      isBinary: change.isBinary === true,
+      conflictReason: change.conflictReason,
+      currentContent:
+        change.isBinary === true
+          ? "[binary content omitted]"
+          : (change.currentContent ?? ""),
+      templateContent:
+        change.isBinary === true
+          ? "[binary content omitted]"
+          : (change.templateContent ?? ""),
+    })),
+  };
 
-	await writeFile(
-		join(inspectRoot, "data.json"),
-		`${JSON.stringify(payload, null, 2)}\n`,
-		"utf-8",
-	)
-	await writeFile(join(inspectRoot, "index.html"), buildInspectHtml(), "utf-8")
+  await writeFile(
+    join(inspectRoot, "data.json"),
+    `${JSON.stringify(payload, null, 2)}\n`,
+    "utf-8"
+  );
+  await writeFile(join(inspectRoot, "index.html"), buildInspectHtml(), "utf-8");
 
-	const host = options.host ?? DEFAULT_HOST
-	const preferredPort = options.port ?? DEFAULT_PORT
-	const server = createServer(async (request, response) => {
-		await serveInspectStatic(inspectRoot, request.url ?? "/", response)
-	})
+  const host = options.host ?? DEFAULT_HOST;
+  const preferredPort = options.port ?? DEFAULT_PORT;
+  const server = createServer(async (request, response) => {
+    await serveInspectStatic(inspectRoot, request.url ?? "/", response);
+  });
 
-	const actualPort = await listenOnAvailablePort(server, host, preferredPort)
-	const url = `http://${host}:${actualPort}`
+  const actualPort = await listenOnAvailablePort(server, host, preferredPort);
+  const url = `http://${host}:${actualPort}`;
 
-	process.stdout.write(
-		`${pc.bold("Template inspect viewer")}\n` +
-			`- URL: ${url}\n` +
-			`- Changes: ${payload.totalChanges}\n` +
-			`- Skipped unchanged template files: ${payload.skippedUnchangedTemplateFiles}\n` +
-			`- Conflicts: ${payload.conflicts}\n` +
-			`- Report: ${reportPath}\n` +
-			`- Press Ctrl+C to stop the viewer\n`,
-	)
+  process.stdout.write(
+    `${pc.bold("Template inspect viewer")}\n` +
+      `- URL: ${url}\n` +
+      `- Changes: ${payload.totalChanges}\n` +
+      `- Skipped unchanged template files: ${payload.skippedUnchangedTemplateFiles}\n` +
+      `- Conflicts: ${payload.conflicts}\n` +
+      `- Report: ${reportPath}\n` +
+      "- Press Ctrl+C to stop the viewer\n"
+  );
 
-	await new Promise<void>((resolvePromise) => {
-		const closeServer = () => {
-			server.close(() => {
-				resolvePromise()
-			})
-		}
+  await new Promise<void>((resolvePromise) => {
+    const closeServer = () => {
+      server.close(() => {
+        resolvePromise();
+      });
+    };
 
-		process.once("SIGINT", closeServer)
-		process.once("SIGTERM", closeServer)
-	})
+    process.once("SIGINT", closeServer);
+    process.once("SIGTERM", closeServer);
+  });
 }
 
 async function serveInspectStatic(
-	inspectRoot: string,
-	requestUrl: string,
-	response: {
-		writeHead: (statusCode: number, headers?: Record<string, string>) => void
-		end: (data?: string) => void
-	},
+  inspectRoot: string,
+  requestUrl: string,
+  response: {
+    writeHead: (statusCode: number, headers?: Record<string, string>) => void;
+    end: (data?: string) => void;
+  }
 ): Promise<void> {
-	try {
-		const relativePath = sanitizeRequestPath(requestUrl)
-		const resolvedPath = resolve(inspectRoot, relativePath)
-		if (!resolvedPath.startsWith(resolve(inspectRoot))) {
-			response.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" })
-			response.end("Forbidden")
-			return
-		}
+  try {
+    const relativePath = sanitizeRequestPath(requestUrl);
+    const resolvedPath = resolve(inspectRoot, relativePath);
+    if (!resolvedPath.startsWith(resolve(inspectRoot))) {
+      response.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end("Forbidden");
+      return;
+    }
 
-		const fileContents = await readFile(resolvedPath, "utf-8")
-		response.writeHead(200, {
-			"Content-Type": getContentType(resolvedPath),
-			"Cache-Control": "no-store",
-		})
-		response.end(fileContents)
-	} catch {
-		response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" })
-		response.end("Not found")
-	}
+    const fileContents = await readFile(resolvedPath, "utf-8");
+    response.writeHead(200, {
+      "Content-Type": getContentType(resolvedPath),
+      "Cache-Control": "no-store",
+    });
+    response.end(fileContents);
+  } catch {
+    response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    response.end("Not found");
+  }
 }
 
 function sanitizeRequestPath(requestUrl: string): string {
-	if (requestUrl === "/" || requestUrl.length === 0) {
-		return "index.html"
-	}
+  if (requestUrl === "/" || requestUrl.length === 0) {
+    return "index.html";
+  }
 
-	const withoutQuery = requestUrl.split("?")[0] ?? requestUrl
-	return withoutQuery.replace(/^\/+/, "")
+  const withoutQuery = requestUrl.split("?")[0] ?? requestUrl;
+  return withoutQuery.replace(/^\/+/, "");
 }
 
 function getContentType(path: string): string {
-	const extension = extname(path).toLowerCase()
-	if (extension === ".html") {
-		return "text/html; charset=utf-8"
-	}
-	if (extension === ".json") {
-		return "application/json; charset=utf-8"
-	}
-	if (extension === ".js") {
-		return "text/javascript; charset=utf-8"
-	}
-	if (extension === ".css") {
-		return "text/css; charset=utf-8"
-	}
-	return "text/plain; charset=utf-8"
+  const extension = extname(path).toLowerCase();
+  if (extension === ".html") {
+    return "text/html; charset=utf-8";
+  }
+  if (extension === ".json") {
+    return "application/json; charset=utf-8";
+  }
+  if (extension === ".js") {
+    return "text/javascript; charset=utf-8";
+  }
+  if (extension === ".css") {
+    return "text/css; charset=utf-8";
+  }
+  return "text/plain; charset=utf-8";
 }
 
 async function listenOnAvailablePort(
-	server: {
-		listen: (
-			port: number,
-			host: string,
-			callback: () => void,
-		) => void
-		on: (event: "error", listener: (error: NodeJS.ErrnoException) => void) => void
-		off: (event: "error", listener: (error: NodeJS.ErrnoException) => void) => void
-		address: () => string | { port: number } | null
-	},
-	host: string,
-	preferredPort: number,
+  server: {
+    listen: (port: number, host: string, callback: () => void) => void;
+    on: (
+      event: "error",
+      listener: (error: NodeJS.ErrnoException) => void
+    ) => void;
+    off: (
+      event: "error",
+      listener: (error: NodeJS.ErrnoException) => void
+    ) => void;
+    address: () => string | { port: number } | null;
+  },
+  host: string,
+  preferredPort: number
 ): Promise<number> {
-	return await new Promise<number>((resolvePromise, rejectPromise) => {
-		const onError = (error: NodeJS.ErrnoException) => {
-			if (error.code !== "EADDRINUSE") {
-				rejectPromise(error)
-				return
-			}
+  return await new Promise<number>((resolvePromise, rejectPromise) => {
+    const onError = (error: NodeJS.ErrnoException) => {
+      if (error.code !== "EADDRINUSE") {
+        rejectPromise(error);
+        return;
+      }
 
-			server.off("error", onError)
-			server.listen(0, host, () => {
-				const address = server.address()
-				if (
-					typeof address === "object" &&
-					address !== null &&
-					typeof address.port === "number"
-				) {
-					resolvePromise(address.port)
-					return
-				}
-				rejectPromise(new Error("Failed to resolve viewer port"))
-			})
-		}
+      server.off("error", onError);
+      server.listen(0, host, () => {
+        const address = server.address();
+        if (
+          typeof address === "object" &&
+          address !== null &&
+          typeof address.port === "number"
+        ) {
+          resolvePromise(address.port);
+          return;
+        }
+        rejectPromise(new Error("Failed to resolve viewer port"));
+      });
+    };
 
-		server.on("error", onError)
-		server.listen(preferredPort, host, () => {
-			server.off("error", onError)
-			const address = server.address()
-			if (
-				typeof address === "object" &&
-				address !== null &&
-				typeof address.port === "number"
-			) {
-				resolvePromise(address.port)
-				return
-			}
-			rejectPromise(new Error("Failed to resolve viewer port"))
-		})
-	})
+    server.on("error", onError);
+    server.listen(preferredPort, host, () => {
+      server.off("error", onError);
+      const address = server.address();
+      if (
+        typeof address === "object" &&
+        address !== null &&
+        typeof address.port === "number"
+      ) {
+        resolvePromise(address.port);
+        return;
+      }
+      rejectPromise(new Error("Failed to resolve viewer port"));
+    });
+  });
 }
 
 function buildInspectHtml(): string {
-	return `<!doctype html>
+  return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -606,5 +612,5 @@ function buildInspectHtml(): string {
   </script>
 </body>
 </html>
-`
+`;
 }

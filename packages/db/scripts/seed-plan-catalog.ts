@@ -1,19 +1,17 @@
 /**
- * One-time seed script to populate mpPlan local business fields
- * from the previously hardcoded CANONICAL_PAYMENT_PLANS.
+ * Seed script to populate the plan catalog with default tier data.
  *
  * Run after schema migration:
- *   pnpm tsx packages/db/scripts/seed-plan-catalog.ts
+ *   pnpm tsx packages/db/scripts/seed-plan-catalog.ts polar
+ *   pnpm tsx packages/db/scripts/seed-plan-catalog.ts mercadopago
  *
- * This script updates existing mpPlan rows that match by canonical tier ID
- * (inferred from the plan's `reason` field). It does NOT create new rows —
- * plans must first be synced from Mercado Pago.
+ * This script upserts plans by canonical tier ID + provider + interval.
  */
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../src/client";
-import { mpPlan } from "../src/schema";
+import { plan } from "../src/schema";
 
-type SeedPlan = {
+type BaseTier = {
   canonicalTierId: string;
   displayName: string;
   description: string;
@@ -24,7 +22,7 @@ type SeedPlan = {
   highlighted: boolean;
 };
 
-const SEED_PLANS: SeedPlan[] = [
+const BASE_TIERS: BaseTier[] = [
   {
     canonicalTierId: "free",
     displayName: "Free",
@@ -117,73 +115,113 @@ const SEED_PLANS: SeedPlan[] = [
   },
 ];
 
-function inferTierFromReason(reason: string): string | null {
-  const lower = reason.toLowerCase();
-  if (lower.includes("ultimate") || lower.includes("enterprise")) {
-    return "ultimate";
+/**
+ * Prices per provider:
+ * - Polar: in cents (900 = $9 USD)
+ * - MercadoPago: in display currency (45 = 45 UYU)
+ */
+const POLAR_PRICING: Record<string, { monthly: number; yearly: number }> = {
+  free: { monthly: 0, yearly: 0 },
+  basic: { monthly: 900, yearly: 9000 }, // $9/mo, $90/yr
+  pro: { monthly: 2900, yearly: 29_000 }, // $29/mo, $290/yr
+  ultimate: { monthly: 9900, yearly: 99_000 }, // $99/mo, $990/yr
+};
+
+const MP_PRICING: Record<string, { monthly: number }> = {
+  free: { monthly: 0 },
+  basic: { monthly: 4500 }, // 4500/mo UYU
+  pro: { monthly: 8000 }, // 8000/mo UYU
+  ultimate: { monthly: 15_000 }, // 15000/mo UYU
+};
+
+type Interval = "month" | "year";
+
+type SeedPlan = BaseTier & {
+  price: number;
+  currency: string;
+  interval: Interval;
+};
+
+function buildSeedPlans(provider: string): SeedPlan[] {
+  const isMP = provider === "mercadopago";
+  const pricing = isMP ? MP_PRICING : POLAR_PRICING;
+  const currency = isMP ? "UYU" : "USD";
+  const plans: SeedPlan[] = [];
+
+  for (const tier of BASE_TIERS) {
+    const prices = pricing[tier.canonicalTierId] ?? { monthly: 0 };
+
+    plans.push({ ...tier, price: prices.monthly, currency, interval: "month" });
+
+    if (
+      !isMP &&
+      "yearly" in prices &&
+      (prices as { yearly: number }).yearly > 0
+    ) {
+      plans.push({
+        ...tier,
+        price: (prices as { yearly: number }).yearly,
+        currency,
+        interval: "year",
+      });
+    }
   }
-  if (lower.includes("pro")) {
-    return "pro";
-  }
-  if (lower.includes("basic")) {
-    return "basic";
-  }
-  if (lower.includes("free")) {
-    return "free";
-  }
-  return null;
+
+  return plans;
 }
 
 async function main() {
-  console.info("[seed] Starting plan catalog seed...");
+  const provider = process.argv[2] ?? "polar";
+  // biome-ignore lint/suspicious/noConsole: seed script
+  console.info(`[seed] Starting plan catalog seed for provider: ${provider}`);
 
-  const existingPlans = await db.select().from(mpPlan);
-  console.info(`[seed] Found ${existingPlans.length} existing plans in DB`);
+  const seedPlans = buildSeedPlans(provider);
+  let upserted = 0;
 
-  let updated = 0;
+  for (const seed of seedPlans) {
+    const id = `${provider}_${seed.canonicalTierId}_${seed.interval}`;
 
-  for (const plan of existingPlans) {
-    const tierId = plan.canonicalTierId ?? inferTierFromReason(plan.reason);
-    if (!tierId) {
-      console.info(
-        `[seed] Skipping plan "${plan.reason}" (${plan.id}) — no tier match`
-      );
-      continue;
+    const [existing] = await db
+      .select({ id: plan.id })
+      .from(plan)
+      .where(and(eq(plan.id, id)))
+      .limit(1);
+
+    const values = {
+      id,
+      provider,
+      canonicalTierId: seed.canonicalTierId,
+      displayName: seed.displayName,
+      description: seed.description,
+      features: seed.features,
+      limits: seed.limits,
+      permissions: seed.permissions,
+      price: String(seed.price),
+      currency: seed.currency,
+      interval: seed.interval,
+      displayOrder: seed.displayOrder,
+      highlighted: seed.highlighted,
+      visible: true,
+    };
+
+    if (existing) {
+      await db.update(plan).set(values).where(eq(plan.id, id));
+    } else {
+      await db.insert(plan).values(values);
     }
 
-    const seed = SEED_PLANS.find((s) => s.canonicalTierId === tierId);
-    if (!seed) {
-      continue;
-    }
-
-    await db
-      .update(mpPlan)
-      .set({
-        canonicalTierId: seed.canonicalTierId,
-        displayName: seed.displayName,
-        description: seed.description,
-        features: seed.features,
-        limits: seed.limits,
-        permissions: seed.permissions,
-        displayOrder: seed.displayOrder,
-        highlighted: seed.highlighted,
-        visible: true,
-      })
-      .where(eq(mpPlan.id, plan.id));
-
-    updated++;
-    console.info(
-      `[seed] Updated plan "${plan.reason}" (${plan.id}) → tier: ${tierId}`
-    );
+    upserted++;
+    // biome-ignore lint/suspicious/noConsole: seed script
+    console.info(`[seed] Upserted plan: ${seed.displayName} (${id})`);
   }
 
-  console.info(
-    `[seed] Done. Updated ${updated}/${existingPlans.length} plans.`
-  );
+  // biome-ignore lint/suspicious/noConsole: seed script
+  console.info(`[seed] Done. Upserted ${upserted} plans.`);
   process.exit(0);
 }
 
 main().catch((error) => {
+  // biome-ignore lint/suspicious/noConsole: seed script
   console.error("[seed] Error:", error);
   process.exit(1);
 });

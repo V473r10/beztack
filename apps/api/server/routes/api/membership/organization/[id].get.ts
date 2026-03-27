@@ -1,6 +1,6 @@
+import { db, schema } from "@beztack/db";
 import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, getRouterParam } from "h3";
-import { db, schema } from "@beztack/db";
 import { auth } from "@/server/utils/auth";
 
 /**
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
         subscriptionTier: schema.organization.subscriptionTier,
         subscriptionStatus: schema.organization.subscriptionStatus,
         subscriptionId: schema.organization.subscriptionId,
-        polarCustomerId: schema.organization.polarCustomerId,
+        paymentCustomerId: schema.organization.paymentCustomerId,
         subscriptionValidUntil: schema.organization.subscriptionValidUntil,
         usageMetrics: schema.organization.usageMetrics,
       })

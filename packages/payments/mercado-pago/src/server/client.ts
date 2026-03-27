@@ -208,6 +208,7 @@ async function mpFetch<T>(
     });
 
     if (result.success) {
+      // console.log("MP Fetch Result:", result.data);
       return result.data;
     }
 
@@ -617,6 +618,9 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
       status?: "paused" | "authorized" | "cancelled";
       reason?: string;
       external_reference?: string;
+      auto_recurring?: {
+        transaction_amount?: number;
+      };
     }
   ): Promise<MPSubscriptionResponse> => {
     return mpFetch<MPSubscriptionResponse>(

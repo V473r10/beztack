@@ -11,13 +11,19 @@ maintainable defaults.
 
 We're using cutting-edge technologies to deliver the best developer and user experience:
 
-- **Monorepo:** [Nx](https://nx.dev) for efficient workspace management.
-- **Frontend:** [React](https://react.dev) + [Vite](https://vitejs.dev) in `apps/ui`.
-- **Backend:** [Nitro](https://nitro.unjs.io) in `apps/api`.
+- **Monorepo:** [Nx](https://nx.dev) + [pnpm](https://pnpm.io) for efficient workspace management.
+- **Frontend:** [React 19](https://react.dev) + [Vite](https://vitejs.dev) + [Tailwind CSS v4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) in `apps/ui`.
+- **Backend:** [Nitro](https://nitro.unjs.io) with file-based routing in `apps/api`.
 - **Landing + Docs:** [Next.js](https://nextjs.org) +
   [Fumadocs](https://fumadocs.dev) in `apps/docs`.
-- **Auth:** [Better Auth](https://better-auth.com).
-- **Payments:** Integrations with Polar and Mercado Pago.
+- **Auth:** [Better Auth](https://better-auth.com) with admin, organization, and twoFactor plugins.
+- **Payments:** Provider-agnostic adapter pattern supporting [Polar](https://polar.sh) and [MercadoPago](https://www.mercadopago.com).
+- **Database:** [Drizzle ORM](https://orm.drizzle.team) + PostgreSQL in `@beztack/db`.
+- **Email:** [React Email](https://react.email) + [Resend](https://resend.com) in `@beztack/email`.
+- **Environment:** [T3 Env](https://env.t3.gg) + [Zod](https://zod.dev) for centralized env validation in `@beztack/env`.
+- **AI:** [Vercel AI SDK](https://sdk.vercel.ai) + Amazon Bedrock in `@beztack/ai`.
+- **OCR:** [Tesseract.js](https://tesseract.projectnaptha.com) in `@beztack/ocr`.
+- **URL State:** [nuqs](https://nuqs.47ng.com) in `@beztack/state`.
 - **CLI Tooling:** Template Sync commands to plan, inspect, apply, and
   rollback template updates.
 
@@ -25,7 +31,9 @@ We're using cutting-edge technologies to deliver the best developer and user exp
 
 The repo is organized into apps and shared packages:
 
-- `apps/`: Deployable applications (UI, API, Docs).
-- `packages/`: Shared libraries and utilities.
+- **`apps/ui`** — React 19 SPA with TanStack Query, React Router v7, and i18next.
+- **`apps/api`** — Nitro REST API with unified payment routes (`/api/subscriptions/*`) and admin routes (`/api/admin/plans/*`).
+- **`apps/docs`** — Next.js landing page and documentation with Fumadocs.
+- **`packages/`** — 10 shared packages covering database, payments, email, env validation, AI, OCR, state management, and CLI tooling.
 
 Check out the sidebar sections to dive deeper into each aspect of Beztack development.

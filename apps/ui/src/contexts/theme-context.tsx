@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import { loadThemeCSS } from "@/lib/css-parser";
-import type {
-  Theme,
-  ColorTheme,
-  ThemeProviderProps,
-} from "./theme-types";
-import {
-  createThemeLink,
-  loadCustomFonts,
-} from "./theme-utils";
 import { ThemeProviderContext } from "./theme-provider-context";
+import type { ColorTheme, Theme, ThemeProviderProps } from "./theme-types";
+import { createThemeLink, loadCustomFonts } from "./theme-utils";
 
 export function ThemeProvider({
   children,

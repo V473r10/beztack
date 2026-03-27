@@ -223,6 +223,11 @@ export type MPPaymentResponse = {
   net_received_amount?: number;
   installments?: number;
   statement_descriptor?: string;
+  point_of_interaction?: {
+    transaction_data?: {
+      subscription_id?: string;
+    };
+  };
   card?: {
     first_six_digits?: string;
     last_four_digits?: string;
@@ -276,9 +281,14 @@ export type MPSubscriptionResponse = {
     currency_id?: string;
   };
   summarized?: {
+    quotas?: number;
     charged_quantity?: number;
     charged_amount?: number;
+    pending_charge_quantity?: number;
     pending_charge_amount?: number;
+    last_charged_date?: string;
+    last_charged_amount?: number;
+    semaphore?: string;
   };
   payment_method_id?: string;
   next_payment_date?: string;
@@ -450,8 +460,13 @@ export type MPPreapproval = {
   reason: string;
   payer_id: number;
   payer_email?: string;
+  payer_first_name?: string;
+  payer_last_name?: string;
   init_point: string;
   date_created: string;
+  last_modified?: string;
+  back_url?: string;
+  payment_method_id?: string;
   auto_recurring: {
     frequency: number;
     frequency_type: string;
@@ -462,6 +477,17 @@ export type MPPreapproval = {
   next_payment_date?: string;
   end_date?: string;
   preapproval_plan_id?: string;
+  first_invoice_offset?: number;
+  summarized?: {
+    quotas?: number;
+    charged_quantity?: number;
+    charged_amount?: number;
+    pending_charge_quantity?: number;
+    pending_charge_amount?: number;
+    last_charged_date?: string;
+    last_charged_amount?: number;
+    semaphore?: string;
+  };
 };
 
 // ============================================================================

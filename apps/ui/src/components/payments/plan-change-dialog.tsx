@@ -41,10 +41,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
-import { usePolarProducts } from "@/hooks/use-polar-products";
+import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
-import type { PolarPricingTier } from "@/types/polar-pricing";
+import type { PricingTier } from "@/types/pricing";
 import { formatCurrency } from "./pricing-card";
 
 const MAX_FEATURES_TO_SHOW = 4;
@@ -135,7 +135,7 @@ export type PlanChangeDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentTier: MembershipTier;
-  targetTier: PolarPricingTier | null;
+  targetTier: PricingTier | null;
   changeType: PlanChangeType;
   billingPeriod: "monthly" | "yearly";
   onBillingPeriodChange: (period: "monthly" | "yearly") => void;
@@ -158,10 +158,16 @@ export function PlanChangeDialog({
   const [confirmDowngrade, setConfirmDowngrade] = useState(false);
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
 
-  const { data: allTiers = [] } = useQuery<PolarPricingTier[]>({
+  const { data: allTiers = [] } = useQuery<PricingTier[]>({
     queryKey: ["subscriptions", "products", "tiers"],
-    queryFn: usePolarProducts,
+    queryFn: usePricingTiers,
   });
+
+  const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
+  const savingsPercent = Math.max(
+    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0),
+    0
+  );
 
   const currentTierData = allTiers.find((tier) => tier.id === currentTier);
 
@@ -344,32 +350,39 @@ export function PlanChangeDialog({
           <Separator />
 
           {/* Billing Period Selection */}
-          <div className="space-y-2">
-            <Label>
-              {t("billing.planChange.billingPeriod", "Billing Period")}
-            </Label>
-            <Select
-              onValueChange={(value) =>
-                onBillingPeriodChange(value as "monthly" | "yearly")
-              }
-              value={billingPeriod}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">
-                  {t("billing.monthly", "Monthly")}
-                </SelectItem>
-                <SelectItem value="yearly">
-                  {t("billing.yearly", "Yearly")}
-                  <Badge className="ml-2" variant="secondary">
-                    {t("billing.save17", "Save 17%")}
-                  </Badge>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {hasYearlyPlans && (
+            <div className="space-y-2">
+              <Label>
+                {t("billing.planChange.billingPeriod", "Billing Period")}
+              </Label>
+              <Select
+                onValueChange={(value) =>
+                  onBillingPeriodChange(value as "monthly" | "yearly")
+                }
+                value={billingPeriod}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">
+                    {t("billing.monthly", "Monthly")}
+                  </SelectItem>
+                  <SelectItem value="yearly">
+                    {t("billing.yearly", "Yearly")}
+                    {savingsPercent > 0 && (
+                      <Badge className="ml-2" variant="secondary">
+                        {t("billing.savePercent", {
+                          defaultValue: "Save {{percent}}%",
+                          percent: savingsPercent,
+                        })}
+                      </Badge>
+                    )}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Price difference info */}
           <div className="rounded-lg border bg-muted/20 p-4">
