@@ -53,6 +53,7 @@ export const auth = betterAuth({
     `https://${projectName}-api.vercel.app`, // Add API domain as trusted origin
     `https://${projectName}-api.codedicated.com`,
     `https://${projectName}-ui.codedicated.com`,
+    `https://app.beztack.com`
   ],
   plugins: [
     twoFactor({
