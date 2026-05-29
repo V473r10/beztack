@@ -8,6 +8,7 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -276,6 +277,7 @@ export const webhookLog = pgTable(
     provider: text("provider").notNull(),
     eventType: text("event_type"),
     resourceId: text("resource_id"),
+    eventKey: text("event_key"),
     rawPayload: jsonb("raw_payload"),
     status: text("status"),
     errorMessage: text("error_message"),
@@ -285,6 +287,7 @@ export const webhookLog = pgTable(
     index("webhook_log_provider_idx").on(table.provider),
     index("webhook_log_event_type_idx").on(table.eventType),
     index("webhook_log_status_idx").on(table.status),
+    uniqueIndex("webhook_log_event_key_idx").on(table.eventKey),
   ]
 );
 

@@ -46,9 +46,8 @@
     "nx",
     "pnpm"
   ],
-  "dependencies": {},
   "devDependencies": {
-    "@types/node": "^22.15.17",
+    "@types/node": "^22.18.6",
     "bumpp": "^10.1.0",
     "tsdown": "^0.11.9",
     "typescript": "^5.8.3",

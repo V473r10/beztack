@@ -131,28 +131,16 @@ const SUBSCRIPTION_ACTION_MAP: Record<string, WebhookPayload["type"]> = {
   authorized: "subscription.active",
 };
 
-async function resolveWebhookPayload(
-  payload: { type: string; action: string; data: { id: string } },
-  getSubscription: (id: string) => Promise<Subscription | null>
-): Promise<WebhookPayload> {
+function resolveWebhookPayload(payload: {
+  type: string;
+  action: string;
+  data: { id: string };
+}): WebhookPayload {
   let mappedType: WebhookPayload["type"] = "subscription.updated";
-  let subscription: Subscription | undefined;
-  let customer: Customer | undefined;
 
   if (payload.type === "subscription_preapproval") {
     mappedType =
       SUBSCRIPTION_ACTION_MAP[payload.action] ?? "subscription.updated";
-
-    if (payload.data?.id) {
-      subscription = (await getSubscription(payload.data.id)) ?? undefined;
-      if (subscription?.customerEmail) {
-        customer = {
-          id: subscription.customerId,
-          email: subscription.customerEmail,
-          metadata: subscription.metadata,
-        };
-      }
-    }
   } else if (payload.type === "payment") {
     const isFailed =
       payload.action.includes("rejected") || payload.action.includes("failed");
@@ -162,8 +150,6 @@ async function resolveWebhookPayload(
   return {
     type: mappedType,
     provider: "mercadopago",
-    subscription,
-    customer,
     rawPayload: payload,
   };
 }
@@ -597,21 +583,14 @@ export function createMercadoPagoAdapter(
       }
     },
 
-    async parseWebhook(
-      rawBody: string,
-      _signature: string
-    ): Promise<WebhookPayload> {
+    parseWebhook(rawBody: string, _signature: string): Promise<WebhookPayload> {
       const payload = JSON.parse(rawBody) as {
         type: string;
         action: string;
         data: { id: string };
       };
 
-      const result = await resolveWebhookPayload(
-        payload,
-        this.getSubscription.bind(this)
-      );
-      return result;
+      return Promise.resolve(resolveWebhookPayload(payload));
     },
   };
 }
