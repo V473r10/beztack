@@ -13,8 +13,10 @@
     }
   },
   "scripts": {
-    "migrate": "pnpm exec drizzle-kit generate --config=./drizzle.config.ts && pnpm exec drizzle-kit migrate --config=./drizzle.config.ts",
-    "push": "pnpm exec drizzle-kit push --config=./drizzle.config.ts",
+    "db:generate": "pnpm exec drizzle-kit generate --config=./drizzle.config.ts",
+    "db:migrate": "pnpm exec drizzle-kit migrate --config=./drizzle.config.ts",
+    "db:push": "pnpm exec drizzle-kit push --config=./drizzle.config.ts",
+    "db:studio": "pnpm exec drizzle-kit studio --config=./drizzle.config.ts",
     "generate-auth-schema": "pnpm dlx @better-auth/cli generate --output ./src/auth-schema.generated.ts --config ../../apps/api/server/utils/auth.ts -y",
     "typecheck": "tsc --noEmit"
   },

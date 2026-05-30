@@ -8,8 +8,10 @@
     "dev": "nx run-many -t dev --parallel=10",
     "lint": "nx lint",
     "test": "nx test",
-    "migrate": "pnpm --filter @beztack/db migrate",
-    "push": "pnpm --filter @beztack/db push",
+    "db:generate": "pnpm --filter @beztack/db db:generate",
+    "db:migrate": "pnpm --filter @beztack/db db:migrate",
+    "db:push": "pnpm --filter @beztack/db db:push",
+    "db:studio": "pnpm --filter @beztack/db db:studio",
     "generate-auth-schema": "pnpm --filter @beztack/db generate-auth-schema"
   },
   "devDependencies": {

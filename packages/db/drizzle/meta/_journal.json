@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1769287376241,
-      "tag": "0000_tricky_slipstream",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1769306091585,
-      "tag": "0001_cheerful_luke_cage",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1769376256388,
-      "tag": "0002_aberrant_stone_men",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1773099547948,
-      "tag": "0003_wealthy_punisher",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1773514094947,
-      "tag": "0004_hesitant_killraven",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1780008130819,
-      "tag": "0005_breezy_black_tom",
+      "when": 1780168296696,
+      "tag": "0000_mixed_callisto",
       "breakpoints": true
     }
   ]
