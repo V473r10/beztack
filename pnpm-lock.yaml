@@ -577,6 +577,13 @@ importers:
         version: 1.3.14
 
   packages/payments/core:
+    dependencies:
+      '@beztack/mercadopago':
+        specifier: workspace:*
+        version: link:../mercado-pago
+      '@beztack/payments-polar':
+        specifier: workspace:*
+        version: link:../polar
     devDependencies:
       '@tanstack/react-query':
         specifier: ^5.0.0

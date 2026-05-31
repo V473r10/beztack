@@ -20,12 +20,20 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
+    "@beztack/mercadopago": "workspace:*",
+    "@beztack/payments-polar": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "better-auth": "^1.0.0",
     "react": "^18.0.0 || ^19.0.0",
     "zod": "^3.23.0"
   },
   "peerDependenciesMeta": {
+    "@beztack/mercadopago": {
+      "optional": true
+    },
+    "@beztack/payments-polar": {
+      "optional": true
+    },
     "@tanstack/react-query": {
       "optional": true
     },
