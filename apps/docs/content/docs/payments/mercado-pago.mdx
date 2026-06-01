@@ -26,11 +26,25 @@ See also: [Polar](/docs/payments/polar)
 
 ```bash
 MERCADO_PAGO_ACCESS_TOKEN=APP_USR-...
+MERCADO_PAGO_APPLICATION_ID=123456789
 MERCADO_PAGO_WEBHOOK_SECRET=... # optional but recommended
 MERCADO_PAGO_INTEGRATOR_ID=...  # optional
 PAYMENT_PROVIDER=mercadopago
 APP_URL=http://localhost:3000
 ```
+
+`MERCADO_PAGO_APPLICATION_ID` is required because it is the Mercado Pago-native
+Payment integration boundary. Beztack uses it to prevent plans,
+subscriptions, webhooks, and Membership cache from one Mercado Pago Application
+from being visible or manageable through another Mercado Pago Application.
+
+Do not confuse it with `MERCADO_PAGO_INTEGRATOR_ID`: the integrator ID is
+optional partner tracking and is not an access-control boundary.
+
+For existing installations, get the Application ID from the Mercado Pago
+developer application details or from an existing plan/subscription API
+response, then set `MERCADO_PAGO_APPLICATION_ID` before running Mercado Pago in
+Beztack.
 
 ### UI (`apps/ui/.env`)
 
@@ -105,14 +119,18 @@ The package `@beztack/mercadopago/react` exposes:
 ## Testing checklist
 
 1. Configure sandbox credentials and `VITE_MERCADO_PAGO_PUBLIC_KEY`.
-2. Test checkout via `POST /api/subscriptions/checkout`.
-3. Trigger/receive webhook events and verify local DB updates.
-4. Validate plan sync via admin routes (`/api/admin/plans/sync`).
-5. Verify SSE events in the UI (if using the events endpoint).
+2. Configure `MERCADO_PAGO_APPLICATION_ID` for the Mercado Pago Application used by this integration.
+3. Validate plan sync via admin routes (`/api/admin/plans/sync`) and confirm only plans from that Application are visible.
+4. Test checkout via `POST /api/subscriptions/checkout` and confirm the created subscription belongs to the configured Application.
+5. Sign in with a Mercado Pago payer email that has a subscription in another Application and confirm it is not listed.
+6. Trigger/receive webhook events and verify mismatched Application events are skipped while matching events update local DB state.
+7. Verify SSE events in the UI (if using the events endpoint).
 
 ## Troubleshooting
 
 - `401/403` on plan sync/create: verify admin session.
+- Mercado Pago fails to start: verify `MERCADO_PAGO_APPLICATION_ID` is set and matches the Application tied to the access token.
+- Plans or subscriptions are missing: confirm they belong to the configured Mercado Pago Application, not just the same Merchant account or payer email.
 - Missing webhook updates: verify `MERCADO_PAGO_WEBHOOK_SECRET` and public URL.
 - Provider not active in UI: check `VITE_PAYMENT_PROVIDER=mercadopago` and
   public key presence.

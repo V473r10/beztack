@@ -375,7 +375,6 @@ describe("server/client", () => {
 
     it("makes GET request with correct headers", async () => {
       const mockResponse = { id: 123, status: "approved" };
-      // @ts-expect-error - mocking fetch without full type
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: STATUS_OK,
@@ -400,7 +399,6 @@ describe("server/client", () => {
 
     it("makes POST request with body", async () => {
       const mockResponse = { id: "pref_123", init_point: "https://mp.com/..." };
-      // @ts-expect-error - mocking fetch without full type
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: STATUS_OK,
@@ -421,7 +419,6 @@ describe("server/client", () => {
     });
 
     it("throws MercadoPagoError on API error", async () => {
-      // @ts-expect-error - mocking fetch without full type
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: STATUS_NOT_FOUND,
@@ -442,7 +439,6 @@ describe("server/client", () => {
       const mockResponse = { id: 123 };
       let callCount = 0;
 
-      // @ts-expect-error - mocking fetch without full type
       global.fetch = vi.fn().mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
@@ -475,7 +471,6 @@ describe("server/client", () => {
       const mockResponse = { id: 123 };
       let callCount = 0;
 
-      // @ts-expect-error - mocking fetch without full type
       global.fetch = vi.fn().mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
@@ -505,7 +500,6 @@ describe("server/client", () => {
     });
 
     it("handles 204 No Content response", async () => {
-      // @ts-expect-error - mocking fetch without full type
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: STATUS_NO_CONTENT,
@@ -525,7 +519,6 @@ describe("server/client", () => {
 
     it("uses custom baseUrl when provided", async () => {
       const customBaseUrl = "https://custom.mercadopago.com";
-      // @ts-expect-error - mocking fetch without full type
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: STATUS_OK,
@@ -545,7 +538,6 @@ describe("server/client", () => {
     });
 
     it("builds search URL with query params", async () => {
-      // @ts-expect-error - mocking fetch without full type
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: STATUS_OK,

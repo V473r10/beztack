@@ -3,9 +3,11 @@
  * Works with both Polar and Mercado Pago based on PAYMENT_PROVIDER config
  */
 import { defineEventHandler, getQuery } from "h3";
+import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
+import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
@@ -35,6 +37,10 @@ export default defineEventHandler(async (event) => {
       }
     }
   }
+
+  subscriptions = subscriptions.filter((subscription) =>
+    isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)
+  );
 
   return {
     provider: provider.provider,

@@ -14,6 +14,7 @@ import type {
   Subscription,
 } from "@beztack/payments";
 import { createError, defineEventHandler, getQuery } from "h3";
+import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
@@ -21,14 +22,16 @@ import {
   estimatePeriodEnd,
   resolveCurrentBillingAmount,
 } from "@/server/utils/billing-amount-resolver";
-import { requireAuth } from "@/server/utils/membership";
+import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
+import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 async function resolveActiveSubscription(
   provider: PaymentProviderAdapter,
-  userId: string,
-  email: string
+  auth: AuthenticatedUser
 ): Promise<Subscription> {
+  const userId = auth.user.id;
+  const email = auth.user.email;
   let subscriptions = await provider.listSubscriptions({
     customerEmail: email,
     customerId: userId,
@@ -37,6 +40,10 @@ async function resolveActiveSubscription(
   if (subscriptions.length === 0) {
     subscriptions = await discoverSubscriptionsFromDb(userId, provider);
   }
+
+  subscriptions = subscriptions.filter((subscription) =>
+    isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)
+  );
 
   const activeSub = subscriptions.find((sub) => sub.status === "active");
   if (activeSub) {
@@ -50,7 +57,9 @@ async function resolveActiveSubscription(
     status: "pending",
   });
 
-  const pendingSub = pendingSubs.at(0);
+  const pendingSub = pendingSubs.find((subscription) =>
+    isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)
+  );
   if (pendingSub) {
     return pendingSub;
   }
@@ -122,11 +131,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const activeSub = await resolveActiveSubscription(
-    provider,
-    auth.user.id,
-    auth.user.email
-  );
+  const activeSub = await resolveActiveSubscription(provider, auth);
 
   const currentBilling = await resolveCurrentBillingAmount(activeSub, provider);
 

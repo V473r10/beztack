@@ -71,6 +71,7 @@ export const env = createEnv({
 
     // MercadoPago
     MERCADO_PAGO_ACCESS_TOKEN: z.string().default(""),
+    MERCADO_PAGO_APPLICATION_ID: z.string().default(""),
     MERCADO_PAGO_WEBHOOK_SECRET: z.string().default(""),
     MERCADO_PAGO_INTEGRATOR_ID: z.string().default(""),
 
@@ -163,4 +164,8 @@ if (activePaymentProvider === "polar") {
 
 if (activePaymentProvider === "mercadopago") {
   assertRequired("MERCADO_PAGO_ACCESS_TOKEN", env.MERCADO_PAGO_ACCESS_TOKEN);
+  assertRequired(
+    "MERCADO_PAGO_APPLICATION_ID",
+    env.MERCADO_PAGO_APPLICATION_ID
+  );
 }

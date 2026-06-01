@@ -266,7 +266,7 @@ export type MPSubscriptionResponse = {
   payer_id?: number;
   payer_email?: string;
   collector_id?: number;
-  application_id?: number;
+  application_id?: number | string;
   status?: string;
   reason?: string;
   external_reference?: string;
@@ -433,7 +433,7 @@ export type MPPreapprovalPlan = {
   id: string;
   status: string;
   reason: string;
-  application_id?: number;
+  application_id?: number | string;
   collector_id?: number;
   auto_recurring: {
     frequency: number;
@@ -460,6 +460,7 @@ export type MPPreapproval = {
   reason: string;
   payer_id: number;
   payer_email?: string;
+  application_id?: number | string;
   payer_first_name?: string;
   payer_last_name?: string;
   init_point: string;

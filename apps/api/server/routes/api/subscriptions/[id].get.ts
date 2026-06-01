@@ -3,6 +3,7 @@
  * Works with both Polar and Mercado Pago based on PAYMENT_PROVIDER config
  */
 import { createError, defineEventHandler, getRouterParam } from "h3";
+import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
 import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
@@ -28,7 +29,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (!isSubscriptionOwnedByUser(subscription, auth)) {
+  if (!isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)) {
     throw createError({
       statusCode: 403,
       message: "Access denied",

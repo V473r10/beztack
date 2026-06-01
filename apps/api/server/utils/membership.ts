@@ -96,10 +96,11 @@ function isSubscriptionActive(subscription: Subscription): boolean {
 
 function belongsToOrganization(
   subscription: Subscription,
-  organizationId?: string
+  organizationId?: string,
+  requireOrganization = false
 ): boolean {
   if (!organizationId) {
-    return true;
+    return !requireOrganization;
   }
 
   const metadata = subscription.metadata as
@@ -113,6 +114,90 @@ function belongsToOrganization(
     metadata?.organizationId === organizationId ||
     metadata?.referenceId === organizationId
   );
+}
+
+function belongsToUser(
+  subscription: Subscription,
+  userId: string,
+  email?: string
+): boolean {
+  if (subscription.customerId === userId) {
+    return true;
+  }
+
+  const metadata = subscription.metadata as
+    | {
+        userId?: string;
+        ownerEmail?: string;
+        referenceId?: string;
+      }
+    | undefined;
+
+  if (metadata?.userId === userId || metadata?.referenceId === userId) {
+    return true;
+  }
+
+  if (!email) {
+    return false;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  return (
+    subscription.customerEmail?.trim().toLowerCase() === normalizedEmail ||
+    metadata?.ownerEmail?.trim().toLowerCase() === normalizedEmail
+  );
+}
+
+type CachedMembershipSource = {
+  subscriptionTier: string | null;
+  subscriptionStatus: string | null;
+  subscriptionId: string | null;
+  subscriptionValidUntil: Date | null;
+};
+
+async function canUseCachedMembership(options: {
+  cache: CachedMembershipSource;
+  userId: string;
+  userEmail?: string;
+  organizationId?: string;
+  isOrgMode: boolean;
+}): Promise<boolean> {
+  const isActivePaidCache =
+    mapTier(options.cache.subscriptionTier ?? undefined) !== "free" &&
+    isSubscriptionStatusActive(
+      options.cache.subscriptionStatus,
+      options.cache.subscriptionValidUntil
+    );
+
+  if (!isActivePaidCache || env.PAYMENT_PROVIDER !== "mercadopago") {
+    return true;
+  }
+
+  if (!options.cache.subscriptionId) {
+    return false;
+  }
+
+  try {
+    const provider = await ensurePaymentProvider();
+    if (provider.provider !== "mercadopago") {
+      return true;
+    }
+
+    const subscription = await provider.getSubscription(
+      options.cache.subscriptionId
+    );
+    if (!(subscription && isSubscriptionActive(subscription))) {
+      return false;
+    }
+
+    if (options.isOrgMode) {
+      return belongsToOrganization(subscription, options.organizationId, true);
+    }
+
+    return belongsToUser(subscription, options.userId, options.userEmail);
+  } catch {
+    return false;
+  }
 }
 
 function getBenefits(subscription: Subscription): Benefit[] {
@@ -198,7 +283,15 @@ export async function getMembershipInfo(
       .where(eq(orgTable.id, organizationId))
       .limit(1);
 
-    if (org?.subscriptionTier) {
+    if (
+      org?.subscriptionTier &&
+      (await canUseCachedMembership({
+        cache: org,
+        userId,
+        organizationId,
+        isOrgMode,
+      }))
+    ) {
       const isActive = isSubscriptionStatusActive(
         org.subscriptionStatus,
         org.subscriptionValidUntil
@@ -227,7 +320,15 @@ export async function getMembershipInfo(
       .where(eq(userTable.id, userId))
       .limit(1);
 
-    if (dbUser?.subscriptionTier) {
+    if (
+      dbUser?.subscriptionTier &&
+      (await canUseCachedMembership({
+        cache: dbUser,
+        userId,
+        userEmail: dbUser.email,
+        isOrgMode,
+      }))
+    ) {
       const isActive = isSubscriptionStatusActive(
         dbUser.subscriptionStatus,
         dbUser.subscriptionValidUntil
@@ -250,6 +351,7 @@ async function getMembershipInfoFromProvider(
   userId: string,
   organizationId?: string
 ): Promise<MembershipInfo> {
+  const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
   const [dbUser] = await db
     .select({ email: userTable.email })
     .from(userTable)
@@ -278,7 +380,7 @@ async function getMembershipInfoFromProvider(
     }
 
     const scopedSubscriptions = subscriptions.filter((subscription) =>
-      belongsToOrganization(subscription, organizationId)
+      belongsToOrganization(subscription, organizationId, isOrgMode)
     );
 
     const activeSubscriptions =

@@ -24,6 +24,22 @@ _Avoid_: period change, same-plan upgrade, same-plan downgrade
 The Beztack-owned catalog of Subscription plans, including canonical tier identity, tier rank, Billing cadence choices, prices, features, limits, and permissions. Plan change classification uses the Pricing catalog rather than provider price alone.
 _Avoid_: provider products, product list
 
+**Payment integration**:
+A provider-native application or credential boundary used to isolate Subscriptions. A Merchant may have many Payment integrations, and each Subscription belongs to exactly one Payment integration.
+_Avoid_: integration, Beztack namespace, Mercado Pago integrator ID
+
+**Mercado Pago Application**:
+The Mercado Pago-native Payment integration boundary. Subscriptions from one Mercado Pago Application must not be visible or manageable through another Mercado Pago Application, and the Mercado Pago Application is not the Mercado Pago integrator ID.
+_Avoid_: Mercado Pago integrator ID, merchant account, provider app
+
+**Payment provider**:
+An external payment platform used by Beztack, such as Polar, Mercado Pago, or Creem. Payment provider is not the same as Payment integration; a Payment provider can serve many Payment integrations.
+_Avoid_: provider, merchant, integration
+
+**Merchant**:
+The seller account at a Payment provider that receives payments. A Merchant may run multiple Payment integrations that must not expose each other's Subscriptions.
+_Avoid_: integration, customer, subscription owner
+
 **Downgrade**:
 A Plan change to a lower-ranked Subscription tier in the Pricing catalog. Membership and the target Billing cadence stay at the current tier until the already-paid Subscription period ends.
 _Avoid_: downgrade flow
@@ -45,7 +61,7 @@ A Plan change to a higher-ranked Subscription tier in the Pricing catalog. Membe
 _Avoid_: upgrade flow
 
 **Subscription**:
-A recurring customer entitlement tracked through a payment provider and cached in Beztack for Membership decisions. A Subscription belongs to either a user or an organization depending on subscription mode.
+A recurring customer entitlement tracked through a payment provider and cached in Beztack for Membership decisions. A Subscription belongs to exactly one Payment integration and either a user or an organization depending on subscription mode.
 _Avoid_: preapproval, recurring checkout
 
 **Current Subscription**:
@@ -53,7 +69,7 @@ The Subscription currently projected by Beztack as effective for Membership deci
 _Avoid_: first active provider subscription, selected subscription id
 
 **Subscription owner**:
-The user who owns the Current Subscription in user subscription mode. The Subscription owner may perform user-mode Plan changes; app admins may override.
+The user who owns the Current Subscription in user subscription mode within the Subscription's Payment integration. The Subscription owner may perform user-mode Plan changes; app admins may override, and provider payer email alone does not establish ownership.
 _Avoid_: customer email match, provider payer
 
 **Subscription projection**:
@@ -65,7 +81,7 @@ The effective access state derived from a Subscription, including tier, active s
 _Avoid_: access level, entitlement state
 
 **Billing manager**:
-An organization member whose role is allowed to manage the organization's Subscription. Billing managers may perform organization Plan changes; app admins may override.
+An organization member whose role is allowed to manage the organization's Subscription. Billing managers may perform organization Plan changes; app admins may override, and payer email alone does not establish that a Subscription belongs to an organization.
 _Avoid_: owner-only billing user, any member
 
 **Payment**:

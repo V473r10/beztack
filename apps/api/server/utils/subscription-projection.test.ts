@@ -490,6 +490,66 @@ describe("projectSubscriptionProviderEvent", () => {
     });
   });
 
+  it("skips Subscription webhooks when the provider boundary hides the Subscription", async () => {
+    const store = createStore({ users: ["user_1"] });
+    const provider = createProvider({ subscriptions: {} });
+
+    const outcome = await projectSubscriptionProviderEvent(
+      subscriptionEnvelope({ resourceId: "sub_cross_app" }),
+      {
+        store,
+        provider,
+        subscriptionMode: "user",
+      }
+    );
+
+    expect(outcome.status).toBe("skipped");
+    expect(outcome.warnings).toContain(
+      "Provider Subscription sub_cross_app was not found"
+    );
+    expect(store.subscriptions.size).toBe(0);
+    expect(store.userMemberships.size).toBe(0);
+  });
+
+  it("does not apply approved payment follow-ups when the related Subscription cannot be verified", async () => {
+    const store = createStore({ users: ["user_1"] });
+    const provider = createProvider({
+      subscriptions: {},
+      payments: {
+        pay_1: {
+          id: "pay_1",
+          status: "approved",
+          amount: PRORATED_UPGRADE_AMOUNT,
+          currency: "UYU",
+          payerEmail: "user@example.com",
+          subscriptionId: "sub_cross_app",
+          metadata: {
+            userId: "user_1",
+            tier: "ultimate",
+            fullAmount: FULL_UPGRADE_AMOUNT,
+            previousSubscriptionId: "sub_old",
+          },
+        },
+      },
+    });
+
+    const outcome = await projectSubscriptionProviderEvent(paymentEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+    });
+
+    expect(outcome.status).toBe("processed");
+    expect(provider.adjustSubscriptionAmount).not.toHaveBeenCalled();
+    expect(provider.cancelSubscription).not.toHaveBeenCalled();
+    expect(store.subscriptions.size).toBe(0);
+    expect(store.userMemberships.size).toBe(0);
+    expect(store.payments.get("pay_1")).toMatchObject({
+      id: "pay_1",
+      subscriptionId: null,
+    });
+  });
+
   it("keeps failed events retryable", async () => {
     const store = createStore({ users: ["user_1"] });
     const provider = createProvider({ subscriptions: {} });

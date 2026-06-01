@@ -484,7 +484,10 @@ function createPlansModule(config: MercadoPagoConfig) {
       status?: string;
       limit?: number;
       offset?: number;
-    }): Promise<{ results: MPPreapprovalPlan[] }> {
+    }): Promise<{
+      results: MPPreapprovalPlan[];
+      paging?: { total?: number; limit?: number; offset?: number };
+    }> {
       const searchParams = new URLSearchParams();
       if (params?.status) {
         searchParams.set("status", params.status);
@@ -500,7 +503,10 @@ function createPlansModule(config: MercadoPagoConfig) {
         "/preapproval_plan/search",
         searchParams
       );
-      return mpFetch<{ results: MPPreapprovalPlan[] }>(config, endpoint);
+      return mpFetch<{
+        results: MPPreapprovalPlan[];
+        paging?: { total?: number; limit?: number; offset?: number };
+      }>(config, endpoint);
     },
 
     /**
@@ -700,7 +706,10 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
       preapproval_plan_id?: string;
       limit?: number;
       offset?: number;
-    }): Promise<{ results: MPPreapproval[]; paging: { total: number } }> {
+    }): Promise<{
+      results: MPPreapproval[];
+      paging: { total: number; limit?: number; offset?: number };
+    }> {
       const searchParams = new URLSearchParams();
       if (params?.payer_email) {
         searchParams.set("payer_email", params.payer_email);
@@ -719,10 +728,10 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
       }
 
       const endpoint = buildSearchEndpoint("/preapproval/search", searchParams);
-      return mpFetch<{ results: MPPreapproval[]; paging: { total: number } }>(
-        config,
-        endpoint
-      );
+      return mpFetch<{
+        results: MPPreapproval[];
+        paging: { total: number; limit?: number; offset?: number };
+      }>(config, endpoint);
     },
 
     /**

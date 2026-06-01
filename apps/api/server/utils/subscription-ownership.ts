@@ -8,6 +8,8 @@ type SubscriptionMetadata = {
   organizationId?: string;
 };
 
+type SubscriptionMode = "user" | "organization";
+
 function hasAdminRole(role: unknown): boolean {
   if (role === "admin") {
     return true;
@@ -26,14 +28,28 @@ function normalizeEmail(value: string): string {
 
 export function isSubscriptionOwnedByUser(
   subscription: Subscription,
-  auth: AuthenticatedUser
+  auth: AuthenticatedUser,
+  subscriptionMode: SubscriptionMode = "user"
 ): boolean {
-  console.log("Checking if subscription is owned by user", subscription, auth);
   const authRole =
     (auth as { role?: unknown }).role ?? (auth.user as { role?: unknown }).role;
 
   if (hasAdminRole(authRole)) {
     return true;
+  }
+
+  const metadata = subscription.metadata as SubscriptionMetadata | undefined;
+
+  if (subscriptionMode === "organization") {
+    const activeOrganizationId = auth.session.activeOrganizationId;
+    if (!activeOrganizationId) {
+      return false;
+    }
+
+    return (
+      metadata?.referenceId === activeOrganizationId ||
+      metadata?.organizationId === activeOrganizationId
+    );
   }
 
   if (subscription.customerId === auth.user.id) {
@@ -48,7 +64,6 @@ export function isSubscriptionOwnedByUser(
     return true;
   }
 
-  const metadata = subscription.metadata as SubscriptionMetadata | undefined;
   if (!metadata) {
     return false;
   }
@@ -63,14 +78,5 @@ export function isSubscriptionOwnedByUser(
   ) {
     return true;
   }
-
-  const activeOrganizationId = auth.session.activeOrganizationId;
-  if (!activeOrganizationId) {
-    return false;
-  }
-
-  return (
-    metadata.referenceId === activeOrganizationId ||
-    metadata.organizationId === activeOrganizationId
-  );
+  return false;
 }

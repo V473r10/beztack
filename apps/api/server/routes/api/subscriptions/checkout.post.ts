@@ -16,8 +16,9 @@ import {
   estimatePeriodEnd,
   resolveCurrentBillingAmount,
 } from "@/server/utils/billing-amount-resolver";
-import { requireAuth } from "@/server/utils/membership";
+import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
+import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 
@@ -34,9 +35,10 @@ const checkoutSchema = z.object({
 
 async function findActiveSubscription(
   provider: PaymentProviderAdapter,
-  userId: string,
-  email: string
+  auth: AuthenticatedUser
 ): Promise<Subscription | null> {
+  const userId = auth.user.id;
+  const email = auth.user.email;
   let subscriptions = await provider.listSubscriptions({
     customerEmail: email,
     customerId: userId,
@@ -45,6 +47,10 @@ async function findActiveSubscription(
   if (subscriptions.length === 0) {
     subscriptions = await discoverSubscriptionsFromDb(userId, provider);
   }
+
+  subscriptions = subscriptions.filter((subscription) =>
+    isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)
+  );
 
   // Prefer authorized (active) subscription
   const active = subscriptions.find((sub) => sub.status === "active");
@@ -61,7 +67,11 @@ async function findActiveSubscription(
     status: "pending",
   });
 
-  return pendingSubs.at(0) ?? null;
+  return (
+    pendingSubs.find((subscription) =>
+      isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)
+    ) ?? null
+  );
 }
 
 async function handleProratedUpgrade(options: {
@@ -336,11 +346,7 @@ export default defineEventHandler(async (event) => {
 
     // Prorated plan change flow (MercadoPago only)
     if (parsed.upgrade && provider.provider === "mercadopago") {
-      const activeSub = await findActiveSubscription(
-        provider,
-        auth.user.id,
-        auth.user.email
-      );
+      const activeSub = await findActiveSubscription(provider, auth);
 
       if (!activeSub) {
         throw createError({

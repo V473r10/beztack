@@ -589,8 +589,9 @@ async function projectApprovedPaymentSubscription(options: {
 async function applyApprovedPaymentFollowUps(options: {
   provider: SubscriptionProjectionProviderAdapter;
   payment: ProjectionPayment;
+  subscriptionVerified: boolean;
 }): Promise<SubscriptionProjectionOutcome["touched"]> {
-  if (options.payment.status !== "approved") {
+  if (options.payment.status !== "approved" || !options.subscriptionVerified) {
     return {};
   }
 
@@ -673,6 +674,7 @@ async function projectPaymentResource(options: {
   const followUpTouched = await applyApprovedPaymentFollowUps({
     provider: options.provider,
     payment,
+    subscriptionVerified: subscriptionProjection.subscriptionPersisted,
   });
 
   return {
@@ -1074,6 +1076,50 @@ function mapInterval(frequencyType: string | undefined): string {
   return frequencyType === "days" ? "day" : "month";
 }
 
+function normalizeMercadoPagoApplicationId(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  return null;
+}
+
+function requireMercadoPagoApplicationId(value: string): string {
+  const applicationId = normalizeMercadoPagoApplicationId(value);
+  if (!applicationId) {
+    throw new Error(
+      "MERCADO_PAGO_APPLICATION_ID is required when using Mercado Pago"
+    );
+  }
+  return applicationId;
+}
+
+function belongsToMercadoPagoApplication(
+  resource: { application_id?: unknown },
+  expectedApplicationId: string
+): boolean {
+  return (
+    normalizeMercadoPagoApplicationId(resource.application_id) ===
+    expectedApplicationId
+  );
+}
+
+function assertMercadoPagoApplicationResource(
+  resource: { application_id?: unknown },
+  expectedApplicationId: string
+): void {
+  if (belongsToMercadoPagoApplication(resource, expectedApplicationId)) {
+    return;
+  }
+
+  throw new Error("Subscription not found");
+}
+
 export async function createMercadoPagoSubscriptionProjectionProvider(): Promise<SubscriptionProjectionProviderAdapter> {
   const [{ env }, mercadoPago, mercadoPagoServer] = await Promise.all([
     import("@/env"),
@@ -1085,14 +1131,25 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
     webhookSecret: env.MERCADO_PAGO_WEBHOOK_SECRET,
     integratorId: env.MERCADO_PAGO_INTEGRATOR_ID,
   });
+  const applicationId = requireMercadoPagoApplicationId(
+    env.MERCADO_PAGO_APPLICATION_ID
+  );
 
   return {
     provider: "mercadopago",
     async getSubscription(subscriptionId) {
       const subscription = await client.subscriptions.get(subscriptionId);
-      if (!subscription.id) {
+      if (
+        !(
+          subscription.id &&
+          belongsToMercadoPagoApplication(subscription, applicationId)
+        )
+      ) {
         return null;
       }
+      const providerIntegrationId = normalizeMercadoPagoApplicationId(
+        subscription.application_id
+      );
       const metadata = mercadoPago.decodeExternalReference(
         subscription.external_reference
       );
@@ -1114,6 +1171,7 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
         externalReference: subscription.external_reference ?? null,
         metadata: {
           ...(metadata ?? {}),
+          ...(providerIntegrationId ? { providerIntegrationId } : {}),
           billingAmount: subscription.auto_recurring?.transaction_amount,
           billingCurrency: subscription.auto_recurring?.currency_id,
           billingInterval: mapInterval(
@@ -1151,6 +1209,9 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
       };
     },
     async adjustSubscriptionAmount(subscriptionId, fullAmount) {
+      const subscription = await client.subscriptions.get(subscriptionId);
+      assertMercadoPagoApplicationResource(subscription, applicationId);
+
       await client.subscriptions.update(subscriptionId, {
         auto_recurring: {
           transaction_amount: fullAmount,
@@ -1158,6 +1219,9 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
       });
     },
     async cancelSubscription(subscriptionId) {
+      const subscription = await client.subscriptions.get(subscriptionId);
+      assertMercadoPagoApplicationResource(subscription, applicationId);
+
       await client.subscriptions.cancel(subscriptionId);
     },
   };
