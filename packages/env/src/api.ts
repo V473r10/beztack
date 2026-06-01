@@ -41,6 +41,9 @@ export const env = createEnv({
     // Database
     DATABASE_URL: z.string().url(),
 
+    // Admin / Sudo
+    APP_ADMIN_EMAILS: z.string().default(""),
+
     // Better Auth
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().url(),

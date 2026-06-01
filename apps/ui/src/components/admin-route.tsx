@@ -2,15 +2,44 @@ import { Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { useIsAdmin } from "@/lib/admin-utils";
+import { useIsAdmin, useIsAppAdmin } from "@/lib/admin-utils";
 import { authClient } from "@/lib/auth-client";
 
 export function AdminRoute({ children }: { children: ReactNode }) {
   const { data: session, isPending } = authClient.useSession();
-  const isAdmin = useIsAdmin();
+  const isAppAdmin = useIsAppAdmin();
   const navigate = useNavigate();
 
-  console.log("AdminRoute", { session, isPending, isAdmin });
+  useEffect(() => {
+    if (!(isPending || session)) {
+      // User not authenticated, redirect to sign in
+      navigate("/auth/sign-in");
+    } else if (!isPending && session && !isAppAdmin) {
+      // User authenticated but not sudo, redirect to home
+      navigate("/");
+    }
+  }, [session, isPending, isAppAdmin, navigate]);
+
+  if (isPending) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Only render children if user is authenticated and is sudo
+  if (session && isAppAdmin) {
+    return <>{children}</>;
+  }
+
+  return null;
+}
+
+export function OrgAdminRoute({ children }: { children: ReactNode }) {
+  const { data: session, isPending } = authClient.useSession();
+  const isAdmin = useIsAdmin();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!(isPending || session)) {

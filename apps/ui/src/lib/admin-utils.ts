@@ -1,17 +1,46 @@
+import { useActiveOrganization, useOrganizationMembers } from "@/hooks/use-organizations";
 import type { AdminUser } from "./admin-types";
 import { authClient } from "./auth-client";
 
 /**
- * Check if the current user has admin permissions
+ * Check if the current user has Org Admin permissions
+ * Sudo is treated as a superset and will also return true
  */
 export function useIsAdmin() {
   const { data: session } = authClient.useSession();
+  const { data: activeOrg } = useActiveOrganization();
+  const { data: members } = useOrganizationMembers(activeOrg?.id);
 
-  // Check if user has admin role or is in adminUserIds
-  return (
-    session?.user?.role === "admin" ||
+  // Sudo users have access to all admin features
+  const isSudo =
+    session?.user?.role === "sudo" ||
     (Array.isArray(session?.user?.role) &&
-      session?.user?.role.includes("admin"))
+      session?.user?.role.includes("sudo"));
+
+  if (isSudo) return true;
+
+  if (!session?.user?.id || !members) return false;
+
+  // Check if user is owner or admin of the active organization
+  const currentMember = members.find((m) => m.userId === session.user.id);
+  const orgRole = currentMember?.role;
+
+  return orgRole === "owner" || orgRole === "admin";
+}
+
+/**
+ * Check if the current user has Platform Superuser (App Admin) permissions
+ */
+export function useIsAppAdmin() {
+  const { data: session } = authClient.useSession();
+
+  // Prefer the injected property, fallback to role check for existing sessions
+  return (
+    // @ts-ignore - custom property injected by backend
+    session?.user?.isAppAdmin === true ||
+    session?.user?.role === "sudo" ||
+    (Array.isArray(session?.user?.role) &&
+      session?.user?.role.includes("sudo"))
   );
 }
 

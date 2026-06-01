@@ -80,6 +80,10 @@ _Avoid_: webhook handler, subscription sync
 The effective access state derived from a Subscription, including tier, active status, benefits, limits, and organization scope.
 _Avoid_: access level, entitlement state
 
+**App admin**:
+A system-level superuser (typically a developer or staff member) identified via environment configuration rather than standard database roles. App admins have global access to internal tools (like the plan-sync UI) and can override Subscription owner and Billing manager rules.
+_Avoid_: sudo, superuser, system admin
+
 **Billing manager**:
 An organization member whose role is allowed to manage the organization's Subscription. Billing managers may perform organization Plan changes; app admins may override, and payer email alone does not establish that a Subscription belongs to an organization.
 _Avoid_: owner-only billing user, any member

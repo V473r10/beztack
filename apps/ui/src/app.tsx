@@ -112,8 +112,18 @@ function App() {
                         }
                         path="admin"
                       >
-                        <Route element={<AdminDashboard />} index />
                         <Route element={<UsersPage />} path="users" />
+                      </Route>
+
+                      <Route
+                        element={
+                          <AdminRoute>
+                            <MainLayout />
+                          </AdminRoute>
+                        }
+                        path="admin"
+                      >
+                        <Route element={<AdminDashboard />} index />
                         <Route element={<AdminAnalytics />} path="analytics" />
                         <Route element={<PlanSyncScreen />} path="plans" />
                       </Route>

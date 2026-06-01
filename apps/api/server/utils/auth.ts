@@ -1,4 +1,4 @@
-import { db, schema } from "@beztack/db";
+import { db, schema, user } from "@beztack/db";
 import { sendEmail } from "@beztack/email";
 import { createPolarAuthPlugin } from "@beztack/payments-polar/auth";
 import { betterAuth } from "better-auth";
@@ -9,6 +9,7 @@ import {
   organization,
   twoFactor,
 } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 import { env } from "@/env";
 import { getPolarProductMappings } from "@/lib/payments/config";
 
@@ -23,7 +24,7 @@ const polarPlugin = isPolarProvider
       successUrl: paymentsSuccessUrl,
       authenticatedUsersOnly: true,
       createCustomerOnSignUp: true,
-      getCustomerCreateParams: (data) => {
+      getCustomerCreateParams: async (data) => {
         return {
           metadata: {
             source: "beztack-signup",
@@ -99,8 +100,20 @@ export const auth = betterAuth({
     }),
     ...(polarPlugin ? [polarPlugin] : []),
   ],
-  hooks: {
-    after: createAuthMiddleware(async (ctx) => {
+  after: [
+    createAuthMiddleware(async (ctx) => {
+      // Intercept session fetching to inject isAppAdmin dynamically
+      if (ctx.path.includes("/get-session") && ctx.context.session?.user) {
+        const appAdminEmails = env.APP_ADMIN_EMAILS.split(",")
+          .map((e: string) => e.trim().toLowerCase())
+          .filter(Boolean);
+
+        if (appAdminEmails.includes(ctx.context.session.user.email.toLowerCase())) {
+           // @ts-ignore - custom property
+           ctx.context.session.user.isAppAdmin = true;
+        }
+      }
+
       if (ctx.path.includes("/sign-up")) {
         const newSession = ctx.context.newSession;
         if (newSession) {
@@ -111,8 +124,36 @@ export const auth = betterAuth({
           });
         }
       }
+
+      if (ctx.path.includes("/sign-in") || ctx.path.includes("/sign-up")) {
+        // @ts-ignore - better-auth types are a bit loose in hooks
+        const session = ctx.context.newSession || ctx.context.session;
+        if (session && session.user) {
+          const appAdminEmails = env.APP_ADMIN_EMAILS.split(",")
+            .map((e: string) => e.trim().toLowerCase())
+            .filter(Boolean);
+
+          if (appAdminEmails.includes(session.user.email.toLowerCase())) {
+            // Mark user as app admin directly in db for backward compat
+            if (session.user.role !== "sudo") {
+              await db
+                .update(user)
+                .set({ role: "sudo" })
+                .where(eq(user.id, session.user.id));
+            }
+            // Also update the session context directly so the frontend gets it immediately
+            if (ctx.context.newSession) {
+              // @ts-ignore - custom property
+              ctx.context.newSession.user.isAppAdmin = true;
+            } else if (ctx.context.session) {
+              // @ts-ignore - custom property
+              ctx.context.session.user.isAppAdmin = true;
+            }
+          }
+        }
+      }
     }),
-  },
+  ],
   advanced: {
     // Remove crossSubDomainCookies as it won't work with separate Vercel apps
     // The proxy solution handles this instead

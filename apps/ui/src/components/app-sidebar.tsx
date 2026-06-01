@@ -29,7 +29,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useIsAdmin } from "@/lib/admin-utils";
+import { useIsAdmin, useIsAppAdmin } from "@/lib/admin-utils";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 const data = {
@@ -86,17 +86,19 @@ const data = {
   ],
   navAdmin: [
     {
-      title: "Admin Panel",
-      url: "/admin",
-      icon: IconShield,
-    },
-    {
       title: "User Management",
       url: "/admin/users",
       icon: IconUserCog,
     },
+  ],
+  navSudo: [
     {
-      title: "Admin Analytics",
+      title: "Platform Admin",
+      url: "/admin",
+      icon: IconShield,
+    },
+    {
+      title: "Analytics",
       url: "/admin/analytics",
       icon: IconChartBar,
     },
@@ -111,6 +113,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isAdmin = useIsAdmin();
+  const isAppAdmin = useIsAppAdmin();
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -140,7 +143,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         {isAdmin && (
-          <NavSecondary items={data.navAdmin} title="Administration" />
+          <NavSecondary items={data.navAdmin} title="Organization" />
+        )}
+        {isAppAdmin && (
+          <NavSecondary items={data.navSudo} title="Platform" />
         )}
         <NavSecondary className="mt-auto" items={data.navSecondary} />
       </SidebarContent>

@@ -1,4 +1,5 @@
 import { createError, type EventHandler, type H3Event } from "h3";
+import { env } from "@/env";
 import { auth } from "./auth";
 
 // =============================================================================
@@ -13,11 +14,20 @@ type AuthenticatedSession = NonNullable<Session>;
 // =============================================================================
 
 /**
- * Check if a user has admin role
+ * Check if a user has Platform Superuser (sudo) role AND is actively in APP_ADMIN_EMAILS.
+ * This strict double-check mitigates role escalation vulnerabilities.
  */
-function isAdmin(session: AuthenticatedSession): boolean {
+function isAppAdmin(session: AuthenticatedSession): boolean {
   const role = session.user?.role;
-  return role === "admin" || (Array.isArray(role) && role.includes("admin"));
+  const hasSudoRole = role === "sudo" || (Array.isArray(role) && role.includes("sudo"));
+  
+  if (!hasSudoRole) return false;
+
+  const sudoEmails = env.SUDO_EMAILS.split(",")
+    .map((e: string) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  return sudoEmails.includes(session.user?.email?.toLowerCase() ?? "");
 }
 
 /**
@@ -46,61 +56,30 @@ async function getAuthenticatedSession(
 /**
  * Middleware to require authentication for a route.
  * Saves the session to event.context.auth for later use.
- *
- * @example
- * ```typescript
- * export default defineEventHandler(async (event) => {
- *   await requireAuth(event);
- *   const session = event.context.auth;
- *   // ... authenticated logic
- * });
- * ```
  */
 export const requireAuth: EventHandler = async (event: H3Event) => {
   await getAuthenticatedSession(event);
 };
 
 /**
- * Middleware to require admin role.
- * Throws 401 if not authenticated, 403 if not admin.
- *
- * @example
- * ```typescript
- * export default defineEventHandler(async (event) => {
- *   await requireAdmin(event);
- *   // ... admin-only logic
- * });
- * ```
+ * Middleware to require Sudo (Platform Admin) role.
+ * Throws 401 if not authenticated, 403 if not Sudo.
+ * Keeping the name requireAdmin to not break existing routes, but it enforces Sudo.
  */
 export const requireAdmin: EventHandler = async (event: H3Event) => {
   const session = await getAuthenticatedSession(event);
 
-  if (!isAdmin(session)) {
+  if (!isAppAdmin(session)) {
     throw createError({
       statusCode: 403,
-      statusMessage: "Admin access required",
+      statusMessage: "Platform Superuser (Sudo) access required",
     });
   }
 };
 
 /**
- * Check if the authenticated user owns a resource or is an admin.
- * Useful for protecting user-specific resources while allowing admin override.
- *
- * @param event - H3 event
- * @param resourceOwnerId - The user ID that owns the resource
- * @throws 401 if not authenticated
- * @throws 403 if not owner and not admin
- *
- * @example
- * ```typescript
- * export default defineEventHandler(async (event) => {
- *   const subscriptionId = getRouterParam(event, "id");
- *   const subscription = await getSubscription(subscriptionId);
- *   await requireOwnerOrAdmin(event, subscription.userId);
- *   // ... update subscription
- * });
- * ```
+ * Check if the authenticated user owns a resource or is a Sudo user.
+ * Useful for protecting user-specific resources while allowing platform admin override.
  */
 export async function requireOwnerOrAdmin(
   event: H3Event,
@@ -109,9 +88,9 @@ export async function requireOwnerOrAdmin(
   const session = await getAuthenticatedSession(event);
 
   const isOwner = resourceOwnerId && session.user?.id === resourceOwnerId;
-  const userIsAdmin = isAdmin(session);
+  const userIsSudo = isAppAdmin(session);
 
-  if (!(isOwner || userIsAdmin)) {
+  if (!(isOwner || userIsSudo)) {
     throw createError({
       statusCode: 403,
       statusMessage: "Access denied",
@@ -124,18 +103,6 @@ export async function requireOwnerOrAdmin(
 /**
  * Get current session without requiring authentication.
  * Returns null if not authenticated.
- *
- * @example
- * ```typescript
- * export default defineEventHandler(async (event) => {
- *   const session = await getOptionalSession(event);
- *   if (session) {
- *     // ... authenticated logic
- *   } else {
- *     // ... anonymous logic
- *   }
- * });
- * ```
  */
 export async function getOptionalSession(
   event: H3Event
