@@ -3,6 +3,7 @@ import type React from "react";
 import { createContext, useCallback, useContext, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { env } from "@/env";
+import { useActiveOrganization } from "@/hooks/use-organizations";
 import { authClient } from "@/lib/auth-client";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 import type {
@@ -129,6 +130,12 @@ export type MembershipProviderProps = {
 
 export function MembershipProvider({ children }: MembershipProviderProps) {
   const queryClient = useQueryClient();
+  const { data: activeOrganization } = useActiveOrganization();
+  const isOrganizationSubscriptionMode =
+    env.VITE_SUBSCRIPTION_MODE === "organization";
+  const activeOrganizationId = isOrganizationSubscriptionMode
+    ? activeOrganization?.id
+    : undefined;
 
   const productsQuery = useQuery({
     queryKey: ["subscriptions", "products"],
@@ -150,11 +157,19 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   });
 
   const subscriptionsQuery = useQuery({
-    queryKey: ["subscriptions", "list"],
+    queryKey: ["subscriptions", "list", activeOrganizationId],
     queryFn: async (): Promise<SubscriptionsResponse> => {
-      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions`, {
-        credentials: "include",
-      });
+      const query = new URLSearchParams();
+      if (activeOrganizationId) {
+        query.set("organizationId", activeOrganizationId);
+      }
+      const queryString = query.toString();
+      const response = await fetch(
+        `${env.VITE_API_URL}/api/subscriptions${queryString ? `?${queryString}` : ""}`,
+        {
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch subscriptions");
@@ -170,6 +185,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       productId: string;
       billingPeriod: "monthly" | "yearly";
       metadata?: Record<string, unknown>;
+      organizationId?: string;
       upgrade?: boolean;
     }) => {
       const selectedProduct = productsQuery.data?.products.find(
@@ -191,6 +207,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
             productId: params.productId,
             planId: selectedPlanId !== "free" ? selectedPlanId : undefined,
             billingPeriod: params.billingPeriod,
+            organizationId: params.organizationId,
             successUrl: `${window.location.origin}/checkout-success`,
             cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
             upgrade: params.upgrade,
@@ -385,16 +402,20 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       billingPeriod: "monthly" | "yearly" = "monthly",
       organizationId?: string
     ) => {
+      const checkoutOrganizationId = organizationId ?? activeOrganizationId;
       await checkoutRef.current({
         productId: tierId,
         billingPeriod,
         upgrade: !!activeSubscription,
+        organizationId: checkoutOrganizationId,
         metadata: {
-          organizationId,
+          ...(checkoutOrganizationId
+            ? { organizationId: checkoutOrganizationId }
+            : {}),
         },
       });
     },
-    [activeSubscription]
+    [activeSubscription, activeOrganizationId]
   );
 
   const planChangeRef = useRef(planChangeMutation.mutateAsync);

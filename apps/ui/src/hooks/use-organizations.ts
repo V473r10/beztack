@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import type {
@@ -13,6 +18,11 @@ import type {
   UpdateMemberRoleData,
   UpdateOrganizationData,
 } from "@/lib/organization-types";
+
+function invalidateOrganizationContext(queryClient: QueryClient): void {
+  queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+  queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+}
 
 // Organization queries
 export function useOrganizations() {
@@ -179,6 +189,7 @@ export function useCreateOrganization() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      invalidateOrganizationContext(queryClient);
       toast.success(`Organization "${data.name}" created successfully`);
     },
     onError: (error) => {
@@ -215,7 +226,7 @@ export function useUpdateOrganization() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+      invalidateOrganizationContext(queryClient);
       toast.success("Organization updated successfully");
     },
     onError: (error) => {
@@ -238,7 +249,7 @@ export function useDeleteOrganization() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+      invalidateOrganizationContext(queryClient);
       toast.success("Organization deleted successfully");
     },
     onError: (error) => {
@@ -260,7 +271,7 @@ export function useSetActiveOrganization() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+      invalidateOrganizationContext(queryClient);
       toast.success("Active organization changed");
     },
     onError: (error) => {
@@ -384,7 +395,7 @@ export function useLeaveOrganization() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+      invalidateOrganizationContext(queryClient);
       toast.success("Left organization successfully");
     },
     onError: (error) => {

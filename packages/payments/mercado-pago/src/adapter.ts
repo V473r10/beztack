@@ -78,11 +78,6 @@ function buildSubscriptionBody(
   successUrl: string,
   currency: string
 ): Record<string, unknown> {
-  // console.log("[MercadoPagoAdapter] buildSubscriptionBody", {
-  //   options,
-  //   successUrl,
-  //   currency,
-  // });
 
   const body: Record<string, unknown> = {
     payer_email: options.customerEmail,
@@ -119,9 +114,6 @@ function buildSubscriptionBody(
     metadata: options.metadata,
   });
 
-  // console.log("[MercadoPagoAdapter] buildSubscriptionBody: externalReference", {
-  //   externalReference,
-  // });
 
   if (externalReference) {
     body.external_reference = externalReference;
@@ -224,8 +216,6 @@ function assertBelongsToApplication(
   expectedApplicationId: string,
   resourceType: string
 ): void {
-  console.log("Resource: ", resource)
-  console.log("ExpectedApplicationId: ", expectedApplicationId)
   if (belongsToApplication(resource, expectedApplicationId)) {
     return;
   }
@@ -484,8 +474,6 @@ export function createMercadoPagoAdapter(
       options: UpdateProductOptions
     ): Promise<Product> {
       const current = await client.plans.get(productId);
-      console.log("Current: ", current)
-      console.log("ApplicationId: ", applicationId)
       if (!belongsToApplication(current, applicationId)) {
         throw new Error("Product not found");
       }
@@ -529,9 +517,6 @@ export function createMercadoPagoAdapter(
     async createCheckout(
       options: CreateCheckoutOptions
     ): Promise<CheckoutResult> {
-      // console.log("[MercadoPagoAdapter] createCheckout", {
-      //   options,
-      // });
       const plan = await client.plans.get(options.productId);
       if (!belongsToApplication(plan, applicationId)) {
         throw new Error("Product not found");
@@ -543,37 +528,46 @@ export function createMercadoPagoAdapter(
         );
       }
 
-      // console.log("[MercadoPagoAdapter] createCheckout: plan", {
-      //   plan,
-      // });
-
-      if (!plan.init_point) {
+      if (!options.customerEmail) {
         throw new Error(
-          "Plan does not have a checkout URL (init_point is missing)."
+          "Customer email is required to create Mercado Pago subscription checkout"
         );
       }
 
-      const externalReference = encodeExternalReference({
-        customerId: options.customerId,
-        metadata: options.metadata,
-      });
+      const body = buildSubscriptionBody(
+        {
+          customerEmail: options.customerEmail,
+          customerId: options.customerId,
+          metadata: {
+            ...options.metadata,
+            targetPlanId: options.productId,
+          },
+          backUrl: options.successUrl,
+          customPlan: {
+            reason: plan.reason,
+            amount: plan.auto_recurring.transaction_amount,
+            currency: plan.auto_recurring.currency_id,
+            interval: mapMPInterval(plan.auto_recurring.frequency_type),
+            intervalCount: plan.auto_recurring.frequency,
+          },
+        },
+        successUrl,
+        currency
+      );
+      const subscription = await client.subscriptions.create(
+        body as Parameters<typeof client.subscriptions.create>[0]
+      );
+      assertBelongsToApplication(subscription, applicationId, "Subscription");
 
-      // console.log("[MercadoPagoAdapter] createCheckout: externalReference", {
-      //   externalReference,
-      // });
-
-      const separator = plan.init_point.includes("?") ? "&" : "?";
-      const checkoutUrl = externalReference
-        ? `${plan.init_point}${separator}external_reference=${encodeURIComponent(externalReference)}`
-        : plan.init_point;
-
-      // console.log("[MercadoPagoAdapter] createCheckout: checkoutUrl", {
-      //   checkoutUrl,
-      // });
+      if (!(subscription.id && subscription.init_point)) {
+        throw new Error(
+          "Mercado Pago did not return a checkout URL for the subscription"
+        );
+      }
 
       return {
-        id: `${plan.id}_${Date.now()}`,
-        url: checkoutUrl,
+        id: subscription.id,
+        url: subscription.init_point,
       };
     },
 

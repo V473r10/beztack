@@ -16,6 +16,7 @@ import {
   estimatePeriodEnd,
   resolveCurrentBillingAmount,
 } from "@/server/utils/billing-amount-resolver";
+import { resolveCheckoutCallbackUrls } from "@/server/utils/checkout-callback-urls";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
@@ -301,8 +302,10 @@ function rethrowOrWrap(error: unknown): never {
 export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
   const provider = await ensurePaymentProvider();
-  const successUrl = env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
-  const cancelUrl = env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL;
+  const checkoutUrls = resolveCheckoutCallbackUrls({
+    configuredSuccessUrl: env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL,
+    configuredCancelUrl: env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL,
+  });
 
   try {
     const body = await readBody(event);
@@ -398,8 +401,8 @@ export default defineEventHandler(async (event) => {
       productId: selectedProduct.id,
       customerEmail: auth.user.email,
       customerId: auth.user.id,
-      successUrl: parsed.successUrl ?? successUrl,
-      cancelUrl: parsed.cancelUrl ?? cancelUrl,
+      successUrl: checkoutUrls.successUrl,
+      cancelUrl: checkoutUrls.cancelUrl,
       metadata: checkoutMetadata,
     });
 

@@ -2,12 +2,58 @@
  * List user's subscriptions
  * Works with both Polar and Mercado Pago based on PAYMENT_PROVIDER config
  */
-import { defineEventHandler, getQuery } from "h3";
+import { db, member as memberTable } from "@beztack/db";
+import { and, eq } from "drizzle-orm";
+import { createError, defineEventHandler, getQuery } from "h3";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
-import { requireAuth } from "@/server/utils/membership";
+import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
+
+function readQueryString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+async function assertOrganizationMember(
+  userId: string,
+  organizationId: string
+): Promise<void> {
+  const [membership] = await db
+    .select({ id: memberTable.id })
+    .from(memberTable)
+    .where(
+      and(
+        eq(memberTable.userId, userId),
+        eq(memberTable.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  if (!membership) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Access denied: You are not a member of this organization",
+    });
+  }
+}
+
+function withSubscriptionOrganization(
+  auth: AuthenticatedUser,
+  organizationId: string | undefined
+): AuthenticatedUser {
+  if (!(env.SUBSCRIPTION_MODE === "organization" && organizationId)) {
+    return auth;
+  }
+
+  return {
+    ...auth,
+    session: {
+      ...auth.session,
+      activeOrganizationId: organizationId,
+    },
+  };
+}
 
 export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
@@ -16,6 +62,18 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const limit = query.limit ? Number(query.limit) : undefined;
   const offset = query.offset ? Number(query.offset) : undefined;
+  const requestedOrganizationId = readQueryString(query.organizationId);
+  const organizationId =
+    env.SUBSCRIPTION_MODE === "organization"
+      ? (requestedOrganizationId ??
+        auth.session.activeOrganizationId ??
+        undefined)
+      : undefined;
+
+  if (env.SUBSCRIPTION_MODE === "organization" && requestedOrganizationId) {
+    await assertOrganizationMember(auth.user.id, requestedOrganizationId);
+  }
+  const scopedAuth = withSubscriptionOrganization(auth, organizationId);
 
   let subscriptions = await provider.listSubscriptions({
     customerEmail: auth.user.email,
@@ -39,7 +97,7 @@ export default defineEventHandler(async (event) => {
   }
 
   subscriptions = subscriptions.filter((subscription) =>
-    isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)
+    isSubscriptionOwnedByUser(subscription, scopedAuth, env.SUBSCRIPTION_MODE)
   );
 
   return {

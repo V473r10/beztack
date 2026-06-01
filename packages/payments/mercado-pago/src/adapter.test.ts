@@ -211,6 +211,51 @@ describe("createMercadoPagoAdapter", () => {
     expect(client.subscriptions.search).toHaveBeenCalledTimes(2);
   });
 
+  it("creates metadata-carrying redirect checkout without requiring a card token", async () => {
+    client.plans.get.mockResolvedValueOnce(plan("plan_match"));
+    client.subscriptions.create.mockResolvedValueOnce({
+      ...subscription("sub_created"),
+      external_reference: "beztack_uid=user_1&tier=pro&tplan=plan_match",
+      init_point: "https://mercadopago.example/subscription/sub_created",
+    });
+
+    const checkout = await createAdapter().createCheckout({
+      productId: "plan_match",
+      customerEmail: "payer@example.com",
+      customerId: "user_1",
+      successUrl: "https://example.com/success",
+      metadata: {
+        targetPlanId: "plan_other",
+        tier: "pro",
+        userId: "user_1",
+      },
+    });
+
+    expect(client.subscriptions.create).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        card_token_id: expect.any(String),
+        preapproval_plan_id: expect.any(String),
+      })
+    );
+    expect(client.subscriptions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        auto_recurring: {
+          currency_id: "UYU",
+          frequency: 1,
+          frequency_type: "months",
+          transaction_amount: 1000,
+        },
+        external_reference: "beztack_uid=user_1&tier=pro&tplan=plan_match",
+        payer_email: "payer@example.com",
+        reason: "Plan plan_match",
+      })
+    );
+    expect(checkout).toEqual({
+      id: "sub_created",
+      url: "https://mercadopago.example/subscription/sub_created",
+    });
+  });
+
   it("treats missing subscription Application identity as not found", async () => {
     client.subscriptions.get.mockResolvedValueOnce(
       subscription("sub_missing", null)
