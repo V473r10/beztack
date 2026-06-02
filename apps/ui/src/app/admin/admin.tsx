@@ -41,7 +41,6 @@ async function fetchRecentActivity() {
 }
 
 export default function AdminDashboard() {
-  console.log("AdminDashboard");
   const { data: recentActivity, isLoading } = useQuery({
     queryKey: ["admin", "recent-activity"],
     queryFn: fetchRecentActivity,

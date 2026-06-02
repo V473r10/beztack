@@ -26,7 +26,6 @@ function getTargetLabel(options: {
 }
 
 export function AdminTierOverrideBanner() {
-  console.log("AdminTierOverrideBanner: init")
   const { data: activeOrganization } = useActiveOrganization();
   const {
     adminTierOverride,
@@ -34,8 +33,6 @@ export function AdminTierOverrideBanner() {
     isAppAdmin,
     isClearingAdminTierOverride,
   } = useMembership();
-
-  console.log({ isAppAdmin, adminTierOverride })
 
   if (!(isAppAdmin && adminTierOverride)) {
     return null;
@@ -53,7 +50,6 @@ export function AdminTierOverrideBanner() {
   const cadenceLabel = adminTierOverride.billingCadence
     ? ` ${adminTierOverride.billingCadence}`
     : "";
-  console.log("AdminTierOverrideBanner: render")
 
   return (
     <div className="pointer-events-none fixed inset-x-2 top-2 z-50 flex justify-center sm:top-3">

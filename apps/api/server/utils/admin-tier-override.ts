@@ -140,7 +140,6 @@ function normalizeAppAdminEmails(emails: string[]): string[] {
 }
 
 function hasAppAdminRole(role: AdminTierOverrideActor["role"]): boolean {
-  console.log(role);
   return role?.includes("sudo") ?? false;
 }
 
