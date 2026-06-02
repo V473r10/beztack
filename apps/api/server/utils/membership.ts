@@ -32,6 +32,15 @@ export type MembershipInfo = {
   organizationId?: string;
   expiresAt?: Date;
   source?: "admin-tier-override" | "subscription" | "free";
+  adminTierOverride?: {
+    target: {
+      type: AdminTierOverrideRecord["targetType"];
+      id: string;
+    };
+    tier: AdminTierOverrideRecord["tier"];
+    billingCadence: AdminTierOverrideRecord["billingCadence"];
+    realSubscriptionsUnchanged: true;
+  };
 };
 
 type ExtendedSession = Session & {
@@ -274,6 +283,15 @@ function membershipInfoFromAdminTierOverride(
     organizationId:
       override.targetType === "organization" ? override.targetId : undefined,
     source: "admin-tier-override",
+    adminTierOverride: {
+      target: {
+        type: override.targetType,
+        id: override.targetId,
+      },
+      tier: override.tier,
+      billingCadence: override.billingCadence,
+      realSubscriptionsUnchanged: true,
+    },
   };
 }
 
@@ -553,9 +571,15 @@ export async function requireBenefit(
   };
 }
 
+export type GetUserMembershipStatusOptions = {
+  includeAdminTierOverride?: boolean;
+  isAppAdmin?: boolean;
+};
+
 export async function getUserMembershipStatus(
   userId: string,
-  organizationId?: string
+  organizationId?: string,
+  options?: GetUserMembershipStatusOptions
 ) {
   const membership = await getMembershipInfo(userId, organizationId);
 
@@ -565,5 +589,9 @@ export async function getUserMembershipStatus(
     benefits: membership.benefits,
     expiresAt: membership.expiresAt?.toISOString(),
     organizationId,
+    isAppAdmin: options?.isAppAdmin === true,
+    ...(options?.includeAdminTierOverride && membership.adminTierOverride
+      ? { adminTierOverride: membership.adminTierOverride }
+      : {}),
   };
 }

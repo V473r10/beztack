@@ -21,6 +21,7 @@ import OCR from "./app/ocr/ocr.tsx";
 import OrganizationsPage from "./app/organizations/organizations.tsx";
 import { Settings } from "./app/settings/settings.tsx";
 import { AdminRoute } from "./components/admin-route.tsx";
+import { AdminTierOverrideBanner } from "./components/admin-tier-override-banner.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
 import { PaymentProviderWrapper } from "./components/payment-provider-wrapper.tsx";
 import { ProtectedRoute } from "./components/protected-route.tsx";
@@ -144,6 +145,7 @@ function App() {
                       {/* Redirect any unknown routes to home */}
                       <Route element={<Navigate replace to="/" />} path="*" />
                     </Routes>
+                    <AdminTierOverrideBanner />
                     <Toaster />
                   </MembershipProvider>
                 </PaymentProviderWrapper>

@@ -21,6 +21,51 @@ import {
   parseTierIdFromProduct as parseTierIdFromProductInternal,
 } from "./membership/tier-config";
 
+type MembershipStatusResponse = {
+  success: boolean;
+  data: {
+    userId: string;
+    tier: string;
+    hasActiveSubscription: boolean;
+    benefits: unknown[];
+    expiresAt?: string;
+    organizationId?: string;
+    isAppAdmin?: boolean;
+    adminTierOverride?: AdminTierOverrideResponse;
+  };
+};
+
+type AdminTierOverrideTarget = {
+  type: "user" | "organization";
+  id: string;
+};
+
+type AdminTierOverrideResponse = {
+  target: AdminTierOverrideTarget;
+  tier: string;
+  billingCadence: "monthly" | "yearly" | null;
+  realSubscriptionsUnchanged: boolean;
+};
+
+export type AdminTierOverrideStatus = {
+  target: AdminTierOverrideTarget;
+  tier: MembershipTier;
+  billingCadence: "monthly" | "yearly" | null;
+  realSubscriptionsUnchanged: boolean;
+};
+
+type ClearAdminTierOverrideResponse = {
+  success: boolean;
+  resultKind: "admin-tier-override-cleared";
+  changed: boolean;
+};
+
+type CheckoutResponse = {
+  checkoutUrl?: string;
+  resultKind?: string;
+  changed?: boolean;
+};
+
 const MILLISECONDS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
 const FIVE_MINUTES = 5;
@@ -82,11 +127,15 @@ export type MembershipContextValue = {
   ) => Promise<PlanChangeResult>;
   openBillingPortal: (returnUrl?: string) => Promise<void>;
   refreshMembership: () => Promise<void>;
+  clearAdminTierOverride: () => Promise<void>;
   hasFeature: (feature: string) => boolean;
   hasPermission: (permission: string) => boolean;
   isWithinLimit: (limitKey: string, currentUsage: number) => boolean;
   canUpgrade: boolean;
   getPlanChangeType: (targetTierId: string) => PlanChangeType;
+  adminTierOverride: AdminTierOverrideStatus | null;
+  isAppAdmin: boolean;
+  isClearingAdminTierOverride: boolean;
 };
 
 function createMembershipContext() {
@@ -114,6 +163,29 @@ function buildTierConfigFromPlansAndProducts(
   provider: "polar" | "mercadopago"
 ): MembershipTierConfig[] {
   return buildTierConfigs(products, plans, provider);
+}
+
+function isAdminTierOverrideCheckoutResponse(data: CheckoutResponse): boolean {
+  return data.resultKind === "admin-tier-override";
+}
+
+function getAdminTierOverrideToastMessage(data: CheckoutResponse): string {
+  return data.changed
+    ? "Admin tier override applied."
+    : "Admin tier override already active.";
+}
+
+function parseAdminTierOverride(
+  data: AdminTierOverrideResponse | undefined
+): AdminTierOverrideStatus | null {
+  if (!data) {
+    return null;
+  }
+
+  return {
+    ...data,
+    tier: parseTierIdFromName(data.tier),
+  };
 }
 
 export function useMembership() {
@@ -180,6 +252,30 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     staleTime: SUBSCRIPTIONS_STALE_TIME,
   });
 
+  const membershipStatusQuery = useQuery({
+    queryKey: ["subscriptions", "membership", activeOrganizationId],
+    queryFn: async (): Promise<MembershipStatusResponse> => {
+      const query = new URLSearchParams();
+      if (activeOrganizationId) {
+        query.set("organizationId", activeOrganizationId);
+      }
+      const queryString = query.toString();
+      const response = await fetch(
+        `${env.VITE_API_URL}/api/membership/status${queryString ? `?${queryString}` : ""}`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch membership status");
+      }
+
+      return response.json();
+    },
+    staleTime: SUBSCRIPTIONS_STALE_TIME,
+  });
+
   const checkoutMutation = useMutation({
     mutationFn: async (params: {
       productId: string;
@@ -187,7 +283,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       metadata?: Record<string, unknown>;
       organizationId?: string;
       upgrade?: boolean;
-    }) => {
+    }): Promise<CheckoutResponse> => {
       const selectedProduct = productsQuery.data?.products.find(
         (product) => product.id === params.productId
       );
@@ -231,7 +327,13 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (isAdminTierOverrideCheckoutResponse(data)) {
+        toast.success(getAdminTierOverrideToastMessage(data));
+        queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+        return;
+      }
+
       toast.success("Redirecting to checkout...");
     },
     onError: () => {
@@ -336,6 +438,40 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
   });
 
+  const clearAdminTierOverrideMutation = useMutation({
+    mutationFn: async (): Promise<ClearAdminTierOverrideResponse> => {
+      const query = new URLSearchParams();
+      if (activeOrganizationId) {
+        query.set("organizationId", activeOrganizationId);
+      }
+      const queryString = query.toString();
+      const response = await fetch(
+        `${env.VITE_API_URL}/api/membership/admin-tier-override${queryString ? `?${queryString}` : ""}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to clear Admin tier override");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast.success(
+        data.changed
+          ? "Admin tier override cleared."
+          : "Admin tier override already cleared."
+      );
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+    },
+    onError: () => {
+      toast.error("Failed to clear Admin tier override");
+    },
+  });
+
   const products = productsQuery.data?.products ?? EMPTY_PRODUCTS;
   const subscriptions =
     subscriptionsQuery.data?.subscriptions ?? EMPTY_SUBSCRIPTIONS;
@@ -366,7 +502,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // TODO: Mercado Pago no tiene metadata, no estamos obteniendo ningún tier, esto hay que sacarlo de la base.
 
   const currentTier = parseTierIdFromName(
-    (activeSubscription?.metadata?.tier as string | undefined) ||
+    membershipStatusQuery.data?.data.tier ||
+      (activeSubscription?.metadata?.tier as string | undefined) ||
       (activeSubscription?.metadata?.planId as string | undefined) ||
       activeSubscription?.productName
   );
@@ -382,16 +519,30 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const tierConfig =
     tierConfigs.find((config) => config.id === currentTier) || null;
 
+  const rawAdminTierOverride =
+    membershipStatusQuery.data?.data.adminTierOverride;
+  const adminTierOverride = useMemo(
+    () => parseAdminTierOverride(rawAdminTierOverride),
+    [rawAdminTierOverride]
+  );
+
+  console.log(membershipStatusQuery.data)
+
+  const isAppAdmin = membershipStatusQuery.data?.data.isAppAdmin === true;
+
   const isLoading =
     productsQuery.isLoading ||
     subscriptionsQuery.isLoading ||
+    membershipStatusQuery.isLoading ||
     checkoutMutation.isPending ||
     planChangeMutation.isPending ||
-    billingPortalMutation.isPending;
+    billingPortalMutation.isPending ||
+    clearAdminTierOverrideMutation.isPending;
 
   const error =
     (productsQuery.error as Error | null) ||
-    (subscriptionsQuery.error as Error | null);
+    (subscriptionsQuery.error as Error | null) ||
+    (membershipStatusQuery.error as Error | null);
 
   const checkoutRef = useRef(checkoutMutation.mutateAsync);
   checkoutRef.current = checkoutMutation.mutateAsync;
@@ -454,6 +605,16 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const refreshMembership = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
   }, [queryClient]);
+
+  const clearAdminTierOverrideRef = useRef(
+    clearAdminTierOverrideMutation.mutateAsync
+  );
+  clearAdminTierOverrideRef.current =
+    clearAdminTierOverrideMutation.mutateAsync;
+
+  const clearAdminTierOverride = useCallback(async () => {
+    await clearAdminTierOverrideRef.current();
+  }, []);
 
   const hasFeature = useCallback(
     (feature: string) => {
@@ -532,11 +693,15 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       changePlan,
       openBillingPortal,
       refreshMembership,
+      clearAdminTierOverride,
       hasFeature,
       hasPermission,
       isWithinLimit,
       canUpgrade,
       getPlanChangeType,
+      adminTierOverride,
+      isAppAdmin,
+      isClearingAdminTierOverride: clearAdminTierOverrideMutation.isPending,
     }),
     [
       currentTier,
@@ -549,11 +714,15 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       changePlan,
       openBillingPortal,
       refreshMembership,
+      clearAdminTierOverride,
       hasFeature,
       hasPermission,
       isWithinLimit,
       canUpgrade,
       getPlanChangeType,
+      adminTierOverride,
+      isAppAdmin,
+      clearAdminTierOverrideMutation.isPending,
     ]
   );
 

@@ -38,9 +38,9 @@ export function useIsAppAdmin() {
   return (
     // @ts-ignore - custom property injected by backend
     session?.user?.isAppAdmin === true ||
-    session?.user?.role === "sudo" ||
+    session?.user?.role?.includes("sudo") ||
     (Array.isArray(session?.user?.role) &&
-      session?.user?.role.includes("sudo"))
+      session?.user?.role.some((r) => r.includes("sudo")))
   );
 }
 

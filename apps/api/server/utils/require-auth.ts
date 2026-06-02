@@ -19,8 +19,7 @@ type AuthenticatedSession = NonNullable<Session>;
  */
 function isAppAdmin(session: AuthenticatedSession): boolean {
   const role = session.user?.role;
-  const hasAppAdminRole =
-    role === "sudo" || (Array.isArray(role) && role.includes("sudo"));
+  const hasAppAdminRole = role?.includes("sudo");
 
   if (!hasAppAdminRole) {
     return false;
