@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   },
   ensurePaymentProvider: vi.fn(),
   discoverSubscriptionsFromDb: vi.fn(),
+  getAdminTierOverrideForMembershipTarget: vi.fn(),
   selectResults: [] as unknown[][],
 }));
 
@@ -18,6 +19,10 @@ vi.mock("@/lib/payments", () => ({
 }));
 vi.mock("./subscription-discovery", () => ({
   discoverSubscriptionsFromDb: mocks.discoverSubscriptionsFromDb,
+}));
+vi.mock("./admin-tier-override", () => ({
+  getAdminTierOverrideForMembershipTarget:
+    mocks.getAdminTierOverrideForMembershipTarget,
 }));
 vi.mock("drizzle-orm", () => ({ eq: vi.fn(() => true) }));
 vi.mock("@beztack/db", () => ({
@@ -91,7 +96,33 @@ describe("getMembershipInfo", () => {
     mocks.ensurePaymentProvider.mockReset();
     mocks.discoverSubscriptionsFromDb.mockReset();
     mocks.discoverSubscriptionsFromDb.mockResolvedValue([]);
+    mocks.getAdminTierOverrideForMembershipTarget.mockReset();
+    mocks.getAdminTierOverrideForMembershipTarget.mockResolvedValue(null);
     mocks.selectResults.length = 0;
+  });
+
+  it("uses an Admin tier override before cached Subscription Membership", async () => {
+    mocks.getAdminTierOverrideForMembershipTarget.mockResolvedValue({
+      id: 1,
+      targetType: "organization",
+      targetId: "org_1",
+      tier: "ultimate",
+      billingCadence: "yearly",
+      actorUserId: "admin_1",
+      sourceAction: "checkout",
+      createdAt: new Date("2026-06-01T00:00:00.000Z"),
+      updatedAt: new Date("2026-06-01T00:00:00.000Z"),
+    });
+
+    const membership = await getMembershipInfo("user_1", "org_1");
+
+    expect(membership).toMatchObject({
+      tier: "ultimate",
+      hasActiveSubscription: false,
+      organizationId: "org_1",
+      source: "admin-tier-override",
+    });
+    expect(mocks.ensurePaymentProvider).not.toHaveBeenCalled();
   });
 
   it("trusts cached Mercado Pago Membership after verifying the cached Subscription ID", async () => {

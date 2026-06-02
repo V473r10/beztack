@@ -6,6 +6,10 @@ import { createError } from "h3";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import type { Subscription } from "@/lib/payments/types";
+import {
+  type AdminTierOverrideRecord,
+  getAdminTierOverrideForMembershipTarget,
+} from "./admin-tier-override";
 import { discoverSubscriptionsFromDb } from "./subscription-discovery";
 
 export type Benefit = {
@@ -27,6 +31,7 @@ export type MembershipInfo = {
   benefits: Benefit[];
   organizationId?: string;
   expiresAt?: Date;
+  source?: "admin-tier-override" | "subscription" | "free";
 };
 
 type ExtendedSession = Session & {
@@ -34,7 +39,7 @@ type ExtendedSession = Session & {
   activeTeamId?: string | null;
 };
 
-export interface AuthenticatedUser {
+export type AuthenticatedUser = {
   id: string;
   name: string;
   email: string;
@@ -45,7 +50,7 @@ export interface AuthenticatedUser {
   session: ExtendedSession;
   membership?: MembershipInfo;
   user: User;
-}
+};
 
 function mapTier(value: string | undefined): MembershipTier {
   const normalized = value?.trim().toLowerCase() ?? "";
@@ -259,6 +264,106 @@ export async function requireAuth(
   };
 }
 
+function membershipInfoFromAdminTierOverride(
+  override: AdminTierOverrideRecord
+): MembershipInfo {
+  return {
+    tier: override.tier,
+    hasActiveSubscription: false,
+    benefits: [],
+    organizationId:
+      override.targetType === "organization" ? override.targetId : undefined,
+    source: "admin-tier-override",
+  };
+}
+
+async function getCachedOrganizationMembershipInfo(
+  userId: string,
+  organizationId: string
+): Promise<MembershipInfo | null> {
+  const [org] = await db
+    .select({
+      subscriptionTier: orgTable.subscriptionTier,
+      subscriptionStatus: orgTable.subscriptionStatus,
+      subscriptionId: orgTable.subscriptionId,
+      subscriptionValidUntil: orgTable.subscriptionValidUntil,
+    })
+    .from(orgTable)
+    .where(eq(orgTable.id, organizationId))
+    .limit(1);
+
+  if (
+    !(
+      org?.subscriptionTier &&
+      (await canUseCachedMembership({
+        cache: org,
+        userId,
+        organizationId,
+        isOrgMode: true,
+      }))
+    )
+  ) {
+    return null;
+  }
+
+  const isActive = isSubscriptionStatusActive(
+    org.subscriptionStatus,
+    org.subscriptionValidUntil
+  );
+  return {
+    tier: mapTier(org.subscriptionTier),
+    hasActiveSubscription: isActive,
+    subscriptionId: org.subscriptionId ?? undefined,
+    benefits: [],
+    organizationId,
+    expiresAt: org.subscriptionValidUntil ?? undefined,
+    source: "subscription",
+  };
+}
+
+async function getCachedUserMembershipInfo(
+  userId: string
+): Promise<MembershipInfo | null> {
+  const [dbUser] = await db
+    .select({
+      subscriptionTier: userTable.subscriptionTier,
+      subscriptionStatus: userTable.subscriptionStatus,
+      subscriptionId: userTable.subscriptionId,
+      subscriptionValidUntil: userTable.subscriptionValidUntil,
+      email: userTable.email,
+    })
+    .from(userTable)
+    .where(eq(userTable.id, userId))
+    .limit(1);
+
+  if (
+    !(
+      dbUser?.subscriptionTier &&
+      (await canUseCachedMembership({
+        cache: dbUser,
+        userId,
+        userEmail: dbUser.email,
+        isOrgMode: false,
+      }))
+    )
+  ) {
+    return null;
+  }
+
+  const isActive = isSubscriptionStatusActive(
+    dbUser.subscriptionStatus,
+    dbUser.subscriptionValidUntil
+  );
+  return {
+    tier: mapTier(dbUser.subscriptionTier),
+    hasActiveSubscription: isActive,
+    subscriptionId: dbUser.subscriptionId ?? undefined,
+    benefits: [],
+    expiresAt: dbUser.subscriptionValidUntil ?? undefined,
+    source: "subscription",
+  };
+}
+
 /**
  * DB-first membership resolution.
  * Reads denormalized subscription data from the entity (user or org).
@@ -269,78 +374,28 @@ export async function getMembershipInfo(
   organizationId?: string
 ): Promise<MembershipInfo> {
   const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
+  const override = await getAdminTierOverrideForMembershipTarget({
+    organizationId,
+    subscriptionMode: isOrgMode ? "organization" : "user",
+    userId,
+  });
 
-  // DB-first: try reading cached subscription data from the entity
-  if (isOrgMode && organizationId) {
-    const [org] = await db
-      .select({
-        subscriptionTier: orgTable.subscriptionTier,
-        subscriptionStatus: orgTable.subscriptionStatus,
-        subscriptionId: orgTable.subscriptionId,
-        subscriptionValidUntil: orgTable.subscriptionValidUntil,
-      })
-      .from(orgTable)
-      .where(eq(orgTable.id, organizationId))
-      .limit(1);
-
-    if (
-      org?.subscriptionTier &&
-      (await canUseCachedMembership({
-        cache: org,
-        userId,
-        organizationId,
-        isOrgMode,
-      }))
-    ) {
-      const isActive = isSubscriptionStatusActive(
-        org.subscriptionStatus,
-        org.subscriptionValidUntil
-      );
-      return {
-        tier: mapTier(org.subscriptionTier),
-        hasActiveSubscription: isActive,
-        subscriptionId: org.subscriptionId ?? undefined,
-        benefits: [],
-        organizationId,
-        expiresAt: org.subscriptionValidUntil ?? undefined,
-      };
-    }
+  if (override) {
+    return membershipInfoFromAdminTierOverride(override);
   }
 
-  if (!isOrgMode) {
-    const [dbUser] = await db
-      .select({
-        subscriptionTier: userTable.subscriptionTier,
-        subscriptionStatus: userTable.subscriptionStatus,
-        subscriptionId: userTable.subscriptionId,
-        subscriptionValidUntil: userTable.subscriptionValidUntil,
-        email: userTable.email,
-      })
-      .from(userTable)
-      .where(eq(userTable.id, userId))
-      .limit(1);
+  let cachedMembership: MembershipInfo | null = null;
+  if (isOrgMode && organizationId) {
+    cachedMembership = await getCachedOrganizationMembershipInfo(
+      userId,
+      organizationId
+    );
+  } else if (!isOrgMode) {
+    cachedMembership = await getCachedUserMembershipInfo(userId);
+  }
 
-    if (
-      dbUser?.subscriptionTier &&
-      (await canUseCachedMembership({
-        cache: dbUser,
-        userId,
-        userEmail: dbUser.email,
-        isOrgMode,
-      }))
-    ) {
-      const isActive = isSubscriptionStatusActive(
-        dbUser.subscriptionStatus,
-        dbUser.subscriptionValidUntil
-      );
-      return {
-        tier: mapTier(dbUser.subscriptionTier),
-        hasActiveSubscription: isActive,
-        subscriptionId: dbUser.subscriptionId ?? undefined,
-        benefits: [],
-        expiresAt: dbUser.subscriptionValidUntil ?? undefined,
-      };
-    }
+  if (cachedMembership) {
+    return cachedMembership;
   }
 
   // Fallback: query payment provider API

@@ -270,6 +270,57 @@ export const payment = pgTable(
   ]
 );
 
+export const adminTierOverride = pgTable(
+  "admin_tier_override",
+  {
+    id: serial("id").primaryKey(),
+    targetType: text("target_type").notNull(),
+    targetId: text("target_id").notNull(),
+    tier: text("tier").notNull(),
+    billingCadence: text("billing_cadence"),
+    actorUserId: text("actor_user_id")
+      .notNull()
+      .references(() => user.id),
+    sourceAction: text("source_action"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("admin_tier_override_target_uidx").on(
+      table.targetType,
+      table.targetId
+    ),
+    index("admin_tier_override_actor_idx").on(table.actorUserId),
+  ]
+);
+
+export const adminTierOverrideAudit = pgTable(
+  "admin_tier_override_audit",
+  {
+    id: serial("id").primaryKey(),
+    action: text("action").notNull(),
+    targetType: text("target_type").notNull(),
+    targetId: text("target_id").notNull(),
+    tier: text("tier").notNull(),
+    billingCadence: text("billing_cadence"),
+    actorUserId: text("actor_user_id")
+      .notNull()
+      .references(() => user.id),
+    sourceAction: text("source_action"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("admin_tier_override_audit_target_idx").on(
+      table.targetType,
+      table.targetId
+    ),
+    index("admin_tier_override_audit_actor_idx").on(table.actorUserId),
+  ]
+);
+
 export const webhookLog = pgTable(
   "webhook_log",
   {
@@ -306,5 +357,7 @@ export const schema = {
   plan,
   subscription,
   payment,
+  adminTierOverride,
+  adminTierOverrideAudit,
   webhookLog,
 };

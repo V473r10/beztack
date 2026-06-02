@@ -13,6 +13,10 @@ import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
 import type { Product } from "@/lib/payments/types";
 import {
+  applyAdminTierOverride,
+  isAppAdminActor,
+} from "@/server/utils/admin-tier-override";
+import {
   estimatePeriodEnd,
   resolveCurrentBillingAmount,
 } from "@/server/utils/billing-amount-resolver";
@@ -210,6 +214,36 @@ async function handleProratedDowngrade(options: {
 
 type CheckoutInput = z.infer<typeof checkoutSchema>;
 
+function getAppAdminEmails(): string[] {
+  return env.APP_ADMIN_EMAILS.split(",")
+    .map((email: string) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function getAuthRole(auth: AuthenticatedUser): string | string[] | null {
+  const role = (auth.user as { role?: unknown }).role;
+  if (typeof role === "string") {
+    return role;
+  }
+  if (Array.isArray(role) && role.every((entry) => typeof entry === "string")) {
+    return role;
+  }
+  return null;
+}
+
+function resolveCheckoutOrganizationId(
+  parsed: CheckoutInput,
+  auth: AuthenticatedUser
+): string | undefined {
+  if (env.SUBSCRIPTION_MODE !== "organization") {
+    return;
+  }
+
+  return (
+    parsed.organizationId ?? auth.session?.activeOrganizationId ?? undefined
+  );
+}
+
 function resolveCheckoutProduct(
   products: Product[],
   productId: string | undefined,
@@ -301,15 +335,51 @@ function rethrowOrWrap(error: unknown): never {
 
 export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
-  const provider = await ensurePaymentProvider();
-  const checkoutUrls = resolveCheckoutCallbackUrls({
-    configuredSuccessUrl: env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL,
-    configuredCancelUrl: env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL,
-  });
 
   try {
     const body = await readBody(event);
     const parsed = checkoutSchema.parse(body);
+    const appAdminEmails = getAppAdminEmails();
+    const actor = {
+      id: auth.user.id,
+      email: auth.user.email,
+      role: getAuthRole(auth),
+    };
+    const organizationId = resolveCheckoutOrganizationId(parsed, auth);
+
+    if (isAppAdminActor(actor, appAdminEmails)) {
+      const result = await applyAdminTierOverride({
+        actor,
+        appAdminEmails,
+        billingPeriod: parsed.billingPeriod,
+        organizationId,
+        planId: parsed.planId,
+        productId: parsed.productId,
+        provider: env.PAYMENT_PROVIDER,
+        sourceAction: "checkout",
+        subscriptionMode:
+          env.SUBSCRIPTION_MODE === "organization" ? "organization" : "user",
+        userId: auth.user.id,
+      });
+
+      return {
+        provider: "beztack",
+        resultKind: result.kind,
+        changed: result.changed,
+        adminTierOverride: {
+          target: result.target,
+          tier: result.override.tier,
+          billingCadence: result.override.billingCadence,
+          realSubscriptionsUnchanged: true,
+        },
+      };
+    }
+
+    const provider = await ensurePaymentProvider();
+    const checkoutUrls = resolveCheckoutCallbackUrls({
+      configuredSuccessUrl: env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL,
+      configuredCancelUrl: env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL,
+    });
 
     validateCheckoutInput(parsed, provider.provider);
 
@@ -333,12 +403,6 @@ export default defineEventHandler(async (event) => {
       typeof selectedProduct.metadata?.tier === "string"
         ? selectedProduct.metadata.tier
         : undefined;
-    const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
-    const organizationId = isOrgMode
-      ? (parsed.organizationId ??
-        auth.session?.activeOrganizationId ??
-        undefined)
-      : undefined;
 
     const checkoutMetadata = buildCheckoutMetadata(
       parsed,

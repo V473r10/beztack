@@ -1,0 +1,3 @@
+# App admin tier overrides stay outside payment providers
+
+App admins can apply an Admin tier override to test paid-tier Membership in production without creating a provider Subscription, Payment, checkout, email, or webhook dependency. The override is Beztack-owned state that targets the same Membership target as normal checkout, takes precedence over provider-derived Membership while present, and leaves real Subscriptions untouched so clearing the override returns the target to its real Subscription-derived state. We rejected fake provider Subscriptions or zero-payment checkout because they would pollute revenue/customer evidence and blur the boundary established by Subscription projection.

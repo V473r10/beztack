@@ -84,6 +84,11 @@ _Avoid_: access level, entitlement state
 A system-level superuser (typically a developer or staff member) identified via environment configuration rather than standard database roles. App admins have global access to internal tools (like the plan-sync UI) and can override Subscription owner and Billing manager rules.
 _Avoid_: sudo, superuser, system admin
 
+**Admin tier override**:
+A Membership state selected by an App admin to exercise a Subscription tier without a customer Subscription or Payment. An Admin tier override applies to the same Membership target as a normal Subscription, takes precedence over real Subscription-derived Membership while present, and leaves real Subscriptions untouched.
+An Admin tier override may target Free, includes Billing cadence for paid tiers, is visible only to App admins, and persists until explicitly cleared; non-App-admins experience only the resulting Membership.
+_Avoid_: test subscription, comped subscription, free checkout
+
 **Billing manager**:
 An organization member whose role is allowed to manage the organization's Subscription. Billing managers may perform organization Plan changes; app admins may override, and payer email alone does not establish that a Subscription belongs to an organization.
 _Avoid_: owner-only billing user, any member
@@ -97,3 +102,7 @@ _Avoid_: payment intent, checkout attempt
 Developer: "Does this route start a checkout or perform a Plan change?"
 
 Domain expert: "If there is an active Subscription and the customer moves to another plan or Billing cadence, call it a Plan change. Checkout is only the provider work needed to complete that change. If only the Billing cadence changes, call that a Cadence change. Use the Pricing catalog to decide whether a tier move is an Upgrade or Downgrade. An Upgrade first Payment credits unused value from the current paid period; a Downgrade keeps current Membership through that paid period."
+
+Developer: "Should we call the App admin production testing path a free subscription?"
+
+Domain expert: "No. Call it an Admin tier override. It changes effective Membership for App admin testing, but it is not a Subscription, Payment, or checkout bypass visible to customers."

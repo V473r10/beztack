@@ -14,20 +14,23 @@ type AuthenticatedSession = NonNullable<Session>;
 // =============================================================================
 
 /**
- * Check if a user has Platform Superuser (sudo) role AND is actively in APP_ADMIN_EMAILS.
+ * Check if a user has the internal role value and is actively in APP_ADMIN_EMAILS.
  * This strict double-check mitigates role escalation vulnerabilities.
  */
 function isAppAdmin(session: AuthenticatedSession): boolean {
   const role = session.user?.role;
-  const hasSudoRole = role === "sudo" || (Array.isArray(role) && role.includes("sudo"));
-  
-  if (!hasSudoRole) return false;
+  const hasAppAdminRole =
+    role === "sudo" || (Array.isArray(role) && role.includes("sudo"));
 
-  const sudoEmails = env.SUDO_EMAILS.split(",")
+  if (!hasAppAdminRole) {
+    return false;
+  }
+
+  const appAdminEmails = env.APP_ADMIN_EMAILS.split(",")
     .map((e: string) => e.trim().toLowerCase())
     .filter(Boolean);
 
-  return sudoEmails.includes(session.user?.email?.toLowerCase() ?? "");
+  return appAdminEmails.includes(session.user?.email?.toLowerCase() ?? "");
 }
 
 /**
@@ -62,9 +65,8 @@ export const requireAuth: EventHandler = async (event: H3Event) => {
 };
 
 /**
- * Middleware to require Sudo (Platform Admin) role.
- * Throws 401 if not authenticated, 403 if not Sudo.
- * Keeping the name requireAdmin to not break existing routes, but it enforces Sudo.
+ * Middleware to require App admin access.
+ * Throws 401 if not authenticated, 403 if not an App admin.
  */
 export const requireAdmin: EventHandler = async (event: H3Event) => {
   const session = await getAuthenticatedSession(event);
@@ -72,13 +74,13 @@ export const requireAdmin: EventHandler = async (event: H3Event) => {
   if (!isAppAdmin(session)) {
     throw createError({
       statusCode: 403,
-      statusMessage: "Platform Superuser (Sudo) access required",
+      statusMessage: "App admin access required",
     });
   }
 };
 
 /**
- * Check if the authenticated user owns a resource or is a Sudo user.
+ * Check if the authenticated user owns a resource or is an App admin.
  * Useful for protecting user-specific resources while allowing platform admin override.
  */
 export async function requireOwnerOrAdmin(
@@ -88,9 +90,9 @@ export async function requireOwnerOrAdmin(
   const session = await getAuthenticatedSession(event);
 
   const isOwner = resourceOwnerId && session.user?.id === resourceOwnerId;
-  const userIsSudo = isAppAdmin(session);
+  const userIsAppAdmin = isAppAdmin(session);
 
-  if (!(isOwner || userIsSudo)) {
+  if (!(isOwner || userIsAppAdmin)) {
     throw createError({
       statusCode: 403,
       statusMessage: "Access denied",
