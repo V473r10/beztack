@@ -92,6 +92,7 @@ export type PlanChangeType = "upgrade" | "downgrade" | "same" | "period_change";
 
 export type PlanChangeResult = {
   success: boolean;
+  planChangeAcceptance?: unknown;
   subscription?: {
     id: string;
     status: string;
@@ -122,6 +123,8 @@ export type MembershipContextValue = {
   changePlan: (
     productId: string,
     options?: {
+      billingPeriod?: "monthly" | "yearly";
+      organizationId?: string;
       prorationBehavior?: "invoice" | "prorate";
     }
   ) => Promise<PlanChangeResult>;
@@ -343,21 +346,22 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   const planChangeMutation = useMutation({
     mutationFn: async (params: {
-      subscriptionId: string;
+      billingPeriod: "monthly" | "yearly";
+      organizationId?: string;
       productId: string;
-      prorationBehavior: "invoice" | "prorate";
     }): Promise<PlanChangeResult> => {
       const response = await fetch(
-        `${env.VITE_API_URL}/api/subscriptions/${params.subscriptionId}`,
+        `${env.VITE_API_URL}/api/subscriptions/plan-change/accept`,
         {
-          method: "PATCH",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include",
           body: JSON.stringify({
-            productId: params.productId,
-            prorationBehavior: params.prorationBehavior,
+            targetPricingCatalogPlanId: params.productId,
+            targetBillingCadence: params.billingPeriod,
+            organizationId: params.organizationId,
           }),
         }
       );
@@ -371,25 +375,21 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       }
 
       const payload = await response.json();
-      const subscription = payload.subscription as Subscription;
 
       return {
         success: true,
-        subscription: {
-          id: subscription.id,
-          status: subscription.status,
-          productId: subscription.productId,
-          amount: 0,
-          currency: "USD",
-          currentPeriodEnd: subscription.currentPeriodEnd
-            ? new Date(subscription.currentPeriodEnd).toISOString()
-            : new Date().toISOString(),
-          recurringInterval: "month",
-        },
+        planChangeAcceptance: payload.planChangeAcceptance,
       };
     },
-    onSuccess: () => {
-      toast.success("Plan updated successfully!");
+    onSuccess: (data) => {
+      const acceptance = data.planChangeAcceptance as
+        | { reconciliationStatus?: string }
+        | undefined;
+      toast.success(
+        acceptance?.reconciliationStatus === "reconciling"
+          ? "Payment confirmed. Plan change is still reconciling."
+          : "Plan change accepted successfully!"
+      );
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
     onError: (mutationError: Error) => {
@@ -485,17 +485,6 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
     const validSubs = subscriptions.filter(isValidSub);
 
-    // When a downgrade is pending, prefer the original (non-downgrade)
-    // subscription so the UI shows the current tier until it expires.
-    if (validSubs.length > 1) {
-      const nonDowngrade = validSubs.find(
-        (sub) => sub.metadata?.proratedDowngrade !== true
-      );
-      if (nonDowngrade) {
-        return nonDowngrade;
-      }
-    }
-
     return validSubs.at(0) ?? null;
   })();
 
@@ -526,8 +515,6 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     [rawAdminTierOverride]
   );
 
-  console.log(membershipStatusQuery.data)
-
   const isAppAdmin = membershipStatusQuery.data?.data.isAppAdmin === true;
 
   const isLoading =
@@ -547,6 +534,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const checkoutRef = useRef(checkoutMutation.mutateAsync);
   checkoutRef.current = checkoutMutation.mutateAsync;
 
+  const planChangeRef = useRef(planChangeMutation.mutateAsync);
+  planChangeRef.current = planChangeMutation.mutateAsync;
+
   const upgradeToTier = useCallback(
     async (
       tierId: string,
@@ -554,10 +544,18 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       organizationId?: string
     ) => {
       const checkoutOrganizationId = organizationId ?? activeOrganizationId;
+      if (activeSubscription) {
+        await planChangeRef.current({
+          billingPeriod,
+          productId: tierId,
+          organizationId: checkoutOrganizationId,
+        });
+        return;
+      }
+
       await checkoutRef.current({
         productId: tierId,
         billingPeriod,
-        upgrade: !!activeSubscription,
         organizationId: checkoutOrganizationId,
         metadata: {
           ...(checkoutOrganizationId
@@ -569,30 +567,26 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     [activeSubscription, activeOrganizationId]
   );
 
-  const planChangeRef = useRef(planChangeMutation.mutateAsync);
-  planChangeRef.current = planChangeMutation.mutateAsync;
-
-  const activeSubIdRef = useRef(activeSubscription?.id);
-  activeSubIdRef.current = activeSubscription?.id;
-
   const changePlan = useCallback(
     (
       productId: string,
       options?: {
+        billingPeriod?: "monthly" | "yearly";
+        organizationId?: string;
         prorationBehavior?: "invoice" | "prorate";
       }
     ): Promise<PlanChangeResult> => {
-      if (!activeSubIdRef.current) {
+      if (!activeSubscription) {
         throw new Error("No active subscription to change");
       }
 
       return planChangeRef.current({
-        subscriptionId: activeSubIdRef.current,
+        billingPeriod: options?.billingPeriod ?? "monthly",
+        organizationId: options?.organizationId ?? activeOrganizationId,
         productId,
-        prorationBehavior: options?.prorationBehavior || "prorate",
       });
     },
-    []
+    [activeSubscription, activeOrganizationId]
   );
 
   const billingPortalRef = useRef(billingPortalMutation.mutateAsync);

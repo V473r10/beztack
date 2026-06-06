@@ -303,27 +303,8 @@ export function BillingDashboard({
 
     const validSubs = subscriptions.filter(isValidSub);
 
-    if (validSubs.length > 1) {
-      const nonDowngrade = validSubs.find(
-        (sub) => sub.metadata?.proratedDowngrade !== true
-      );
-      if (nonDowngrade) {
-        return nonDowngrade;
-      }
-    }
-
     return validSubs.at(0);
   })();
-
-  // Detect pending downgrade: either the active subscription itself has
-  // proratedDowngrade (it's the new sub in trial), or another subscription does
-  const downgradeSubscription = subscriptions.find(
-    (sub) => sub.metadata?.proratedDowngrade === true
-  );
-  const pendingDowngradeTier =
-    typeof downgradeSubscription?.metadata?.tier === "string"
-      ? downgradeSubscription.metadata.tier
-      : undefined;
 
   const handleUpgrade = (
     tierId: string,
@@ -367,7 +348,6 @@ export function BillingDashboard({
                     : undefined
                 }
                 isActive={activeSubscription.status === "active"}
-                pendingDowngradeTier={pendingDowngradeTier}
                 tier={currentTier}
               />
             ) : (

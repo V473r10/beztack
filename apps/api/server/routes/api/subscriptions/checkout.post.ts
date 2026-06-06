@@ -3,8 +3,7 @@
  * Works with both Polar and Mercado Pago based on PAYMENT_PROVIDER config
  */
 
-import { calculateProration } from "@beztack/mercadopago";
-import type { PaymentProviderAdapter, Subscription } from "@beztack/payments";
+import type { PaymentProviderAdapter } from "@beztack/payments";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { env } from "@/env";
@@ -16,14 +15,8 @@ import {
   applyAdminTierOverride,
   isAppAdminActor,
 } from "@/server/utils/admin-tier-override";
-import {
-  estimatePeriodEnd,
-  resolveCurrentBillingAmount,
-} from "@/server/utils/billing-amount-resolver";
 import { resolveCheckoutCallbackUrls } from "@/server/utils/checkout-callback-urls";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
-import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
-import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 
@@ -37,180 +30,6 @@ const checkoutSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
   upgrade: z.boolean().optional(),
 });
-
-async function findActiveSubscription(
-  provider: PaymentProviderAdapter,
-  auth: AuthenticatedUser
-): Promise<Subscription | null> {
-  const userId = auth.user.id;
-  const email = auth.user.email;
-  let subscriptions = await provider.listSubscriptions({
-    customerEmail: email,
-    customerId: userId,
-  });
-
-  if (subscriptions.length === 0) {
-    subscriptions = await discoverSubscriptionsFromDb(userId, provider);
-  }
-
-  subscriptions = subscriptions.filter((subscription) =>
-    isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)
-  );
-
-  // Prefer authorized (active) subscription
-  const active = subscriptions.find((sub) => sub.status === "active");
-  if (active) {
-    return active;
-  }
-
-  // Upgrade-specific: also check for pending subscriptions (just created,
-  // first payment not yet processed by MercadoPago).
-  // Note: "pending" string matches between core SubscriptionStatus and MP API.
-  const pendingSubs = await provider.listSubscriptions({
-    customerEmail: email,
-    customerId: userId,
-    status: "pending",
-  });
-
-  return (
-    pendingSubs.find((subscription) =>
-      isSubscriptionOwnedByUser(subscription, auth, env.SUBSCRIPTION_MODE)
-    ) ?? null
-  );
-}
-
-async function handleProratedUpgrade(options: {
-  provider: PaymentProviderAdapter;
-  activeSub: Subscription;
-  selectedProduct: Product;
-  metadata: Record<string, unknown>;
-  userEmail: string;
-}): Promise<{ id: string; url: string }> {
-  const { provider, activeSub, selectedProduct, metadata, userEmail } = options;
-
-  const currentBilling = await resolveCurrentBillingAmount(activeSub, provider);
-
-  const periodStart = activeSub.currentPeriodStart ?? new Date();
-  const periodEnd =
-    activeSub.currentPeriodEnd ??
-    estimatePeriodEnd(activeSub, currentBilling.interval);
-  const newAmount = selectedProduct.price.amount;
-
-  const proration = calculateProration({
-    currentAmount: currentBilling.amount,
-    newAmount,
-    periodStart,
-    periodEnd,
-  });
-
-  // Create new subscription with prorated first payment
-  const newSub = await provider.createSubscription({
-    customerEmail: userEmail,
-    customerId: activeSub.customerId,
-    customPlan: {
-      reason: selectedProduct.name,
-      amount: proration.proratedAmount,
-      currency: currentBilling.currency,
-      interval: currentBilling.interval as "month" | "year" | "day" | "week",
-      intervalCount: 1,
-    },
-    metadata: {
-      ...metadata,
-      proratedUpgrade: true,
-      fullAmount: newAmount,
-      targetPlanId: selectedProduct.id,
-      previousSubscriptionId: activeSub.id,
-    },
-  });
-
-  const checkoutUrl =
-    typeof newSub.metadata?.initPoint === "string"
-      ? newSub.metadata.initPoint
-      : undefined;
-
-  if (!checkoutUrl) {
-    throw createError({
-      statusCode: 500,
-      message:
-        "Mercado Pago did not return a checkout URL for the prorated subscription",
-    });
-  }
-
-  return {
-    id: newSub.id,
-    url: checkoutUrl,
-  };
-}
-
-const MILLISECONDS_PER_DAY = 86_400_000;
-
-async function handleProratedDowngrade(options: {
-  provider: PaymentProviderAdapter;
-  activeSub: Subscription;
-  selectedProduct: Product;
-  metadata: Record<string, unknown>;
-  userEmail: string;
-}): Promise<{ id: string; url: string }> {
-  const { provider, activeSub, selectedProduct, metadata, userEmail } = options;
-
-  const currentBilling = await resolveCurrentBillingAmount(activeSub, provider);
-
-  const periodEnd =
-    activeSub.currentPeriodEnd ??
-    estimatePeriodEnd(activeSub, currentBilling.interval);
-
-  const now = new Date();
-  const daysRemaining = Math.max(
-    Math.ceil((periodEnd.getTime() - now.getTime()) / MILLISECONDS_PER_DAY),
-    1
-  );
-
-  const currentTier =
-    typeof activeSub.metadata?.tier === "string"
-      ? activeSub.metadata.tier
-      : undefined;
-
-  const newSub = await provider.createSubscription({
-    customerEmail: userEmail,
-    customerId: activeSub.customerId,
-    customPlan: {
-      reason: selectedProduct.name,
-      amount: selectedProduct.price.amount,
-      currency: currentBilling.currency,
-      interval: currentBilling.interval as "month" | "year" | "day" | "week",
-      intervalCount: 1,
-      freeTrial: {
-        frequency: daysRemaining,
-        frequencyType: "days",
-      },
-    },
-    metadata: {
-      ...metadata,
-      proratedDowngrade: true,
-      previousSubscriptionId: activeSub.id,
-      previousTier: currentTier,
-      targetPlanId: selectedProduct.id,
-    },
-  });
-
-  const checkoutUrl =
-    typeof newSub.metadata?.initPoint === "string"
-      ? newSub.metadata.initPoint
-      : undefined;
-
-  if (!checkoutUrl) {
-    throw createError({
-      statusCode: 500,
-      message:
-        "Mercado Pago did not return a checkout URL for the downgrade subscription",
-    });
-  }
-
-  return {
-    id: newSub.id,
-    url: checkoutUrl,
-  };
-}
 
 type CheckoutInput = z.infer<typeof checkoutSchema>;
 
@@ -411,54 +230,12 @@ export default defineEventHandler(async (event) => {
       productTierId
     );
 
-    // Prorated plan change flow (MercadoPago only)
-    if (parsed.upgrade && provider.provider === "mercadopago") {
-      const activeSub = await findActiveSubscription(provider, auth);
-
-      if (!activeSub) {
-        throw createError({
-          statusCode: 400,
-          message: "No active subscription found to change from",
-        });
-      }
-
-      const currentBilling = await resolveCurrentBillingAmount(
-        activeSub,
-        provider
-      );
-      const isDowngrade = selectedProduct.price.amount < currentBilling.amount;
-
-      if (isDowngrade) {
-        const result = await handleProratedDowngrade({
-          provider,
-          activeSub,
-          selectedProduct,
-          metadata: checkoutMetadata,
-          userEmail: auth.user.email,
-        });
-
-        return {
-          provider: provider.provider,
-          checkoutId: result.id,
-          checkoutUrl: result.url,
-          downgrade: true,
-        };
-      }
-
-      const result = await handleProratedUpgrade({
-        provider,
-        activeSub,
-        selectedProduct,
-        metadata: checkoutMetadata,
-        userEmail: auth.user.email,
+    if (parsed.upgrade) {
+      throw createError({
+        statusCode: 410,
+        message:
+          "Subscription Plan changes must use the Plan change acceptance route",
       });
-
-      return {
-        provider: provider.provider,
-        checkoutId: result.id,
-        checkoutUrl: result.url,
-        prorated: true,
-      };
     }
 
     const result = await provider.createCheckout({

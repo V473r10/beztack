@@ -1,4 +1,15 @@
 import { createHash } from "node:crypto";
+import {
+  activatePendingPlanChange,
+  type PendingPlanChangeRecord,
+  type PendingPlanChangeRenewalEvidence,
+  type PlanChangeBillingCadence,
+  type PlanChangeCatalogPlan,
+  type PlanChangeProjectionStore,
+  type PlanChangeReconciliation,
+  type ProviderConfirmedPlanChangeEvidence,
+  reconcileProviderConfirmedPlanChange,
+} from "./plan-change";
 
 type MembershipTargetType = "user" | "organization";
 
@@ -125,6 +136,7 @@ export type SubscriptionProjectionDependencies = {
   store: SubscriptionProjectionStore;
   provider: SubscriptionProjectionProviderAdapter;
   subscriptionMode: MembershipTargetType;
+  planChangeStore?: PlanChangeProjectionStore;
   now?: () => Date;
 };
 
@@ -147,6 +159,7 @@ export type SubscriptionProjectionOutcome = {
     userId?: string;
     organizationId?: string;
     canceledSubscriptionId?: string;
+    pendingPlanChangeId?: string;
   };
   error?: string;
 };
@@ -165,6 +178,8 @@ type ProjectionWorkResult = {
 const ACTIVE_PROVIDER_STATUSES = new Set(["active", "authorized", "trialing"]);
 const PAST_DUE_PROVIDER_STATUSES = new Set(["past_due", "unpaid"]);
 const CANCELED_PROVIDER_STATUSES = new Set(["canceled", "cancelled"]);
+const SINGLE_INTERVAL_COUNT = 1;
+const MONTHS_PER_YEAR = 12;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -373,25 +388,150 @@ function buildStoredSubscription(options: {
 function resolveMembershipTier(options: {
   metadata: Record<string, unknown> | null | undefined;
   productName?: string | null;
-  rawStatus: string;
-  forcedTier?: string;
 }): string | null {
-  if (options.forcedTier) {
-    return options.forcedTier;
-  }
-
-  const isDowngradeTrial =
-    readBoolean(options.metadata, "proratedDowngrade") &&
-    ACTIVE_PROVIDER_STATUSES.has(normalizeRawStatus(options.rawStatus));
-
-  if (isDowngradeTrial) {
-    const previousTier = readString(options.metadata, "previousTier");
-    if (previousTier) {
-      return previousTier;
-    }
-  }
-
   return readString(options.metadata, "tier") ?? options.productName ?? null;
+}
+
+function resolvePendingPlanChangeRenewalState(
+  rawStatus: string
+): PendingPlanChangeRenewalEvidence["state"] {
+  const normalized = normalizeRawStatus(rawStatus);
+
+  if (ACTIVE_PROVIDER_STATUSES.has(normalized)) {
+    return "renewed";
+  }
+
+  if (CANCELED_PROVIDER_STATUSES.has(normalized)) {
+    return "canceled";
+  }
+
+  if (PAST_DUE_PROVIDER_STATUSES.has(normalized)) {
+    return "failed";
+  }
+
+  if (normalized === "pending") {
+    return "unchanged";
+  }
+
+  return "failed";
+}
+
+function readPlanChangeBillingCadence(
+  metadata: Record<string, unknown> | null | undefined
+): PlanChangeBillingCadence | undefined {
+  const interval = readString(metadata, "billingInterval");
+  const intervalCount = readNumber(metadata, "billingFrequency") ?? 1;
+
+  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
+    return "monthly";
+  }
+
+  if (
+    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
+    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
+  ) {
+    return "yearly";
+  }
+
+  return;
+}
+
+function readProviderConfirmedPlanChangeEvidence(input: {
+  provider: string;
+  subscription: ProjectionSubscription;
+  target: MembershipTarget | null;
+}): ProviderConfirmedPlanChangeEvidence | null {
+  if (!input.target) {
+    return null;
+  }
+
+  const metadata = input.subscription.metadata;
+  const direction = readString(metadata, "direction");
+  const isDowngradeEvidence = readBoolean(metadata, "proratedDowngrade");
+  let planChangeDirection:
+    | ProviderConfirmedPlanChangeEvidence["direction"]
+    | null = null;
+  if (direction === "downgrade" || direction === "cadence_change") {
+    planChangeDirection = direction;
+  } else if (isDowngradeEvidence) {
+    planChangeDirection = "downgrade";
+  }
+  if (!planChangeDirection) {
+    return null;
+  }
+
+  const targetPlanId = readString(metadata, "targetPlanId");
+  const providerConfirmedPlanChangeId =
+    readString(metadata, "providerConfirmedPlanChangeId") ??
+    targetPlanId ??
+    input.subscription.productId;
+  if (!providerConfirmedPlanChangeId) {
+    return null;
+  }
+
+  return {
+    currentSubscriptionId: input.subscription.id,
+    direction: planChangeDirection,
+    effectiveAt: input.subscription.currentPeriodEnd ?? null,
+    membershipTarget: input.target,
+    paymentProvider: input.provider,
+    providerConfirmedPlanChangeId,
+    target: {
+      planId: targetPlanId ?? input.subscription.productId ?? undefined,
+      tierId: readString(metadata, "tier"),
+      billingCadence: readPlanChangeBillingCadence(metadata),
+    },
+  };
+}
+
+function reconcilePendingPlanChangeFromProjection(options: {
+  planChangeStore?: PlanChangeProjectionStore;
+  provider: string;
+  subscription: ProjectionSubscription;
+  target: MembershipTarget | null;
+}): Promise<PlanChangeReconciliation | null> {
+  if (!options.planChangeStore) {
+    return Promise.resolve(null);
+  }
+
+  const evidence = readProviderConfirmedPlanChangeEvidence({
+    provider: options.provider,
+    subscription: options.subscription,
+    target: options.target,
+  });
+  if (!evidence) {
+    return Promise.resolve(null);
+  }
+
+  return reconcileProviderConfirmedPlanChange({
+    evidence,
+    store: options.planChangeStore,
+  });
+}
+
+async function activatePendingPlanChangeFromProjection(options: {
+  now: Date;
+  planChangeStore?: PlanChangeProjectionStore;
+  subscription: ProjectionSubscription;
+}): Promise<string | undefined> {
+  if (!options.planChangeStore) {
+    return;
+  }
+
+  const activation = await activatePendingPlanChange({
+    currentSubscriptionId: options.subscription.id,
+    renewalEvidence: {
+      occurredAt: options.now,
+      state: resolvePendingPlanChangeRenewalState(
+        options.subscription.rawStatus
+      ),
+    },
+    store: options.planChangeStore,
+  });
+
+  return activation.action === "skipped"
+    ? undefined
+    : activation.pendingPlanChange?.id;
 }
 
 async function projectMembershipCache(options: {
@@ -432,12 +572,11 @@ async function projectMembershipCache(options: {
 
 async function projectSubscriptionResource(options: {
   provider: SubscriptionProjectionProviderAdapter;
+  planChangeStore?: PlanChangeProjectionStore;
   store: SubscriptionProjectionStore;
   subscriptionId: string;
   subscriptionMode: MembershipTargetType;
   now: Date;
-  forcedTier?: string;
-  skipProratedDowngradeFollowUps?: boolean;
 }): Promise<ProjectionWorkResult> {
   const subscription = await options.provider.getSubscription(
     options.subscriptionId
@@ -466,12 +605,16 @@ async function projectSubscriptionResource(options: {
       target,
     })
   );
+  const reconciliation = await reconcilePendingPlanChangeFromProjection({
+    planChangeStore: options.planChangeStore,
+    provider: options.provider.provider,
+    subscription,
+    target,
+  });
 
   const tier = resolveMembershipTier({
     metadata: subscription.metadata,
     productName: subscription.productName,
-    rawStatus: subscription.rawStatus,
-    forcedTier: options.forcedTier,
   });
   const warnings = await projectMembershipCache({
     store: options.store,
@@ -480,29 +623,31 @@ async function projectSubscriptionResource(options: {
     tier,
     now: options.now,
   });
+  if (reconciliation?.status === "reconciling") {
+    warnings.push(
+      `Plan change ${reconciliation.providerConfirmedPlanChangeId} is still reconciling: ${reconciliation.reason}`
+    );
+  }
+  const pendingPlanChangeId = await activatePendingPlanChangeFromProjection({
+    now: options.now,
+    planChangeStore: options.planChangeStore,
+    subscription,
+  });
 
   const touched: SubscriptionProjectionOutcome["touched"] = {
     subscriptionId: subscription.id,
   };
 
+  if (pendingPlanChangeId) {
+    touched.pendingPlanChangeId = pendingPlanChangeId;
+  } else if (reconciliation?.status === "stored_pending") {
+    touched.pendingPlanChangeId = reconciliation.pendingPlanChange?.id;
+  }
+
   if (target?.type === "user") {
     touched.userId = target.id;
   } else if (target?.type === "organization") {
     touched.organizationId = target.id;
-  }
-
-  const previousSubscriptionId = readString(
-    subscription.metadata,
-    "previousSubscriptionId"
-  );
-  if (
-    previousSubscriptionId &&
-    !options.skipProratedDowngradeFollowUps &&
-    readBoolean(subscription.metadata, "proratedDowngrade") &&
-    ACTIVE_PROVIDER_STATUSES.has(normalizeRawStatus(subscription.rawStatus))
-  ) {
-    await options.provider.cancelSubscription(previousSubscriptionId, true);
-    touched.canceledSubscriptionId = previousSubscriptionId;
   }
 
   return {
@@ -539,6 +684,7 @@ function buildStoredPayment(options: {
 
 async function projectApprovedPaymentSubscription(options: {
   provider: SubscriptionProjectionProviderAdapter;
+  planChangeStore?: PlanChangeProjectionStore;
   store: SubscriptionProjectionStore;
   payment: ProjectionPayment;
   subscriptionMode: MembershipTargetType;
@@ -562,17 +708,13 @@ async function projectApprovedPaymentSubscription(options: {
     };
   }
 
-  const forcedTier = readBoolean(options.payment.metadata, "proratedDowngrade")
-    ? readString(options.payment.metadata, "tier")
-    : undefined;
   const subscriptionResult = await projectSubscriptionResource({
     provider: options.provider,
+    planChangeStore: options.planChangeStore,
     store: options.store,
     subscriptionId: options.payment.subscriptionId,
     subscriptionMode: options.subscriptionMode,
     now: options.now,
-    forcedTier,
-    skipProratedDowngradeFollowUps: true,
   });
 
   return {
@@ -608,10 +750,7 @@ async function applyApprovedPaymentFollowUps(options: {
     options.payment.metadata,
     "previousSubscriptionId"
   );
-  if (
-    previousSubscriptionId &&
-    !readBoolean(options.payment.metadata, "proratedDowngrade")
-  ) {
+  if (previousSubscriptionId) {
     await options.provider.cancelSubscription(previousSubscriptionId, true);
     touched.canceledSubscriptionId = previousSubscriptionId;
   }
@@ -621,6 +760,7 @@ async function applyApprovedPaymentFollowUps(options: {
 
 async function projectPaymentResource(options: {
   provider: SubscriptionProjectionProviderAdapter;
+  planChangeStore?: PlanChangeProjectionStore;
   store: SubscriptionProjectionStore;
   paymentId: string;
   subscriptionMode: MembershipTargetType;
@@ -643,6 +783,7 @@ async function projectPaymentResource(options: {
   });
   const subscriptionProjection = await projectApprovedPaymentSubscription({
     provider: options.provider,
+    planChangeStore: options.planChangeStore,
     store: options.store,
     payment,
     subscriptionMode: options.subscriptionMode,
@@ -720,6 +861,7 @@ function executeProjectionWork(options: {
   if (resourceType === "payment") {
     return projectPaymentResource({
       provider: options.dependencies.provider,
+      planChangeStore: options.dependencies.planChangeStore,
       store: options.dependencies.store,
       paymentId: resourceId,
       subscriptionMode: options.dependencies.subscriptionMode,
@@ -729,6 +871,7 @@ function executeProjectionWork(options: {
 
   return projectSubscriptionResource({
     provider: options.dependencies.provider,
+    planChangeStore: options.dependencies.planChangeStore,
     store: options.dependencies.store,
     subscriptionId: resourceId,
     subscriptionMode: options.dependencies.subscriptionMode,
@@ -914,6 +1057,263 @@ export function createProjectionEventEnvelopeFromWebhookPayload(input: {
     resourceType: resolveWebhookPayloadResourceType(input.eventType),
     resourceId: resourceId ?? null,
     rawPayload: input.rawPayload,
+  };
+}
+
+type PendingPlanChangeRow = {
+  direction: string;
+  effectiveAt: Date | null;
+  id: string;
+  membershipTargetId: string;
+  membershipTargetType: string;
+  providerConfirmedPlanChangeId: string;
+  subscriptionId: string;
+  targetPlanSnapshot: {
+    id: string;
+    paymentProvider: string;
+    providerPlanId: string | null;
+    canonicalTierId: string;
+    tierRank: number;
+    billingCadence: string;
+    price: {
+      amount: number;
+      currency: string;
+    };
+  } | null;
+};
+
+function isPlanChangeBillingCadence(
+  value: string
+): value is PlanChangeBillingCadence {
+  return value === "monthly" || value === "yearly";
+}
+
+function mapPendingDirection(
+  direction: string
+): PendingPlanChangeRecord["direction"] {
+  if (direction === "downgrade" || direction === "cadence_change") {
+    return direction;
+  }
+
+  throw new Error("Stored Pending Plan change has an invalid direction");
+}
+
+function mapPendingMembershipTarget(input: {
+  id: string;
+  type: string;
+}): PendingPlanChangeRecord["membershipTarget"] {
+  if (input.type === "user" || input.type === "organization") {
+    return { type: input.type, id: input.id };
+  }
+
+  throw new Error(
+    "Stored Pending Plan change has an invalid Membership target"
+  );
+}
+
+function mapTargetPlanSnapshot(
+  snapshot: PendingPlanChangeRow["targetPlanSnapshot"]
+): PlanChangeCatalogPlan {
+  if (!snapshot) {
+    throw new Error("Stored Pending Plan change is missing its target Plan");
+  }
+
+  if (!isPlanChangeBillingCadence(snapshot.billingCadence)) {
+    throw new Error(
+      "Stored Pending Plan change target Plan has an invalid Billing cadence"
+    );
+  }
+
+  return {
+    ...snapshot,
+    billingCadence: snapshot.billingCadence,
+  };
+}
+
+function mapPendingPlanChangeRecord(
+  row: PendingPlanChangeRow
+): PendingPlanChangeRecord {
+  return {
+    direction: mapPendingDirection(row.direction),
+    effectiveAt: row.effectiveAt,
+    id: row.id,
+    membershipTarget: mapPendingMembershipTarget({
+      id: row.membershipTargetId,
+      type: row.membershipTargetType,
+    }),
+    providerConfirmedPlanChangeId: row.providerConfirmedPlanChangeId,
+    subscriptionId: row.subscriptionId,
+    targetPlanSnapshot: mapTargetPlanSnapshot(row.targetPlanSnapshot),
+  };
+}
+
+function mapPlanBillingCadence(input: {
+  interval: string | null;
+  intervalCount: number | null;
+}): PlanChangeBillingCadence | null {
+  const interval = input.interval?.trim().toLowerCase();
+  const intervalCount = input.intervalCount ?? SINGLE_INTERVAL_COUNT;
+
+  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
+    return "monthly";
+  }
+
+  if (
+    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
+    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
+  ) {
+    return "yearly";
+  }
+
+  return null;
+}
+
+export async function createDbPendingPlanChangeActivationStore(): Promise<PlanChangeProjectionStore> {
+  const [{ db, schema }, { and, eq }] = await Promise.all([
+    import("@beztack/db"),
+    import("drizzle-orm"),
+  ]);
+
+  const selectPendingPlanChangeFields = () => ({
+    direction: schema.pendingPlanChange.direction,
+    effectiveAt: schema.pendingPlanChange.effectiveAt,
+    id: schema.pendingPlanChange.id,
+    membershipTargetId: schema.pendingPlanChange.membershipTargetId,
+    membershipTargetType: schema.pendingPlanChange.membershipTargetType,
+    providerConfirmedPlanChangeId:
+      schema.pendingPlanChange.providerConfirmedPlanChangeId,
+    subscriptionId: schema.pendingPlanChange.subscriptionId,
+    targetPlanSnapshot: schema.pendingPlanChange.targetPlanSnapshot,
+  });
+
+  const deletePendingPlanChange = async (
+    subscriptionId: string
+  ): Promise<PendingPlanChangeRecord | null> => {
+    const [deletedPendingPlanChange] = await db
+      .delete(schema.pendingPlanChange)
+      .where(
+        and(
+          eq(schema.pendingPlanChange.subscriptionId, subscriptionId),
+          eq(schema.pendingPlanChange.status, "pending")
+        )
+      )
+      .returning(selectPendingPlanChangeFields());
+
+    return deletedPendingPlanChange
+      ? mapPendingPlanChangeRecord(deletedPendingPlanChange)
+      : null;
+  };
+
+  return {
+    cancelPendingPlanChange: deletePendingPlanChange,
+    clearPendingPlanChange: deletePendingPlanChange,
+    async findPendingPlanChange(subscriptionId) {
+      const [pendingPlanChange] = await db
+        .select(selectPendingPlanChangeFields())
+        .from(schema.pendingPlanChange)
+        .where(
+          and(
+            eq(schema.pendingPlanChange.subscriptionId, subscriptionId),
+            eq(schema.pendingPlanChange.status, "pending")
+          )
+        )
+        .limit(1);
+
+      return pendingPlanChange
+        ? mapPendingPlanChangeRecord(pendingPlanChange)
+        : null;
+    },
+    async listActiveVisiblePricingCatalogPlans(paymentProvider) {
+      const rows = await db
+        .select({
+          id: schema.plan.id,
+          provider: schema.plan.provider,
+          providerPlanId: schema.plan.providerPlanId,
+          canonicalTierId: schema.plan.canonicalTierId,
+          displayOrder: schema.plan.displayOrder,
+          price: schema.plan.price,
+          currency: schema.plan.currency,
+          interval: schema.plan.interval,
+          intervalCount: schema.plan.intervalCount,
+        })
+        .from(schema.plan)
+        .where(
+          and(
+            eq(schema.plan.provider, paymentProvider),
+            eq(schema.plan.visible, true),
+            eq(schema.plan.status, "active")
+          )
+        );
+
+      return rows.flatMap((row) => {
+        const billingCadence = mapPlanBillingCadence(row);
+        if (!billingCadence) {
+          return [];
+        }
+
+        return [
+          {
+            id: row.id,
+            paymentProvider: row.provider,
+            providerPlanId: row.providerPlanId,
+            canonicalTierId: row.canonicalTierId,
+            tierRank: row.displayOrder ?? 0,
+            billingCadence,
+            price: {
+              amount: Number(row.price),
+              currency: row.currency,
+            },
+          },
+        ];
+      });
+    },
+    async moveMembershipToPlan(input) {
+      const updates = {
+        subscriptionTier: input.targetPlan.canonicalTierId,
+        subscriptionStatus: "active",
+        subscriptionId: input.subscriptionId,
+      };
+
+      if (input.membershipTarget.type === "organization") {
+        await db
+          .update(schema.organization)
+          .set(updates)
+          .where(eq(schema.organization.id, input.membershipTarget.id));
+        return;
+      }
+
+      await db
+        .update(schema.user)
+        .set(updates)
+        .where(eq(schema.user.id, input.membershipTarget.id));
+    },
+    savePendingPlanChange(input) {
+      const id = `pending_${input.subscriptionId}`;
+      const values = {
+        direction: input.direction,
+        effectiveAt: input.effectiveAt,
+        id,
+        membershipTargetId: input.membershipTarget.id,
+        membershipTargetType: input.membershipTarget.type,
+        providerConfirmedPlanChangeId: input.providerConfirmedPlanChangeId,
+        status: "pending",
+        subscriptionId: input.subscriptionId,
+        targetPlanSnapshot: input.targetPlanSnapshot,
+        updatedAt: new Date(),
+      };
+
+      return db
+        .insert(schema.pendingPlanChange)
+        .values(values)
+        .onConflictDoUpdate({
+          set: values,
+          target: schema.pendingPlanChange.subscriptionId,
+        })
+        .then(() => ({
+          id,
+          ...input,
+        }));
+    },
   };
 }
 
@@ -1295,9 +1695,10 @@ export async function getDefaultSubscriptionProjectionDependencies(provider?: {
     immediately?: boolean
   ): Promise<unknown>;
 }): Promise<SubscriptionProjectionDependencies> {
-  const [{ env }, store] = await Promise.all([
+  const [{ env }, store, planChangeStore] = await Promise.all([
     import("@/env"),
     createDbSubscriptionProjectionStore(),
+    createDbPendingPlanChangeActivationStore(),
   ]);
   const projectionProvider =
     provider?.provider === "mercadopago" || !provider
@@ -1308,5 +1709,6 @@ export async function getDefaultSubscriptionProjectionDependencies(provider?: {
     store,
     provider: projectionProvider,
     subscriptionMode: env.SUBSCRIPTION_MODE,
+    planChangeStore,
   };
 }

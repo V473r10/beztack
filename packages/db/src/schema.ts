@@ -321,6 +321,48 @@ export const adminTierOverrideAudit = pgTable(
   ]
 );
 
+export const pendingPlanChange = pgTable(
+  "pending_plan_change",
+  {
+    id: text("id").primaryKey(),
+    subscriptionId: text("subscription_id")
+      .notNull()
+      .references(() => subscription.id),
+    direction: text("direction").notNull(),
+    membershipTargetType: text("membership_target_type").notNull(),
+    membershipTargetId: text("membership_target_id").notNull(),
+    targetPlanSnapshot: jsonb("target_plan_snapshot").$type<{
+      id: string;
+      paymentProvider: string;
+      providerPlanId: string | null;
+      canonicalTierId: string;
+      tierRank: number;
+      billingCadence: string;
+      price: {
+        amount: number;
+        currency: string;
+      };
+    }>(),
+    providerConfirmedPlanChangeId: text(
+      "provider_confirmed_plan_change_id"
+    ).notNull(),
+    effectiveAt: timestamp("effective_at"),
+    status: text("status").default("pending").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("pending_plan_change_subscription_uidx").on(
+      table.subscriptionId
+    ),
+    index("pending_plan_change_status_idx").on(table.status),
+    index("pending_plan_change_effective_at_idx").on(table.effectiveAt),
+  ]
+);
+
 export const webhookLog = pgTable(
   "webhook_log",
   {
@@ -359,5 +401,6 @@ export const schema = {
   payment,
   adminTierOverride,
   adminTierOverrideAudit,
+  pendingPlanChange,
   webhookLog,
 };

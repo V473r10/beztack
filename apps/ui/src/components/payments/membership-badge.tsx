@@ -82,7 +82,6 @@ export type MembershipStatusProps = {
   tier: MembershipTier;
   isActive: boolean;
   expiresAt?: Date;
-  pendingDowngradeTier?: string;
   className?: string;
 };
 
@@ -90,7 +89,6 @@ export function MembershipStatus({
   tier,
   isActive,
   expiresAt,
-  pendingDowngradeTier,
   className,
 }: MembershipStatusProps) {
   const tierName = tierNames[tier];
@@ -139,16 +137,12 @@ export function MembershipStatus({
       </Badge>
       {expiresAt && isActive && expiresAt > new Date() && (
         <span className="text-muted-foreground text-xs">
-          {pendingDowngradeTier
-            ? `Downgrades to ${tierNames[pendingDowngradeTier as MembershipTier] ?? pendingDowngradeTier} on ${expiresAt.toLocaleDateString()}`
-            : `Renews ${expiresAt.toLocaleDateString()}`}
+          {`Renews ${expiresAt.toLocaleDateString()}`}
         </span>
       )}
       {expiresAt && !isActive && expiresAt > new Date() && (
         <span className="text-muted-foreground text-xs">
-          {pendingDowngradeTier
-            ? `Downgrades to ${tierNames[pendingDowngradeTier as MembershipTier] ?? pendingDowngradeTier} on ${expiresAt.toLocaleDateString()}`
-            : `You will keep your membership until ${expiresAt.toLocaleDateString()}`}
+          {`You will keep your membership until ${expiresAt.toLocaleDateString()}`}
         </span>
       )}
     </div>

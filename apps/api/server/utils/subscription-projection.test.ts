@@ -1,4 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import type {
+  PendingPlanChangeRecord,
+  PlanChangeCatalogPlan,
+  PlanChangeProjectionStore,
+} from "./plan-change";
 import {
   type ProjectionPayment,
   type ProjectionSubscription,
@@ -19,19 +24,57 @@ type StoredPayment = Parameters<
 const FIRST_WEBHOOK_LOG_ID = 1;
 const PRORATED_UPGRADE_AMOUNT = 250;
 const FULL_UPGRADE_AMOUNT = 1000;
-const DOWNGRADE_AMOUNT = 500;
+const PLAN_CHANGE_EFFECTIVE_AT = new Date("2026-06-01T00:00:00.000Z");
+
+function catalogPlan(
+  overrides: Partial<PlanChangeCatalogPlan> = {}
+): PlanChangeCatalogPlan {
+  return {
+    id: "mercadopago_basic_month",
+    paymentProvider: "mercadopago",
+    providerPlanId: "provider_basic_month",
+    canonicalTierId: "basic",
+    tierRank: 1,
+    billingCadence: "monthly",
+    price: { amount: 2900, currency: "UYU" },
+    ...overrides,
+  };
+}
+
+function pendingPlanChange(
+  overrides: Partial<PendingPlanChangeRecord> = {}
+): PendingPlanChangeRecord {
+  return {
+    id: "pending_sub_1",
+    direction: "downgrade",
+    effectiveAt: PLAN_CHANGE_EFFECTIVE_AT,
+    membershipTarget: { type: "user", id: "user_1" },
+    providerConfirmedPlanChangeId: "provider_pending_change_1",
+    subscriptionId: "sub_1",
+    targetPlanSnapshot: catalogPlan(),
+    ...overrides,
+  };
+}
 
 function createStore(options?: {
   users?: string[];
   organizations?: string[];
   emailToUserId?: Record<string, string>;
-}): SubscriptionProjectionStore & {
-  subscriptions: Map<string, StoredSubscription>;
-  payments: Map<string, StoredPayment>;
-  userMemberships: Map<string, Record<string, unknown>>;
-  organizationMemberships: Map<string, Record<string, unknown>>;
-  webhookLogs: Map<string, { id: number; status: string | null }>;
-} {
+  failSavePendingPlanChange?: boolean;
+  pendingPlanChanges?: PendingPlanChangeRecord[];
+  plans?: PlanChangeCatalogPlan[];
+}): SubscriptionProjectionStore &
+  PlanChangeProjectionStore & {
+    subscriptions: Map<string, StoredSubscription>;
+    payments: Map<string, StoredPayment>;
+    userMemberships: Map<string, Record<string, unknown>>;
+    organizationMemberships: Map<string, Record<string, unknown>>;
+    webhookLogs: Map<string, { id: number; status: string | null }>;
+    pendingPlanChanges: Map<string, PendingPlanChangeRecord>;
+    planChangeMembershipMoves: Parameters<
+      PlanChangeProjectionStore["moveMembershipToPlan"]
+    >[0][];
+  } {
   let nextLogId = FIRST_WEBHOOK_LOG_ID;
   const users = new Set(options?.users ?? []);
   const organizations = new Set(options?.organizations ?? []);
@@ -41,6 +84,16 @@ function createStore(options?: {
   const userMemberships = new Map<string, Record<string, unknown>>();
   const organizationMemberships = new Map<string, Record<string, unknown>>();
   const webhookLogs = new Map<string, { id: number; status: string | null }>();
+  const pendingPlanChanges = new Map<string, PendingPlanChangeRecord>();
+  const planChangeMembershipMoves: Parameters<
+    PlanChangeProjectionStore["moveMembershipToPlan"]
+  >[0][] = [];
+  for (const existingPendingPlanChange of options?.pendingPlanChanges ?? []) {
+    pendingPlanChanges.set(
+      existingPendingPlanChange.subscriptionId,
+      existingPendingPlanChange
+    );
+  }
 
   return {
     subscriptions,
@@ -48,6 +101,30 @@ function createStore(options?: {
     userMemberships,
     organizationMemberships,
     webhookLogs,
+    pendingPlanChanges,
+    planChangeMembershipMoves,
+    cancelPendingPlanChange(subscriptionId) {
+      const canceledPendingPlanChange =
+        pendingPlanChanges.get(subscriptionId) ?? null;
+      pendingPlanChanges.delete(subscriptionId);
+      return Promise.resolve(canceledPendingPlanChange);
+    },
+    clearPendingPlanChange(subscriptionId) {
+      const clearedPendingPlanChange =
+        pendingPlanChanges.get(subscriptionId) ?? null;
+      pendingPlanChanges.delete(subscriptionId);
+      return Promise.resolve(clearedPendingPlanChange);
+    },
+    findPendingPlanChange(subscriptionId) {
+      return Promise.resolve(pendingPlanChanges.get(subscriptionId) ?? null);
+    },
+    listActiveVisiblePricingCatalogPlans(paymentProvider) {
+      return Promise.resolve(
+        (options?.plans ?? [catalogPlan()]).filter(
+          (plan) => plan.paymentProvider === paymentProvider
+        )
+      );
+    },
     findWebhookLogByEventKey(eventKey) {
       const log = webhookLogs.get(eventKey);
       return Promise.resolve(log ? { eventKey, ...log } : null);
@@ -106,6 +183,40 @@ function createStore(options?: {
     updateOrganizationMembership(organizationId, updates) {
       organizationMemberships.set(organizationId, updates);
       return Promise.resolve();
+    },
+    moveMembershipToPlan(input) {
+      planChangeMembershipMoves.push(input);
+      const updates = {
+        subscriptionTier: input.targetPlan.canonicalTierId,
+        subscriptionStatus: "active",
+        subscriptionId: input.subscriptionId,
+      };
+
+      if (input.membershipTarget.type === "organization") {
+        organizationMemberships.set(input.membershipTarget.id, {
+          ...(organizationMemberships.get(input.membershipTarget.id) ?? {}),
+          ...updates,
+        });
+        return Promise.resolve();
+      }
+
+      userMemberships.set(input.membershipTarget.id, {
+        ...(userMemberships.get(input.membershipTarget.id) ?? {}),
+        ...updates,
+      });
+      return Promise.resolve();
+    },
+    savePendingPlanChange(input) {
+      if (options?.failSavePendingPlanChange) {
+        throw new Error("database unavailable");
+      }
+
+      const savedPendingPlanChange = {
+        id: `pending_${input.subscriptionId}`,
+        ...input,
+      };
+      pendingPlanChanges.set(input.subscriptionId, savedPendingPlanChange);
+      return Promise.resolve(savedPendingPlanChange);
     },
   };
 }
@@ -260,12 +371,12 @@ describe("projectSubscriptionProviderEvent", () => {
     });
   });
 
-  it("preserves the previous tier during a prorated downgrade trial", async () => {
+  it("does not use provider downgrade metadata as Membership source of truth", async () => {
     const store = createStore({ users: ["user_1"] });
     const provider = createProvider({
       subscriptions: {
-        sub_down: {
-          id: "sub_down",
+        sub_1: {
+          id: "sub_1",
           rawStatus: "authorized",
           productId: "plan_basic",
           productName: "Basic",
@@ -284,8 +395,8 @@ describe("projectSubscriptionProviderEvent", () => {
 
     const outcome = await projectSubscriptionProviderEvent(
       subscriptionEnvelope({
-        eventId: "evt_down_trial",
-        resourceId: "sub_down",
+        eventId: "evt_down_metadata",
+        resourceId: "sub_1",
       }),
       {
         store,
@@ -296,66 +407,11 @@ describe("projectSubscriptionProviderEvent", () => {
 
     expect(outcome.status).toBe("processed");
     expect(store.userMemberships.get("user_1")).toMatchObject({
-      subscriptionId: "sub_down",
-      subscriptionStatus: "active",
-      subscriptionTier: "pro",
-    });
-    expect(provider.cancelSubscription).toHaveBeenCalledWith("sub_pro", true);
-  });
-
-  it("moves to the lower tier after the first real approved downgrade payment", async () => {
-    const store = createStore({ users: ["user_1"] });
-    const provider = createProvider({
-      subscriptions: {
-        sub_down: {
-          id: "sub_down",
-          rawStatus: "authorized",
-          productId: "plan_basic",
-          productName: "Basic",
-          customerEmail: "user@example.com",
-          currentPeriodEnd: new Date("2026-06-01T00:00:00.000Z"),
-          metadata: {
-            userId: "user_1",
-            tier: "basic",
-            proratedDowngrade: true,
-            previousTier: "pro",
-            previousSubscriptionId: "sub_pro",
-          },
-        },
-      },
-      payments: {
-        pay_1: {
-          id: "pay_1",
-          status: "approved",
-          amount: DOWNGRADE_AMOUNT,
-          currency: "UYU",
-          payerEmail: "user@example.com",
-          subscriptionId: "sub_down",
-          metadata: {
-            userId: "user_1",
-            tier: "basic",
-            proratedDowngrade: true,
-            previousTier: "pro",
-            previousSubscriptionId: "sub_pro",
-          },
-        },
-      },
-    });
-
-    const outcome = await projectSubscriptionProviderEvent(paymentEnvelope(), {
-      store,
-      provider,
-      subscriptionMode: "user",
-    });
-
-    expect(outcome.status).toBe("processed");
-    expect(provider.adjustSubscriptionAmount).not.toHaveBeenCalled();
-    expect(provider.cancelSubscription).not.toHaveBeenCalled();
-    expect(store.userMemberships.get("user_1")).toMatchObject({
-      subscriptionId: "sub_down",
+      subscriptionId: "sub_1",
       subscriptionStatus: "active",
       subscriptionTier: "basic",
     });
+    expect(provider.cancelSubscription).not.toHaveBeenCalled();
   });
 
   it("returns duplicate without repeating provider follow-up writes", async () => {
@@ -547,6 +603,250 @@ describe("projectSubscriptionProviderEvent", () => {
     expect(store.payments.get("pay_1")).toMatchObject({
       id: "pay_1",
       subscriptionId: null,
+    });
+  });
+
+  it("reconciles provider-confirmed Plan change evidence into missing Pending state", async () => {
+    const targetPlan = catalogPlan({
+      id: "mercadopago_basic_year",
+      providerPlanId: "provider_basic_year",
+      billingCadence: "yearly",
+      price: { amount: 29_000, currency: "UYU" },
+    });
+    const store = createStore({
+      users: ["user_1"],
+      plans: [targetPlan],
+    });
+    const provider = createProvider({
+      subscriptions: {
+        sub_1: {
+          id: "sub_1",
+          rawStatus: "authorized",
+          productId: "provider_pro_month",
+          productName: "Pro",
+          customerEmail: "user@example.com",
+          currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+          metadata: {
+            userId: "user_1",
+            tier: "pro",
+            direction: "downgrade",
+            targetPlanId: "provider_basic_year",
+            providerConfirmedPlanChangeId: "provider_basic_year",
+          },
+        },
+      },
+    });
+
+    const outcome = await projectSubscriptionProviderEvent(
+      subscriptionEnvelope(),
+      {
+        store,
+        provider,
+        subscriptionMode: "user",
+        planChangeStore: store,
+        now: () => PLAN_CHANGE_EFFECTIVE_AT,
+      }
+    );
+
+    expect(outcome.status).toBe("processed");
+    expect(outcome.touched.pendingPlanChangeId).toBe("pending_sub_1");
+    expect(store.pendingPlanChanges.get("sub_1")).toMatchObject({
+      providerConfirmedPlanChangeId: "provider_basic_year",
+      targetPlanSnapshot: targetPlan,
+    });
+    expect(store.userMemberships.get("user_1")).toMatchObject({
+      subscriptionTier: "pro",
+    });
+  });
+
+  it("surfaces a reconciling Plan change warning when missing Pending state cannot be stored", async () => {
+    const store = createStore({
+      users: ["user_1"],
+      failSavePendingPlanChange: true,
+      plans: [catalogPlan({ providerPlanId: "provider_basic_year" })],
+    });
+    const provider = createProvider({
+      subscriptions: {
+        sub_1: {
+          id: "sub_1",
+          rawStatus: "authorized",
+          productId: "provider_pro_month",
+          productName: "Pro",
+          customerEmail: "user@example.com",
+          currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+          metadata: {
+            userId: "user_1",
+            tier: "pro",
+            direction: "downgrade",
+            targetPlanId: "provider_basic_year",
+            providerConfirmedPlanChangeId: "provider_basic_year",
+          },
+        },
+      },
+    });
+
+    const outcome = await projectSubscriptionProviderEvent(
+      subscriptionEnvelope({ eventId: "evt_sub_reconciling" }),
+      {
+        store,
+        provider,
+        subscriptionMode: "user",
+        planChangeStore: store,
+        now: () => PLAN_CHANGE_EFFECTIVE_AT,
+      }
+    );
+
+    expect(outcome.status).toBe("processed");
+    expect(outcome.warnings).toContain(
+      "Plan change provider_basic_year is still reconciling: database unavailable"
+    );
+    expect(store.pendingPlanChanges).toEqual(new Map());
+  });
+
+  it("activates a Pending Plan change at renewal through the Plan change Module", async () => {
+    const acceptedTargetSnapshot = catalogPlan({
+      id: "mercadopago_basic_year",
+      providerPlanId: "provider_basic_year",
+      billingCadence: "yearly",
+      price: { amount: 29_000, currency: "UYU" },
+    });
+    const store = createStore({
+      users: ["user_1"],
+      pendingPlanChanges: [
+        pendingPlanChange({ targetPlanSnapshot: acceptedTargetSnapshot }),
+      ],
+    });
+    const provider = createProvider({
+      subscriptions: {
+        sub_1: {
+          id: "sub_1",
+          rawStatus: "authorized",
+          productId: "provider_pro_month",
+          productName: "Pro",
+          customerEmail: "user@example.com",
+          currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+          metadata: {
+            userId: "user_1",
+            tier: "pro",
+          },
+        },
+      },
+    });
+
+    const outcome = await projectSubscriptionProviderEvent(
+      subscriptionEnvelope(),
+      {
+        store,
+        provider,
+        subscriptionMode: "user",
+        planChangeStore: store,
+        now: () => PLAN_CHANGE_EFFECTIVE_AT,
+      }
+    );
+
+    expect(outcome.status).toBe("processed");
+    expect(outcome.touched.pendingPlanChangeId).toBe("pending_sub_1");
+    expect(store.userMemberships.get("user_1")).toMatchObject({
+      subscriptionId: "sub_1",
+      subscriptionStatus: "active",
+      subscriptionTier: "basic",
+    });
+    expect(store.planChangeMembershipMoves).toEqual([
+      {
+        membershipTarget: { type: "user", id: "user_1" },
+        paymentId: "renewal:sub_1",
+        subscriptionId: "sub_1",
+        targetPlan: acceptedTargetSnapshot,
+      },
+    ]);
+    expect(store.pendingPlanChanges).toEqual(new Map());
+  });
+
+  it("cancels a Pending Plan change when the Current Subscription is canceled", async () => {
+    const store = createStore({
+      users: ["user_1"],
+      pendingPlanChanges: [pendingPlanChange()],
+    });
+    const provider = createProvider({
+      subscriptions: {
+        sub_1: {
+          id: "sub_1",
+          rawStatus: "canceled",
+          productId: "provider_pro_month",
+          productName: "Pro",
+          customerEmail: "user@example.com",
+          currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+          metadata: {
+            userId: "user_1",
+            tier: "pro",
+          },
+        },
+      },
+    });
+
+    const outcome = await projectSubscriptionProviderEvent(
+      subscriptionEnvelope(),
+      {
+        store,
+        provider,
+        subscriptionMode: "user",
+        planChangeStore: store,
+        now: () => PLAN_CHANGE_EFFECTIVE_AT,
+      }
+    );
+
+    expect(outcome.status).toBe("processed");
+    expect(outcome.touched.pendingPlanChangeId).toBe("pending_sub_1");
+    expect(store.planChangeMembershipMoves).toEqual([]);
+    expect(store.pendingPlanChanges).toEqual(new Map());
+    expect(store.userMemberships.get("user_1")).toMatchObject({
+      subscriptionId: "sub_1",
+      subscriptionStatus: "canceled",
+      subscriptionTier: "pro",
+    });
+  });
+
+  it("cancels a Pending Plan change when renewal evidence is failed", async () => {
+    const store = createStore({
+      users: ["user_1"],
+      pendingPlanChanges: [pendingPlanChange()],
+    });
+    const provider = createProvider({
+      subscriptions: {
+        sub_1: {
+          id: "sub_1",
+          rawStatus: "past_due",
+          productId: "provider_pro_month",
+          productName: "Pro",
+          customerEmail: "user@example.com",
+          currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+          metadata: {
+            userId: "user_1",
+            tier: "pro",
+          },
+        },
+      },
+    });
+
+    const outcome = await projectSubscriptionProviderEvent(
+      subscriptionEnvelope({ eventId: "evt_sub_failed" }),
+      {
+        store,
+        provider,
+        subscriptionMode: "user",
+        planChangeStore: store,
+        now: () => PLAN_CHANGE_EFFECTIVE_AT,
+      }
+    );
+
+    expect(outcome.status).toBe("processed");
+    expect(outcome.touched.pendingPlanChangeId).toBe("pending_sub_1");
+    expect(store.planChangeMembershipMoves).toEqual([]);
+    expect(store.pendingPlanChanges).toEqual(new Map());
+    expect(store.userMemberships.get("user_1")).toMatchObject({
+      subscriptionId: "sub_1",
+      subscriptionStatus: "past_due",
+      subscriptionTier: "pro",
     });
   });
 

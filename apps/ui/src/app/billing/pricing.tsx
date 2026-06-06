@@ -345,11 +345,14 @@ export default function Pricing() {
 
   const handleConfirmPlanChange = useCallback(
     async (productId: string) => {
-      await changePlan(productId, { prorationBehavior: "prorate" });
+      await changePlan(productId, {
+        billingPeriod,
+        prorationBehavior: "prorate",
+      });
       setShowPlanChangeDialog(false);
       setSelectedTier(null);
     },
-    [changePlan]
+    [billingPeriod, changePlan]
   );
 
   const getChangeTypeForTier = useCallback(

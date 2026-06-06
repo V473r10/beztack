@@ -20,7 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMembership } from "@/contexts/membership-context";
 import { env } from "@/env";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
-import { estimateProration } from "@/lib/proration";
+import { estimateProration, type ProrationEstimate } from "@/lib/proration";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
 import type { PricingTier } from "@/types/pricing";
@@ -30,34 +30,28 @@ import { formatCurrency, PricingCard } from "./pricing-card";
 // Constants
 const MIN_TIERS_FOR_THREE_COLUMN = 3;
 
-type UpgradePreviewResponse = {
-  direction: "upgrade";
-  currentAmount: number;
-  newAmount: number;
-  unusedCredit: number;
-  proratedFirstPayment: number;
-  fullMonthlyAmount: number;
-  currency: string;
-  daysRemaining: number;
-  totalDays: number;
-  currentTier: string;
-  targetTier: string;
+type PlanChangePreviewResponse = {
+  planChangePreview: {
+    direction: "upgrade" | "downgrade" | "cadence_change";
+    currentPlan: {
+      price: {
+        amount: number;
+        currency: string;
+      };
+    };
+    targetPlan: {
+      price: {
+        amount: number;
+        currency: string;
+      };
+    };
+    firstPayment: {
+      amount: number;
+      currency: string;
+      fullAmount: number;
+    };
+  };
 };
-
-type DowngradePreviewResponse = {
-  direction: "downgrade";
-  currentAmount: number;
-  newAmount: number;
-  trialDays: number;
-  savings: number;
-  currency: string;
-  currentTier: string;
-  targetTier: string;
-};
-
-type PlanChangePreviewResponse =
-  | UpgradePreviewResponse
-  | DowngradePreviewResponse;
 
 type PlanChangeDisplay =
   | {
@@ -73,6 +67,61 @@ type PlanChangeDisplay =
       savings: number;
       newAmount: number;
     };
+
+function buildServerPlanChangeDisplay(
+  serverPreview: PlanChangePreviewResponse,
+  clientEstimate: ProrationEstimate | null
+): PlanChangeDisplay | null {
+  const preview = serverPreview.planChangePreview;
+  if (preview.direction === "cadence_change") {
+    return null;
+  }
+
+  if (preview.direction === "downgrade") {
+    return {
+      direction: "downgrade",
+      newAmount: preview.targetPlan.price.amount,
+      savings: Math.max(
+        preview.currentPlan.price.amount - preview.targetPlan.price.amount,
+        0
+      ),
+      trialDays: clientEstimate?.daysRemaining ?? 0,
+    };
+  }
+
+  return {
+    daysRemaining: clientEstimate?.daysRemaining ?? 0,
+    direction: "upgrade",
+    fullAmount: preview.firstPayment.fullAmount,
+    proratedAmount: preview.firstPayment.amount,
+    unusedCredit: Math.max(
+      preview.firstPayment.fullAmount - preview.firstPayment.amount,
+      0
+    ),
+  };
+}
+
+function buildClientPlanChangeDisplay(
+  clientEstimate: ProrationEstimate,
+  previewChangeType: string
+): PlanChangeDisplay {
+  if (previewChangeType === "downgrade") {
+    return {
+      direction: "downgrade",
+      newAmount: clientEstimate.fullAmount,
+      savings: clientEstimate.unusedCredit,
+      trialDays: clientEstimate.daysRemaining,
+    };
+  }
+
+  return {
+    daysRemaining: clientEstimate.daysRemaining,
+    direction: "upgrade",
+    fullAmount: clientEstimate.fullAmount,
+    proratedAmount: clientEstimate.proratedAmount,
+    unusedCredit: clientEstimate.unusedCredit,
+  };
+}
 
 export type UpgradeDialogProps = {
   open: boolean;
@@ -102,7 +151,7 @@ export function UpgradeDialog({
     queryFn: usePricingTiers,
   });
 
-  // Fetch server-side proration preview when a tier is hovered/selected
+  // Fetch server-side Plan change preview when a tier is hovered/selected
   const previewTargetId = hoveredTierId ?? selectedTier;
   const previewChangeType = previewTargetId
     ? getPlanChangeType(previewTargetId)
@@ -112,14 +161,19 @@ export function UpgradeDialog({
     useQuery<PlanChangePreviewResponse>({
       queryKey: ["proration-preview", previewTargetId, billingPeriod],
       queryFn: async () => {
-        const params = new URLSearchParams();
-        if (previewTargetId) {
-          params.set("targetTierId", previewTargetId);
-        }
-        params.set("billingPeriod", billingPeriod);
         const response = await fetch(
-          `${env.VITE_API_URL}/api/subscriptions/preview-upgrade?${params.toString()}`,
-          { credentials: "include" }
+          `${env.VITE_API_URL}/api/subscriptions/plan-change/preview`,
+          {
+            body: JSON.stringify({
+              targetBillingCadence: billingPeriod,
+              targetTierId: previewTargetId,
+            }),
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            method: "POST",
+          }
         );
         if (!response.ok) {
           throw new Error("Failed to fetch plan change preview");
@@ -162,38 +216,10 @@ export function UpgradeDialog({
   // Normalize server and client shapes into a common display type
   const planChangeDisplay: PlanChangeDisplay | null = useMemo(() => {
     if (serverPreview) {
-      if (serverPreview.direction === "downgrade") {
-        return {
-          direction: "downgrade",
-          trialDays: serverPreview.trialDays,
-          savings: serverPreview.savings,
-          newAmount: serverPreview.newAmount,
-        };
-      }
-      return {
-        direction: "upgrade",
-        unusedCredit: serverPreview.unusedCredit,
-        proratedAmount: serverPreview.proratedFirstPayment,
-        fullAmount: serverPreview.fullMonthlyAmount,
-        daysRemaining: serverPreview.daysRemaining,
-      };
+      return buildServerPlanChangeDisplay(serverPreview, clientEstimate);
     }
     if (clientEstimate) {
-      return {
-        direction: previewChangeType === "downgrade" ? "downgrade" : "upgrade",
-        ...(previewChangeType === "downgrade"
-          ? {
-              trialDays: clientEstimate.daysRemaining,
-              savings: clientEstimate.unusedCredit,
-              newAmount: clientEstimate.fullAmount,
-            }
-          : {
-              unusedCredit: clientEstimate.unusedCredit,
-              proratedAmount: clientEstimate.proratedAmount,
-              fullAmount: clientEstimate.fullAmount,
-              daysRemaining: clientEstimate.daysRemaining,
-            }),
-      } as PlanChangeDisplay;
+      return buildClientPlanChangeDisplay(clientEstimate, previewChangeType);
     }
     return null;
   }, [serverPreview, clientEstimate, previewChangeType]);

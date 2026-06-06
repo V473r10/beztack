@@ -53,6 +53,14 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     const parsed = updateSchema.parse(body);
 
+    if (parsed.productId || parsed.prorationBehavior) {
+      throw createError({
+        statusCode: 410,
+        message:
+          "Subscription Plan changes must use the Plan change acceptance route",
+      });
+    }
+
     const subscription = await provider.updateSubscription(
       subscriptionId,
       parsed
