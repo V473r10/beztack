@@ -1,0 +1,8 @@
+{
+  "name": "beztack-template-sync-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Self-contained minimal reproducible fixture for the Beztack Template sync engine contract.",
+  "type": "module",
+  "license": "MIT"
+}

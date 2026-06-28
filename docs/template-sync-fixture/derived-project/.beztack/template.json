@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "templateId": "beztack-core",
+  "ownership": [
+    {
+      "path": "packages/**",
+      "strategy": "template-owned",
+      "note": "Reusable platform packages. The Template source owns updates here."
+    },
+    {
+      "path": "packages/auth/**",
+      "strategy": "custom-owned",
+      "note": "Auth is sensitive in our Derived project. Overlaps with packages/** — engine MUST warn and treat this rule as more specific."
+    },
+    {
+      "path": ".env.contract.json",
+      "strategy": "template-owned",
+      "note": "Environment contract is platform-owned and synced as Template source content."
+    },
+    {
+      "path": ".env.example",
+      "strategy": "custom-owned",
+      "note": "Product-specific environment example. Distinct from the Environment contract and must not be overwritten."
+    },
+    {
+      "path": "apps/checkout/**",
+      "strategy": "custom-owned",
+      "note": "Product domain: checkout flow. The Template source never edits these files; conflicts must be reported."
+    },
+    {
+      "path": "apps/api/routes.ts",
+      "strategy": "mixed",
+      "note": "Mixed ownership via the api-route-registration seam. Engine preserves registerRoute(...) calls."
+    },
+    {
+      "path": "apps/api/middleware.ts",
+      "strategy": "mixed",
+      "note": "Mixed ownership but no Sync seam is registered for this file in v1.1.0. The Derived project already has its own version; the Template source v1.2.0 also adds one. Engine MUST report this as a conflict and not silently merge."
+    },
+    {
+      "path": "apps/**",
+      "strategy": "template-owned",
+      "note": "Catch-all for app scaffolding owned by the Template source. The more specific apps/checkout/** and apps/api/routes.ts rules win precedence."
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "strategy": "custom-owned",
+      "note": "Derived-project lockfile. Engines MUST regenerate this locally after a Template update; the Template source does NOT ship a lockfile. Engines must never copy the Template source's lockfile into the Derived project."
+    }
+  ],
+  "seams": [
+    {
+      "id": "api-route-registration",
+      "file": "apps/api/routes.ts",
+      "marker": "registerRoute(",
+      "note": "Derived projects register custom routes inside this seam without editing the surrounding harness."
+    }
+  ],
+  "environmentContract": {
+    "file": ".env.contract.json",
+    "format": "json",
+    "note": "Template-owned platform environment requirements. Synced as Template source content and regenerated on update."
+  },
+  "parameters": {
+    "file": ".beztack/parameters.json",
+    "schemaVersion": "1.0"
+  }
+}

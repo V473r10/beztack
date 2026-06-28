@@ -1,0 +1,9 @@
+{
+  "name": "{{appName}}",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@beztack/auth": "workspace:*",
+    "@beztack/storage": "workspace:*"
+  }
+}

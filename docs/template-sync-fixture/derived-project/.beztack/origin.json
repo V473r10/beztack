@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "derivedProjectId": "dp_01HMVBEZTACK0000000000000A",
+  "templateId": "beztack-core",
+  "templateRevision": "v1.1.0",
+  "templateRevisionRef": "git:affab9b4d3240dfb3c188a139364beffe3b0865040998826881c0c17f8c0469f",
+  "acceptedAt": "2026-05-15T09:00:00Z",
+  "files": {
+    "packages/auth/session.ts": {
+      "templateHash": "sha256:affab9b4d3240dfb3c188a139364beffe3b0865040998826881c0c17f8c0469f",
+      "projectHash": "sha256:affab9b4d3240dfb3c188a139364beffe3b0865040998826881c0c17f8c0469f"
+    },
+    "apps/api/routes.ts": {
+      "templateHash": "sha256:d9c9660452b67c527fceff0b879911ee0909e2bf85659567e1299915df91927b",
+      "projectHash": "sha256:d9c9660452b67c527fceff0b879911ee0909e2bf85659567e1299915df91927b"
+    },
+    ".env.contract.json": {
+      "templateHash": "sha256:af2c92ce508c53974410c5180ca12c2cfc4bbb403ccdefc5bfb5aa1cd0bbba27",
+      "projectHash": "sha256:af2c92ce508c53974410c5180ca12c2cfc4bbb403ccdefc5bfb5aa1cd0bbba27"
+    },
+    "package.json": {
+      "templateHash": "sha256:525630a2749a93a12ab1dbe297492a076d394368bed884a49238d8ed997cb077",
+      "projectHash": "sha256:525630a2749a93a12ab1dbe297492a076d394368bed884a49238d8ed997cb077"
+    }
+  }
+}

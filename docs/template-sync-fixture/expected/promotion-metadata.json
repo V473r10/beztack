@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "derivedProjectId": "dp_01HMVBEZTACK0000000000000A",
+  "trustClass": "trusted",
+  "templateId": "beztack-core",
+  "baselineRevision": "v1.1.0",
+  "label": "promotion: candidate",
+  "sourcePR": "https://github.com/example/derived-app/pull/42",
+  "candidates": [
+    {
+      "path": "packages/util/retry.ts",
+      "ownership": "template-owned",
+      "reason": "new-template-owned-file",
+      "suggestedSeam": null
+    },
+    {
+      "path": "packages/util/package.json",
+      "ownership": "template-owned",
+      "reason": "new-template-owned-file",
+      "suggestedSeam": null
+    }
+  ],
+  "skipped": [
+    {
+      "path": "apps/checkout/index.ts",
+      "ownership": "custom-owned",
+      "reason": "custom-owned-product-domain"
+    },
+    {
+      "path": "apps/checkout/payment-handler.ts",
+      "ownership": "custom-owned",
+      "reason": "custom-owned-product-domain"
+    },
+    {
+      "path": "apps/checkout/README.md",
+      "ownership": "custom-owned",
+      "reason": "custom-owned-product-domain"
+    }
+  ],
+  "checks": [
+    { "name": "schema/sync-policy", "result": "pass" },
+    { "name": "schema/origin-baseline", "result": "pass" },
+    { "name": "schema/sync-state", "result": "pass" },
+    { "name": "ownership/overlap-validation", "result": "pass" },
+    { "name": "promotion/candidate-filter", "result": "pass" },
+    { "name": "engine/version-compatibility", "result": "pass" }
+  ],
+  "suggestedTemplateVersionImpact": "minor",
+  "relatedPromotions": []
+}

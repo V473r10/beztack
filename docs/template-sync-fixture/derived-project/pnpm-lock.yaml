@@ -1,0 +1,38 @@
+# pnpm-lock.yaml for the Derived project.
+#
+# This lockfile is regenerated LOCALLY by the Derived project's package
+# manager after a Template update. Per ADR-0006 and CONTEXT.md
+# ("Lockfiles are regenerated in Derived projects rather than copied as
+# Template-owned content"), engines MUST NOT copy the Template source's
+# lockfile into the Derived project.
+#
+# The Sync policy classifies pnpm-lock.yaml as custom-owned with an
+# explicit note that the engine regenerates it locally.
+
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    dependencies:
+      '@beztack/auth':
+        specifier: workspace:*
+        version: link:packages/auth
+      '@beztack/storage':
+        specifier: workspace:*
+        version: link:packages/storage
+      '@derived-app/util':
+        specifier: workspace:*
+        version: link:packages/util
+    devDependencies:
+      '@types/node':
+        specifier: ^22.19.2
+        version: 22.19.2
+      typescript:
+        specifier: ~5.8.3
+        version: 5.8.3
+
+packages: {}

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0",
+  "derivedProjectId": "dp_01HMVBEZTACK0000000000000A",
+  "templateId": "beztack-core",
+  "currentRevision": "v1.1.0",
+  "candidateRevision": "v1.2.0",
+  "syncEngine": {
+    "name": "beztack-fixture-reference",
+    "version": "0.0.0"
+  },
+  "status": "conflicts",
+  "files": {
+    "packages/auth/session.ts": {
+      "ownership": "custom-owned",
+      "drift": "template-changed",
+      "seam": null
+    },
+    "apps/api/routes.ts": {
+      "ownership": "mixed",
+      "drift": "project-changed",
+      "seam": "api-route-registration"
+    },
+    "apps/api/middleware.ts": {
+      "ownership": "mixed",
+      "drift": "both-changed",
+      "seam": null
+    },
+    "apps/checkout/index.ts": {
+      "ownership": "custom-owned",
+      "drift": "added",
+      "seam": null
+    },
+    "apps/checkout/payment-handler.ts": {
+      "ownership": "custom-owned",
+      "drift": "added",
+      "seam": null
+    },
+    "apps/checkout/README.md": {
+      "ownership": "custom-owned",
+      "drift": "added",
+      "seam": null
+    },
+    "packages/util/retry.ts": {
+      "ownership": "template-owned",
+      "drift": "added",
+      "seam": null
+    },
+    "packages/util/package.json": {
+      "ownership": "template-owned",
+      "drift": "added",
+      "seam": null
+    },
+    ".env.contract.json": {
+      "ownership": "template-owned",
+      "drift": "template-changed",
+      "seam": null
+    },
+    ".env.example": {
+      "ownership": "custom-owned",
+      "drift": "added",
+      "seam": null
+    },
+    "pnpm-lock.yaml": {
+      "ownership": "custom-owned",
+      "drift": "added",
+      "seam": null
+    },
+    "package.json": {
+      "ownership": "template-owned",
+      "drift": "both-changed",
+      "seam": null
+    }
+  },
+  "conflicts": [
+    {
+      "path": "apps/api/middleware.ts",
+      "reason": "both-changed-no-seam",
+      "ownership": "mixed",
+      "detail": "Template source v1.2.0 introduces a default middleware on a Mixed-ownership path, but no Sync seam is registered for this file and the Derived project already has its own implementation. Engine must report this and refuse to silently merge."
+    }
+  ],
+  "overlaps": [
+    {
+      "path": "packages/auth/session.ts",
+      "rules": ["packages/**", "packages/auth/**"],
+      "strategies": ["template-owned", "custom-owned"],
+      "severity": "warning",
+      "detail": "More-specific rule wins: packages/auth/** is authoritative. Apply skips this file as custom-owned-preserved and surfaces a warning so reviewers can resolve the policy."
+    },
+    {
+      "path": "apps/checkout/payment-handler.ts",
+      "rules": ["apps/**", "apps/checkout/**"],
+      "strategies": ["template-owned", "custom-owned"],
+      "severity": "warning",
+      "detail": "More-specific rule wins: apps/checkout/** is authoritative. Apply preserves the file as custom-owned."
+    }
+  ],
+  "recommendation": {
+    "action": "review-conflicts",
+    "command": "beztack-sync apply --to v1.2.0",
+    "note": "One Sync conflict (apps/api/middleware.ts) requires an explicit decision. After resolving, apply proceeds on a branch and the Environment contract update is included automatically."
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "derived-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@beztack/auth": "workspace:*",
+    "@beztack/storage": "workspace:*",
+    "@derived-app/util": "workspace:*"
+  }
+}

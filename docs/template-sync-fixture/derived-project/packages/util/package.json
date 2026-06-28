@@ -1,0 +1,6 @@
+{
+  "name": "@derived-app/util",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./retry.ts"
+}

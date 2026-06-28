@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beztack.dev/schemas/promotion-metadata.schema.json",
+  "title": "Beztack Promotion metadata",
+  "description": "Schema-versioned metadata for a Promotion from a Derived project back to the Template source. Promotion candidates are filtered by ownership and exclude Custom-owned Product domain changes by default per PRD-27.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "derivedProjectId",
+    "trustClass",
+    "templateId",
+    "baselineRevision",
+    "label",
+    "candidates",
+    "skipped",
+    "checks",
+    "suggestedTemplateVersionImpact"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "derivedProjectId": { "type": "string" },
+    "trustClass": {
+      "type": "string",
+      "enum": ["trusted", "community"]
+    },
+    "templateId": { "type": "string" },
+    "baselineRevision": {
+      "type": "string",
+      "description": "Template revision the Derived project last accepted."
+    },
+    "label": {
+      "type": "string",
+      "description": "Promotion label applied to the source PR."
+    },
+    "sourcePR": {
+      "type": "string",
+      "description": "Optional reference (URL or identifier) to the source PR on the Derived project."
+    },
+    "candidates": {
+      "type": "array",
+      "description": "Files eligible for Promotion. Owned by Template-owned paths or by unprotected parts of Mixed ownership.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "ownership", "reason"],
+        "properties": {
+          "path": { "type": "string" },
+          "ownership": {
+            "type": "string",
+            "enum": ["template-owned", "custom-owned", "mixed"]
+          },
+          "reason": { "type": "string" },
+          "suggestedSeam": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "description": "Files intentionally excluded from Promotion, with the reason.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "ownership", "reason"],
+        "properties": {
+          "path": { "type": "string" },
+          "ownership": {
+            "type": "string",
+            "enum": ["template-owned", "custom-owned", "mixed"]
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "custom-owned-product-domain",
+              "platform-extraction-required",
+              "mixed-protected-by-seam",
+              "ownership-ambiguous"
+            ]
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "description": "Checks that ran in the source PR. Engines record which checks ran so reviewers can re-run them.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "result"],
+        "properties": {
+          "name": { "type": "string" },
+          "result": {
+            "type": "string",
+            "enum": ["pass", "fail", "skip"]
+          }
+        }
+      }
+    },
+    "suggestedTemplateVersionImpact": {
+      "type": "string",
+      "enum": ["patch", "minor", "major", "none"],
+      "description": "Suggested Template version bump. Engines do not auto-publish; this is metadata for reviewers."
+    },
+    "relatedPromotions": {
+      "type": "array",
+      "description": "Other open Promotions that touch overlapping paths. Linked, not auto-deduplicated.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["derivedProjectId", "label"],
+        "properties": {
+          "derivedProjectId": { "type": "string" },
+          "label": { "type": "string" }
+        }
+      }
+    }
+  }
+}

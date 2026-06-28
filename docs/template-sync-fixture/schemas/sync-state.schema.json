@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beztack.dev/schemas/sync-state.schema.json",
+  "title": "Beztack Sync state",
+  "description": "Schema-versioned current machine-readable sync status. Stable JSON for agents and CI per PRD-27. Must not include audit history; that belongs to the Sync event log.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "derivedProjectId",
+    "templateId",
+    "currentRevision",
+    "syncEngine",
+    "status",
+    "files",
+    "conflicts",
+    "overlaps",
+    "recommendation"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "derivedProjectId": {
+      "type": "string"
+    },
+    "templateId": {
+      "type": "string"
+    },
+    "currentRevision": {
+      "type": "string",
+      "description": "Last accepted Template revision."
+    },
+    "candidateRevision": {
+      "type": "string",
+      "description": "Optional candidate Template revision under consideration."
+    },
+    "syncEngine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "description": "Sync engine identity. Versioned separately from Template version per ADR-0006."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ready-to-apply",
+        "conflicts",
+        "policy-invalid",
+        "engine-incompatible",
+        "in-sync"
+      ]
+    },
+    "files": {
+      "type": "object",
+      "description": "Per-file ownership and drift classification.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ownership", "drift"],
+        "properties": {
+          "ownership": {
+            "type": "string",
+            "enum": ["template-owned", "custom-owned", "mixed"]
+          },
+          "drift": {
+            "type": "string",
+            "enum": [
+              "unchanged",
+              "template-changed",
+              "project-changed",
+              "both-changed",
+              "added",
+              "removed"
+            ]
+          },
+          "seam": {
+            "type": "string",
+            "description": "Seam id if the file uses one."
+          }
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "description": "Sync conflicts requiring an explicit ownership or design decision.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "reason", "ownership"],
+        "properties": {
+          "path": { "type": "string" },
+          "reason": {
+            "type": "string",
+            "enum": ["both-changed-no-seam", "ownership-ambiguous"]
+          },
+          "ownership": {
+            "type": "string",
+            "enum": ["template-owned", "custom-owned", "mixed"]
+          },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "overlaps": {
+      "type": "array",
+      "description": "Ownership overlaps or shadowing detected before apply.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "rules", "strategies"],
+        "properties": {
+          "path": { "type": "string" },
+          "rules": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Policy rule globs that match this path."
+          },
+          "strategies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["template-owned", "custom-owned", "mixed"]
+            },
+            "description": "Strategies declared by each matching rule, in rule order."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["warning", "block"]
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human-readable explanation of the overlap and the engine's precedence decision."
+          }
+        }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "apply",
+            "review-conflicts",
+            "review-overlap",
+            "review-environment",
+            "reset-engine",
+            "no-action"
+          ]
+        },
+        "command": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}
