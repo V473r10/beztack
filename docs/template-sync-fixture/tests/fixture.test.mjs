@@ -45,6 +45,8 @@ const SCHEMA_FILES = {
   "sync-state": "sync-state.schema.json",
   "apply-plan": "apply-plan.schema.json",
   "promotion-metadata": "promotion-metadata.schema.json",
+  "sync-event-log": "sync-event-log.schema.json",
+  "template-manifest": "template-manifest.schema.json",
 };
 
 function pathSegments(fileURL) {
@@ -58,13 +60,29 @@ function normalize(p) {
 /**
  * Minimal JSON Schema validator covering the subset used by this fixture:
  * type, const, enum, required, additionalProperties, properties, items,
- * and string format checks (date-time, uri). Errors carry a JSON Pointer.
+ * $ref, $defs, oneOf, allOf, pattern, and string format checks
+ * (date-time, uri). Errors carry a JSON Pointer.
  */
 function compileSchema(schema) {
+  function resolveRef(ref) {
+    if (ref.startsWith("#/$defs/")) {
+      const key = ref.slice("#/$defs/".length);
+      const target = schema.$defs?.[key];
+      if (!target) throw new Error(`unknown $ref ${ref}`);
+      return target;
+    }
+    throw new Error(`unsupported $ref ${ref}`);
+  }
+
   function build(node, pointer) {
     const subValidators = {};
     let itemsValidator = null;
+    let oneOfValidators = null;
+    let allOfValidators = null;
 
+    if (typeof node.$ref === "string") {
+      return build(resolveRef(node.$ref), pointer);
+    }
     if (node.properties && typeof node.properties === "object") {
       for (const key of Object.keys(node.properties)) {
         subValidators[key] = build(node.properties[key], `${pointer}/${key}`);
@@ -72,6 +90,16 @@ function compileSchema(schema) {
     }
     if (node.items && typeof node.items === "object") {
       itemsValidator = build(node.items, `${pointer}/items`);
+    }
+    if (Array.isArray(node.oneOf)) {
+      oneOfValidators = node.oneOf.map((n, i) =>
+        build(n, `${pointer}/oneOf/${i}`)
+      );
+    }
+    if (Array.isArray(node.allOf)) {
+      allOfValidators = node.allOf.map((n, i) =>
+        build(n, `${pointer}/allOf/${i}`)
+      );
     }
 
     const required = Array.isArray(node.required) ? node.required : [];
@@ -146,6 +174,23 @@ function compileSchema(schema) {
           }
         }
       }
+      if (typeof node.pattern === "string" && typeof value === "string") {
+        if (!new RegExp(node.pattern).test(value)) {
+          return `${pointer} must match pattern ${node.pattern}`;
+        }
+      }
+      if (oneOfValidators) {
+        const matched = oneOfValidators.filter((fn) => fn(value) === null);
+        if (matched.length !== 1) {
+          return `${pointer} must match exactly one of oneOf (matched ${matched.length})`;
+        }
+      }
+      if (allOfValidators) {
+        for (let i = 0; i < allOfValidators.length; i += 1) {
+          const error = allOfValidators[i](value);
+          if (error) return `${pointer} ${error}`;
+        }
+      }
       return null;
     };
   }
@@ -192,6 +237,10 @@ for (const [name, file] of Object.entries(SCHEMA_FILES)) {
       value = await readJson(join(EXPECTED, "apply-plan.json"));
     } else if (name === "promotion-metadata") {
       value = await readJson(join(EXPECTED, "promotion-metadata.json"));
+    } else if (name === "sync-event-log") {
+      value = await readJson(join(DERIVED, ".beztack/sync-event-log.json"));
+    } else if (name === "template-manifest") {
+      value = await readJson(join(REVISIONS, "v1.2.0", "template.json"));
     }
     const error = validate(value, schema);
     assert.equal(error, null, error ?? "");
@@ -409,6 +458,176 @@ test("Template source does not ship a lockfile (regenerated in Derived projects)
   }
 });
 
+test("issue #30: Sync policy, Origin baseline, Sync state, and Sync event log are schema-versioned", async () => {
+  for (const [file, path] of [
+    ["template.json", join(DERIVED, ".beztack/template.json")],
+    ["origin.json", join(DERIVED, ".beztack/origin.json")],
+    ["sync-state.json", join(EXPECTED, "status.json")],
+    ["sync-event-log.json", join(DERIVED, ".beztack/sync-event-log.json")],
+  ]) {
+    const value = await readJson(path);
+    assert.equal(
+      value.schemaVersion,
+      "1.0",
+      `${file} must declare schemaVersion "1.0"`
+    );
+  }
+});
+
+test("issue #30: Origin baseline orders the Template revision before per-file metadata", async () => {
+  const origin = await readJson(join(DERIVED, ".beztack/origin.json"));
+  const keys = Object.keys(origin);
+  const revIdx = keys.indexOf("templateRevision");
+  const refIdx = keys.indexOf("templateRevisionRef");
+  const acceptedIdx = keys.indexOf("acceptedAt");
+  const filesIdx = keys.indexOf("files");
+  assert.ok(revIdx >= 0 && refIdx > revIdx, "templateRevisionRef must follow templateRevision");
+  assert.ok(acceptedIdx > refIdx, "acceptedAt must follow templateRevisionRef");
+  assert.ok(filesIdx > acceptedIdx, "files (per-file metadata) must follow the Template revision fields");
+});
+
+test("issue #30: Sync state and Sync event log are distinct artifacts", async () => {
+  const state = await readJson(join(EXPECTED, "status.json"));
+  const log = await readJson(join(DERIVED, ".beztack/sync-event-log.json"));
+  assert.equal(
+    "events" in state,
+    false,
+    "Sync state must not include an audit-history events array; audit history lives in the Sync event log"
+  );
+  assert.ok(
+    Array.isArray(log.events) && log.events.length > 0,
+    "Sync event log must include append-only events"
+  );
+  for (const evt of log.events) {
+    assert.ok(
+      typeof evt.eventId === "string" && evt.eventId.length > 0,
+      "Each Sync event must have a stable eventId"
+    );
+    assert.ok(
+      typeof evt.timestamp === "string",
+      "Each Sync event must have a timestamp"
+    );
+    assert.ok(
+      ["baseline-reset", "apply", "promotion", "schema-rejected"].includes(evt.type),
+      `Sync event type ${evt.type} must be one of the documented types`
+    );
+  }
+});
+
+test("issue #30: Sync engine version is recorded separately from Template version", async () => {
+  const state = await readJson(join(EXPECTED, "status.json"));
+  const plan = await readJson(join(EXPECTED, "apply-plan.json"));
+  const log = await readJson(join(DERIVED, ".beztack/sync-event-log.json"));
+
+  for (const [name, obj] of [
+    ["sync-state", state],
+    ["apply-plan", plan],
+  ]) {
+    assert.ok(obj.syncEngine, `${name} must include a syncEngine field`);
+    assert.ok(typeof obj.syncEngine.name === "string", `${name}.syncEngine.name must be a string`);
+    assert.ok(typeof obj.syncEngine.version === "string", `${name}.syncEngine.version must be a string`);
+  }
+
+  for (const evt of log.events) {
+    assert.ok(evt.syncEngine, `event ${evt.eventId} must include a syncEngine field`);
+    assert.ok(
+      typeof evt.syncEngine.name === "string" && typeof evt.syncEngine.version === "string",
+      `event ${evt.eventId} syncEngine must record name and version`
+    );
+  }
+
+  const manifest120 = await readJson(join(REVISIONS, "v1.2.0", "template.json"));
+  assert.notEqual(
+    manifest120.version,
+    manifest120.compatibleEngines.minimum,
+    "Template version must not equal Sync engine version"
+  );
+});
+
+test("issue #30: Template versions declare a compatibleEngines range", async () => {
+  for (const revision of ["v1.1.0", "v1.2.0"]) {
+    const manifest = await readJson(join(REVISIONS, revision, "template.json"));
+    assert.equal(manifest.schemaVersion, "1.0", `${revision} manifest must declare schemaVersion "1.0"`);
+    assert.ok(
+      typeof manifest.compatibleEngines?.minimum === "string",
+      `${revision} manifest must declare compatibleEngines.minimum`
+    );
+    assert.match(
+      manifest.compatibleEngines.minimum,
+      /^[0-9]+\.[0-9]+\.[0-9]+/,
+      `${revision} compatibleEngines.minimum must be semver-shaped`
+    );
+    if (manifest.compatibleEngines.maximum !== undefined) {
+      assert.match(
+        manifest.compatibleEngines.maximum,
+        /^[0-9]+\.[0-9]+\.[0-9]+/,
+        `${revision} compatibleEngines.maximum must be semver-shaped`
+      );
+    }
+  }
+});
+
+test("issue #30: invalid schema versions are rejected by the validator before planning", async () => {
+  const policySchema = await readJson(join(SCHEMAS, "sync-policy.schema.json"));
+  const stateSchema = await readJson(join(SCHEMAS, "sync-state.schema.json"));
+  const logSchema = await readJson(join(SCHEMAS, "sync-event-log.schema.json"));
+  const manifestSchema = await readJson(join(SCHEMAS, "template-manifest.schema.json"));
+
+  const validSyncPolicy = await readJson(join(DERIVED, ".beztack/template.json"));
+  const validSyncState = await readJson(join(EXPECTED, "status.json"));
+  const validSyncEventLog = await readJson(join(DERIVED, ".beztack/sync-event-log.json"));
+  const validManifest = await readJson(join(REVISIONS, "v1.2.0", "template.json"));
+
+  const invalidCases = [
+    { name: "sync-policy", schema: policySchema, value: { ...validSyncPolicy, schemaVersion: "0.9" } },
+    { name: "sync-policy", schema: policySchema, value: { ...validSyncPolicy, schemaVersion: "2.0" } },
+    { name: "sync-state", schema: stateSchema, value: { ...validSyncState, schemaVersion: "0.9" } },
+    { name: "sync-event-log", schema: logSchema, value: { ...validSyncEventLog, schemaVersion: "2.0" } },
+    { name: "template-manifest", schema: manifestSchema, value: { ...validManifest, schemaVersion: "0.5" } },
+  ];
+
+  for (const c of invalidCases) {
+    const error = validate(c.value, c.schema);
+    assert.ok(
+      error !== null,
+      `validator must reject ${c.name} with schemaVersion ${JSON.stringify(c.value.schemaVersion)}`
+    );
+    assert.ok(
+      error.includes("must equal \"1.0\"") || error.includes('must equal "1.0"'),
+      `${c.name} rejection (${c.value.schemaVersion}) must mention the supported schemaVersion 1.0; got: ${error}`
+    );
+  }
+});
+
+test("issue #30: schemas refuse additional properties (locked-down contract)", async () => {
+  for (const [name, file] of Object.entries(SCHEMA_FILES)) {
+    const schema = await readJson(join(SCHEMAS, file));
+    let value;
+    if (name === "sync-policy") {
+      value = await readJson(join(DERIVED, ".beztack/template.json"));
+    } else if (name === "origin-baseline") {
+      value = await readJson(join(DERIVED, ".beztack/origin.json"));
+    } else if (name === "sync-state") {
+      value = await readJson(join(EXPECTED, "status.json"));
+    } else if (name === "apply-plan") {
+      value = await readJson(join(EXPECTED, "apply-plan.json"));
+    } else if (name === "promotion-metadata") {
+      value = await readJson(join(EXPECTED, "promotion-metadata.json"));
+    } else if (name === "sync-event-log") {
+      value = await readJson(join(DERIVED, ".beztack/sync-event-log.json"));
+    } else if (name === "template-manifest") {
+      value = await readJson(join(REVISIONS, "v1.2.0", "template.json"));
+    }
+    value = JSON.parse(JSON.stringify(value));
+    value.__rogueField = "engines must reject this";
+    const error = validate(value, schema);
+    assert.ok(
+      error !== null && error.includes("__rogueField"),
+      `${name} schema must reject unexpected top-level fields`
+    );
+  }
+});
+
 test("README is reachable, non-empty, and references each schema and expected output", async () => {
   const readme = await readText(join(ROOT, "README.md"));
   assert.ok(readme.length > 0, "README must not be empty");
@@ -418,6 +637,8 @@ test("README is reachable, non-empty, and references each schema and expected ou
     "sync-state.schema.json",
     "apply-plan.schema.json",
     "promotion-metadata.schema.json",
+    "sync-event-log.schema.json",
+    "template-manifest.schema.json",
     "status.json",
     "apply-plan.json",
     "promotion-metadata.json",

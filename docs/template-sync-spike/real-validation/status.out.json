@@ -6,7 +6,7 @@
   "candidateRevision": "v1.1.0",
   "syncEngine": {
     "name": "beztack-sync-prototype",
-    "version": "0.0.0"
+    "version": "0.2.0"
   },
   "status": "ready-to-apply",
   "files": {

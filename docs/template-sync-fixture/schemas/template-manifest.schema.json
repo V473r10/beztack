@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beztack.dev/schemas/template-manifest.schema.json",
+  "title": "Beztack Template manifest",
+  "description": "Schema-versioned metadata for a published Template version. Lives at the root of a Template revision snapshot and declares the Template identity, semver, expected sync impact, and the compatible Sync engine version range. Engines must read this manifest before planning an apply and refuse templates whose compatibleEngines range excludes the current engine version per ADR-0006.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "templateId",
+    "version",
+    "semver",
+    "versionImpact",
+    "releasedAt",
+    "compatibleEngines"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version. Engines must refuse unknown values before planning or applying a Template update."
+    },
+    "templateId": {
+      "type": "string",
+      "description": "Stable identifier of the Template source. Matches templateId in Sync policy and Sync state."
+    },
+    "version": {
+      "type": "string",
+      "description": "Published Template version tag (e.g. 'v1.2.0'). Used as the Origin baseline and in apply branches."
+    },
+    "semver": {
+      "type": "string",
+      "description": "Semver triple (e.g. '1.2.0'). Encodes the versionImpact semantics separately.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+].*)?$"
+    },
+    "versionImpact": {
+      "type": "string",
+      "enum": ["patch", "minor", "major"],
+      "description": "Expected sync impact on Derived projects per PRD-27: patch for compatible fixes, minor for compatible capabilities or Sync seams, major for updates requiring explicit migration."
+    },
+    "releasedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this Template version was published. Informational; not used for sync decisions."
+    },
+    "compatibleEngines": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum"],
+      "properties": {
+        "minimum": {
+          "type": "string",
+          "description": "Minimum Sync engine version (semver) that can plan or apply this Template version. Engines below this version refuse the update.",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+].*)?$"
+        },
+        "maximum": {
+          "type": "string",
+          "description": "Optional upper bound (inclusive) on Sync engine versions. Engines above this version refuse the update, e.g. because the Template version predates a contract-breaking engine change.",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+].*)?$"
+        },
+        "note": {
+          "type": "string",
+          "description": "Human-readable explanation of the compatibility range."
+        }
+      },
+      "description": "Range of Sync engine versions that can plan or apply this Template version. Versioned separately from the Template semver per ADR-0006."
+    },
+    "migrations": {
+      "type": "array",
+      "description": "Template migrations declared at this Template version. Detailed modeling belongs in issue #34; this field is a placeholder that lists migration ids only.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" }
+        }
+      }
+    }
+  }
+}

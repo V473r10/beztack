@@ -17,7 +17,7 @@ async function getEngineJson(subcommand, planFlag = false) {
     fixtureRoot,
     "--engine",
     "beztack-sync-prototype",
-    "0.0.0",
+    "0.2.0",
     "--trust-class",
     "trusted",
   ];
@@ -174,6 +174,10 @@ out.results.promotionMetadata = {
     baselineRevisionCorrect:
       promo.baselineRevision === promoExpected.baselineRevision,
     schemaVersionCorrect: promo.schemaVersion === "1.0",
+    syncEngineRecorded:
+      !!promo.syncEngine &&
+      typeof promo.syncEngine.name === "string" &&
+      typeof promo.syncEngine.version === "string",
     checksRecorded:
       promo.checks.length === promoExpected.checks.length,
   },

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "templateId": "beztack-core",
+  "version": "v1.2.0",
+  "semver": "1.2.0",
+  "versionImpact": "minor",
+  "releasedAt": "2026-06-01T00:00:00Z",
+  "compatibleEngines": {
+    "minimum": "0.2.0",
+    "note": "v1.2.0 adds apps/api/middleware.ts to the Template source. Engines 0.2.0+ recognize the new file and the schema-versioned Sync event log contract introduced in issue #30. Older engines cannot record apply/promotion events and would lose audit history, so they are excluded by the minimum."
+  },
+  "migrations": []
+}

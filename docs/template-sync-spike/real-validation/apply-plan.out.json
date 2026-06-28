@@ -6,7 +6,7 @@
   "toRevision": "v1.1.0",
   "syncEngine": {
     "name": "beztack-sync-prototype",
-    "version": "0.0.0"
+    "version": "0.2.0"
   },
   "branch": "template-sync/v1.0.0-to-v1.1.0",
   "summary": "Apply Beztack template v1.1.0 onto Derived project dp_01HMVLNCD00000000000000000A. Refresh the Environment contract (v1.1.0 required variables). Render Template parameters into package.json. No conflicts.",

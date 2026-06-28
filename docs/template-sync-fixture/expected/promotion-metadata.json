@@ -3,6 +3,10 @@
   "derivedProjectId": "dp_01HMVBEZTACK0000000000000A",
   "trustClass": "trusted",
   "templateId": "beztack-core",
+  "syncEngine": {
+    "name": "beztack-fixture-reference",
+    "version": "0.0.0"
+  },
   "baselineRevision": "v1.1.0",
   "label": "promotion: candidate",
   "sourcePR": "https://github.com/example/derived-app/pull/42",

@@ -11,13 +11,17 @@ or the WIP CLI prototype.
 
 In scope:
 
-- A Template source represented as two revisions (`v1.1.0` and `v1.2.0`).
-- A single Derived project state with a Schema-versioned Sync policy,
-  Origin baseline, Template parameters, and Sync state.
-- Schemas for Sync policy, Origin baseline, Sync state, Apply plan, and
-  Promotion metadata.
+- A Template source represented as two revisions (`v1.1.0` and `v1.2.0`),
+  each with a Schema-versioned Template manifest declaring the compatible
+  Sync engine version range.
+- A single Derived project state with Schema-versioned Sync policy, Origin
+  baseline, Template parameters, Sync state, and Sync event log.
+- Schemas for Sync policy, Origin baseline, Sync state, Apply plan,
+  Promotion metadata, Sync event log, and Template manifest.
 - Expected observable outputs for `status`, `apply`, and Promotion
   metadata.
+- A schema-validation gate contract: engines must refuse unsupported
+  schema versions before planning or applying a Template update.
 
 Out of scope:
 
@@ -25,6 +29,92 @@ Out of scope:
   fixture and produce equivalent outputs.
 - The real Beztack → lncd validation case (separate issue #28 deliverable).
 - Any tool-specific configuration files (Copier/Cruft/subtree metadata).
+
+## Schema-versioned artifacts (issue #30)
+
+Every file the engine reads from or writes to a Derived project is
+schema-versioned. The schema version is a `const` on each schema, so the
+JSON Schema validator refuses any value other than the supported version.
+Engines must validate every input file before planning or applying a
+Template update; engines that receive an unsupported version must abort
+with a clear error and never produce a plan.
+
+| Artifact                 | Schema                          | Where it lives                                                | Purpose                                                                  |
+|--------------------------|---------------------------------|---------------------------------------------------------------|--------------------------------------------------------------------------|
+| Sync policy              | `sync-policy.schema.json`       | `<derived>/.beztack/template.json`                            | Declares Ownership rules, Sync seams, Environment contract, parameters.  |
+| Origin baseline          | `origin-baseline.schema.json`   | `<derived>/.beztack/origin.json`                              | The Template revision the Derived project last accepted, plus per-file metadata for drift detection. |
+| Sync state               | `sync-state.schema.json`        | `<derived>/.beztack/sync-state.json`                          | Current machine-readable sync status. Not an audit log.                  |
+| Sync event log           | `sync-event-log.schema.json`    | `<derived>/.beztack/sync-event-log.json`                      | Append-only audit trail of sync actions and Promotions.                  |
+| Apply plan               | `apply-plan.schema.json`        | Engine output                                                  | Plan the engine prepares for a reviewable branch.                        |
+| Promotion metadata       | `promotion-metadata.schema.json` | Engine output                                                 | Metadata for an opt-in Promotion from a Derived project PR.              |
+| Template manifest        | `template-manifest.schema.json` | `<template-revisions>/<version>/template.json`                | Declares Template identity, semver, expected sync impact, and the compatible Sync engine version range. |
+
+### Sync engine version vs. Template version
+
+The Sync engine version is recorded in three places (per ADR-0006):
+
+- `sync-state.json#syncEngine` — engine that produced the current state.
+- `apply-plan.json#syncEngine` — engine that produced the plan.
+- Each `sync-event-log.json#events[].syncEngine` — engine that recorded
+  the event.
+
+The Template version is recorded separately in:
+
+- `origin.json#templateRevision` — last accepted Template revision.
+- `apply-plan.json#fromRevision` and `toRevision` — the move being planned.
+- `sync-event-log.json#events[].details.fromRevision` /
+  `toRevision` — the move recorded in the event.
+- `template-manifest.json#version` and `semver` — the published Template
+  version's identity.
+
+Engines must keep the two versions distinct. A Template version bump must
+never change the Sync engine version requirement implicitly; the change
+must be declared explicitly via `compatibleEngines`.
+
+### Origin baseline ordering
+
+The Origin baseline is built around the Template revision first. The
+required fields appear in this order: `templateRevision`,
+`templateRevisionRef`, `acceptedAt`, then the per-file metadata. The
+per-file metadata is supporting drift evidence for offline work and
+reconciliation — it is not the source of truth for sync decisions.
+
+### Sync state vs. Sync event log
+
+Sync state and Sync event log are two distinct artifacts (per CONTEXT.md
+and PRD #27):
+
+- **Sync state** is current machine-readable status. It is rewritten on
+  each `status` run. It must not become an audit log.
+- **Sync event log** is the append-only audit trail. Engines append a new
+  event each time they plan, apply, or emit Promotion metadata. They never
+  mutate or reorder existing entries.
+
+The Sync event log also records rejected attempts (`type:
+"schema-rejected"`) so the audit trail covers invalid inputs, not just
+successful operations.
+
+### Invalid or unsupported schema versions
+
+Engines must refuse unsupported schema versions before planning or
+applying a Template update. The gate runs in this order:
+
+1. Read every schema-versioned file the engine will consume:
+   - Sync policy (`<derived>/.beztack/template.json`)
+   - Origin baseline (`<derived>/.beztack/origin.json`)
+   - Sync event log (`<derived>/.beztack/sync-event-log.json`, if present)
+   - Template manifest (`<template-revisions>/<to>/template.json`, if present)
+2. For each file, check `schemaVersion` against the engine's supported
+   list. If absent or unsupported, abort with a clear error.
+3. Validate the file body against its schema. If invalid, abort with a
+   clear error.
+4. If a Template manifest declares `compatibleEngines`, check that the
+   engine's version falls inside the range. If not, abort.
+5. Only after every gate passes may the engine plan or apply.
+
+The fixture's self-check verifies the gate by constructing a synthetic
+invalid Sync policy and asserting that the validator rejects it with a
+clear message.
 
 ## Layout
 
@@ -36,14 +126,18 @@ docs/template-sync-fixture/
 │   ├── origin-baseline.schema.json
 │   ├── sync-state.schema.json
 │   ├── apply-plan.schema.json
-│   └── promotion-metadata.schema.json
+│   ├── promotion-metadata.schema.json
+│   ├── sync-event-log.schema.json     # issue #30: append-only audit history
+│   └── template-manifest.schema.json  # issue #30: compatibleEngines range
 ├── template-revisions/                # Template source snapshot per revision
 │   ├── v1.1.0/                        # last accepted (Origin baseline)
+│   │   ├── template.json              # Template manifest (issue #30)
 │   │   ├── packages/auth/session.ts
 │   │   ├── apps/api/routes.ts
 │   │   ├── .env.contract.json
 │   │   └── package.json
 │   └── v1.2.0/                        # candidate
+│       ├── template.json              # Template manifest (issue #30)
 │       ├── packages/auth/session.ts
 │       ├── apps/api/routes.ts
 │       ├── apps/api/middleware.ts     # NEW
@@ -55,6 +149,7 @@ docs/template-sync-fixture/
 │   │   ├── parameters.json            # Template parameters
 │   │   ├── origin.json                # Origin baseline (v1.1.0)
 │   │   ├── sync-state.json            # current Sync state
+│   │   ├── sync-event-log.json        # issue #30: append-only audit history
 │   │   └── promotion-label.md         # Promotion label convention
 │   ├── packages/auth/session.ts
 │   ├── apps/api/routes.ts             # mixed ownership, seam content
@@ -179,22 +274,47 @@ The engine must produce metadata conforming to
 
 A conforming engine implementation, given this fixture, must:
 
-1. Read `derived-project/.beztack/template.json` as the Sync policy.
-2. Read `derived-project/.beztack/parameters.json` as Template parameters.
-3. Read `derived-project/.beztack/origin.json` as the Origin baseline.
-4. Read both `template-revisions/v1.1.0/` and `template-revisions/v1.2.0/`
+1. Validate every schema-versioned input file before planning or applying.
+   Refuse unsupported schema versions with a clear error.
+2. Read `derived-project/.beztack/template.json` as the Sync policy.
+3. Read `derived-project/.beztack/parameters.json` as Template parameters.
+4. Read `derived-project/.beztack/origin.json` as the Origin baseline.
+5. Read `derived-project/.beztack/sync-event-log.json` (if present) as
+   the append-only audit history. Engines must never reorder or mutate
+   existing entries; they may only append.
+6. Read each `template-revisions/<version>/template.json` as the Template
+   manifest. Refuse the update if the manifest's `compatibleEngines`
+   range excludes the engine version.
+7. Read both `template-revisions/v1.1.0/` and `template-revisions/v1.2.0/`
    as the Template source revisions.
-5. Treat `derived-project/` as the working tree.
-6. Emit `expected/status.json` (or an equivalent) for `status`.
-7. Emit `expected/apply-plan.json` (or an equivalent) for `apply --plan`.
-8. Emit `expected/promotion-metadata.json` (or an equivalent) for a PR
-   labelled `promotion: candidate`.
-9. Regenerate `pnpm-lock.yaml` in the Derived project locally; never copy
-   a lockfile from the Template source.
+8. Treat `derived-project/` as the working tree.
+9. Emit `expected/status.json` (or an equivalent) for `status`.
+10. Emit `expected/apply-plan.json` (or an equivalent) for `apply --plan`.
+11. Emit `expected/promotion-metadata.json` (or an equivalent) for a PR
+    labelled `promotion: candidate`.
+12. Append events to `derived-project/.beztack/sync-event-log.json` for
+    each planning, apply, and Promotion action (engines that plan may
+    not yet write the log on planning alone — issue #30 only specifies
+    the schema contract, not when events are appended).
+13. Regenerate `pnpm-lock.yaml` in the Derived project locally; never copy
+    a lockfile from the Template source.
 
 Engines under test must NOT add tool-specific metadata to the working
 tree (no `.copier-answers.yml`, `.cruft.json`, etc.) as part of running
 this fixture; the fixture's `derived-project/` state is what it is.
+
+## Acceptance criteria mapping (issue #30)
+
+| Issue #30 acceptance criterion                                              | Fixture artifact / test                                                              |
+|-----------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| Explicit schema versions on Sync policy, Sync state, Origin baseline, Sync event log | `sync-policy.schema.json`, `sync-state.schema.json`, `origin-baseline.schema.json`, `sync-event-log.schema.json` all pin `schemaVersion: "1.0"` |
+| Origin baseline defined around Template revision first, file metadata only as supporting drift evidence | `origin-baseline.schema.json` description and required-field order (`templateRevision`, `templateRevisionRef`, `acceptedAt`, `files`) |
+| Sync state records current status without becoming an audit log              | `sync-state.schema.json` has no `events[]` field; `sync-event-log.schema.json` is the separate audit history |
+| Sync event log records append-only sync and Promotion events without becoming current state | `sync-event-log.schema.json` is `events[]` only, marked append-only; not consumed as current state |
+| Sync engine version recorded separately from Template version               | `sync-state.json#syncEngine`, `apply-plan.json#syncEngine`, `sync-event-log.json#events[].syncEngine`; Template version lives in `templateRevision` / `version` / `fromRevision` / `toRevision` |
+| Template versions can declare compatible Sync engine version ranges         | `template-manifest.schema.json#compatibleEngines.minimum` / `.maximum`; `template-revisions/v1.1.0/template.json`, `template-revisions/v1.2.0/template.json` |
+| Invalid or unsupported schema versions fail before planning or applying     | `validate.mjs` gate in `docs/template-sync-spike/custom-engine/`; `fixture.test.mjs` tests that an invalid `schemaVersion` is rejected |
+| Specification validated against the Sync engine contract fixture            | All new schemas live next to the existing fixture schemas and are exercised by `fixture.test.mjs` |
 
 ## Self-check
 
@@ -211,6 +331,10 @@ consistent. It checks:
 - The README references every schema and expected output file.
 - Every issue #29 acceptance criterion is covered by at least one
   fixture case.
+- Every issue #30 acceptance criterion is covered by at least one
+  fixture case: the new schemas exist, the Sync event log and Template
+  manifests validate, the Sync engine version is recorded separately,
+  and an invalid schema version is rejected by the validator.
 
 Run with Node's built-in test runner (no external dependencies):
 

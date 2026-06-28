@@ -10,6 +10,7 @@
     "derivedProjectId",
     "trustClass",
     "templateId",
+    "syncEngine",
     "baselineRevision",
     "label",
     "candidates",
@@ -28,6 +29,16 @@
       "enum": ["trusted", "community"]
     },
     "templateId": { "type": "string" },
+    "syncEngine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "description": "Sync engine that emitted this Promotion metadata. Versioned separately from the Template version per ADR-0006."
+    },
     "baselineRevision": {
       "type": "string",
       "description": "Template revision the Derived project last accepted."

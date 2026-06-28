@@ -3,6 +3,10 @@
   "derivedProjectId": "dp_01HMVLNCD00000000000000000A",
   "trustClass": "trusted",
   "templateId": "beztack-core",
+  "syncEngine": {
+    "name": "beztack-sync-prototype",
+    "version": "0.2.0"
+  },
   "baselineRevision": "v1.0.0",
   "label": "promotion: candidate",
   "candidates": [

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://beztack.dev/schemas/origin-baseline.schema.json",
   "title": "Beztack Origin baseline",
-  "description": "Schema-versioned Origin baseline. Records the Template revision a Derived project last accepted and per-file metadata for drift detection.",
+  "description": "Schema-versioned Origin baseline. The Template revision (templateRevision) is the primary baseline: a verifiable Template source state that the engine compares against. The per-file metadata (files) is supporting drift evidence for offline work and reconciliation; it is not the source of truth for sync decisions.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,6 +10,7 @@
     "derivedProjectId",
     "templateId",
     "templateRevision",
+    "templateRevisionRef",
     "acceptedAt",
     "files"
   ],

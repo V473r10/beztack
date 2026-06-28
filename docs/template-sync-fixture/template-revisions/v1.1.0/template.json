@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "templateId": "beztack-core",
+  "version": "v1.1.0",
+  "semver": "1.1.0",
+  "versionImpact": "minor",
+  "releasedAt": "2026-05-15T00:00:00Z",
+  "compatibleEngines": {
+    "minimum": "0.1.0",
+    "maximum": "1.0.0",
+    "note": "v1.1.0 introduced the Environment contract and the api-route-registration Sync seam. Engines 0.1.0+ understand both. The upper bound caps engines at 1.0.0 because v1.2.0 introduces schema-versioned contracts that older engines cannot represent."
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0",
+  "derivedProjectId": "dp_01HMVBEZTACK0000000000000A",
+  "templateId": "beztack-core",
+  "currentRevision": "v1.1.0",
+  "events": [
+    {
+      "eventSchemaVersion": "1.0",
+      "eventId": "evt_01HMVBEZTACK00000000000A001",
+      "timestamp": "2026-05-15T09:00:00Z",
+      "type": "baseline-reset",
+      "syncEngine": {
+        "name": "beztack-fixture-reference",
+        "version": "0.0.0"
+      },
+      "details": {
+        "revision": "v1.1.0",
+        "filesRecorded": 4
+      }
+    },
+    {
+      "eventSchemaVersion": "1.0",
+      "eventId": "evt_01HMVBEZTACK00000000000A002",
+      "timestamp": "2026-06-10T12:00:00Z",
+      "type": "apply",
+      "syncEngine": {
+        "name": "beztack-fixture-reference",
+        "version": "0.0.0"
+      },
+      "details": {
+        "fromRevision": "v1.1.0",
+        "toRevision": "v1.2.0",
+        "branch": "template-sync/v1.1.0-to-v1.2.0",
+        "updates": 3,
+        "skipped": 8,
+        "conflicts": 1,
+        "blockers": 0
+      }
+    },
+    {
+      "eventSchemaVersion": "1.0",
+      "eventId": "evt_01HMVBEZTACK00000000000A003",
+      "timestamp": "2026-06-12T09:00:00Z",
+      "type": "promotion",
+      "syncEngine": {
+        "name": "beztack-fixture-reference",
+        "version": "0.0.0"
+      },
+      "details": {
+        "baselineRevision": "v1.1.0",
+        "label": "promotion: candidate",
+        "sourcePR": "https://github.com/example/derived-app/pull/42",
+        "candidates": 2,
+        "skipped": 3,
+        "suggestedTemplateVersionImpact": "minor"
+      }
+    },
+    {
+      "eventSchemaVersion": "1.0",
+      "eventId": "evt_01HMVBEZTACK00000000000A004",
+      "timestamp": "2026-06-13T11:00:00Z",
+      "type": "schema-rejected",
+      "syncEngine": {
+        "name": "beztack-fixture-reference",
+        "version": "0.0.0"
+      },
+      "details": {
+        "file": ".beztack/template.json",
+        "schemaVersion": "0.9",
+        "supportedVersions": ["1.0"],
+        "reason": "Sync policy declared schemaVersion '0.9' which the engine does not support. Engines must refuse unsupported schema versions before planning or applying a Template update."
+      }
+    }
+  ]
+}

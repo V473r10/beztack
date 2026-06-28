@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beztack.dev/schemas/sync-event-log.schema.json",
+  "title": "Beztack Sync event log",
+  "description": "Schema-versioned append-only audit trail of Template sync actions and Promotions for a Derived project. The Sync event log is the source of truth for audit history; current machine-readable status belongs in Sync state (sync-state.schema.json), not here. Engines append entries on each planning or apply action and never mutate or reorder existing entries.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "derivedProjectId",
+    "templateId",
+    "currentRevision",
+    "events"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version. Engines must refuse unknown values before planning or applying a Template update."
+    },
+    "derivedProjectId": {
+      "type": "string",
+      "description": "Opaque stable Derived project identifier generated at scaffolding."
+    },
+    "templateId": {
+      "type": "string"
+    },
+    "currentRevision": {
+      "type": "string",
+      "description": "Template revision the Derived project last accepted. Mirrored from the Origin baseline so the log is useful even if Origin baseline is absent; the Origin baseline remains the canonical source."
+    },
+    "events": {
+      "type": "array",
+      "description": "Append-only entries. Engines MUST only append; existing entries are immutable.",
+      "items": { "$ref": "#/$defs/event" }
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventSchemaVersion",
+        "eventId",
+        "timestamp",
+        "type",
+        "syncEngine"
+      ],
+      "properties": {
+        "eventSchemaVersion": {
+          "type": "string",
+          "const": "1.0",
+          "description": "Per-event schema version. Distinct from the file-level schemaVersion so future revisions can introduce new event types without forcing a log file rewrite."
+        },
+        "eventId": {
+          "type": "string",
+          "description": "Opaque stable identifier for the event (ULID or similar). Engines generate this when appending."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "baseline-reset",
+            "apply",
+            "promotion",
+            "schema-rejected"
+          ],
+          "description": "Event type. schema-rejected records an attempt that the engine refused at validation time, so the audit trail also covers invalid inputs."
+        },
+        "syncEngine": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" }
+          },
+          "description": "Sync engine that recorded the event. Versioned separately from the Template version per ADR-0006."
+        },
+        "details": {
+          "type": "object",
+          "description": "Type-specific payload. The shape is constrained per type.",
+          "oneOf": [
+            { "$ref": "#/$defs/baselineReset" },
+            { "$ref": "#/$defs/apply" },
+            { "$ref": "#/$defs/promotion" },
+            { "$ref": "#/$defs/schemaRejected" }
+          ]
+        }
+      }
+    },
+    "baselineReset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision"],
+      "properties": {
+        "revision": {
+          "type": "string",
+          "description": "Template revision accepted as the new Origin baseline."
+        },
+        "filesRecorded": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of files captured in the new Origin baseline."
+        }
+      }
+    },
+    "apply": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromRevision", "toRevision", "branch"],
+      "properties": {
+        "fromRevision": { "type": "string" },
+        "toRevision": { "type": "string" },
+        "branch": {
+          "type": "string",
+          "description": "Branch the engine prepared for the Template update. PR-only by construction (ADR-0006)."
+        },
+        "updates": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "conflicts": { "type": "integer", "minimum": 0 },
+        "blockers": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baselineRevision", "label", "candidates", "skipped"],
+      "properties": {
+        "baselineRevision": { "type": "string" },
+        "label": {
+          "type": "string",
+          "description": "Promotion label applied to the source PR (e.g. 'promotion: candidate')."
+        },
+        "sourcePR": {
+          "type": "string",
+          "description": "Optional reference (URL or identifier) to the source PR on the Derived project."
+        },
+        "candidates": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "suggestedTemplateVersionImpact": {
+          "type": "string",
+          "enum": ["patch", "minor", "major", "none"]
+        }
+      }
+    },
+    "schemaRejected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "schemaVersion", "supportedVersions", "reason"],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path (Derived-project-relative) of the schema-versioned file the engine refused."
+        },
+        "schemaVersion": {
+          "type": "string",
+          "description": "The schemaVersion value the engine observed."
+        },
+        "supportedVersions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Schema versions the engine accepts. Rejection means the value was not in this list."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable explanation of the rejection."
+        }
+      }
+    }
+  }
+}

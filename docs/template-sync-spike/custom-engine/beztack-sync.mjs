@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
+import {
+  loadSchemas,
+  gateInputs,
+  validateSchemaVersioned,
+  checkEngineCompatibility,
+  SUPPORTED_SCHEMA_VERSIONS,
+} from "./validate.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 const subcommand = args._[0];
@@ -13,20 +20,24 @@ if (!subcommand) {
 }
 
 const fixtureRoot = resolve(args.fixture ?? "docs/template-sync-fixture");
+const schemaDir = resolve(args["schema-dir"] ?? join(fixtureRoot, "schemas"));
 const derivedRoot = resolve(
   args["derived-project"] ?? join(fixtureRoot, "derived-project")
 );
 const fromRev = args.from ?? "v1.1.0";
 const toRev = args.to ?? "v1.2.0";
 const engineName = args.engine ?? "beztack-sync-prototype";
-const engineVersion = args["engine-version"] ?? "0.0.0";
+const engineVersion = args["engine-version"] ?? "0.2.0";
 const trustClass =
   args["trust-class"] ??
   process.env.BEZTACK_TRUST_CLASS ??
   "trusted";
+const skipValidation = args["skip-validation"] === true;
 
 const fromTemplateRoot = join(fixtureRoot, "template-revisions", fromRev);
 const toTemplateRoot = join(fixtureRoot, "template-revisions", toRev);
+
+const schemas = skipValidation ? null : await loadSchemas(schemaDir);
 
 const policy = JSON.parse(
   await readFile(join(derivedRoot, ".beztack/template.json"), "utf8")
@@ -37,6 +48,48 @@ const parameters = JSON.parse(
 const origin = JSON.parse(
   await readFile(join(derivedRoot, ".beztack/origin.json"), "utf8")
 );
+let syncEventLog = null;
+try {
+  syncEventLog = JSON.parse(
+    await readFile(join(derivedRoot, ".beztack/sync-event-log.json"), "utf8")
+  );
+} catch (err) {
+  if (err.code !== "ENOENT") throw err;
+}
+
+let toManifest = null;
+try {
+  toManifest = JSON.parse(
+    await readFile(join(toTemplateRoot, "template.json"), "utf8")
+  );
+} catch (err) {
+  if (err.code !== "ENOENT") throw err;
+}
+
+if (schemas) {
+  const inputs = { "sync-policy": policy, "origin-baseline": origin };
+  if (syncEventLog) inputs["sync-event-log"] = syncEventLog;
+  if (toManifest) inputs["template-manifest"] = toManifest;
+  const errors = gateInputs(inputs, schemas);
+  if (errors.length > 0) {
+    const detail = errors
+      .map((e) => `  - ${e.name}: ${e.error}`)
+      .join("\n");
+    console.error(
+      `Schema validation failed before ${subcommand}. Engines must refuse unsupported schema versions before planning or applying a Template update.\n${detail}`
+    );
+    process.exit(3);
+  }
+  if (toManifest) {
+    const incompat = checkEngineCompatibility(toManifest, engineVersion);
+    if (incompat) {
+      console.error(
+        `Engine compatibility check failed before ${subcommand}: ${incompat}. Engines must refuse templates whose compatibleEngines range excludes the current engine version per ADR-0006.`
+      );
+      process.exit(4);
+    }
+  }
+}
 
 const derivedProjectId = origin.derivedProjectId;
 const templateId = policy.templateId;
@@ -462,6 +515,7 @@ async function buildPromotionMetadata({
     derivedProjectId,
     trustClass,
     templateId,
+    syncEngine: engineOutput,
     baselineRevision: origin.templateRevision ?? fromRev,
     label: "promotion: candidate",
     candidates,
