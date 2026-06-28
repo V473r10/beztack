@@ -80,8 +80,8 @@
             ]
           },
           "seam": {
-            "type": ["string", "null"],
-            "description": "Seam id if the file uses one, otherwise null."
+            "type": "string",
+            "description": "Seam id if the file uses one."
           }
         }
       }

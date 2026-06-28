@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beztack.dev/schemas/apply-plan.schema.json",
+  "title": "Beztack Apply plan",
+  "description": "Schema-versioned plan produced by the Sync engine for a Template update. Apply must prepare a reviewable branch or PR-ready state and never mutate main directly.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "derivedProjectId",
+    "templateId",
+    "fromRevision",
+    "toRevision",
+    "branch",
+    "summary",
+    "updates",
+    "skipped",
+    "conflicts",
+    "blockers"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "derivedProjectId": { "type": "string" },
+    "templateId": { "type": "string" },
+    "fromRevision": { "type": "string" },
+    "toRevision": { "type": "string" },
+    "syncEngine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "branch": {
+      "type": "string",
+      "description": "Branch the engine would create for PR-only application."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary intended for the PR description."
+    },
+    "updates": {
+      "type": "array",
+      "description": "Files the engine would update.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "ownership", "reason"],
+        "properties": {
+          "path": { "type": "string" },
+          "ownership": {
+            "type": "string",
+            "enum": ["template-owned", "custom-owned", "mixed"]
+          },
+          "reason": { "type": "string" },
+          "seam": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "description": "Files the engine would intentionally skip.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "ownership", "reason"],
+        "properties": {
+          "path": { "type": "string" },
+          "ownership": {
+            "type": "string",
+            "enum": ["template-owned", "custom-owned", "mixed"]
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "custom-owned-preserved",
+              "template-and-project-changed",
+              "ownership-ambiguous",
+              "template-owned-preserved-addition"
+            ]
+          }
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "reason"],
+        "properties": {
+          "path": { "type": "string" },
+          "reason": { "type": "string" },
+          "ownership": {
+            "type": "string",
+            "enum": ["template-owned", "custom-owned", "mixed"]
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human-readable explanation of the conflict and resolution options."
+          }
+        }
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "description": "Conditions that prevent apply. Empty list means apply may proceed on a branch.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "detail"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ownership-overlap",
+              "ownership-shadow",
+              "engine-incompatible",
+              "missing-baseline"
+            ]
+          },
+          "detail": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "templateId": "beztack-core",
+  "currentVersion": "1.2.3",
+  "strategyByPath": {
+    "packages/**": "template-owned",
+    "apps/**": "custom-owned",
+    "**": "mixed"
+  },
+  "appliedMigrations": []
+}

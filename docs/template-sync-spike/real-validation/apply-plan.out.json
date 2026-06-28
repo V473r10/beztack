@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "derivedProjectId": "dp_01HMVLNCD00000000000000000A",
+  "templateId": "beztack-core",
+  "fromRevision": "v1.0.0",
+  "toRevision": "v1.1.0",
+  "syncEngine": {
+    "name": "beztack-sync-prototype",
+    "version": "0.0.0"
+  },
+  "branch": "template-sync/v1.0.0-to-v1.1.0",
+  "summary": "Apply Beztack template v1.1.0 onto Derived project dp_01HMVLNCD00000000000000000A. Refresh the Environment contract (v1.1.0 required variables). Render Template parameters into package.json. No conflicts.",
+  "updates": [
+    {
+      "path": "beztack.template.json",
+      "ownership": "mixed",
+      "reason": "template-changed-no-project-change",
+      "seam": null
+    },
+    {
+      "path": ".env.contract.json",
+      "ownership": "mixed",
+      "reason": "template-changed-no-project-change",
+      "seam": null
+    },
+    {
+      "path": "package.json",
+      "ownership": "mixed",
+      "reason": "render-template-parameters-and-merge",
+      "seam": null
+    }
+  ],
+  "skipped": [
+    {
+      "path": ".env.example",
+      "ownership": "mixed",
+      "reason": "template-owned-preserved-addition"
+    },
+    {
+      "path": "apps/api/db.ts",
+      "ownership": "custom-owned",
+      "reason": "ownership-ambiguous"
+    },
+    {
+      "path": "apps/api/routes.ts",
+      "ownership": "custom-owned",
+      "reason": "ownership-ambiguous"
+    },
+    {
+      "path": "packages/cli/index.ts",
+      "ownership": "template-owned",
+      "reason": "template-owned-preserved-addition"
+    }
+  ],
+  "conflicts": [],
+  "blockers": []
+}

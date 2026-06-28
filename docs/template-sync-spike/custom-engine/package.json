@@ -1,0 +1,8 @@
+{
+  "name": "@beztack/template-sync-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Build-vs-adopt spike prototype for the Beztack Template sync engine. Implements the engine-agnostic fixture contract (status, apply --plan, promotion-metadata).",
+  "engines": { "node": ">=20" }
+}

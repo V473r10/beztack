@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beztack.dev/schemas/origin-baseline.schema.json",
+  "title": "Beztack Origin baseline",
+  "description": "Schema-versioned Origin baseline. Records the Template revision a Derived project last accepted and per-file metadata for drift detection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "derivedProjectId",
+    "templateId",
+    "templateRevision",
+    "acceptedAt",
+    "files"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "derivedProjectId": {
+      "type": "string",
+      "description": "Opaque stable Derived project identifier generated at scaffolding."
+    },
+    "templateId": {
+      "type": "string"
+    },
+    "templateRevision": {
+      "type": "string",
+      "description": "Template revision tag or commit accepted as the Origin baseline."
+    },
+    "templateRevisionRef": {
+      "type": "string",
+      "description": "Optional verifier reference (e.g. git:abc123)."
+    },
+    "acceptedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "files": {
+      "type": "object",
+      "description": "Per-file metadata. Keys are Derived-project-relative paths.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["templateHash"],
+        "properties": {
+          "templateHash": {
+            "type": "string",
+            "description": "Hash of the file as it appeared in the accepted Template revision."
+          },
+          "projectHash": {
+            "type": "string",
+            "description": "Hash of the file as it appeared in the Derived project at acceptance."
+          }
+        }
+      }
+    }
+  }
+}

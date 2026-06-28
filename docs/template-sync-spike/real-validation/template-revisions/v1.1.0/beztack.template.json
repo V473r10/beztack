@@ -1,0 +1,15 @@
+{
+  "templateId": "beztack-core",
+  "currentVersion": "1.1.0",
+  "strategyByPath": {
+    "packages/**": "template-owned",
+    "apps/**": "custom-owned",
+    ".env.contract.json": "template-owned",
+    ".env.example": "custom-owned",
+    "pnpm-lock.yaml": "custom-owned",
+    "**": "mixed"
+  },
+  "appliedMigrations": [
+    "add-environment-contract-separation"
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0",
+  "derivedProjectId": "dp_01HMVLNCD00000000000000000A",
+  "templateId": "beztack-core",
+  "currentRevision": "v1.0.0",
+  "candidateRevision": "v1.1.0",
+  "syncEngine": {
+    "name": "beztack-sync-prototype",
+    "version": "0.0.0"
+  },
+  "status": "ready-to-apply",
+  "files": {
+    "beztack.template.json": {
+      "ownership": "mixed",
+      "drift": "template-changed",
+      "seam": null
+    },
+    ".env.contract.json": {
+      "ownership": "mixed",
+      "drift": "added",
+      "seam": null
+    },
+    "package.json": {
+      "ownership": "mixed",
+      "drift": "added",
+      "seam": null
+    },
+    ".env.example": {
+      "ownership": "mixed",
+      "drift": "added",
+      "seam": null
+    },
+    "apps/api/db.ts": {
+      "ownership": "custom-owned",
+      "drift": "added",
+      "seam": null
+    },
+    "apps/api/routes.ts": {
+      "ownership": "custom-owned",
+      "drift": "added",
+      "seam": null
+    },
+    "packages/cli/index.ts": {
+      "ownership": "template-owned",
+      "drift": "added",
+      "seam": null
+    }
+  },
+  "conflicts": [],
+  "overlaps": [
+    {
+      "path": "apps/api/db.ts",
+      "rules": [
+        "apps/**",
+        "**"
+      ],
+      "strategies": [
+        "custom-owned",
+        "mixed"
+      ],
+      "severity": "warning",
+      "detail": "More-specific rule wins: ** is authoritative. Apply preserves the file as mixed and surfaces a warning so reviewers can resolve the policy."
+    },
+    {
+      "path": "apps/api/routes.ts",
+      "rules": [
+        "apps/**",
+        "**"
+      ],
+      "strategies": [
+        "custom-owned",
+        "mixed"
+      ],
+      "severity": "warning",
+      "detail": "More-specific rule wins: ** is authoritative. Apply preserves the file as mixed and surfaces a warning so reviewers can resolve the policy."
+    },
+    {
+      "path": "packages/cli/index.ts",
+      "rules": [
+        "packages/**",
+        "**"
+      ],
+      "strategies": [
+        "template-owned",
+        "mixed"
+      ],
+      "severity": "warning",
+      "detail": "More-specific rule wins: ** is authoritative. Apply preserves the file as mixed and surfaces a warning so reviewers can resolve the policy."
+    }
+  ],
+  "recommendation": {
+    "action": "apply",
+    "command": "beztack-sync.mjs apply --to v1.1.0",
+    "note": "Apply proceeds on a branch. The Environment contract update and Template parameter rendering happen automatically."
+  }
+}

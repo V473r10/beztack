@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beztack.dev/schemas/sync-policy.schema.json",
+  "title": "Beztack Sync policy",
+  "description": "Schema-versioned Sync policy for Beztack template sync. Declares Ownership strategy rules, Sync seams, the Environment contract path, and Template parameter file location. A valid Sync policy must validate overlaps and shadowing before apply per ADR-0006.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "templateId",
+    "ownership",
+    "environmentContract",
+    "parameters"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version. Engines must refuse unknown values."
+    },
+    "templateId": {
+      "type": "string",
+      "description": "Identifier of the Template source this policy belongs to."
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "schemaVersion"],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path to the persisted Template parameter file in a Derived project."
+        },
+        "schemaVersion": {
+          "type": "string",
+          "const": "1.0"
+        }
+      }
+    },
+    "environmentContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "format"],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path to the Environment contract file (Template-owned)."
+        },
+        "format": {
+          "type": "string",
+          "enum": ["json", "yaml"]
+        },
+        "note": {
+          "type": "string",
+          "description": "Ownership note. Does not change sync behavior."
+        }
+      }
+    },
+    "ownership": {
+      "type": "array",
+      "description": "Ordered Ownership rules. First match wins for non-overlapping cases. Engines must detect overlaps and shadowing across rules before apply.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "strategy"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Glob relative to the Derived project root."
+          },
+          "strategy": {
+            "type": "string",
+            "enum": ["template-owned", "custom-owned", "mixed"]
+          },
+          "note": {
+            "type": "string",
+            "description": "Human-readable Ownership note. Records intent without changing merge behavior."
+          }
+        }
+      }
+    },
+    "seams": {
+      "type": "array",
+      "description": "Sync seams. Mixed ownership should be resolved through Sync seams where practical; zone markers remain an escape hatch.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "file"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable seam identifier."
+          },
+          "file": {
+            "type": "string"
+          },
+          "marker": {
+            "type": "string",
+            "description": "Marker convention used at the seam, if any."
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "engines": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minimumVersion": {
+          "type": "string",
+          "description": "Minimum Sync engine version compatible with this policy."
+        }
+      },
+      "description": "Optional Sync engine compatibility hint."
+    }
+  }
+}

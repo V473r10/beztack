@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "derivedProjectId": "dp_01HMVLNCD00000000000000000A",
+  "trustClass": "trusted",
+  "templateId": "beztack-core",
+  "baselineRevision": "v1.0.0",
+  "label": "promotion: candidate",
+  "candidates": [
+    {
+      "path": "packages/cli/index.ts",
+      "ownership": "template-owned",
+      "reason": "new-template-owned-file",
+      "suggestedSeam": null
+    }
+  ],
+  "skipped": [
+    {
+      "path": ".env.example",
+      "ownership": "mixed",
+      "reason": "platform-extraction-required"
+    },
+    {
+      "path": "apps/api/db.ts",
+      "ownership": "custom-owned",
+      "reason": "custom-owned-product-domain"
+    },
+    {
+      "path": "apps/api/routes.ts",
+      "ownership": "custom-owned",
+      "reason": "custom-owned-product-domain"
+    }
+  ],
+  "checks": [
+    {
+      "name": "schema/sync-policy",
+      "result": "pass"
+    },
+    {
+      "name": "schema/origin-baseline",
+      "result": "pass"
+    },
+    {
+      "name": "schema/sync-state",
+      "result": "pass"
+    },
+    {
+      "name": "ownership/overlap-validation",
+      "result": "pass"
+    },
+    {
+      "name": "promotion/candidate-filter",
+      "result": "pass"
+    },
+    {
+      "name": "engine/version-compatibility",
+      "result": "pass"
+    }
+  ],
+  "suggestedTemplateVersionImpact": "minor",
+  "relatedPromotions": []
+}

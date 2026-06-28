@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "templateId": "beztack-core",
+  "ownership": [
+    {
+      "path": "packages/**",
+      "strategy": "template-owned",
+      "note": "Mirrors real beztack.template.json strategyByPath — packages are Template-owned in Beztack."
+    },
+    {
+      "path": "apps/**",
+      "strategy": "custom-owned",
+      "note": "Mirrors real beztack.template.json strategyByPath — apps are Custom-owned in Beztack (lncd)."
+    },
+    {
+      "path": "**",
+      "strategy": "mixed",
+      "note": "Mirrors real beztack.template.json strategyByPath catch-all. Combined with apps/** and packages/**, this creates overlapping rules for every path."
+    }
+  ],
+  "seams": [],
+  "environmentContract": {
+    "file": ".env.contract.json",
+    "format": "json"
+  },
+  "parameters": {
+    "file": ".beztack/parameters.json",
+    "schemaVersion": "1.0"
+  }
+}
