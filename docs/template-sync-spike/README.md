@@ -82,7 +82,7 @@ node docs/template-sync-spike/custom-engine/beztack-sync.mjs \
 | Criteria include non-interactive, PR-only, revisions, policy, etc.   | [Criteria](#criteria)                                         |
 | Reproducible notes/commands                                          | [Reproducible checks](#reproducible-checks)                   |
 | Runs against minimal fixture or documents missing capability         | [Fixture-driven checks](#fixture-driven-checks)               |
-| Validates leading option against real Beztack → lncd case            | [Real Beztack validation](#real-beztack-validation)           |
+| Validates leading option against Beztack strategy; lncd validation deferred | [Real Beztack validation](#real-beztack-validation)           |
 | Ends with exactly one recommendation                                 | [Recommendation](#recommendation)                             |
 | Identifies Beztack-specific behavior even if external tool adopted   | [What remains Beztack-specific](#what-remains-beztack-specific) |
 
@@ -504,19 +504,32 @@ caller (a follow-up CI step or the GitHub CLI) to create and push.
 
 ## Real Beztack validation
 
+**Real Beztack strategy validation passed; real lncd repository
+validation deferred because lncd was not accessible in this
+environment.**
+
 The fixture-driven checks above use an engine-agnostic scenario. Issue
 #28 also requires validating the leading option against the real
-Beztack → lncd case. The actual `lncd` repository is not accessible from
-this spike environment (no clone in the workspace, no Beztack
-credentials for the `lncd` organization), so the spike substitutes a
-synthetic Derived project that uses the **real** current
-`beztack.template.json` strategy verbatim.
-This exercises the same contract against real project complexity rather
-than only the hand-crafted minimal fixture.
+Beztack → lncd case. The actual `lncd` repository is not accessible
+from this spike environment (no clone in the workspace, no Beztack
+credentials for the `lncd` organization), so the spike uses the real
+current `beztack.template.json` strategy verbatim and exercises a
+synthetic lncd-like Derived project against a real `v1.0.0 → v1.1.0`
+diff (with the `add-environment-contract-separation` migration).
 
-See [`real-validation/`](real-validation/) for the validation inputs and
-[`real-validation/analysis.md`](real-validation/analysis.md) for the
-analysis.
+- **Real Beztack strategy validation** — passed. The real
+  `beztack.template.json` strategy runs end-to-end; all three engine
+  outputs are schema-conformant.
+- **Real lncd repository validation** — deferred. The `lncd` repo
+  could not be cloned in this environment, so the validation uses a
+  synthetic Derived project with the same shape (apps/api
+  customisations, packages/ untouched). The first task of the
+  follow-up implementation issue is to clone the real `lncd` repo and
+  re-run the spike against it.
+
+See [`real-validation/`](real-validation/) for the validation inputs
+and [`real-validation/analysis.md`](real-validation/analysis.md) for
+the analysis.
 
 Key observations from the validation:
 
@@ -657,6 +670,27 @@ engine choice must support them as first-class concepts. Building custom
 gives Beztack full control over how they are modeled; wrapping or
 adopting an external tool would require implementing them in a Beztack
 shim layer regardless.
+
+## Out-of-scope reinforcements
+
+PRD #27 enumerates out-of-scope behaviors that the spike output must
+explicitly enforce rather than only omit. The recommendation and the
+follow-up implementation must respect each of these:
+
+- **Promotion merge does not auto-publish a Template version; release
+  remains explicit.** This is the enforcement of PRD #27's
+  "Automatically publishing a new Template version whenever a Promotion
+  merges" out-of-scope item. The engine emits
+  `suggestedTemplateVersionImpact: "patch" | "minor" | "major" | "none"`
+  as **metadata for reviewers**, not as an automated publish trigger.
+  Beztack maintainers tag the next Template version explicitly; the
+  engine never does.
+- Full-workspace snapshots are not the central rollback mechanism.
+  Rollback rides on Git branches and PRs (ADR-0006).
+- Community Derived projects are never auto-trusted; trust comes from
+  the Beztack-owned registry.
+- Template migrations from untrusted templates require explicit local
+  execution in the Derived project, never automatic run.
 
 ## Open questions for follow-up
 
