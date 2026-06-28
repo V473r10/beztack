@@ -4,6 +4,106 @@ Beztack is a TypeScript monorepo starter with a subscription-oriented payment fl
 
 ## Language
 
+### Template Sync
+
+**Template source**:
+The Beztack project that defines reusable platform behavior for Derived projects.
+_Avoid_: upstream repo, parent repo, canonical branch
+
+**Template version**:
+A published Template source version that a Derived project may accept through template sync. Template version semantics describe expected sync impact on Derived projects.
+_Avoid_: apply count, sync run number, local version
+
+**Sync engine version**:
+The version of the tool that planned or applied template sync, recorded separately from the Template version.
+_Avoid_: template version, Beztack version, platform version
+
+**Template revision**:
+A verifiable Template source state, usually a Git tag or commit, used as the primary baseline for template sync.
+_Avoid_: hash list, generated snapshot, local cache
+
+**Template parameter**:
+A persisted Derived project value used to render Template source content during scaffolding and later template sync.
+_Avoid_: diff normalization, string substitution, local branding patch
+
+**Template migration**:
+A declared Template version step that changes Derived project state beyond applying file content.
+_Avoid_: release note, postinstall script, manual fix
+
+**Derived project**:
+A product project created from the Template source that may receive template updates while preserving product-specific ownership.
+_Avoid_: downstream, fork, child repo
+
+**Product domain**:
+The Derived project-owned business behavior that is not part of the reusable Template source.
+_Avoid_: custom code, downstream logic, app-specific stuff
+
+**Derived project ID**:
+An opaque stable identifier generated when a Derived project is created and used for sync traceability.
+_Avoid_: repository name, package name, remote URL
+
+**Trusted Derived project**:
+A Derived project controlled by the Beztack maintainer organization whose Promotions may be prepared by trusted automation but still require review before entering the Template source.
+_Avoid_: internal downstream, official fork
+
+**Community Derived project**:
+A Derived project outside the Beztack maintainer trust boundary whose Promotions are treated as untrusted external contributions.
+_Avoid_: user fork, third-party downstream
+
+**Sync policy**:
+The declared ownership rules that decide which project is allowed to change each part of a Derived project during template sync.
+_Avoid_: manifest, config, sync settings
+
+**Ownership note**:
+A human-readable explanation attached to Sync policy that records why a path is owned or excluded without changing sync behavior.
+_Avoid_: custom zone, zone policy, merge rule
+
+**Sync seam**:
+An explicit extension point where a Derived project can add product-specific behavior without editing Template source-owned code.
+_Avoid_: zone marker, local patch, override block
+
+**Environment contract**:
+The Template source-owned set of required environment variables, meanings, and platform defaults that Derived projects must satisfy.
+_Avoid_: `.env.example`, local env file, deployment secret list
+
+**Sync conflict**:
+A template sync state where Template source changes and Derived project changes cannot be safely combined without an explicit ownership or design decision.
+_Avoid_: merge error, failed apply, broken sync
+
+**Sync state**:
+The current machine-readable template sync status of a Derived project.
+_Avoid_: manifest, origin file, report
+
+**Sync event log**:
+The append-only audit trail of template sync actions and Promotions for a Derived project.
+_Avoid_: sync state, changelog, report
+
+**Origin baseline**:
+The Template revision a Derived project last accepted for sync comparison, with optional file metadata for drift detection and offline work.
+_Avoid_: source of truth, lockfile, sync database
+
+**Baseline reset**:
+An explicit acceptance of the current Derived project state as the new Origin baseline after review.
+_Avoid_: origin rebuild, hash fix, cleanup
+
+**Promotion**:
+An opt-in proposal to move a validated change from a Derived project back into the Template source.
+_Avoid_: reverse sync, upstream sync, backport
+
+**Promotion candidate**:
+A Derived project change that is eligible to be proposed as a Promotion because it belongs to Template source ownership or to unprotected parts of mixed ownership.
+_Avoid_: useful downstream change, upstreamable change
+
+**Platform extraction**:
+The design of reusable Template source behavior inspired by a Product domain change without copying product-owned behavior directly.
+_Avoid_: promotion, upstream copy, generalization by copy-paste
+
+**Promotion label**:
+The PR label on a Derived project change that explicitly opts the change into Promotion consideration.
+_Avoid_: branch name, commit prefix, issue label
+
+### Subscription Billing
+
 **Plan change**:
 A change from one active Subscription plan to another, including tier changes and Billing cadence changes. A Plan change requires a different tier or Billing cadence; a same-tier, same-cadence request is not a Plan change.
 _Avoid_: upgrade flow, downgrade flow, subscription workflow
