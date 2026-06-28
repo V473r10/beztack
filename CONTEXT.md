@@ -1,6 +1,6 @@
 # Beztack Context
 
-Beztack is a TypeScript monorepo starter with a subscription-oriented payment flow. This context records project-specific domain language that should stay consistent across architecture work.
+Beztack is a TypeScript monorepo starter with a subscription-oriented payment flow and a template sync model for Derived projects. This context records project-specific domain language that should stay consistent across architecture work.
 
 ## Language
 
@@ -13,6 +13,14 @@ _Avoid_: upstream repo, parent repo, canonical branch
 **Template version**:
 A published Template source version that a Derived project may accept through template sync. Template version semantics describe expected sync impact on Derived projects.
 _Avoid_: apply count, sync run number, local version
+
+**Template update**:
+A proposed move from one accepted Template revision to a newer Template revision in a Derived project.
+_Avoid_: sync patch, upstream pull, template bump
+
+**Sync engine**:
+The tool that plans, validates, or applies template sync actions for a Derived project.
+_Avoid_: template, CLI version, sync policy
 
 **Sync engine version**:
 The version of the tool that planned or applied template sync, recorded separately from the Template version.
@@ -46,6 +54,10 @@ _Avoid_: repository name, package name, remote URL
 A Derived project controlled by the Beztack maintainer organization whose Promotions may be prepared by trusted automation but still require review before entering the Template source.
 _Avoid_: internal downstream, official fork
 
+**Trusted Derived project registry**:
+The Beztack-owned allowlist that records which Derived project IDs belong to trusted repositories.
+_Avoid_: downstream config, project self-declaration, GitHub org membership
+
 **Community Derived project**:
 A Derived project outside the Beztack maintainer trust boundary whose Promotions are treated as untrusted external contributions.
 _Avoid_: user fork, third-party downstream
@@ -53,6 +65,22 @@ _Avoid_: user fork, third-party downstream
 **Sync policy**:
 The declared ownership rules that decide which project is allowed to change each part of a Derived project during template sync.
 _Avoid_: manifest, config, sync settings
+
+**Ownership strategy**:
+The Sync policy classification for a path or file region: Template-owned, Custom-owned, or Mixed ownership.
+_Avoid_: merge mode, sync behavior, file status
+
+**Template-owned**:
+An Ownership strategy where the Template source owns updates for the path or file region.
+_Avoid_: upstream-owned, generated, shared
+
+**Custom-owned**:
+An Ownership strategy where the Derived project owns updates for the path or file region, usually because it belongs to its Product domain.
+_Avoid_: downstream-owned, ignored, local-only by accident
+
+**Mixed ownership**:
+An Ownership strategy where the Template source and Derived project both have legitimate ownership in a path or file region and must be separated by a Sync seam or explicit conflict handling.
+_Avoid_: partially custom, manual merge file, zone file
 
 **Ownership note**:
 A human-readable explanation attached to Sync policy that records why a path is owned or excluded without changing sync behavior.
@@ -83,7 +111,7 @@ The Template revision a Derived project last accepted for sync comparison, with 
 _Avoid_: source of truth, lockfile, sync database
 
 **Baseline reset**:
-An explicit acceptance of the current Derived project state as the new Origin baseline after review.
+An explicit acceptance of a reviewed Template revision and reconciled file metadata as the new Origin baseline.
 _Avoid_: origin rebuild, hash fix, cleanup
 
 **Promotion**:
@@ -91,7 +119,7 @@ An opt-in proposal to move a validated change from a Derived project back into t
 _Avoid_: reverse sync, upstream sync, backport
 
 **Promotion candidate**:
-A Derived project change that is eligible to be proposed as a Promotion because it belongs to Template source ownership or to unprotected parts of mixed ownership.
+A Derived project change that is eligible to be proposed as a Promotion because it belongs to Template-owned paths or to unprotected parts of Mixed ownership.
 _Avoid_: useful downstream change, upstreamable change
 
 **Platform extraction**:
