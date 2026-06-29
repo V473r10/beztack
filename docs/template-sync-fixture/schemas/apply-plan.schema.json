@@ -17,7 +17,8 @@
     "skipped",
     "conflicts",
     "migrations",
-    "blockers"
+    "blockers",
+    "trust"
   ],
   "properties": {
     "schemaVersion": {
@@ -44,6 +45,52 @@
     "summary": {
       "type": "string",
       "description": "Human-readable summary intended for the PR description."
+    },
+    "trust": {
+      "type": "object",
+      "description": "Beztack-owned registry decision for this Derived project ID. Trust is granted by Beztack through its registry, not self-declared by Derived projects (ADR-0006).",
+      "additionalProperties": false,
+      "required": ["trustClass", "source", "registryId", "registryVersion", "effectiveTrustClass", "trustOverriddenByCaller"],
+      "properties": {
+        "trustClass": {
+          "type": "string",
+          "enum": ["trusted", "community"],
+          "description": "Trust class granted by the Beztack-owned registry."
+        },
+        "effectiveTrustClass": {
+          "type": "string",
+          "enum": ["trusted", "community"],
+          "description": "Trust class actually used for this run (registry grant or permitted override)."
+        },
+        "trustOverriddenByCaller": {
+          "type": "boolean",
+          "description": "True when the caller passed --trust-class and the registry permitted a non-escalating override."
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "registry-listed",
+            "registry-absent-default-community",
+            "registry-revoked-default-community"
+          ]
+        },
+        "registryId": { "type": "string" },
+        "registryVersion": { "type": "string" },
+        "repository": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["canonicalUrl", "knownUrls"],
+          "properties": {
+            "canonicalUrl": { "type": "string" },
+            "displayName": { "type": ["string", "null"] },
+            "knownUrls": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "note": { "type": "string" }
+      }
     },
     "updates": {
       "type": "array",

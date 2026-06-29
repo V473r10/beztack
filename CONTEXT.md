@@ -47,19 +47,19 @@ The Derived project-owned business behavior that is not part of the reusable Tem
 _Avoid_: custom code, downstream logic, app-specific stuff
 
 **Derived project ID**:
-An opaque stable identifier generated when a Derived project is created and used for sync traceability.
-_Avoid_: repository name, package name, remote URL
+An opaque stable identifier generated when a Derived project is created and used for sync traceability. The ID is the source of truth for who the Derived project is; repository name, package name, and remote URL are display-only. Renaming the GitHub repository or moving the remote URL does NOT change the ID, and the Origin baseline, Sync state, and Sync event log keep the same ID across renames. The ID is generated once at scaffolding, never reused, and never reissued for a different Derived project.
+_Avoid_: repository name, package name, remote URL, hash of the repo URL
 
 **Trusted Derived project**:
-A Derived project controlled by the Beztack maintainer organization whose Promotions may be prepared by trusted automation but still require review before entering the Template source.
+A Derived project controlled by the Beztack maintainer organization whose Promotions may be prepared by trusted automation but still require review before entering the Template source. Trust is granted by Beztack through the Trusted Derived project registry; a Derived project cannot self-declare trusted status.
 _Avoid_: internal downstream, official fork
 
 **Trusted Derived project registry**:
-The Beztack-owned allowlist that records which Derived project IDs belong to trusted repositories.
-_Avoid_: downstream config, project self-declaration, GitHub org membership
+The Beztack-owned allowlist that records which Derived project IDs belong to trusted repositories, along with the expected repository identity and governance metadata. The registry is Beztack-owned, lives outside any Derived project tree, and is the only source of truth for trust decisions. Each entry records the opaque Derived project ID, the current canonical remote URL, the rename history of remote URLs (so renames are auditable without changing the ID), the trust class granted by Beztack, and the governance rationale. A Derived project whose ID is absent from the registry is a Community Derived project by default. A Trusted entry that has been revoked (revokedAt set) falls back to community trust while remaining in the registry for audit.
+_Avoid_: downstream config, project self-declaration, GitHub org membership, repo-name allowlist
 
 **Community Derived project**:
-A Derived project outside the Beztack maintainer trust boundary whose Promotions are treated as untrusted external contributions.
+A Derived project outside the Beztack maintainer trust boundary whose Promotions are treated as untrusted external contributions. Trust is one-way: a Community Derived project cannot escalate to trusted status by self-declaration; only Beztack can grant trust, and only by adding the Derived project ID to the Trusted Derived project registry. Community maintainers consume Template updates through release notes and local tooling without Beztack holding permissions in the repository.
 _Avoid_: user fork, third-party downstream
 
 **Sync policy**:

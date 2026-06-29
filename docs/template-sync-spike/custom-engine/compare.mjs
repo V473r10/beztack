@@ -146,6 +146,21 @@ out.results.status = {
             s.action === expected.action
         )
       ),
+    trustBlockPresent:
+      !!status.trust &&
+      typeof status.trust.trustClass === "string" &&
+      typeof status.trust.source === "string" &&
+      typeof status.trust.registryId === "string" &&
+      typeof status.trust.registryVersion === "string" &&
+      typeof status.trust.effectiveTrustClass === "string" &&
+      typeof status.trust.trustOverriddenByCaller === "boolean",
+    trustClassMatchesRegistry:
+      status.trust?.trustClass === statusExpected.trust?.trustClass,
+    trustSourceMatchesRegistry:
+      status.trust?.source === statusExpected.trust?.source,
+    trustRepositoryKnownUrlsPreserved: Array.isArray(
+      status.trust?.repository?.knownUrls
+    ),
   },
 };
 
@@ -182,6 +197,10 @@ out.results.applyPlan = {
             m.branchAction === expected.branchAction
         )
       ),
+    trustBlockPresent:
+      !!plan.trust &&
+      typeof plan.trust.trustClass === "string" &&
+      typeof plan.trust.source === "string",
   },
 };
 
@@ -199,6 +218,10 @@ out.results.promotionMetadata = {
       promo.skipped.some((p) => p.path === s.path)
     ),
     trustClassCorrect: promo.trustClass === promoExpected.trustClass,
+    trustBlockPresent:
+      !!promo.trust &&
+      promo.trust.trustClass === promo.trustClass &&
+      typeof promo.trust.source === "string",
     labelCorrect: promo.label === promoExpected.label,
     baselineRevisionCorrect:
       promo.baselineRevision === promoExpected.baselineRevision,

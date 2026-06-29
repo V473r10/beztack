@@ -30,6 +30,59 @@ Out of scope:
 - The real Beztack → lncd validation case (separate issue #28 deliverable).
 - Any tool-specific configuration files (Copier/Cruft/subtree metadata).
 
+## Trusted Derived project registry (issue #32)
+
+Trust is granted by Beztack through a Beztack-owned registry file, not
+self-declared by Derived projects (ADR-0006). The registry lives
+**outside the Derived project tree** in
+`beztack/derived-project-registry.json`, ships under
+`docs/template-sync-fixture/beztack/`, and is schema-versioned by
+`derived-project-registry.schema.json`.
+
+| Property                                | Value                                                                                       |
+|-----------------------------------------|---------------------------------------------------------------------------------------------|
+| Source of trust                         | Beztack-owned registry. Derived projects cannot self-declare trust.                        |
+| Key                                     | Opaque stable `derivedProjectId`. Renames and remote URL changes do NOT change the ID.      |
+| Trust classes                           | `trusted` (registry grant), `community` (default when absent or revoked).                   |
+| Repository identity                     | `canonicalUrl` (current) + `knownUrls` (rename history). First entry is the canonical URL. |
+| Revocation                              | `revokedAt` timestamp; engine treats revoked entries as community trust but keeps them.    |
+| Where the registry lives                | `beztack/derived-project-registry.json` (NOT in any Derived project tree).                  |
+| Schema                                  | `derived-project-registry.schema.json`. Pins `schemaVersion: "1.0"`.                       |
+| Surface in engine outputs               | `sync-state.trust`, `apply-plan.trust`, `promotion-metadata.trust` (all schema-versioned). |
+
+### Identity and rename traceability
+
+A Derived project ID is generated once at scaffolding and is opaque. It
+is **not** derived from the repository name, package name, or remote
+URL, so renaming a repository (for example `V473r10/lncd` →
+`beztack/lncd`) or moving it to a different host does NOT change the
+ID. The Origin baseline, Sync state, Sync event log, and Promotion
+metadata keep the same `derivedProjectId` across renames.
+
+To preserve audit history across renames, the registry entry for a
+Trusted Derived project records both the current `canonicalUrl` and the
+full rename history in `knownUrls` (with the canonical URL as the first
+entry). Beztack-owned tooling targets the canonical URL for automated
+update notifications; the rename history is for traceability and review.
+
+### Self-declared trust is refused
+
+A `--trust-class trusted` flag (or any other project-side signal) is
+honored only when the registry lists the `derivedProjectId` as
+`trusted`. If the ID is absent from the registry, or the entry is
+revoked, the engine exits with code 5 and refuses to plan or apply.
+A Community maintainer can pass `--trust-class community` to opt out
+of trusted dispatch for a single run, but cannot escalate to trusted.
+
+### Community fallback
+
+A Derived project whose ID is absent from the registry is treated as
+`trustClass: "community"` with `source:
+"registry-absent-default-community"`. The engine still runs, the
+Sync state schema still validates, and the recommendation surfaces the
+release-notes / local-tooling path so the maintainer does not need
+Beztack-held permissions.
+
 ## Schema-versioned artifacts (issue #30)
 
 Every file the engine reads from or writes to a Derived project is
@@ -48,6 +101,7 @@ with a clear error and never produce a plan.
 | Apply plan               | `apply-plan.schema.json`        | Engine output                                                  | Plan the engine prepares for a reviewable branch.                        |
 | Promotion metadata       | `promotion-metadata.schema.json` | Engine output                                                 | Metadata for an opt-in Promotion from a Derived project PR.              |
 | Template manifest        | `template-manifest.schema.json` | `<template-revisions>/<version>/template.json`                | Declares Template identity, semver, expected sync impact, the compatible Sync engine version range, and Template migrations declared at this version. |
+| Trusted Derived project registry | `derived-project-registry.schema.json` | `<fixture>/beztack/derived-project-registry.json` (Beztack-owned) | Maps opaque Derived project IDs to a trust class and the expected repository identity (canonical URL + rename history). The single source of truth for trust. |
 
 ### Sync engine version vs. Template version
 
@@ -143,6 +197,8 @@ docs/template-sync-fixture/
 │       ├── apps/api/middleware.ts     # NEW
 │       ├── .env.contract.json
 │       └── package.json
+├── beztack/                           # Beztack-owned fixture data (issue #32)
+│   └── derived-project-registry.json  # Beztack-owned Trusted Derived project registry
 ├── derived-project/                   # Derived project state
 │   ├── .beztack/
 │   │   ├── template.json              # Sync policy
@@ -351,6 +407,19 @@ this fixture; the fixture's `derived-project/` state is what it is.
 | Template versions can declare compatible Sync engine version ranges         | `template-manifest.schema.json#compatibleEngines.minimum` / `.maximum`; `template-revisions/v1.1.0/template.json`, `template-revisions/v1.2.0/template.json` |
 | Invalid or unsupported schema versions fail before planning or applying     | `validate.mjs` gate in `docs/template-sync-spike/custom-engine/`; `fixture.test.mjs` tests that an invalid `schemaVersion` is rejected |
 | Specification validated against the Sync engine contract fixture            | All new schemas live next to the existing fixture schemas and are exercised by `fixture.test.mjs` |
+
+## Acceptance criteria mapping (issue #32)
+
+| Issue #32 acceptance criterion                                                       | Fixture artifact / test                                                                                                                  |
+|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| Stable opaque Derived project ID generated once for a Derived project                | `origin.derivedProjectId` = `dp_01HMVBEZTACK0000000000000A` (opaque, not derived from repo name or URL); `identity-registry.test.mjs` "stable opaque Derived project ID" |
+| How project renames or remote URL changes affect traceability                        | Registry entry records `canonicalUrl` + `knownUrls`; Derived project ID stays the same across renames; `identity-registry.test.mjs` "Derived project ID stays stable when the canonical URL changes" |
+| Trusted Derived project registry is Beztack-owned, not self-declared                  | `beztack/derived-project-registry.json` lives outside the Derived project tree; engine refuses self-declared `--trust-class trusted`; `identity-registry.test.mjs` "Beztack-owned registry file exists outside the Derived project tree" |
+| Registry records enough metadata to identify trusted repositories and trust class    | `derivedProjectId`, `trustClass`, `repository.{canonicalUrl,knownUrls,displayName}`, `addedAt`, `addedBy`, `governanceNotes`; `identity-registry.test.mjs` "registry entries record canonicalUrl, knownUrls, and trust class metadata" |
+| Copied Community Derived project with the same ID does NOT receive trusted status    | Engine defaults to `community` for IDs absent from the registry and refuses `--trust-class trusted` for them; `identity-registry.test.mjs` "copied Community Derived project with same trusted ID does NOT receive trusted status" |
+| Trusted Derived projects targetable for automated update notification                | Registry records `canonicalUrl` per Trusted entry; engine surfaces it in `sync-state.trust.repository.canonicalUrl`; `identity-registry.test.mjs` "Trusted Derived projects are targetable for automated update notification" |
+| Community Derived projects remain supported through release notes and local tooling  | Engine still runs for community IDs; status/apply/promotion validate; `identity-registry.test.mjs` "Community Derived projects are supported through local tooling" |
+| Validated against the schema-versioned Sync state contract                           | `derived-project-registry.schema.json` pins `schemaVersion: "1.0"`; `sync-state`, `apply-plan`, `promotion-metadata` schemas all pin the trust block; `identity-registry.test.mjs` "registry file validates against the derived-project-registry schema" and "schemas refuse additional properties on the trust block" |
 
 ## Acceptance criteria mapping (issue #34)
 

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "registryVersion": "2026.06.29",
+  "registryId": "beztack-public-trust-registry",
+  "templateId": "beztack-core",
+  "issuedAt": "2026-06-29T00:00:00Z",
+  "notes": "Beztack-owned allowlist of Trusted Derived projects. Trust is granted by Beztack through this registry, not self-declared by Derived projects (ADR-0006). A Derived project whose ID is absent from this registry is a Community Derived project by default.",
+  "entries": [
+    {
+      "derivedProjectId": "dp_01HMVBEZTACK0000000000000A",
+      "trustClass": "trusted",
+      "repository": {
+        "canonicalUrl": "https://github.com/beztack/lncd",
+        "knownUrls": [
+          "https://github.com/beztack/lncd",
+          "https://github.com/V473r10/lncd"
+        ],
+        "displayName": "lncd"
+      },
+      "addedAt": "2026-05-15T00:00:00Z",
+      "addedBy": "beztack:core-team",
+      "governanceNotes": "lncd is the maintainer-controlled pilot Derived project. Granted trusted status via governance PR beztack#182. Repository was moved from V473r10/lncd to beztack/lncd on 2026-05-15; the previous URL is retained in knownUrls so traceability survives the rename."
+    },
+    {
+      "derivedProjectId": "dp_01HMVBEZTACK0000000000000B",
+      "trustClass": "trusted",
+      "repository": {
+        "canonicalUrl": "https://github.com/beztack/example-derived",
+        "knownUrls": [
+          "https://github.com/beztack/example-derived"
+        ],
+        "displayName": "example-derived"
+      },
+      "addedAt": "2026-06-01T00:00:00Z",
+      "addedBy": "beztack:core-team",
+      "governanceNotes": "Trusted Derived project added on 2026-06-01. Beztack holds automated dispatch credentials for the canonicalUrl."
+    },
+    {
+      "derivedProjectId": "dp_01HMVBEZTACK0000000000000R",
+      "trustClass": "trusted",
+      "repository": {
+        "canonicalUrl": "https://github.com/beztack/legacy-derived",
+        "knownUrls": [
+          "https://github.com/beztack/legacy-derived",
+          "https://github.com/beztack/legacy-derived-old"
+        ],
+        "displayName": "legacy-derived"
+      },
+      "addedAt": "2026-01-10T00:00:00Z",
+      "addedBy": "beztack:core-team",
+      "governanceNotes": "Revoked on 2026-04-20; kept in the registry for audit. Engines must treat this entry as Community trust despite the trustClass field.",
+      "revokedAt": "2026-04-20T00:00:00Z"
+    }
+  ]
+}

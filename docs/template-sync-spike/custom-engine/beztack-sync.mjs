@@ -19,13 +19,22 @@ import {
   buildMigrationPlanEntry,
   migrationRecommendation,
 } from "./migrations.mjs";
+import {
+  loadRegistry,
+  resolveTrustClass,
+  assertRegistryMatches,
+  buildRegistryDecision,
+  formatRegistryNotice,
+  RegistryError,
+  DEFAULT_REGISTRY_PATH,
+} from "./registry.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 const subcommand = args._[0];
 
 if (!subcommand) {
   console.error(
-    "Usage: beztack-sync.js <status|apply|promotion-metadata> [--fixture PATH] [--from REV] [--to REV] [--derived-project PATH] [--engine NAME VERSION] [--format json|human] [--worktree PATH [--init-git]]"
+    "Usage: beztack-sync.js <status|apply|promotion-metadata> [--fixture PATH] [--from REV] [--to REV] [--derived-project PATH] [--engine NAME VERSION] [--format json|human] [--worktree PATH [--init-git]] [--registry PATH] [--trust-class trusted|community]"
   );
   process.exit(2);
 }
@@ -39,10 +48,11 @@ const fromRev = args.from ?? "v1.1.0";
 const toRev = args.to ?? "v1.2.0";
 const engineName = args.engine ?? "beztack-sync-prototype";
 const engineVersion = args["engine-version"] ?? "0.2.0";
-const trustClass =
-  args["trust-class"] ??
-  process.env.BEZTACK_TRUST_CLASS ??
-  "trusted";
+const registryPath = resolve(
+  args.registry ?? join(fixtureRoot, DEFAULT_REGISTRY_PATH)
+);
+const requestedTrustClass =
+  args["trust-class"] ?? process.env.BEZTACK_TRUST_CLASS ?? null;
 const skipValidation = args["skip-validation"] === true;
 const outputFormat = args.format ?? "json";
 const worktreePath = args.worktree ? resolve(args.worktree) : null;
@@ -53,6 +63,18 @@ const toTemplateRoot = join(fixtureRoot, "template-revisions", toRev);
 const revisionManifestPath = "template.json";
 
 const schemas = skipValidation ? null : await loadSchemas(schemaDir);
+let registry = null;
+try {
+  registry = schemas
+    ? await loadRegistry(registryPath, schemas)
+    : await loadRegistry(registryPath, await loadSchemas(schemaDir));
+} catch (err) {
+  if (err instanceof RegistryError) {
+    console.error(err.message);
+    process.exit(5);
+  }
+  throw err;
+}
 
 const policy = JSON.parse(
   await readFile(join(derivedRoot, ".beztack/template.json"), "utf8")
@@ -109,6 +131,34 @@ if (schemas) {
 const derivedProjectId = origin.derivedProjectId;
 const templateId = policy.templateId;
 
+const registryDecision = buildRegistryDecision({ derivedProjectId, registry });
+const resolvedTrust = registryDecision.resolved;
+try {
+  assertRegistryMatches(derivedProjectId, resolvedTrust, requestedTrustClass);
+} catch (err) {
+  if (err instanceof RegistryError) {
+    console.error(err.message);
+    process.exit(5);
+  }
+  throw err;
+}
+
+// The registry's grant is the canonical trust class. A caller-provided
+// `--trust-class` flag is honored only when it does not escalate trust
+// beyond the registry grant. This preserves the one-way trust rule: a
+// Derived project owner cannot self-declare trusted status.
+const effectiveTrustClass =
+  requestedTrustClass && requestedTrustClass !== resolvedTrust.trustClass
+    ? requestedTrustClass
+    : resolvedTrust.trustClass;
+const trustOverridden = effectiveTrustClass !== resolvedTrust.trustClass;
+const trustPayload = {
+  ...registryDecision.payload,
+  effectiveTrustClass,
+  trustOverriddenByCaller: trustOverridden,
+};
+const projectTrustClass = effectiveTrustClass;
+
 const engineOutput = {
   name: engineName,
   version: engineVersion,
@@ -127,7 +177,9 @@ if (subcommand === "status") {
     origin,
     engineOutput,
     manifest: toManifest,
-    projectTrustClass: trustClass,
+    projectTrustClass,
+    trustPayload,
+    resolvedTrust,
   });
   if (outputFormat === "human" || outputFormat === "md" || outputFormat === "markdown") {
     process.stdout.write(formatStatusMarkdown(status) + "\n");
@@ -154,7 +206,9 @@ if (subcommand === "status") {
     origin,
     engineOutput,
     manifest: toManifest,
-    projectTrustClass: trustClass,
+    projectTrustClass,
+    trustPayload,
+    resolvedTrust,
   });
   if (worktreePath) {
     const result = await prepareBranch({
@@ -168,7 +222,7 @@ if (subcommand === "status") {
       plan,
       engineOutput,
       initGit,
-      projectTrustClass: trustClass,
+      projectTrustClass,
     });
     if (outputFormat === "human" || outputFormat === "md" || outputFormat === "markdown") {
       process.stdout.write(formatPlanMarkdown(plan) + "\n\n");
@@ -217,6 +271,9 @@ if (subcommand === "status") {
     policy,
     origin,
     engineOutput,
+    projectTrustClass,
+    trustPayload,
+    resolvedTrust,
   });
   process.stdout.write(JSON.stringify(meta, null, 2) + "\n");
 } else {
@@ -237,6 +294,8 @@ async function buildStatus({
   engineOutput,
   manifest,
   projectTrustClass,
+  trustPayload,
+  resolvedTrust,
 }) {
   const fromFiles = await listFiles(fromTemplateRoot);
   const toFiles = await listFiles(toTemplateRoot);
@@ -359,6 +418,7 @@ async function buildStatus({
     currentRevision: origin.templateRevision ?? fromRev,
     candidateRevision: toRev,
     syncEngine: engineOutput,
+    trust: trustPayload,
     status,
     files,
     conflicts,
@@ -386,6 +446,8 @@ async function buildApplyPlan({
   engineOutput,
   manifest,
   projectTrustClass,
+  trustPayload,
+  resolvedTrust,
 }) {
   const fromFiles = await listFiles(fromTemplateRoot);
   const toFiles = await listFiles(toTemplateRoot);
@@ -532,6 +594,7 @@ async function buildApplyPlan({
     syncEngine: engineOutput,
     branch: `template-sync/${fromRev}-to-${toRev}`,
     summary,
+    trust: trustPayload,
     updates,
     skipped,
     conflicts,
@@ -642,6 +705,9 @@ async function buildPromotionMetadata({
   policy,
   origin,
   engineOutput,
+  projectTrustClass,
+  trustPayload,
+  resolvedTrust,
 }) {
   const derivedFiles = await listFiles(derivedRoot, derivedRoot);
   const originFiles = await listFiles(fromTemplateRoot);
@@ -688,7 +754,8 @@ async function buildPromotionMetadata({
   return {
     schemaVersion: "1.0",
     derivedProjectId,
-    trustClass,
+    trustClass: projectTrustClass,
+    trust: trustPayload,
     templateId,
     syncEngine: engineOutput,
     baselineRevision: origin.templateRevision ?? fromRev,
@@ -702,6 +769,7 @@ async function buildPromotionMetadata({
       { name: "ownership/overlap-validation", result: "pass" },
       { name: "promotion/candidate-filter", result: "pass" },
       { name: "engine/version-compatibility", result: "pass" },
+      { name: "registry/trust-resolution", result: "pass" },
     ],
     suggestedTemplateVersionImpact:
       candidates.length > 0 ? "minor" : "none",

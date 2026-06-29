@@ -8,6 +8,23 @@
     "name": "beztack-fixture-reference",
     "version": "0.0.0"
   },
+  "trust": {
+    "trustClass": "trusted",
+    "effectiveTrustClass": "trusted",
+    "trustOverriddenByCaller": false,
+    "source": "registry-listed",
+    "registryId": "beztack-public-trust-registry",
+    "registryVersion": "2026.06.29",
+    "repository": {
+      "canonicalUrl": "https://github.com/beztack/lncd",
+      "displayName": "lncd",
+      "knownUrls": [
+        "https://github.com/beztack/lncd",
+        "https://github.com/V473r10/lncd"
+      ]
+    },
+    "note": "Derived project ID dp_01HMVBEZTACK0000000000000A is on the Beztack-owned registry; trust class is trusted."
+  },
   "status": "conflicts",
   "migrations": [
     {

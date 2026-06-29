@@ -10,6 +10,23 @@
   },
   "branch": "template-sync/v1.1.0-to-v1.2.0",
   "summary": "Apply Beztack template v1.2.0 onto Derived project dp_01HMV... (Trusted). Updates the routing harness with the api-route-registration seam preserved, refreshes the Environment contract with WEBHOOK_SIGNING_SECRET, and renders Template parameters into package.json. One Sync conflict (apps/api/middleware.ts) requires an explicit decision. Two ownership overlaps (packages/auth/session.ts, apps/checkout/payment-handler.ts) are reported as warnings and resolved by the more-specific rule. The pnpm-lock.yaml lockfile is preserved as Custom-owned and is regenerated locally by the Derived project's package manager after the apply branch is prepared; engines must not copy a lockfile from the Template source. Template migrations are surfaced as separate steps: marker-environments-contract-v1.2.0 is already-applied (engine surfaces only), rotate-webhook-signing-secret is pending and requires manual human execution on the apply branch (interactive + destructive), and register-trusted-only-secrets-bundle is pending and requires manual execution (Trusted trust class). The engine does not execute any migration; the apply branch's MIGRATIONS.md documents each step for the reviewer.",
+  "trust": {
+    "trustClass": "trusted",
+    "effectiveTrustClass": "trusted",
+    "trustOverriddenByCaller": false,
+    "source": "registry-listed",
+    "registryId": "beztack-public-trust-registry",
+    "registryVersion": "2026.06.29",
+    "repository": {
+      "canonicalUrl": "https://github.com/beztack/lncd",
+      "displayName": "lncd",
+      "knownUrls": [
+        "https://github.com/beztack/lncd",
+        "https://github.com/V473r10/lncd"
+      ]
+    },
+    "note": "Derived project ID dp_01HMVBEZTACK0000000000000A is on the Beztack-owned registry; trust class is trusted."
+  },
   "updates": [
     {
       "path": ".env.contract.json",

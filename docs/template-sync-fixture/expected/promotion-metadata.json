@@ -2,6 +2,23 @@
   "schemaVersion": "1.0",
   "derivedProjectId": "dp_01HMVBEZTACK0000000000000A",
   "trustClass": "trusted",
+  "trust": {
+    "trustClass": "trusted",
+    "effectiveTrustClass": "trusted",
+    "trustOverriddenByCaller": false,
+    "source": "registry-listed",
+    "registryId": "beztack-public-trust-registry",
+    "registryVersion": "2026.06.29",
+    "repository": {
+      "canonicalUrl": "https://github.com/beztack/lncd",
+      "displayName": "lncd",
+      "knownUrls": [
+        "https://github.com/beztack/lncd",
+        "https://github.com/V473r10/lncd"
+      ]
+    },
+    "note": "Derived project ID dp_01HMVBEZTACK0000000000000A is on the Beztack-owned registry; trust class is trusted."
+  },
   "templateId": "beztack-core",
   "syncEngine": {
     "name": "beztack-fixture-reference",
@@ -47,7 +64,8 @@
     { "name": "schema/sync-state", "result": "pass" },
     { "name": "ownership/overlap-validation", "result": "pass" },
     { "name": "promotion/candidate-filter", "result": "pass" },
-    { "name": "engine/version-compatibility", "result": "pass" }
+    { "name": "engine/version-compatibility", "result": "pass" },
+    { "name": "registry/trust-resolution", "result": "pass" }
   ],
   "suggestedTemplateVersionImpact": "minor",
   "relatedPromotions": []

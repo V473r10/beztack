@@ -79,6 +79,13 @@ function formatStatusMarkdown(status) {
   }
   lines.push("");
 
+  if (status.trust) {
+    lines.push("## Beztack registry (trust source)");
+    lines.push("");
+    lines.push(formatTrustBlock(status.trust));
+    lines.push("");
+  }
+
   if (status.recommendation) {
     lines.push("## Recommended next action");
     lines.push("");
@@ -212,6 +219,12 @@ function formatPlanMarkdown(plan) {
     );
   }
   lines.push("");
+  if (plan.trust) {
+    lines.push("## Beztack registry (trust source)");
+    lines.push("");
+    lines.push(formatTrustBlock(plan.trust));
+    lines.push("");
+  }
   if (plan.summary) {
     lines.push("## Summary");
     lines.push("");
@@ -337,6 +350,19 @@ function formatBranchReadme({ plan, derivedProjectId, templateId, targetPath }) 
   lines.push(`- **Worktree path:** \`${targetPath}\``);
   lines.push(`- **Branch name:** \`${plan.branch}\``);
   lines.push(`- **Sync engine:** \`${plan.syncEngine.name}@${plan.syncEngine.version}\``);
+  if (plan.trust) {
+    lines.push(`- **Trust class:** \`${plan.trust.trustClass}\` (registry source: \`${plan.trust.source}\`)`);
+    if (plan.trust.repository?.canonicalUrl) {
+      lines.push(`- **Repository:** \`${plan.trust.repository.canonicalUrl}\``);
+    }
+  }
+  lines.push("");
+  lines.push(
+    "The Derived project ID is the **opaque stable identifier** generated at scaffolding. " +
+      "Renaming the GitHub repository or moving the remote URL does NOT change the ID; " +
+      "traceability rides on the ID, not on the URL. The Beztack-owned registry records " +
+      "the canonical URL plus a rename history (`knownUrls`) so renames are auditable."
+  );
   lines.push("");
 
   if (plan.summary) {
@@ -470,9 +496,48 @@ function shortName(path) {
   return basename(path);
 }
 
+function formatTrustBlock(trust) {
+  const lines = [];
+  lines.push(`- **Trust class (registry grant):** \`${trust.trustClass}\``);
+  lines.push(`- **Trust class (effective for this run):** \`${trust.effectiveTrustClass}\``);
+  if (trust.trustOverriddenByCaller) {
+    lines.push("- **Caller overrode trust class for this run** (registry permit only; cannot escalate beyond the registry grant).");
+  }
+  lines.push(`- **Source:** \`${trust.source}\``);
+  lines.push(`- **Registry:** \`${trust.registryId}\` (version \`${trust.registryVersion}\`)`);
+  if (trust.repository) {
+    lines.push(`- **Repository:** \`${trust.repository.canonicalUrl}\``);
+    if (trust.repository.displayName) {
+      lines.push(`- **Display name:** \`${trust.repository.displayName}\``);
+    }
+    if (Array.isArray(trust.repository.knownUrls) && trust.repository.knownUrls.length > 1) {
+      lines.push(
+        `- **Known remote URLs (rename history):** ${trust.repository.knownUrls.map((u) => `\`${u}\``).join(", ")}`
+      );
+    }
+  }
+  if (trust.note) {
+    lines.push("");
+    lines.push(trust.note);
+  }
+  if (trust.source !== "registry-listed") {
+    lines.push("");
+    lines.push(
+      "> **Community fallback:** because the registry does not list this Derived project ID (or the entry was revoked), the engine treats it as a Community Derived project. Trust is one-way: a Derived project cannot self-declare trusted status. The maintainer consumes releases via local tooling without Beztack-held permissions."
+    );
+  } else if (trust.repository?.canonicalUrl) {
+    lines.push("");
+    lines.push(
+      `> **Trusted dispatch:** because the registry lists \`${trust.repository.canonicalUrl}\` as a Trusted Derived project, Beztack-owned tooling may dispatch automated update notifications to this canonical URL. The maintainer retains the option to opt out per run via \`--trust-class community\`.`
+    );
+  }
+  return lines.join("\n");
+}
+
 export {
   formatStatusMarkdown,
   formatPlanMarkdown,
   formatBranchReadme,
   summarizeApplyResult,
+  formatTrustBlock,
 };

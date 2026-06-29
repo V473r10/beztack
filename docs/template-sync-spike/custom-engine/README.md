@@ -5,7 +5,7 @@
 > [`../../template-sync-fixture/`](../../template-sync-fixture/) in a
 > small Node-based CLI.
 >
-> Issues: [#31 — Template sync: Prove PR-only status/apply flow](https://github.com/V473r10/beztack/issues/31), [#34 — Template sync: Model Template migrations safely](https://github.com/V473r10/beztack/issues/34)
+> Issues: [#31 — Template sync: Prove PR-only status/apply flow](https://github.com/V473r10/beztack/issues/31), [#34 — Template sync: Model Template migrations safely](https://github.com/V473r10/beztack/issues/34), [#32 — Template sync: Add Trusted Derived project identity and registry](https://github.com/V473r10/beztack/issues/32)
 > Parent PRD: [#27 — Template Sync System](https://github.com/V473r10/beztack/issues/27)
 
 ## What this is
@@ -82,12 +82,19 @@ node --test docs/template-sync-spike/custom-engine/tests/apply-flow.test.mjs
 - `--to REV` — candidate revision (default: `v1.2.0`).
 - `--derived-project PATH` — Derived project root (default:
   `<fixture>/derived-project`).
+- `--registry PATH` — Beztack-owned Trusted Derived project registry
+  (default: `<fixture>/beztack/derived-project-registry.json`). The
+  engine refuses to run when the registry is missing or invalid
+  (exit code 5).
 - `--engine NAME VERSION` — overrides `syncEngine.name` and
   `syncEngine.version` in outputs. The validator gates every subcommand
   on `compatibleEngines` and aborts with exit code 4 if the engine
   version is below the Template minimum.
-- `--trust-class trusted|community` — overrides the trust class used
-  in Promotion metadata.
+- `--trust-class trusted|community` — caller hint. The registry is the
+  source of truth: the engine honors a downgrade (`trusted` registry
+  entry + `--trust-class community`) and refuses an escalation
+  (`--trust-class trusted` for an ID absent from the registry or with
+  a revoked entry). Refusals exit with code 5.
 - `--format json|human` — `json` is the default; `human` (alias:
   `md`, `markdown`) emits a Markdown view of `status` or the apply
   plan. `--worktree` mode also prints a one-line summary of what was
@@ -157,9 +164,12 @@ custom-engine/
 ├── format.mjs                # human-readable Markdown formatters
 ├── prepare-branch.mjs        # PR-ready branch preparation
 ├── validate.mjs              # schema-validation gate (issue #30)
+├── registry.mjs              # Beztack-owned Trusted Derived project registry (issue #32)
 ├── compare.mjs               # fixture-vs-engine comparator
 └── tests/
-    └── apply-flow.test.mjs   # PR-only flow tests (issue #31)
+    ├── apply-flow.test.mjs      # PR-only flow tests (issue #31)
+    ├── migration-flow.test.mjs  # migration flow tests (issue #34)
+    └── identity-registry.test.mjs # identity + registry tests (issue #32)
 ```
 
 The comparator (`compare.mjs`) embeds a minimal JSON Schema validator
@@ -182,7 +192,72 @@ schema-versioned outputs against the fixture schemas.
   subset used by the fixture schemas and is explicitly
   dependency-free.
 - A CI workflow that runs both `fixture.test.mjs`,
-  `apply-flow.test.mjs`, and `migration-flow.test.mjs` on every PR.
+  `apply-flow.test.mjs`, `migration-flow.test.mjs`, and
+  `identity-registry.test.mjs` on every PR.
+
+## Trusted Derived project identity and registry (issue #32)
+
+Trust is granted by Beztack through a Beztack-owned registry file. The
+registry lives **outside the Derived project tree** and the engine
+refuses to plan or apply without it.
+
+### What the registry records
+
+The registry maps each opaque stable `derivedProjectId` to a trust
+class and the expected repository identity:
+
+| Field                  | Purpose                                                                                       |
+|------------------------|-----------------------------------------------------------------------------------------------|
+| `derivedProjectId`     | Opaque stable ID generated at scaffolding. Survives renames.                                  |
+| `trustClass`           | Always `"trusted"` in the registry. Community trust is the default when the ID is absent.    |
+| `repository.canonicalUrl` | Current canonical remote URL. Beztack-owned tooling targets this for automated dispatch.    |
+| `repository.knownUrls` | Full rename history. First entry is the canonical URL; subsequent entries are prior URLs.   |
+| `repository.displayName` | Optional human-readable name. Distinct from the URL.                                      |
+| `addedAt`              | When Beztack granted trust.                                                                   |
+| `addedBy`              | Beztack-owned identity that granted trust (never self-declared).                              |
+| `governanceNotes`      | Optional rationale (PR link, scope, etc.).                                                     |
+| `revokedAt`            | Optional revocation timestamp. Revoked entries default to community trust for audit.        |
+
+### How the engine uses the registry
+
+1. The engine loads the registry before any other step (including the
+   schema gate) and refuses to run with exit code 5 if the file is
+   missing or fails `derived-project-registry.schema.json` validation.
+2. The registry decides the canonical trust class. The
+   `sync-state.trust.trustClass` field records the grant; the
+   `sync-state.trust.effectiveTrustClass` field records what the engine
+   actually used for the current run.
+3. A caller-provided `--trust-class` flag is honored only when it does
+   not escalate trust beyond the registry grant. A Trusted maintainer
+   can pass `--trust-class community` to opt out of trusted dispatch
+   for a single run; a Community project cannot pass
+   `--trust-class trusted` to opt in.
+4. Every output (`status`, `apply --plan`, `apply --worktree`,
+   `promotion-metadata`) includes a structured `trust` block that
+   references the registry ID and version, exposes the trust class
+   source, and records the repository identity. The `BRANCH_README.md`
+   documents the opaque-ID invariant and the rename history.
+
+### Why this matters for one-way trust
+
+The registry is the **only** source of truth for trust decisions. A
+Derived project owner cannot self-declare trusted status by reusing
+or guessing a `derivedProjectId` — the engine refuses the escalation
+and exits with code 5. The same restriction prevents a copied
+Community Derived project from inheriting the trust of the original
+Trusted project: if the registry does not list the ID (or lists it
+as revoked), trust defaults to community regardless of any project-side
+declaration.
+
+### ID stability across renames
+
+The `derivedProjectId` is generated once at scaffolding and never
+reused. Renaming the GitHub repository or moving the remote URL does
+NOT change the ID; the Origin baseline, Sync state, Sync event log,
+and Promotion metadata keep the same ID across renames. To preserve
+audit history, the registry entry's `repository.knownUrls` records
+every URL the project has used, with the canonical URL as the first
+entry.
 
 ## Template migration flow (issue #34)
 

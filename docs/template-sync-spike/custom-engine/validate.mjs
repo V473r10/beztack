@@ -36,6 +36,7 @@ export const SCHEMA_FILES = {
   "promotion-metadata": "promotion-metadata.schema.json",
   "sync-event-log": "sync-event-log.schema.json",
   "template-manifest": "template-manifest.schema.json",
+  "derived-project-registry": "derived-project-registry.schema.json",
 };
 
 export async function loadSchemas(schemaDir = DEFAULT_SCHEMA_DIR) {
