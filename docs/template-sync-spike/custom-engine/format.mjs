@@ -37,6 +37,8 @@ function actionVerb(action) {
       return "Review ownership overlap, then apply";
     case "review-environment":
       return "Review Environment contract, then apply";
+    case "review-migrations":
+      return "Review Template migrations, then apply";
     case "reset-engine":
       return "Reset the Sync engine version, then apply";
     case "no-action":
@@ -44,6 +46,18 @@ function actionVerb(action) {
     default:
       return action;
   }
+}
+
+function migrationStatusLabel(status) {
+  if (status === "already-applied") return "ALREADY APPLIED";
+  if (status === "pending") return "PENDING";
+  return status.toUpperCase();
+}
+
+function executionLabel(execution) {
+  if (execution === "manual-execution-required") return "MANUAL EXECUTION REQUIRED";
+  if (execution === "engine-surfaces-only") return "ENGINE SURFACES ONLY";
+  return execution.toUpperCase();
 }
 
 function formatStatusMarkdown(status) {
@@ -131,6 +145,55 @@ function formatStatusMarkdown(status) {
     lines.push("");
   }
 
+  const migrations = status.migrations ?? [];
+  if (migrations.length > 0) {
+    lines.push("## Template migrations");
+    lines.push("");
+    lines.push(
+      "Template migrations are declared separately from Template-owned file content per PRD-27 stories 37-39. " +
+        "The Beztack Sync engine never executes migrations; it evaluates each migration's idempotency check " +
+        "and surfaces the manual steps a human must run."
+    );
+    lines.push("");
+    lines.push("| Id | Mode | Idempotency status | Execution | Trust class | Action |");
+    lines.push("|----|------|--------------------|-----------|-------------|--------|");
+    for (const m of migrations) {
+      lines.push(
+        `| \`${m.id}\` | ${m.mode} | ${migrationStatusLabel(m.idempotencyStatus)} (${m.idempotencyCheck}) | ${executionLabel(m.execution)} | ${m.trustClass} | ${m.action} |`
+      );
+    }
+    lines.push("");
+    const pendingManual = migrations.filter(
+      (m) => m.execution === "manual-execution-required" && m.idempotencyStatus === "pending"
+    );
+    if (pendingManual.length > 0) {
+      lines.push("**Pending manual migrations:**");
+      lines.push("");
+      for (const m of pendingManual) {
+        if (m.dryRunCommand) {
+          lines.push("- Dry run:");
+          lines.push("");
+          lines.push("  ```bash");
+          lines.push(`  ${m.dryRunCommand}`);
+          lines.push("  ```");
+        }
+        if (m.applyCommand) {
+          lines.push("- Apply (engine never runs this):");
+          lines.push("");
+          lines.push("  ```bash");
+          lines.push(`  ${m.applyCommand}`);
+          lines.push("  ```");
+        }
+      }
+      lines.push("");
+    }
+  } else {
+    lines.push("## Template migrations");
+    lines.push("");
+    lines.push("None declared at this Template version.");
+    lines.push("");
+  }
+
   return lines.join("\n");
 }
 
@@ -164,6 +227,55 @@ function formatPlanMarkdown(plan) {
       if (c.detail) lines.push(`  - ${c.detail}`);
     }
     lines.push("");
+  }
+
+  const migrations = plan.migrations ?? [];
+  if (migrations.length > 0) {
+    lines.push(`## Template migrations (${migrations.length})`);
+    lines.push("");
+    lines.push(
+      "Template migrations are declared separately from Template-owned file content per PRD-27 stories 37-39. " +
+        "The engine never executes migrations; the apply branch's `MIGRATIONS.md` documents each step for the reviewer."
+    );
+    lines.push("");
+    lines.push("| Id | Mode | Idempotency | Execution | Trust class | Branch action |");
+    lines.push("|----|------|-------------|-----------|-------------|---------------|");
+    for (const m of migrations) {
+      lines.push(
+        `| \`${m.id}\` | ${m.mode} | ${migrationStatusLabel(m.idempotencyStatus)} | ${executionLabel(m.execution)} | ${m.trustClass} | ${m.branchAction ?? "—"} |`
+      );
+    }
+    lines.push("");
+    const pendingManual = migrations.filter(
+      (m) => m.execution === "manual-execution-required" && m.idempotencyStatus === "pending"
+    );
+    if (pendingManual.length > 0) {
+      lines.push("**Pending manual migrations (engine never runs these):**");
+      lines.push("");
+      for (const m of pendingManual) {
+        lines.push(`### \`${m.id}\``);
+        lines.push("");
+        if (m.dryRunCommand) {
+          lines.push("- Dry run:");
+          lines.push("");
+          lines.push("  ```bash");
+          lines.push(`  ${m.dryRunCommand}`);
+          lines.push("  ```");
+        }
+        if (m.applyCommand) {
+          lines.push("- Apply command (engine never runs this):");
+          lines.push("");
+          lines.push("  ```bash");
+          lines.push(`  ${m.applyCommand}`);
+          lines.push("  ```");
+        }
+        if (m.note) {
+          lines.push("");
+          lines.push(m.note);
+        }
+        lines.push("");
+      }
+    }
   }
 
   if (plan.blockers && plan.blockers.length > 0) {
@@ -275,6 +387,42 @@ function formatBranchReadme({ plan, derivedProjectId, templateId, targetPath }) 
     }
   }
 
+  const migrations = plan.migrations ?? [];
+  if (migrations.length > 0) {
+    const pendingManual = migrations.filter(
+      (m) => m.execution === "manual-execution-required" && m.idempotencyStatus === "pending"
+    );
+    lines.push("## Template migrations");
+    lines.push("");
+    lines.push(
+      "The Beztack Sync engine never executes Template migrations. " +
+        "See `MIGRATIONS.md` for the full per-step checklist (idempotency checks, dry-run commands, " +
+        "apply commands, and reviewer actions)."
+    );
+    lines.push("");
+    if (pendingManual.length > 0) {
+      lines.push(
+        `**${pendingManual.length} migration(s) require manual human execution before or after merging this branch:**`
+      );
+      lines.push("");
+      for (const m of pendingManual) {
+        lines.push(`- \`${m.id}\` — ${m.execution} — trust class \`${m.trustClass}\` — ${m.branchAction ?? ""}`);
+        if (m.applyCommand) {
+          lines.push(`  - apply: \`${m.applyCommand}\``);
+        }
+        if (m.dryRunCommand) {
+          lines.push(`  - dry run: \`${m.dryRunCommand}\``);
+        }
+      }
+      lines.push("");
+    } else {
+      lines.push(
+        "All declared migrations are either already-applied (idempotency check passed) or surface-only."
+      );
+      lines.push("");
+    }
+  }
+
   lines.push("## Derived artifacts (regenerate locally)");
   lines.push("");
   lines.push(
@@ -302,6 +450,10 @@ function formatBranchReadme({ plan, derivedProjectId, templateId, targetPath }) 
 
 function summarizeApplyResult({ plan, worktree, engineOutput, branchCreated }) {
   const lines = [];
+  const migrations = plan.migrations ?? [];
+  const pendingManual = migrations.filter(
+    (m) => m.execution === "manual-execution-required" && m.idempotencyStatus === "pending"
+  );
   lines.push(`PR-ready branch prepared.`);
   lines.push(`- Worktree: ${worktree}`);
   lines.push(`- Branch: ${plan.branch}${branchCreated ? " (git branch created)" : " (worktree-only; commit on review)"}`);
@@ -309,6 +461,7 @@ function summarizeApplyResult({ plan, worktree, engineOutput, branchCreated }) {
   lines.push(`- Updates: ${plan.updates.length}`);
   lines.push(`- Skipped: ${plan.skipped.length}`);
   lines.push(`- Conflicts: ${plan.conflicts.length}`);
+  lines.push(`- Migrations: ${migrations.length} declared (${pendingManual.length} require manual execution)`);
   lines.push(`- Blockers: ${plan.blockers.length}`);
   return lines.join("\n");
 }

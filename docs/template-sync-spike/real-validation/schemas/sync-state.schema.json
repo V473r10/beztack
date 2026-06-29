@@ -15,6 +15,7 @@
     "files",
     "conflicts",
     "overlaps",
+    "migrations",
     "recommendation"
   ],
   "properties": {
@@ -56,6 +57,11 @@
         "in-sync"
       ]
     },
+    "migrations": {
+      "type": "array",
+      "description": "Template migrations declared by the candidate Template version. Each entry carries the migration identity, mode, idempotency status against the current Derived project, and the reviewer action. The engine never executes migrations; it evaluates the idempotency check and reports the result.",
+      "items": { "$ref": "#/$defs/migrationStatus" }
+    },
     "files": {
       "type": "object",
       "description": "Per-file ownership and drift classification.",
@@ -80,8 +86,8 @@
             ]
           },
           "seam": {
-            "type": "string",
-            "description": "Seam id if the file uses one."
+            "type": ["string", "null"],
+            "description": "Seam id if the file uses one, otherwise null."
           }
         }
       }
@@ -152,11 +158,72 @@
             "review-conflicts",
             "review-overlap",
             "review-environment",
+            "review-migrations",
             "reset-engine",
             "no-action"
           ]
         },
         "command": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "migrationStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "mode",
+        "description",
+        "idempotencyCheck",
+        "idempotencyStatus",
+        "interactive",
+        "destructive",
+        "trustClass",
+        "execution",
+        "action"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "mode": {
+          "type": "string",
+          "enum": ["automatic", "manual"]
+        },
+        "description": { "type": "string" },
+        "idempotencyCheck": {
+          "type": "string",
+          "description": "Short human-readable description of the idempotency check the engine evaluated."
+        },
+        "idempotencyStatus": {
+          "type": "string",
+          "enum": ["pending", "already-applied"],
+          "description": "Result of the engine's idempotency check. 'already-applied' means the engine concluded the migration is done; 'pending' means the Derived project still needs it."
+        },
+        "interactive": { "type": "boolean" },
+        "destructive": { "type": "boolean" },
+        "trustClass": {
+          "type": "string",
+          "enum": ["any", "trusted"],
+          "description": "Trust class the migration is intended for. 'trusted' migrations are restricted to Trusted Derived projects."
+        },
+        "execution": {
+          "type": "string",
+          "enum": ["engine-surfaces-only", "manual-execution-required"],
+          "description": "How the migration must be run. engine-surfaces-only = the engine reports it; the human does not need to execute anything (e.g. an idempotent side-effect of file sync). manual-execution-required = a human must run the applyCommand (and any dry-run command) explicitly. Community Derived projects always require manual-execution-required."
+        },
+        "dryRunCommand": {
+          "type": ["string", "null"],
+          "description": "Optional dry-run / preview command. Null when no preview is available."
+        },
+        "applyCommand": {
+          "type": ["string", "null"],
+          "description": "Optional apply command. Null when no command is declared. The engine never runs it."
+        },
+        "action": {
+          "type": "string",
+          "description": "What the engine recommends the human do for this migration. Stable string so CI can match on it."
+        },
         "note": { "type": "string" }
       }
     }

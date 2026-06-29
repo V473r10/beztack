@@ -9,5 +9,61 @@
     "minimum": "0.2.0",
     "note": "v1.2.0 adds apps/api/middleware.ts to the Template source. Engines 0.2.0+ recognize the new file and the schema-versioned Sync event log contract introduced in issue #30. Older engines cannot record apply/promotion events and would lose audit history, so they are excluded by the minimum."
   },
-  "migrations": []
+  "migrations": [
+    {
+      "id": "marker-environments-contract-v1.2.0",
+      "description": "Create the .beztack/migrations/v1.2.0-applied marker file so future sync runs can detect that this Derived project already accepted the v1.2.0 Environment contract.",
+      "mode": "automatic",
+      "idempotency": {
+        "type": "file-exists",
+        "path": ".beztack/migrations/v1.2.0-applied"
+      },
+      "dryRun": {
+        "command": "test -e .beztack/migrations/v1.2.0-applied && echo already-applied || echo pending",
+        "note": "Prints 'already-applied' if the marker is present, 'pending' otherwise. Does not modify project state."
+      },
+      "applyCommand": "mkdir -p .beztack/migrations && touch .beztack/migrations/v1.2.0-applied",
+      "interactive": false,
+      "destructive": false,
+      "trustClass": "any",
+      "note": "Marker-file migration. Safe and reversible (delete the file to 'unapply'). The engine surfaces it for review but does not run it."
+    },
+    {
+      "id": "rotate-webhook-signing-secret",
+      "description": "Rotate the WEBHOOK_SIGNING_SECRET environment variable and re-register the new value with the upstream payment provider. Requires interactive confirmation because the rotation invalidates in-flight webhook deliveries.",
+      "mode": "manual",
+      "idempotency": {
+        "type": "marker-present",
+        "path": ".beztack/migrations/webhook-secret-rotated-at",
+        "marker": "v1.2.0"
+      },
+      "dryRun": {
+        "command": "grep -q 'v1.2.0' .beztack/migrations/webhook-secret-rotated-at && echo already-applied || echo pending",
+        "note": "Prints 'already-applied' if the rotation marker contains 'v1.2.0', 'pending' otherwise."
+      },
+      "applyCommand": "pnpm beztack webhook:rotate --confirm",
+      "interactive": true,
+      "destructive": true,
+      "trustClass": "any",
+      "note": "Interactive migration: forces 'manual' execution regardless of trust class. Engine surfaces this as a manual step in status and apply output."
+    },
+    {
+      "id": "register-trusted-only-secrets-bundle",
+      "description": "Publish the v1.2.0 secrets bundle to the Trusted Derived project registry so Beztack-owned pipelines can pick it up automatically. Community Derived projects do not get this bundle and must vendor the secrets manually.",
+      "mode": "manual",
+      "idempotency": {
+        "type": "command-succeeds",
+        "command": "pnpm beztack secrets:bundle --version 1.2.0 --check"
+      },
+      "dryRun": {
+        "command": "pnpm beztack secrets:bundle --version 1.2.0 --dry-run",
+        "note": "Reports whether the secrets bundle is already registered for this Template version."
+      },
+      "applyCommand": "pnpm beztack secrets:bundle --version 1.2.0 --publish",
+      "interactive": false,
+      "destructive": false,
+      "trustClass": "trusted",
+      "note": "Trusted-only migration. Community Derived projects must not run this; the engine surfaces it as 'manual-execution-required' and notes the trust restriction."
+    }
+  ]
 }

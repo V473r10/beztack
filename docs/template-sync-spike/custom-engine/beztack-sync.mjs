@@ -14,6 +14,11 @@ import {
   summarizeApplyResult,
 } from "./format.mjs";
 import { prepareBranch } from "./prepare-branch.mjs";
+import {
+  buildMigrationStatus,
+  buildMigrationPlanEntry,
+  migrationRecommendation,
+} from "./migrations.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 const subcommand = args._[0];
@@ -121,6 +126,8 @@ if (subcommand === "status") {
     policy,
     origin,
     engineOutput,
+    manifest: toManifest,
+    projectTrustClass: trustClass,
   });
   if (outputFormat === "human" || outputFormat === "md" || outputFormat === "markdown") {
     process.stdout.write(formatStatusMarkdown(status) + "\n");
@@ -146,6 +153,8 @@ if (subcommand === "status") {
     parameters,
     origin,
     engineOutput,
+    manifest: toManifest,
+    projectTrustClass: trustClass,
   });
   if (worktreePath) {
     const result = await prepareBranch({
@@ -159,6 +168,7 @@ if (subcommand === "status") {
       plan,
       engineOutput,
       initGit,
+      projectTrustClass: trustClass,
     });
     if (outputFormat === "human" || outputFormat === "md" || outputFormat === "markdown") {
       process.stdout.write(formatPlanMarkdown(plan) + "\n\n");
@@ -225,6 +235,8 @@ async function buildStatus({
   policy,
   origin,
   engineOutput,
+  manifest,
+  projectTrustClass,
 }) {
   const fromFiles = await listFiles(fromTemplateRoot);
   const toFiles = await listFiles(toTemplateRoot);
@@ -239,6 +251,18 @@ async function buildStatus({
   const files = {};
   const conflicts = [];
   const overlaps = [];
+
+  const migrations = [];
+  for (const m of manifest?.migrations ?? []) {
+    migrations.push(
+      await buildMigrationStatus({
+        migration: m,
+        derivedProjectRoot: derivedRoot,
+        projectTrustClass,
+      })
+    );
+  }
+  const migrationAction = migrationRecommendation(migrations);
 
   for (const path of allPaths) {
     if (
@@ -305,7 +329,28 @@ async function buildStatus({
     });
   }
 
-  const status = conflicts.length > 0 ? "conflicts" : "ready-to-apply";
+  const hasConflicts = conflicts.length > 0;
+  const pendingMigrations = migrations.filter(
+    (m) => m.execution === "manual-execution-required" && m.idempotencyStatus === "pending"
+  );
+  const status = hasConflicts ? "conflicts" : "ready-to-apply";
+
+  let action;
+  if (hasConflicts) {
+    action = "review-conflicts";
+  } else if (migrationAction) {
+    action = migrationAction;
+  } else {
+    action = "apply";
+  }
+
+  const recommendationNote = buildRecommendationNote({
+    hasConflicts,
+    conflicts,
+    pendingMigrations,
+    migrations,
+    toRev,
+  });
 
   return {
     schemaVersion: "1.0",
@@ -318,15 +363,11 @@ async function buildStatus({
     files,
     conflicts,
     overlaps,
+    migrations,
     recommendation: {
-      action: conflicts.length > 0 ? "review-conflicts" : "apply",
+      action,
       command: `beztack-sync.mjs apply --to ${toRev}`,
-      note:
-        conflicts.length > 0
-          ? "One or more Sync conflicts require an explicit decision. " +
-            "After resolving, apply proceeds on a branch."
-          : "Apply proceeds on a branch. The Environment contract update " +
-            "and Template parameter rendering happen automatically.",
+      note: recommendationNote,
     },
   };
 }
@@ -343,6 +384,8 @@ async function buildApplyPlan({
   parameters,
   origin,
   engineOutput,
+  manifest,
+  projectTrustClass,
 }) {
   const fromFiles = await listFiles(fromTemplateRoot);
   const toFiles = await listFiles(toTemplateRoot);
@@ -352,6 +395,16 @@ async function buildApplyPlan({
   const skipped = [];
   const conflicts = [];
   const blockers = [];
+  const migrations = [];
+  for (const m of manifest?.migrations ?? []) {
+    migrations.push(
+      await buildMigrationPlanEntry({
+        migration: m,
+        derivedProjectRoot: derivedRoot,
+        projectTrustClass,
+      })
+    );
+  }
 
   const overlapByPath = detectOverlaps(
     policy,
@@ -467,6 +520,7 @@ async function buildApplyPlan({
     updates,
     skipped,
     conflicts,
+    migrations,
   });
 
   return {
@@ -481,16 +535,59 @@ async function buildApplyPlan({
     updates,
     skipped,
     conflicts,
+    migrations,
     blockers,
   };
 }
 
-function buildSummary({ fromRev, toRev, derivedProjectId, updates, skipped, conflicts }) {
+function buildRecommendationNote({
+  hasConflicts,
+  conflicts,
+  pendingMigrations,
+  migrations,
+  toRev,
+}) {
+  const parts = [];
+  if (hasConflicts) {
+    const paths = conflicts.map((c) => c.path).join(", ");
+    parts.push(
+      `${conflicts.length} Sync conflict(s) require an explicit decision: ${paths}. After resolving, apply proceeds on a branch and the Environment contract update is included automatically.`
+    );
+  } else {
+    parts.push(
+      "Apply proceeds on a branch. The Environment contract update and Template parameter rendering happen automatically."
+    );
+  }
+  if (pendingMigrations.length > 0) {
+    const ids = pendingMigrations.map((m) => m.id).join(", ");
+    parts.push(
+      `${pendingMigrations.length} Template migration(s) require manual human execution on the apply branch: ${ids}.`
+    );
+  }
+  const already = (migrations ?? []).filter(
+    (m) => m.idempotencyStatus === "already-applied"
+  );
+  if (already.length > 0) {
+    const ids = already.map((m) => m.id).join(", ");
+    parts.push(
+      `${already.length} Template migration(s) already applied (idempotency check passed) and surfaced only for visibility: ${ids}.`
+    );
+  }
+  return parts.join(" ");
+}
+
+function buildSummary({ fromRev, toRev, derivedProjectId, updates, skipped, conflicts, migrations }) {
   const envContractUpdate = updates.some((u) => u.path === ".env.contract.json");
   const paramUpdate = updates.some((u) => u.path === "package.json");
   const seamUpdate = updates.find((u) => u.seam);
   const lockfileSkipped = skipped.some((s) => s.path === "pnpm-lock.yaml");
   const conflictPaths = conflicts.map((c) => c.path).join(", ");
+  const pendingMigrations = (migrations ?? []).filter(
+    (m) => m.execution === "manual-execution-required" && m.idempotencyStatus === "pending"
+  );
+  const alreadyAppliedMigrations = (migrations ?? []).filter(
+    (m) => m.idempotencyStatus === "already-applied"
+  );
 
   const parts = [];
   parts.push(
@@ -520,6 +617,18 @@ function buildSummary({ fromRev, toRev, derivedProjectId, updates, skipped, conf
     );
   } else {
     parts.push("No conflicts.");
+  }
+  if (pendingMigrations.length > 0) {
+    const ids = pendingMigrations.map((m) => m.id).join(", ");
+    parts.push(
+      `${pendingMigrations.length} Template migration(s) require manual human execution on the apply branch: ${ids}. The engine never executes migrations; the worktree's MIGRATIONS.md documents each step.`
+    );
+  }
+  if (alreadyAppliedMigrations.length > 0) {
+    const ids = alreadyAppliedMigrations.map((m) => m.id).join(", ");
+    parts.push(
+      `${alreadyAppliedMigrations.length} Template migration(s) are already applied (idempotency check passed) and are surfaced for visibility only: ${ids}.`
+    );
   }
   return parts.join(" ");
 }

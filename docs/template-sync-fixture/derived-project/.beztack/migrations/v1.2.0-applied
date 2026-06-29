@@ -1,0 +1,5 @@
+{
+  "appliedAt": "2026-05-15T09:00:00Z",
+  "appliedRevision": "v1.1.0",
+  "note": "Marker file proving that the v1.2.0 Environment contract acceptance marker was created when this Derived project synced to v1.1.0. Engines evaluate file-exists idempotency checks against this file."
+}

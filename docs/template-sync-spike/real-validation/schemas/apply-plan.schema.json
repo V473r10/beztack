@@ -16,6 +16,7 @@
     "updates",
     "skipped",
     "conflicts",
+    "migrations",
     "blockers"
   ],
   "properties": {
@@ -107,6 +108,11 @@
         }
       }
     },
+    "migrations": {
+      "type": "array",
+      "description": "Template migrations declared by the candidate Template version. The engine surfaces each migration with its idempotency status against the current Derived project; it never executes migrations.",
+      "items": { "$ref": "#/$defs/migrationPlan" }
+    },
     "blockers": {
       "type": "array",
       "description": "Conditions that prevent apply. Empty list means apply may proceed on a branch.",
@@ -126,6 +132,78 @@
           },
           "detail": { "type": "string" }
         }
+      }
+    }
+  },
+  "$defs": {
+    "migrationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "mode",
+        "description",
+        "idempotency",
+        "idempotencyStatus",
+        "interactive",
+        "destructive",
+        "trustClass",
+        "execution",
+        "applyOnBranch"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "mode": {
+          "type": "string",
+          "enum": ["automatic", "manual"]
+        },
+        "description": { "type": "string" },
+        "idempotency": {
+          "type": "object",
+          "description": "Idempotency check declared by the Template manifest. Mirrored onto the apply plan so MIGRATIONS.md on the branch can render it without re-reading the Template source.",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["file-exists", "marker-present", "command-succeeds"]
+            },
+            "path": { "type": "string" },
+            "marker": { "type": "string" },
+            "command": { "type": "string" }
+          }
+        },
+        "idempotencyStatus": {
+          "type": "string",
+          "enum": ["pending", "already-applied"]
+        },
+        "interactive": { "type": "boolean" },
+        "destructive": { "type": "boolean" },
+        "trustClass": {
+          "type": "string",
+          "enum": ["any", "trusted"]
+        },
+        "execution": {
+          "type": "string",
+          "enum": ["engine-surfaces-only", "manual-execution-required"]
+        },
+        "applyOnBranch": {
+          "type": "boolean",
+          "description": "False when the engine will not even record the migration on the apply branch (e.g. it requires explicit out-of-band execution). True when the engine lists the migration on the apply branch's MIGRATIONS.md so reviewers can act."
+        },
+        "dryRunCommand": {
+          "type": ["string", "null"],
+          "description": "Optional dry-run command surfaced for human preview."
+        },
+        "applyCommand": {
+          "type": ["string", "null"],
+          "description": "Optional apply command. The engine never runs it."
+        },
+        "branchAction": {
+          "type": "string",
+          "description": "What the human reviewer must do with this migration on the apply branch (e.g. 'manually run the apply command after merging')."
+        },
+        "note": { "type": "string" }
       }
     }
   }

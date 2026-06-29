@@ -57,6 +57,48 @@ function normalize(p) {
   return p.split("/").filter(Boolean).join("/");
 }
 
+function matchGlob(pattern, path) {
+  let regex = "^";
+  let i = 0;
+  while (i < pattern.length) {
+    const c = pattern[i];
+    if (c === "*" && pattern[i + 1] === "*") {
+      if (pattern[i + 2] === "/") {
+        regex += "(?:.*/)?";
+        i += 3;
+        continue;
+      } else if (i + 2 === pattern.length) {
+        regex += ".*";
+        i += 2;
+        continue;
+      } else {
+        regex += ".*";
+        i += 2;
+        continue;
+      }
+    }
+    if (c === "*") {
+      regex += "[^/]*";
+      i += 1;
+      continue;
+    }
+    if (c === "?") {
+      regex += "[^/]";
+      i += 1;
+      continue;
+    }
+    if ("\\^$.|+()[]{}/".includes(c)) {
+      regex += "\\" + c;
+      i += 1;
+      continue;
+    }
+    regex += c;
+    i += 1;
+  }
+  regex += "$";
+  return new RegExp(regex).test(path);
+}
+
 /**
  * Minimal JSON Schema validator covering the subset used by this fixture:
  * type, const, enum, required, additionalProperties, properties, items,
@@ -562,6 +604,114 @@ test("issue #30: Template versions declare a compatibleEngines range", async () 
         manifest.compatibleEngines.maximum,
         /^[0-9]+\.[0-9]+\.[0-9]+/,
         `${revision} compatibleEngines.maximum must be semver-shaped`
+      );
+    }
+  }
+});
+
+test("issue #34: Template manifest declares migrations with mode and idempotency", async () => {
+  const manifest = await readJson(join(REVISIONS, "v1.2.0/template.json"));
+  assert.ok(Array.isArray(manifest.migrations), "v1.2.0 manifest.migrations must be an array");
+  assert.ok(manifest.migrations.length >= 3, "fixture must declare at least three migration examples");
+
+  for (const m of manifest.migrations) {
+    assert.ok(typeof m.id === "string" && m.id.length > 0, `${JSON.stringify(m)} must have id`);
+    assert.ok(["automatic", "manual"].includes(m.mode), `${m.id}.mode must be automatic|manual`);
+    assert.ok(typeof m.description === "string" && m.description.length > 0, `${m.id} must have a description`);
+    assert.ok(typeof m.idempotency === "object" && m.idempotency !== null, `${m.id} must declare idempotency`);
+    assert.ok(typeof m.idempotency.type === "string", `${m.id} idempotency must have a type`);
+    assert.ok(
+      ["file-exists", "marker-present", "command-succeeds"].includes(m.idempotency.type),
+      `${m.id} idempotency.type must be one of the documented variants`
+    );
+    assert.ok(
+      ["any", "trusted"].includes(m.trustClass ?? "any"),
+      `${m.id} must declare trustClass (default any)`
+    );
+  }
+
+  const automatic = manifest.migrations.find((m) => m.mode === "automatic");
+  assert.ok(automatic, "fixture must include at least one automatic migration");
+  assert.equal(automatic.interactive ?? false, false, "automatic migration in fixture must not be interactive");
+  assert.equal(automatic.destructive ?? false, false, "automatic migration in fixture must not be destructive");
+
+  const manual = manifest.migrations.find((m) => m.mode === "manual");
+  assert.ok(manual, "fixture must include at least one manual migration");
+
+  const interactive = manifest.migrations.find((m) => m.interactive === true);
+  assert.ok(interactive, "fixture must include at least one interactive migration (forced manual)");
+
+  const trustedOnly = manifest.migrations.find((m) => m.trustClass === "trusted");
+  assert.ok(trustedOnly, "fixture must include at least one trusted-only migration");
+});
+
+test("issue #34: status output surfaces migrations[] and the recommended note mentions them", async () => {
+  const state = await readJson(join(EXPECTED, "status.json"));
+  const plan = await readJson(join(EXPECTED, "apply-plan.json"));
+  assert.ok(Array.isArray(state.migrations) && state.migrations.length > 0, "expected status.json must include migrations[]");
+  assert.ok(Array.isArray(plan.migrations) && plan.migrations.length > 0, "expected apply-plan.json must include migrations[]");
+
+  for (const m of state.migrations) {
+    assert.ok(["pending", "already-applied"].includes(m.idempotencyStatus), `${m.id} idempotencyStatus must be pending|already-applied`);
+    assert.ok(
+      ["engine-surfaces-only", "manual-execution-required"].includes(m.execution),
+      `${m.id} execution must be engine-surfaces-only|manual-execution-required`
+    );
+    assert.ok(["any", "trusted"].includes(m.trustClass), `${m.id} trustClass must be any|trusted`);
+  }
+
+  const note = state.recommendation.note ?? "";
+  assert.ok(/migration/i.test(note), `recommendation.note must mention migrations when any migration is pending (got: ${note})`);
+});
+
+test("issue #34: apply plan migrations[] carry idempotency checks and branch actions", async () => {
+  const plan = await readJson(join(EXPECTED, "apply-plan.json"));
+  assert.ok(Array.isArray(plan.migrations));
+  for (const m of plan.migrations) {
+    assert.ok(typeof m.id === "string", "plan migration must have id");
+    assert.ok(typeof m.idempotency === "object" && typeof m.idempotency.type === "string", `${m.id} plan entry must carry idempotency check`);
+    assert.ok(["pending", "already-applied"].includes(m.idempotencyStatus), `${m.id} must declare idempotencyStatus`);
+    assert.ok(typeof m.branchAction === "string", `${m.id} must declare branchAction`);
+    assert.equal(m.applyOnBranch, true, `${m.id} must be marked applyOnBranch: true (engine surfaces it)`);
+  }
+});
+
+test("issue #34: migrations declared on the Template manifest are separate from Template-owned file content", async () => {
+  const manifest = await readJson(join(REVISIONS, "v1.2.0/template.json"));
+  // Migrations must not include `path` fields that overlap with the
+  // Template source's file tree (migrations are non-file steps).
+  const fileTreePaths = new Set([
+    "packages/auth/session.ts",
+    "apps/api/routes.ts",
+    "apps/api/middleware.ts",
+    ".env.contract.json",
+    "package.json",
+  ]);
+  for (const m of manifest.migrations) {
+    assert.ok(
+      !(m.path && fileTreePaths.has(m.path)),
+      `migration ${m.id} must not be expressed as a Template-owned file path`
+    );
+  }
+  // The fixture's expected sync-state.json must not include any migration
+  // id as a file key (migrations live in status.migrations[], not in
+  // status.files{}).
+  const state = await readJson(join(EXPECTED, "status.json"));
+  const migrationIds = new Set((manifest.migrations ?? []).map((m) => m.id));
+  for (const path of Object.keys(state.files ?? {})) {
+    assert.ok(
+      !migrationIds.has(path),
+      `sync-state.files must not contain migration id ${path} (migrations live in status.migrations[])`
+    );
+  }
+  // The engine must not list any migration id in the apply plan's
+  // updates[] / skipped[] / conflicts[] either.
+  const plan = await readJson(join(EXPECTED, "apply-plan.json"));
+  for (const list of [plan.updates ?? [], plan.skipped ?? [], plan.conflicts ?? []]) {
+    for (const entry of list) {
+      assert.ok(
+        !migrationIds.has(entry.path),
+        `apply plan must not classify migration id ${entry.path} as a file update/skip/conflict`
       );
     }
   }

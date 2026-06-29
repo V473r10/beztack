@@ -94,14 +94,24 @@ const schemas = {
   ),
 };
 
+const statusExpected = JSON.parse(
+  await readFile(resolve(fixtureRoot, "expected/status.json"), "utf8")
+);
+const planExpected = JSON.parse(
+  await readFile(resolve(fixtureRoot, "expected/apply-plan.json"), "utf8")
+);
+const promoExpected = JSON.parse(
+  await readFile(
+    resolve(fixtureRoot, "expected/promotion-metadata.json"),
+    "utf8"
+  )
+);
+
 const validateSyncState = makeValidator(schemas["sync-state"]);
 const validateApplyPlan = makeValidator(schemas["apply-plan"]);
 const validatePromotionMetadata = makeValidator(schemas["promotion-metadata"]);
 
 const status = await getEngineJson("status");
-const statusExpected = JSON.parse(
-  await readFile(resolve(fixtureRoot, "expected/status.json"), "utf8")
-);
 out.results.status = {
   schemaErrors: validateSyncState(status),
   checks: {
@@ -122,13 +132,24 @@ out.results.status = {
       !!status.syncEngine.name &&
       !!status.syncEngine.version,
     schemaVersionCorrect: status.schemaVersion === "1.0",
+    migrationsPresent:
+      Array.isArray(status.migrations) &&
+      status.migrations.length === statusExpected.migrations.length,
+    migrationsMatchExpected:
+      statusExpected.migrations.every((expected) =>
+        status.migrations.some(
+          (s) =>
+            s.id === expected.id &&
+            s.idempotencyStatus === expected.idempotencyStatus &&
+            s.execution === expected.execution &&
+            s.trustClass === expected.trustClass &&
+            s.action === expected.action
+        )
+      ),
   },
 };
 
 const plan = await getEngineJson("apply", true);
-const planExpected = JSON.parse(
-  await readFile(resolve(fixtureRoot, "expected/apply-plan.json"), "utf8")
-);
 out.results.applyPlan = {
   schemaErrors: validateApplyPlan(plan),
   checks: {
@@ -147,16 +168,24 @@ out.results.applyPlan = {
     ),
     blockersEmpty: plan.blockers.length === 0,
     schemaVersionCorrect: plan.schemaVersion === "1.0",
+    migrationsPresent:
+      Array.isArray(plan.migrations) &&
+      plan.migrations.length === planExpected.migrations.length,
+    migrationsMatchExpected:
+      planExpected.migrations.every((expected) =>
+        plan.migrations.some(
+          (m) =>
+            m.id === expected.id &&
+            m.idempotencyStatus === expected.idempotencyStatus &&
+            m.execution === expected.execution &&
+            m.trustClass === expected.trustClass &&
+            m.branchAction === expected.branchAction
+        )
+      ),
   },
 };
 
 const promo = await getEngineJson("promotion-metadata");
-const promoExpected = JSON.parse(
-  await readFile(
-    resolve(fixtureRoot, "expected/promotion-metadata.json"),
-    "utf8"
-  )
-);
 out.results.promotionMetadata = {
   schemaErrors: validatePromotionMetadata(promo),
   checks: {

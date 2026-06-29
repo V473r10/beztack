@@ -27,6 +27,10 @@ import {
   formatBranchReadme,
   summarizeApplyResult,
 } from "./format.mjs";
+import {
+  formatMigrationReadme,
+  buildMigrationStatus,
+} from "./migrations.mjs";
 
 const execFile = promisify(execFileCb);
 
@@ -297,6 +301,7 @@ export async function prepareBranch({
   plan,
   engineOutput,
   initGit = false,
+  projectTrustClass = "trusted",
 }) {
   if (await pathExists(worktreePath)) {
     throw new Error(
@@ -414,11 +419,34 @@ export async function prepareBranch({
     files: {},
     conflicts: plan.conflicts ?? [],
     overlaps: [],
+    migrations: [],
     recommendation: {
       action: "no-action",
-      note: "Branch prepared. Resolve conflicts and regenerate the lockfile before opening the PR.",
+      note: "Branch prepared. Resolve conflicts, regenerate the lockfile, and run any pending Template migrations before opening the PR.",
     },
   };
+
+  for (const planMigration of plan.migrations ?? []) {
+    const idempotencyPayload = { ...planMigration.idempotency };
+    const statusMigration = await buildMigrationStatus({
+      migration: {
+        id: planMigration.id,
+        mode: planMigration.mode,
+        description: planMigration.description,
+        idempotency: idempotencyPayload,
+        interactive: planMigration.interactive,
+        destructive: planMigration.destructive,
+        trustClass: planMigration.trustClass,
+        applyCommand: planMigration.applyCommand,
+        note: planMigration.note,
+        dryRun: planMigration.dryRunCommand ? { command: planMigration.dryRunCommand } : undefined,
+      },
+      derivedProjectRoot: worktreePath,
+      projectTrustClass,
+    });
+    statusMigration.idempotencyStatus = planMigration.idempotencyStatus;
+    newState.migrations.push(statusMigration);
+  }
   for (const [path, meta] of Object.entries(newOrigin.files)) {
     const ownership = pickOwnership(policy, path);
     const seam = findSeam(policy, path);
@@ -481,6 +509,35 @@ export async function prepareBranch({
   });
   await writeFile(join(worktreePath, "BRANCH_README.md"), readme, "utf8");
 
+  const migrationsForReadme = (plan.migrations ?? []).map((m) => {
+    const check = m.idempotency ?? {};
+    let idempotencyCheck;
+    if (check.type === "file-exists") {
+      idempotencyCheck = `file-exists ${check.path ?? ""}`.trim();
+    } else if (check.type === "marker-present") {
+      idempotencyCheck = `marker-present ${check.path ?? ""} (looking for '${check.marker ?? ""}')`;
+    } else if (check.type === "command-succeeds") {
+      idempotencyCheck = `command-succeeds '${check.command ?? ""}' (engine does not run; treated as pending)`;
+    } else {
+      idempotencyCheck = `unknown idempotency type ${check.type ?? "undefined"}`;
+    }
+    return { ...m, idempotencyCheck };
+  });
+
+  const migrationsReadme = formatMigrationReadme({
+    migrations: migrationsForReadme,
+    planBranch: plan.branch,
+    fromRevision: plan.fromRevision,
+    toRevision: plan.toRevision,
+    derivedProjectId: origin.derivedProjectId,
+    projectTrustClass,
+  });
+  await writeFile(
+    join(worktreePath, "MIGRATIONS.md"),
+    migrationsReadme,
+    "utf8"
+  );
+
   let branchCreated = false;
   if (initGit) {
     await execFile("git", ["init", "--quiet"], { cwd: worktreePath });
@@ -489,7 +546,7 @@ export async function prepareBranch({
     });
     await execFile(
       "git",
-      ["add", "-A", ".beztack", "BRANCH_README.md"],
+      ["add", "-A", ".beztack", "BRANCH_README.md", "MIGRATIONS.md"],
       { cwd: worktreePath }
     );
     for (const u of plan.updates ?? []) {
@@ -512,7 +569,7 @@ export async function prepareBranch({
         "commit",
         "-q",
         "-m",
-        `template-sync: ${plan.fromRevision} -> ${plan.toRevision}`,
+        `template-sync: ${plan.fromRevision} -> ${plan.toRevision} (${plan.migrations?.filter((m) => m.idempotencyStatus === "pending" && m.execution === "manual-execution-required").length ?? 0} pending migrations)`,
       ],
       { cwd: worktreePath }
     );

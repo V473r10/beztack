@@ -9,6 +9,53 @@
     "version": "0.0.0"
   },
   "status": "conflicts",
+  "migrations": [
+    {
+      "id": "marker-environments-contract-v1.2.0",
+      "mode": "automatic",
+      "description": "Create the .beztack/migrations/v1.2.0-applied marker file so future sync runs can detect that this Derived project already accepted the v1.2.0 Environment contract.",
+      "idempotencyCheck": "file-exists .beztack/migrations/v1.2.0-applied",
+      "idempotencyStatus": "already-applied",
+      "interactive": false,
+      "destructive": false,
+      "trustClass": "any",
+      "execution": "engine-surfaces-only",
+      "dryRunCommand": "test -e .beztack/migrations/v1.2.0-applied && echo already-applied || echo pending",
+      "applyCommand": "mkdir -p .beztack/migrations && touch .beztack/migrations/v1.2.0-applied",
+      "action": "no-human-action-required",
+      "note": "Marker-file migration. Safe and reversible (delete the file to 'unapply'). The engine surfaces it for review but does not run it."
+    },
+    {
+      "id": "rotate-webhook-signing-secret",
+      "mode": "manual",
+      "description": "Rotate the WEBHOOK_SIGNING_SECRET environment variable and re-register the new value with the upstream payment provider. Requires interactive confirmation because the rotation invalidates in-flight webhook deliveries.",
+      "idempotencyCheck": "marker-present .beztack/migrations/webhook-secret-rotated-at (looking for 'v1.2.0')",
+      "idempotencyStatus": "pending",
+      "interactive": true,
+      "destructive": true,
+      "trustClass": "any",
+      "execution": "manual-execution-required",
+      "dryRunCommand": "grep -q 'v1.2.0' .beztack/migrations/webhook-secret-rotated-at && echo already-applied || echo pending",
+      "applyCommand": "pnpm beztack webhook:rotate --confirm",
+      "action": "human-runs-apply-command",
+      "note": "Interactive migration: forces 'manual' execution regardless of trust class. Engine surfaces this as a manual step in status and apply output."
+    },
+    {
+      "id": "register-trusted-only-secrets-bundle",
+      "mode": "manual",
+      "description": "Publish the v1.2.0 secrets bundle to the Trusted Derived project registry so Beztack-owned pipelines can pick it up automatically. Community Derived projects do not get this bundle and must vendor the secrets manually.",
+      "idempotencyCheck": "command-succeeds 'pnpm beztack secrets:bundle --version 1.2.0 --check' (engine does not run; treated as pending)",
+      "idempotencyStatus": "pending",
+      "interactive": false,
+      "destructive": false,
+      "trustClass": "trusted",
+      "execution": "manual-execution-required",
+      "dryRunCommand": "pnpm beztack secrets:bundle --version 1.2.0 --dry-run",
+      "applyCommand": "pnpm beztack secrets:bundle --version 1.2.0 --publish",
+      "action": "human-runs-apply-command",
+      "note": "Trusted-only migration. Community Derived projects must not run this; the engine surfaces it as 'manual-execution-required' and notes the trust restriction."
+    }
+  ],
   "files": {
     "packages/auth/session.ts": {
       "ownership": "custom-owned",
@@ -98,6 +145,6 @@
   "recommendation": {
     "action": "review-conflicts",
     "command": "beztack-sync apply --to v1.2.0",
-    "note": "One Sync conflict (apps/api/middleware.ts) requires an explicit decision. After resolving, apply proceeds on a branch and the Environment contract update is included automatically."
+    "note": "One Sync conflict (apps/api/middleware.ts) requires an explicit decision. After resolving, apply proceeds on a branch and the Environment contract update is included automatically. Two Template migrations are pending manual execution on the apply branch: rotate-webhook-signing-secret (interactive, destructive) and register-trusted-only-secrets-bundle (trusted-only). One migration is already applied (marker-environments-contract-v1.2.0) and only surfaced for visibility."
   }
 }

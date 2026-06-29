@@ -47,7 +47,7 @@ with a clear error and never produce a plan.
 | Sync event log           | `sync-event-log.schema.json`    | `<derived>/.beztack/sync-event-log.json`                      | Append-only audit trail of sync actions and Promotions.                  |
 | Apply plan               | `apply-plan.schema.json`        | Engine output                                                  | Plan the engine prepares for a reviewable branch.                        |
 | Promotion metadata       | `promotion-metadata.schema.json` | Engine output                                                 | Metadata for an opt-in Promotion from a Derived project PR.              |
-| Template manifest        | `template-manifest.schema.json` | `<template-revisions>/<version>/template.json`                | Declares Template identity, semver, expected sync impact, and the compatible Sync engine version range. |
+| Template manifest        | `template-manifest.schema.json` | `<template-revisions>/<version>/template.json`                | Declares Template identity, semver, expected sync impact, the compatible Sync engine version range, and Template migrations declared at this version. |
 
 ### Sync engine version vs. Template version
 
@@ -137,7 +137,7 @@ docs/template-sync-fixture/
 │   │   ├── .env.contract.json
 │   │   └── package.json
 │   └── v1.2.0/                        # candidate
-│       ├── template.json              # Template manifest (issue #30)
+│       ├── template.json              # Template manifest (issue #30, #34: declares migrations)
 │       ├── packages/auth/session.ts
 │       ├── apps/api/routes.ts
 │       ├── apps/api/middleware.ts     # NEW
@@ -150,6 +150,8 @@ docs/template-sync-fixture/
 │   │   ├── origin.json                # Origin baseline (v1.1.0)
 │   │   ├── sync-state.json            # current Sync state
 │   │   ├── sync-event-log.json        # issue #30: append-only audit history
+│   │   ├── migrations/                # issue #34: migration marker files
+│   │   │   └── v1.2.0-applied         # marker for the idempotent v1.2.0 Environment contract migration
 │   │   └── promotion-label.md         # Promotion label convention
 │   ├── packages/auth/session.ts
 │   ├── apps/api/routes.ts             # mixed ownership, seam content
@@ -251,6 +253,40 @@ source revisions in this fixture deliberately do NOT include
 as Custom-owned in the Sync policy with an explicit note that engines
 must regenerate it locally after the apply branch is prepared.
 
+### Template migrations (issue #34)
+
+Template migrations are declared separately from Template-owned file
+content per PRD-27 stories 37-39. The Template manifest's `migrations[]`
+field is a first-class array: each migration has an `id`, a `mode`
+(`automatic` or `manual`), an `idempotency` check (file-exists,
+marker-present, or command-succeeds), an optional `dryRun` preview
+command, an `applyCommand` the human reviews, and metadata flags
+(`interactive`, `destructive`, `trustClass`). The engine never executes
+migrations; it evaluates the idempotency check at status time and
+reports `idempotencyStatus: pending | already-applied`.
+
+The fixture's `v1.2.0` Template manifest declares three migrations that
+exercise the contract:
+
+| Migration id | Mode | Idempotency check | Idempotency status | Execution (Trusted) | Execution (Community) |
+|--------------|------|--------------------|--------------------|---------------------|-----------------------|
+| `marker-environments-contract-v1.2.0` | automatic | file-exists `.beztack/migrations/v1.2.0-applied` | already-applied (fixture ships the marker) | engine-surfaces-only | manual-execution-required |
+| `rotate-webhook-signing-secret` | manual | marker-present `.beztack/migrations/webhook-secret-rotated-at` (looking for `v1.2.0`) | pending | manual-execution-required | manual-execution-required |
+| `register-trusted-only-secrets-bundle` | manual | command-succeeds `pnpm beztack secrets:bundle --version 1.2.0 --check` (engine does not run) | pending | manual-execution-required | manual-execution-required |
+
+The second migration is `interactive: true` and `destructive: true`, so
+it forces `manual-execution-required` regardless of trust class. The
+third declares `trustClass: "trusted"`, so the engine surfaces the
+trust restriction explicitly in `MIGRATIONS.md` for Community Derived
+projects.
+
+When the engine plans an apply it emits `migrations[]` in both
+`sync-state` and `apply-plan` JSON. `apply --worktree` writes
+`MIGRATIONS.md` into the worktree documenting every migration with its
+idempotency check, dry-run command, apply command, and the explicit
+reviewer action. The engine never executes migrations on either Trusted
+or Community Derived projects.
+
 ### Promotion metadata
 
 The engine must produce metadata conforming to
@@ -315,6 +351,19 @@ this fixture; the fixture's `derived-project/` state is what it is.
 | Template versions can declare compatible Sync engine version ranges         | `template-manifest.schema.json#compatibleEngines.minimum` / `.maximum`; `template-revisions/v1.1.0/template.json`, `template-revisions/v1.2.0/template.json` |
 | Invalid or unsupported schema versions fail before planning or applying     | `validate.mjs` gate in `docs/template-sync-spike/custom-engine/`; `fixture.test.mjs` tests that an invalid `schemaVersion` is rejected |
 | Specification validated against the Sync engine contract fixture            | All new schemas live next to the existing fixture schemas and are exercised by `fixture.test.mjs` |
+
+## Acceptance criteria mapping (issue #34)
+
+| Issue #34 acceptance criterion                                              | Fixture artifact / test                                                              |
+|-----------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| Template migrations represented separately from Template-owned file content | `template-manifest.schema.json#migrations`; `fixture.test.mjs` "issue #34: migrations declared on the Template manifest are separate from Template-owned file content" |
+| Template version declares migration steps + automatic/manual mode           | `template-revisions/v1.2.0/template.json#migrations[].mode`; `fixture.test.mjs` "issue #34: Template manifest declares migrations with mode and idempotency" |
+| Migration steps have a dry-run mode or equivalent preview behavior           | `template-manifest.schema.json#migration.dryRun`; `status.migrations[].dryRunCommand`; `MIGRATIONS.md` rendered by `apply --worktree` |
+| Migration steps define idempotency checks or conditions                     | `template-manifest.schema.json#migration.idempotency`; engine evaluates file-exists, marker-present, command-succeeds; `migration-flow.test.mjs` |
+| Unsafe or interactive migrations reported as manual steps instead of running automatically | `migration.interactive`, `migration.destructive`; `execution: "manual-execution-required"`; `migration-flow.test.mjs` |
+| Community Derived projects require explicit local execution                  | `evaluateExecution(migration, "community")` always returns `manual-execution-required`; `MIGRATIONS.md` includes the explicit-local-execution warning for community projects |
+| Migration status appears in `status` or `apply` output as part of the recommended next action | `sync-state.schema.json#migrations`; `apply-plan.schema.json#migrations`; `recommendation.action: "review-migrations"`; `status.recommendation.note` mentions migrations |
+| Behavior covered by the Sync engine contract fixture                        | `expected/status.json#migrations`, `expected/apply-plan.json#migrations`; `migration-flow.test.mjs`; `fixture.test.mjs` issue #34 tests |
 
 ## Self-check
 

@@ -88,6 +88,7 @@
       "detail": "More-specific rule wins: ** is authoritative. Apply preserves the file as mixed and surfaces a warning so reviewers can resolve the policy."
     }
   ],
+  "migrations": [],
   "recommendation": {
     "action": "apply",
     "command": "beztack-sync.mjs apply --to v1.1.0",

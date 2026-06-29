@@ -5,7 +5,7 @@
 > [`../../template-sync-fixture/`](../../template-sync-fixture/) in a
 > small Node-based CLI.
 >
-> Issue: [#31 — Template sync: Prove PR-only status/apply flow](https://github.com/V473r10/beztack/issues/31)
+> Issues: [#31 — Template sync: Prove PR-only status/apply flow](https://github.com/V473r10/beztack/issues/31), [#34 — Template sync: Model Template migrations safely](https://github.com/V473r10/beztack/issues/34)
 > Parent PRD: [#27 — Template Sync System](https://github.com/V473r10/beztack/issues/27)
 
 ## What this is
@@ -177,11 +177,60 @@ schema-versioned outputs against the fixture schemas.
   concern that does not need to block the contract.
 - Real `lncd` repository validation against the engine. Deferred in
   issue #28; the fixture is the only validation target for this spike.
-- Template migration modeling. Owned by issue #34. The Template
-  manifest's `migrations` field is parsed but not executed.
 - Replacement of the inline JSON Schema validator with `ajv` or
   another battle-tested validator. The current validator covers the
   subset used by the fixture schemas and is explicitly
   dependency-free.
-- A CI workflow that runs both `fixture.test.mjs` and
-  `apply-flow.test.mjs` on every PR.
+- A CI workflow that runs both `fixture.test.mjs`,
+  `apply-flow.test.mjs`, and `migration-flow.test.mjs` on every PR.
+
+## Template migration flow (issue #34)
+
+The engine surfaces Template migrations as a first-class part of the
+`status` and `apply` outputs and writes `MIGRATIONS.md` to the apply
+branch, but it **never executes** migrations. The flow is:
+
+1. **Schema gate** — the Template manifest's `migrations[]` is validated
+   alongside every other schema-versioned file (issue #30). The engine
+   refuses manifests with rogue fields on migration entries.
+2. **Idempotency evaluation** — for each migration, the engine evaluates
+   the declared idempotency check (`file-exists`, `marker-present`, or
+   `command-succeeds`) against the Derived project without running any
+   migration command. The result lands in `sync-state.migrations[]` as
+   `idempotencyStatus: pending | already-applied`.
+3. **Execution mode** — `interactive: true` or `destructive: true`
+   force `execution: "manual-execution-required"`. Community Derived
+   projects also force every migration to `manual-execution-required`
+   regardless of declared mode. Trusted Derived projects may treat
+   automatic, non-interactive, non-destructive migrations as
+   `engine-surfaces-only`.
+4. **Recommended action** — when at least one migration is pending and
+   `manual-execution-required`, the status `recommendation.action`
+   becomes `review-migrations`; conflicts still take precedence when
+   present.
+5. **Worktree documentation** — `apply --worktree` writes
+   `MIGRATIONS.md` next to `BRANCH_README.md`. The file lists every
+   migration with its idempotency check, dry-run command, apply command,
+   and the explicit reviewer action. For Community Derived projects the
+   file includes a callout that the maintainer must run every migration
+   step locally; for Trusted Derived projects the file notes when
+   trusted automation is allowed.
+6. **PR-only** — migrations never cause direct mutation of a Derived
+   project's main branch. The engine surfaces them; humans run them.
+
+Layout:
+
+```text
+custom-engine/
+├── README.md
+├── package.json
+├── beztack-sync.mjs          # engine entry point
+├── migrations.mjs            # issue #34: migration evaluation + MIGRATIONS.md formatter
+├── format.mjs                # human-readable Markdown formatters
+├── prepare-branch.mjs        # PR-ready branch preparation
+├── validate.mjs              # schema-validation gate (issue #30)
+├── compare.mjs               # fixture-vs-engine comparator
+└── tests/
+    ├── apply-flow.test.mjs   # PR-only flow tests (issue #31)
+    └── migration-flow.test.mjs # migration flow tests (issue #34)
+```

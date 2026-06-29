@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://beztack.dev/schemas/template-manifest.schema.json",
   "title": "Beztack Template manifest",
-  "description": "Schema-versioned metadata for a published Template version. Lives at the root of a Template revision snapshot and declares the Template identity, semver, expected sync impact, and the compatible Sync engine version range. Engines must read this manifest before planning an apply and refuse templates whose compatibleEngines range excludes the current engine version per ADR-0006.",
+  "description": "Schema-versioned metadata for a published Template version. Lives at the root of a Template revision snapshot and declares the Template identity, semver, expected sync impact, the compatible Sync engine version range, and the Template migrations declared at this version. Migrations are declared separately from Template-owned file content per PRD-27 stories 37-39; engines must read this manifest before planning an apply and refuse templates whose compatibleEngines range excludes the current engine version per ADR-0006.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -67,13 +67,89 @@
     },
     "migrations": {
       "type": "array",
-      "description": "Template migrations declared at this Template version. Detailed modeling belongs in issue #34; this field is a placeholder that lists migration ids only.",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id"],
-        "properties": {
-          "id": { "type": "string" }
+      "description": "Template migrations declared at this Template version. Migrations are non-file update steps that change Derived project state beyond applying Template-owned file content per PRD-27 stories 37-39. The engine never executes migrations; it reads each step's idempotency check, reports its status, and lists the manual steps a human must run.",
+      "items": { "$ref": "#/$defs/migration" }
+    }
+  },
+  "$defs": {
+    "migration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "description", "idempotency"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable migration identifier (e.g. 'rotate-webhook-secret'). Must be unique within a Template version."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable explanation of what the migration does and why it is needed at this Template version."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["automatic", "manual"],
+          "description": "Whether the engine could run the migration automatically or only as a manual step. 'manual' covers unsafe or interactive migrations per PRD-27. The engine never actually runs either mode; this is metadata for the human reviewer."
+        },
+        "idempotency": {
+          "type": "object",
+          "description": "How the engine decides whether the migration has already been applied. The engine evaluates this check at status / apply time without executing the migration itself.",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["file-exists", "marker-present", "command-succeeds"],
+              "description": "Idempotency check variant. file-exists: a project file is present. marker-present: a project file contains a marker string. command-succeeds: the engine records the migration as pending and the human runs the command to confirm."
+            },
+            "path": {
+              "type": "string",
+              "description": "Derived-project-relative path used by file-exists and marker-present checks."
+            },
+            "marker": {
+              "type": "string",
+              "description": "Substring that must appear in the file at 'path' for marker-present checks."
+            },
+            "command": {
+              "type": "string",
+              "description": "Shell command for command-succeeds checks. The engine does not run it; the human does."
+            }
+          }
+        },
+        "dryRun": {
+          "type": "object",
+          "description": "Optional dry-run / preview metadata. The engine surfaces this as a preview command the human can run locally; it does not execute it.",
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Optional preview command that simulates the migration without changing project state."
+            },
+            "note": {
+              "type": "string",
+              "description": "Human-readable explanation of what the dry run shows."
+            }
+          }
+        },
+        "applyCommand": {
+          "type": "string",
+          "description": "Optional command that would perform the migration. The engine does not run it; humans decide whether to run it locally."
+        },
+        "interactive": {
+          "type": "boolean",
+          "description": "True if the migration requires interactive input. The engine reports the migration as manual regardless of declared mode."
+        },
+        "destructive": {
+          "type": "boolean",
+          "description": "True if the migration removes or rewrites existing project state. The engine reports the migration as manual regardless of declared mode."
+        },
+        "trustClass": {
+          "type": "string",
+          "enum": ["any", "trusted"],
+          "description": "Which Derived project trust classes are intended to run the migration. 'any' is the default and includes Community Derived projects (which must still run it explicitly). 'trusted' marks a migration as restricted to Trusted Derived projects; the engine surfaces this distinction in status and apply output."
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional human-readable guidance for the reviewer (e.g. links to docs, preconditions)."
         }
       }
     }
