@@ -451,6 +451,10 @@ test("issue #32: promotion-metadata output records registry decision in both tru
     "promotion-metadata",
     "--fixture",
     FIXTURE,
+    "--label",
+    "promotion: candidate",
+    "--source-pr",
+    "https://github.com/example/derived-app/pull/42",
   ]);
   assert.equal(promo.trustClass, "trusted");
   assert.ok(promo.trust, "promotion metadata must include the structured trust block");
@@ -572,6 +576,10 @@ test("issue #32: Community Derived projects are supported through local tooling 
     FIXTURE,
     "--derived-project",
     cloneDir,
+    "--label",
+    "promotion: candidate",
+    "--source-pr",
+    "https://github.com/example/community-derived/pull/1",
   ]);
   assert.equal(promo.trustClass, "community");
   assert.equal(promo.trust.source, "registry-absent-default-community");

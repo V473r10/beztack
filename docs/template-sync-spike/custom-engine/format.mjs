@@ -534,10 +534,158 @@ function formatTrustBlock(trust) {
   return lines.join("\n");
 }
 
+function entryModeLabel(mode) {
+  if (mode === "trusted-automation") return "TRUSTED AUTOMATION";
+  if (mode === "patch") return "PATCH (COMMUNITY)";
+  if (mode === "normal-pr") return "NORMAL PR";
+  return mode.toUpperCase();
+}
+
+function formatPromotionMarkdown(meta) {
+  const lines = [];
+  lines.push("# Promotion metadata");
+  lines.push("");
+  lines.push(`- **Derived project:** \`${meta.derivedProjectId}\``);
+  lines.push(`- **Template:** \`${meta.templateId}\``);
+  lines.push(`- **Baseline revision:** \`${meta.baselineRevision}\``);
+  lines.push(`- **Promotion label:** \`${meta.label}\``);
+  lines.push(`- **Entry mode:** ${entryModeLabel(meta.entryMode)} (\`${meta.entryMode}\`)`);
+  if (meta.entryMode === "trusted-automation") {
+    lines.push("");
+    lines.push(
+      "> **Trusted automation:** the source PR was opened by Beztack-owned automation because the registry lists this Derived project ID as trusted. Beztack review is still required before any change enters the Template source (ADR-0006)."
+    );
+  } else if (meta.entryMode === "patch") {
+    lines.push("");
+    lines.push(
+      "> **Community patch entry:** the source PR was submitted as a patch from a Community Derived project. Beztack CI must validate the patch before review (ADR-0006)."
+    );
+  } else {
+    lines.push("");
+    lines.push(
+      "> **Normal PR:** the source PR was opened by the Derived project maintainer. Beztack review is required before any change enters the Template source (ADR-0006)."
+    );
+  }
+  if (meta.syncEngine) {
+    lines.push(`- **Sync engine:** \`${meta.syncEngine.name}@${meta.syncEngine.version}\``);
+  }
+  lines.push("");
+
+  if (meta.sourcePRs && meta.sourcePRs.length > 0) {
+    lines.push("## Source PR / issue links");
+    lines.push("");
+    for (const ref of meta.sourcePRs) {
+      lines.push(`- \`${ref}\``);
+    }
+    lines.push("");
+  }
+
+  if (meta.trust) {
+    lines.push("## Beztack registry (trust source)");
+    lines.push("");
+    lines.push(formatTrustBlock(meta.trust));
+    lines.push("");
+  }
+
+  if (meta.candidates && meta.candidates.length > 0) {
+    lines.push(`## Promotion candidates (${meta.candidates.length})`);
+    lines.push("");
+    lines.push(
+      "Files eligible for direct Promotion. Ownership is Template-owned per the Beztack-owned Sync policy."
+    );
+    lines.push("");
+    lines.push("| Path | Ownership | Reason | Suggested seam |");
+    lines.push("|------|-----------|--------|----------------|");
+    for (const c of meta.candidates) {
+      const seam = c.suggestedSeam ? `\`${c.suggestedSeam}\`` : "—";
+      lines.push(`| \`${c.path}\` | ${c.ownership} | ${c.reason} | ${seam} |`);
+    }
+    lines.push("");
+  } else {
+    lines.push("## Promotion candidates");
+    lines.push("");
+    lines.push("None. The source PR did not touch any Template-owned path.");
+    lines.push("");
+  }
+
+  if (meta.skipped && meta.skipped.length > 0) {
+    lines.push(`## Skipped files (${meta.skipped.length})`);
+    lines.push("");
+    lines.push(
+      "Files excluded from Promotion by ownership. Custom-owned Product-domain files are excluded by default (issue #33). Mixed-without-seam files are surfaced for Platform extraction rather than direct Promotion."
+    );
+    lines.push("");
+    lines.push("| Path | Ownership | Reason |");
+    lines.push("|------|-----------|--------|");
+    for (const s of meta.skipped) {
+      lines.push(`| \`${s.path}\` | ${s.ownership} | \`${s.reason}\` |`);
+    }
+    lines.push("");
+    const platformExtractions = meta.skipped.filter(
+      (s) => s.reason === "platform-extraction-required"
+    );
+    if (platformExtractions.length > 0) {
+      lines.push(
+        `> **Platform extraction guidance:** ${platformExtractions.length} file(s) require Platform extraction rather than direct Promotion (see CONTEXT.md). Do not copy Custom-owned Product domain code into Beztack; design a reusable Template-source abstraction intentionally.`
+      );
+      lines.push("");
+    }
+  } else {
+    lines.push("## Skipped files");
+    lines.push("");
+    lines.push("None.");
+    lines.push("");
+  }
+
+  if (meta.checks && meta.checks.length > 0) {
+    lines.push(`## Checks (${meta.checks.length})`);
+    lines.push("");
+    lines.push("| Name | Result | Source |");
+    lines.push("|------|--------|--------|");
+    for (const c of meta.checks) {
+      lines.push(`| \`${c.name}\` | ${c.result} | \`${c.source ?? "engine"}\` |`);
+    }
+    lines.push("");
+  }
+
+  if (meta.relatedPromotions && meta.relatedPromotions.length > 0) {
+    lines.push(`## Related overlapping Promotions (${meta.relatedPromotions.length})`);
+    lines.push("");
+    lines.push(
+      "Overlapping Promotions are linked for reviewer awareness rather than auto-deduplicated. Reviewers must reconcile conflicting ideas in PR review."
+    );
+    lines.push("");
+    for (const r of meta.relatedPromotions) {
+      lines.push(`- \`${r.derivedProjectId}\` — label \`${r.label}\``);
+    }
+    lines.push("");
+  }
+
+  lines.push("## Suggested Template version impact");
+  lines.push("");
+  lines.push(`- **Suggested impact:** \`${meta.suggestedTemplateVersionImpact}\``);
+  lines.push(
+    "- **Publish policy:** engines do not auto-publish Template versions on Promotion merge. The new Template version is tagged explicitly by Beztack maintainers (PRD-27 out-of-scope item)."
+  );
+  lines.push("");
+
+  lines.push("## Distinction from Platform extraction");
+  lines.push("");
+  lines.push(
+    "Promotion copies Template-owned content from a Derived project PR back into the Template source. " +
+      "Platform extraction redesigns a Product-domain idea into a reusable Template-source abstraction intentionally. " +
+      "Engines must never copy Custom-owned Product-domain code into Beztack; use Platform extraction instead (issue #33, PRD-27 out-of-scope item)."
+  );
+  lines.push("");
+
+  return lines.join("\n");
+}
+
 export {
   formatStatusMarkdown,
   formatPlanMarkdown,
   formatBranchReadme,
   summarizeApplyResult,
   formatTrustBlock,
+  formatPromotionMarkdown,
 };

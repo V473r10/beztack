@@ -10,6 +10,22 @@
   },
   "branch": "template-sync/v1.0.0-to-v1.1.0",
   "summary": "Apply Beztack template v1.1.0 onto Derived project dp_01HMVLNCD00000000000000000A. Refresh the Environment contract (v1.1.0 required variables). Render Template parameters into package.json. No conflicts.",
+  "trust": {
+    "trustClass": "trusted",
+    "source": "registry-listed",
+    "note": "Derived project ID dp_01HMVLNCD00000000000000000A is on the Beztack-owned registry; trust class is trusted.",
+    "repository": {
+      "canonicalUrl": "https://github.com/beztack/synthetic-lncd",
+      "displayName": "synthetic-lncd",
+      "knownUrls": [
+        "https://github.com/beztack/synthetic-lncd"
+      ]
+    },
+    "registryId": "beztack-public-trust-registry",
+    "registryVersion": "2026.06.29",
+    "effectiveTrustClass": "trusted",
+    "trustOverriddenByCaller": false
+  },
   "updates": [
     {
       "path": "beztack.template.json",

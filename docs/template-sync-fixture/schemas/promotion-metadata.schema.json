@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://beztack.dev/schemas/promotion-metadata.schema.json",
   "title": "Beztack Promotion metadata",
-  "description": "Schema-versioned metadata for a Promotion from a Derived project back to the Template source. Promotion candidates are filtered by ownership and exclude Custom-owned Product domain changes by default per PRD-27.",
+  "description": "Schema-versioned metadata for a Promotion from a Derived project back to the Template source. Promotion candidates are filtered by ownership and exclude Custom-owned Product domain changes by default per PRD-27. Promotion is opt-in via a PR label (the authoritative signal); Trusted Derived projects may use trusted automation, Community Derived projects enter as normal PRs or patches, both still require Beztack review per issue #33.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,7 +17,8 @@
     "candidates",
     "skipped",
     "checks",
-    "suggestedTemplateVersionImpact"
+    "suggestedTemplateVersionImpact",
+    "entryMode"
   ],
   "properties": {
     "schemaVersion": {
@@ -93,11 +94,21 @@
     },
     "label": {
       "type": "string",
-      "description": "Promotion label applied to the source PR."
+      "description": "Promotion label applied to the source PR. The label is the authoritative opt-in signal per issue #33; the engine refuses to produce Promotion metadata without a label."
     },
     "sourcePR": {
       "type": "string",
-      "description": "Optional reference (URL or identifier) to the source PR on the Derived project."
+      "description": "Primary source PR reference (URL or identifier) on the Derived project. The first link in `sourcePRs` is mirrored here for convenience."
+    },
+    "sourcePRs": {
+      "type": "array",
+      "description": "All source PR and issue references (URLs or identifiers) on the Derived project. Multiple links are accepted when one PR builds on or relates to others; the first entry is mirrored in `sourcePR`.",
+      "items": { "type": "string" }
+    },
+    "entryMode": {
+      "type": "string",
+      "enum": ["normal-pr", "patch", "trusted-automation"],
+      "description": "How the source PR entered Beztack. Trusted Derived projects may use `trusted-automation` when Beztack-owned automation opens the PR; Community Derived projects may submit a `patch`. `normal-pr` is the default. Beztack review is still required in every case (ADR-0006)."
     },
     "candidates": {
       "type": "array",
@@ -144,7 +155,7 @@
     },
     "checks": {
       "type": "array",
-      "description": "Checks that ran in the source PR. Engines record which checks ran so reviewers can re-run them.",
+      "description": "Checks that ran in the source PR and in the engine. Engines record both their own validation checks and the upstream CI checks so reviewers can re-run them.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -154,6 +165,11 @@
           "result": {
             "type": "string",
             "enum": ["pass", "fail", "skip"]
+          },
+          "source": {
+            "type": "string",
+            "enum": ["engine", "upstream-pr-ci"],
+            "description": "Where the check ran. `engine` checks were executed by the Beztack Sync engine (schema validation, ownership overlap, candidate filter, registry resolution, engine version compatibility). `upstream-pr-ci` checks were supplied from the source PR's CI run."
           }
         }
       }

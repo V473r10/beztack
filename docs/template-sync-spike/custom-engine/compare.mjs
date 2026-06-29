@@ -22,6 +22,14 @@ async function getEngineJson(subcommand, planFlag = false) {
     "trusted",
   ];
   if (planFlag) args.push("--plan");
+  if (subcommand === "promotion-metadata") {
+    args.push(
+      "--label",
+      "promotion: candidate",
+      "--source-pr",
+      "https://github.com/example/derived-app/pull/42"
+    );
+  }
   const { stdout } = await execFile("node", args);
   return JSON.parse(stdout);
 }
@@ -232,6 +240,15 @@ out.results.promotionMetadata = {
       typeof promo.syncEngine.version === "string",
     checksRecorded:
       promo.checks.length === promoExpected.checks.length,
+    entryModeRecorded:
+      typeof promo.entryMode === "string" &&
+      ["normal-pr", "patch", "trusted-automation"].includes(promo.entryMode),
+    sourcePRsRecorded:
+      Array.isArray(promo.sourcePRs) &&
+      promo.sourcePRs.length >= 1 &&
+      promo.sourcePR === promo.sourcePRs[0],
+    engineChecksTagged:
+      promo.checks.every((c) => typeof c.source === "string"),
   },
 };
 

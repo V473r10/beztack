@@ -8,6 +8,22 @@
     "name": "beztack-sync-prototype",
     "version": "0.2.0"
   },
+  "trust": {
+    "trustClass": "trusted",
+    "source": "registry-listed",
+    "note": "Derived project ID dp_01HMVLNCD00000000000000000A is on the Beztack-owned registry; trust class is trusted.",
+    "repository": {
+      "canonicalUrl": "https://github.com/beztack/synthetic-lncd",
+      "displayName": "synthetic-lncd",
+      "knownUrls": [
+        "https://github.com/beztack/synthetic-lncd"
+      ]
+    },
+    "registryId": "beztack-public-trust-registry",
+    "registryVersion": "2026.06.29",
+    "effectiveTrustClass": "trusted",
+    "trustOverriddenByCaller": false
+  },
   "status": "ready-to-apply",
   "files": {
     "beztack.template.json": {

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "registryVersion": "2026.06.29",
+  "registryId": "beztack-public-trust-registry",
+  "templateId": "beztack-core",
+  "issuedAt": "2026-06-29T00:00:00Z",
+  "notes": "Beztack-owned allowlist of Trusted Derived projects. The real lncd repository is not accessible from this spike environment, so this fixture substitutes a synthetic Derived project ID; the engine still exercises the real Beztack strategy. Trust is granted by Beztack through this registry, not self-declared by Derived projects (ADR-0006).",
+  "entries": [
+    {
+      "derivedProjectId": "dp_01HMVLNCD00000000000000000A",
+      "trustClass": "trusted",
+      "repository": {
+        "canonicalUrl": "https://github.com/beztack/synthetic-lncd",
+        "knownUrls": [
+          "https://github.com/beztack/synthetic-lncd"
+        ],
+        "displayName": "synthetic-lncd"
+      },
+      "addedAt": "2026-05-15T00:00:00Z",
+      "addedBy": "beztack:core-team",
+      "governanceNotes": "Synthetic stand-in for lncd in the real-validation fixture. The real lncd repository is not accessible from this spike environment (issue #28)."
+    }
+  ]
+}

@@ -717,6 +717,84 @@ test("issue #34: migrations declared on the Template manifest are separate from 
   }
 });
 
+test("issue #33: Promotion metadata expected output declares the new fields from #33", async () => {
+  const promo = await readJson(join(EXPECTED, "promotion-metadata.json"));
+  const promoSchema = await readJson(join(SCHEMAS, "promotion-metadata.schema.json"));
+
+  // entryMode is required and locked to the documented enum.
+  assert.ok(
+    ["normal-pr", "patch", "trusted-automation"].includes(promo.entryMode),
+    `expected promotion-metadata must declare entryMode in the documented enum; got: ${promo.entryMode}`
+  );
+  assert.ok(
+    Array.isArray(promoSchema.required) && promoSchema.required.includes("entryMode"),
+    "promotion-metadata schema must require entryMode"
+  );
+
+  // sourcePRs is optional but, when present, the engine must mirror its
+  // first entry into sourcePR.
+  assert.ok(Array.isArray(promo.sourcePRs), "sourcePRs must be an array when present");
+  assert.ok(
+    promo.sourcePRs.length >= 1,
+    "sourcePRs must list at least one reference when sourcePR is present"
+  );
+  assert.equal(
+    promo.sourcePR,
+    promo.sourcePRs[0],
+    "sourcePR must mirror the first entry of sourcePRs"
+  );
+
+  // Each checks[] entry must declare its source (engine vs upstream-pr-ci).
+  assert.ok(Array.isArray(promo.checks) && promo.checks.length > 0);
+  for (const c of promo.checks) {
+    assert.ok(
+      ["engine", "upstream-pr-ci"].includes(c.source),
+      `checks[].source must be in {engine, upstream-pr-ci}; got: ${c.source} on ${c.name}`
+    );
+  }
+
+  // The skipped[] reason enum must include the four documented reasons.
+  const skipReasonEnum = promoSchema.properties.skipped.items.properties.reason.enum;
+  for (const reason of [
+    "custom-owned-product-domain",
+    "platform-extraction-required",
+    "mixed-protected-by-seam",
+    "ownership-ambiguous",
+  ]) {
+    assert.ok(
+      skipReasonEnum.includes(reason),
+      `promotion-metadata schema must allow skipped reason: ${reason}`
+    );
+  }
+
+  // relatedPromotions must be an array (engine never auto-deduplicates).
+  assert.ok(Array.isArray(promo.relatedPromotions));
+});
+
+test("issue #33: Promotion metadata expected output validates against the schema with the new fields", async () => {
+  const promo = await readJson(join(EXPECTED, "promotion-metadata.json"));
+  const promoSchema = await readJson(join(SCHEMAS, "promotion-metadata.schema.json"));
+  const error = validate(promo, promoSchema);
+  assert.equal(
+    error,
+    null,
+    error ?? "expected/promotion-metadata.json must validate against the updated schema (issue #33 fields)"
+  );
+});
+
+test("issue #33: Promotion metadata schema refuses rogue fields on the trust block (carries #32 invariant)", async () => {
+  // Issue #33 added new Promotion-specific fields but the trust block
+  // contract from issue #32 must remain locked down.
+  const promoSchema = await readJson(join(SCHEMAS, "promotion-metadata.schema.json"));
+  const rogue = JSON.parse(JSON.stringify(await readJson(join(EXPECTED, "promotion-metadata.json"))));
+  rogue.trust.__rogueField = "engine must reject this";
+  const error = validate(rogue, promoSchema);
+  assert.ok(
+    error !== null && error.includes("__rogueField"),
+    `promotion-metadata schema must reject rogue fields on the trust block; got: ${error}`
+  );
+});
+
 test("issue #30: invalid schema versions are rejected by the validator before planning", async () => {
   const policySchema = await readJson(join(SCHEMAS, "sync-policy.schema.json"));
   const stateSchema = await readJson(join(SCHEMAS, "sync-state.schema.json"));

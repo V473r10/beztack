@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beztack.dev/schemas/derived-project-registry.schema.json",
+  "title": "Beztack Trusted Derived project registry",
+  "description": "Schema-versioned Beztack-owned allowlist of Trusted Derived projects. Trust is granted by Beztack through this registry, not self-declared by Derived projects (ADR-0006). Each entry records the opaque stable Derived project ID, the expected repository identity (current canonical URL plus a rename history for traceability when the repo moves or is renamed), the trust class, and governance metadata. A Derived project whose ID is absent from this registry is treated as a Community Derived project by default; a Derived project owner cannot escalate trust by self-declaration. The registry is read-only from a Derived project's perspective and lives outside the Derived project tree.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "registryVersion",
+    "registryId",
+    "templateId",
+    "issuedAt",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version. Engines must refuse unknown values before planning or applying a Template update."
+    },
+    "registryVersion": {
+      "type": "string",
+      "description": "Opaque registry revision tag (e.g. '2026.06.29'). Lets the engine detect when Beztack has updated the allowlist."
+    },
+    "registryId": {
+      "type": "string",
+      "description": "Stable identifier of the registry instance (e.g. 'beztack-public-trust-registry'). Used in audit logs to record which registry granted trust."
+    },
+    "templateId": {
+      "type": "string",
+      "description": "Template source this registry applies to. Matches templateId in Sync policy and Sync state."
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this registry snapshot was issued. Informational; the engine uses registryVersion for equality."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable explanation of this registry snapshot (e.g. governance policy link)."
+    },
+    "entries": {
+      "type": "array",
+      "description": "Trusted Derived projects known to Beztack. Each entry binds a stable Derived project ID to a trust class and the expected repository identity. The list is order-independent.",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "derivedProjectId",
+        "trustClass",
+        "repository",
+        "addedAt",
+        "addedBy"
+      ],
+      "properties": {
+        "derivedProjectId": {
+          "type": "string",
+          "description": "Opaque stable Derived project identifier generated once at scaffolding. The registry entry is keyed by this id; renames or remote URL changes do NOT change the id."
+        },
+        "trustClass": {
+          "type": "string",
+          "enum": ["trusted"],
+          "description": "Trust class granted by Beztack to this Derived project. Only 'trusted' is recorded in the registry. Community trust is the default when a project is absent from the registry and is not granted here. Keeping Community trust out of the registry makes the absence of an entry the source of truth for community classification, so a copied project cannot receive trusted status by reusing the id."
+        },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["canonicalUrl", "knownUrls"],
+          "properties": {
+            "canonicalUrl": {
+              "type": "string",
+              "description": "Current canonical remote URL for this Derived project (e.g. 'https://github.com/beztack/lncd'). Used by Beztack-owned tooling to dispatch automated update notifications."
+            },
+            "knownUrls": {
+              "type": "array",
+              "description": "All remote URLs that have ever pointed at this Derived project. Preserves traceability when the repo is renamed or moved. The first entry is the current canonicalUrl.",
+              "items": { "type": "string" },
+              "minItems": 1
+            },
+            "displayName": {
+              "type": "string",
+              "description": "Optional human-readable name for the repository. Distinct from the canonicalUrl so a rename does not lose context in audit logs."
+            }
+          }
+        },
+        "addedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When Beztack added this Derived project ID to the registry."
+        },
+        "addedBy": {
+          "type": "string",
+          "description": "Beztack-owned identity that granted trust (e.g. a team handle or a governance PR link). Self-declared trust is not accepted; this field always records Beztack's grant."
+        },
+        "governanceNotes": {
+          "type": "string",
+          "description": "Optional human-readable governance rationale (link to the approving PR, scope statement, etc.). Does not affect sync behavior; documents intent."
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional revocation timestamp. When present, the entry is removed from the trusted set even though it remains in the registry for audit. Engines must treat revoked entries as community trust."
+        }
+      }
+    }
+  }
+}

@@ -343,22 +343,64 @@ idempotency check, dry-run command, apply command, and the explicit
 reviewer action. The engine never executes migrations on either Trusted
 or Community Derived projects.
 
-### Promotion metadata
+### Promotion metadata (issue #33)
 
 The engine must produce metadata conforming to
 `schemas/promotion-metadata.schema.json` and matching
-`expected/promotion-metadata.json`. Key invariants:
+`expected/promotion-metadata.json` for a source PR labelled
+`promotion: candidate`. The Promotion label is the authoritative
+opt-in signal per issue #33; the engine refuses to emit metadata
+without one.
+
+Key invariants from issue #33:
+
+- **`label`** is the Promotion label applied to the source PR
+  (`promotion: candidate`). The engine refuses to emit Promotion
+  metadata without `--label` (or `BEZTACK_PROMOTION_LABEL`).
+- **`sourcePR` / `sourcePRs[]`** capture every PR or issue link on
+  the Derived project that contributes to the Promotion. `--source-pr`
+  is repeatable; the first link is mirrored in `sourcePR`.
+- **`entryMode`** records how the source PR entered Beztack:
+  `normal-pr` (default), `patch` (Community maintainers), or
+  `trusted-automation` (Trusted maintainers using Beztack-owned
+  automation). Beztack review is required in every case (ADR-0006).
+- **`candidates`** lists only files on Template-owned paths; **Mixed-with-seam**
+  paths surface as `mixed-protected-by-seam`, **Mixed-without-seam**
+  paths surface as `platform-extraction-required` (issue #33
+  distinguishes Promotion from Platform extraction), **Custom-owned**
+  Product-domain files surface as `custom-owned-product-domain`,
+  and conflicting overlapping rules surface as `ownership-ambiguous`.
+- **`skipped`** lists every excluded file with its reason, so the
+  reviewer can confirm the Custom-owned Product-domain files did not
+  flow into the Template source.
+- **`checks[]`** records both engine-internal validation
+  (`source: "engine"`) and any upstream PR CI checks the caller passed
+  via `--check NAME=RESULT` (`source: "upstream-pr-ci"`).
+- **`trust`** is the Beztack-owned registry decision (issue #32); trust
+  is one-way, so `--trust-class trusted` for an ID absent from the
+  registry is refused even with a Promotion label.
+- **`relatedPromotions[]`** lists overlapping Promotions from other
+  Derived project IDs, linked for reviewer awareness rather than
+  auto-deduplicated.
+
+Fixture invariants:
 
 - `trustClass: "trusted"` because the Derived project ID is on the
   Trusted Derived project registry.
 - `label: "promotion: candidate"` (the documented Promotion label).
+- `entryMode: "normal-pr"` (default; the Trusted Derived project could
+  alternatively supply `--trusted-automation` to switch to
+  `trusted-automation`).
+- `sourcePRs` and `sourcePR` mirror the first `--source-pr` value.
 - `candidates` lists only files on Template-owned paths:
   `packages/util/retry.ts`, `packages/util/package.json`.
 - `skipped` lists Custom-owned Product-domain files
   (`apps/checkout/index.ts`, `apps/checkout/payment-handler.ts`,
   `apps/checkout/README.md`) with reason `custom-owned-product-domain`.
 - `checks` records the schema and ownership validation checks the engine
-  ran.
+  ran, each tagged `source: "engine"`. The caller can append
+  `--check NAME=RESULT` entries which the engine tags
+  `source: "upstream-pr-ci"`.
 - `suggestedTemplateVersionImpact: "minor"` because the candidates add a
   reusable Template-owned capability (PRD #27 minor semantics).
 
@@ -433,6 +475,19 @@ this fixture; the fixture's `derived-project/` state is what it is.
 | Community Derived projects require explicit local execution                  | `evaluateExecution(migration, "community")` always returns `manual-execution-required`; `MIGRATIONS.md` includes the explicit-local-execution warning for community projects |
 | Migration status appears in `status` or `apply` output as part of the recommended next action | `sync-state.schema.json#migrations`; `apply-plan.schema.json#migrations`; `recommendation.action: "review-migrations"`; `status.recommendation.note` mentions migrations |
 | Behavior covered by the Sync engine contract fixture                        | `expected/status.json#migrations`, `expected/apply-plan.json#migrations`; `migration-flow.test.mjs`; `fixture.test.mjs` issue #34 tests |
+
+## Acceptance criteria mapping (issue #33)
+
+| Issue #33 acceptance criterion                                                                                                       | Fixture artifact / test                                                                                                                                          |
+|-------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A Promotion label on a Derived project PR is the authoritative opt-in signal                                                       | Engine refuses `promotion-metadata` without `--label` (exit 6); `promotion-flow.test.mjs` "issue #33: Promotion label is the authoritative opt-in signal"     |
+| Promotion candidates are filtered by ownership: Template-owned paths and unprotected parts of Mixed ownership                      | `candidates[]` only includes `packages/util/*` (Template-owned); `promotion-flow.test.mjs` "issue #33: Promotion candidates are filtered to Template-owned paths" |
+| Custom-owned Product domain changes are skipped by default and reported clearly                                                    | `skipped[]` lists `apps/checkout/*` with reason `custom-owned-product-domain`; `promotion-flow.test.mjs` "issue #33: Custom-owned Product domain changes are skipped by default" |
+| Promotion metadata includes source project identity, trust class, source PR or issue links, baseline revision, files touched (candidates+skipped), resolved ownership, skipped files, checks run, suggested Template version impact, and related overlapping Promotions | `promotion-metadata.schema.json#derivedProjectId / trustClass / sourcePR / sourcePRs / baselineRevision / candidates / skipped / checks / suggestedTemplateVersionImpact / relatedPromotions`; `promotion-flow.test.mjs` issue #33 metadata coverage tests |
+| Community Derived project Promotions enter as normal PRs or patches and are validated by Beztack CI                                | `--community-entry-mode patch` → `entryMode: "patch"`; default is `normal-pr`; `promotion-flow.test.mjs` "issue #33: Community Derived project + --community-entry-mode patch" |
+| Trusted Derived project Promotions optionally using trusted automation while still requiring Beztack review                          | `--trusted-automation` → `entryMode: "trusted-automation"`; engine warns and ignores when trust is community; `promotion-flow.test.mjs` "issue #33: Trusted Derived project + --trusted-automation" |
+| Overlapping Promotions are linked for reviewer awareness rather than auto-deduplicated                                             | `--related-promotion DERIVED_PROJECT_ID,LABEL` repeatable; engine never deduplicates; `promotion-flow.test.mjs` "issue #33: related Promotions are linked in metadata, not auto-deduplicated" |
+| The flow distinguishes Promotion from Platform extraction                                                                            | `skipped[]` reasons include `platform-extraction-required` for Mixed-without-seam paths; `formatPromotionMarkdown` and the human view render the distinction; `promotion-flow.test.mjs` "issue #33: Mixed-without-seam paths are surfaced for Platform extraction" and "issue #33: human-readable Promotion metadata renders the Promotion flow" |
 
 ## Self-check
 

@@ -2,6 +2,22 @@
   "schemaVersion": "1.0",
   "derivedProjectId": "dp_01HMVLNCD00000000000000000A",
   "trustClass": "trusted",
+  "trust": {
+    "trustClass": "trusted",
+    "source": "registry-listed",
+    "note": "Derived project ID dp_01HMVLNCD00000000000000000A is on the Beztack-owned registry; trust class is trusted.",
+    "repository": {
+      "canonicalUrl": "https://github.com/beztack/synthetic-lncd",
+      "displayName": "synthetic-lncd",
+      "knownUrls": [
+        "https://github.com/beztack/synthetic-lncd"
+      ]
+    },
+    "registryId": "beztack-public-trust-registry",
+    "registryVersion": "2026.06.29",
+    "effectiveTrustClass": "trusted",
+    "trustOverriddenByCaller": false
+  },
   "templateId": "beztack-core",
   "syncEngine": {
     "name": "beztack-sync-prototype",
@@ -9,6 +25,7 @@
   },
   "baselineRevision": "v1.0.0",
   "label": "promotion: candidate",
+  "entryMode": "normal-pr",
   "candidates": [
     {
       "path": "packages/cli/index.ts",
@@ -37,29 +54,44 @@
   "checks": [
     {
       "name": "schema/sync-policy",
-      "result": "pass"
+      "result": "pass",
+      "source": "engine"
     },
     {
       "name": "schema/origin-baseline",
-      "result": "pass"
+      "result": "pass",
+      "source": "engine"
     },
     {
       "name": "schema/sync-state",
-      "result": "pass"
+      "result": "pass",
+      "source": "engine"
     },
     {
       "name": "ownership/overlap-validation",
-      "result": "pass"
+      "result": "pass",
+      "source": "engine"
     },
     {
       "name": "promotion/candidate-filter",
-      "result": "pass"
+      "result": "pass",
+      "source": "engine"
     },
     {
       "name": "engine/version-compatibility",
-      "result": "pass"
+      "result": "pass",
+      "source": "engine"
+    },
+    {
+      "name": "registry/trust-resolution",
+      "result": "pass",
+      "source": "engine"
     }
   ],
   "suggestedTemplateVersionImpact": "minor",
-  "relatedPromotions": []
+  "relatedPromotions": [],
+  "sourcePR": "https://github.com/beztack/synthetic-lncd/pull/1",
+  "sourcePRs": [
+    "https://github.com/beztack/synthetic-lncd/pull/1"
+  ]
 }

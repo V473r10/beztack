@@ -27,6 +27,10 @@
   "baselineRevision": "v1.1.0",
   "label": "promotion: candidate",
   "sourcePR": "https://github.com/example/derived-app/pull/42",
+  "sourcePRs": [
+    "https://github.com/example/derived-app/pull/42"
+  ],
+  "entryMode": "normal-pr",
   "candidates": [
     {
       "path": "packages/util/retry.ts",
@@ -59,14 +63,15 @@
     }
   ],
   "checks": [
-    { "name": "schema/sync-policy", "result": "pass" },
-    { "name": "schema/origin-baseline", "result": "pass" },
-    { "name": "schema/sync-state", "result": "pass" },
-    { "name": "ownership/overlap-validation", "result": "pass" },
-    { "name": "promotion/candidate-filter", "result": "pass" },
-    { "name": "engine/version-compatibility", "result": "pass" },
-    { "name": "registry/trust-resolution", "result": "pass" }
+    { "name": "schema/sync-policy", "result": "pass", "source": "engine" },
+    { "name": "schema/origin-baseline", "result": "pass", "source": "engine" },
+    { "name": "schema/sync-state", "result": "pass", "source": "engine" },
+    { "name": "ownership/overlap-validation", "result": "pass", "source": "engine" },
+    { "name": "promotion/candidate-filter", "result": "pass", "source": "engine" },
+    { "name": "engine/version-compatibility", "result": "pass", "source": "engine" },
+    { "name": "registry/trust-resolution", "result": "pass", "source": "engine" }
   ],
   "suggestedTemplateVersionImpact": "minor",
   "relatedPromotions": []
 }
+

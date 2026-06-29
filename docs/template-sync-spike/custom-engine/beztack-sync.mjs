@@ -12,6 +12,7 @@ import {
   formatStatusMarkdown,
   formatPlanMarkdown,
   summarizeApplyResult,
+  formatPromotionMarkdown,
 } from "./format.mjs";
 import { prepareBranch } from "./prepare-branch.mjs";
 import {
@@ -28,6 +29,12 @@ import {
   RegistryError,
   DEFAULT_REGISTRY_PATH,
 } from "./registry.mjs";
+
+const REPEATABLE_FLAGS = new Set([
+  "source-pr",
+  "related-promotion",
+  "check",
+]);
 
 const args = parseArgs(process.argv.slice(2));
 const subcommand = args._[0];
@@ -261,6 +268,10 @@ if (subcommand === "status") {
     }
   }
 } else if (subcommand === "promotion-metadata") {
+  const promotionInput = collectPromotionInput({
+    args,
+    projectTrustClass,
+  });
   const meta = await buildPromotionMetadata({
     derivedProjectId,
     templateId,
@@ -274,8 +285,17 @@ if (subcommand === "status") {
     projectTrustClass,
     trustPayload,
     resolvedTrust,
+    promotionInput,
   });
-  process.stdout.write(JSON.stringify(meta, null, 2) + "\n");
+  if (
+    outputFormat === "human" ||
+    outputFormat === "md" ||
+    outputFormat === "markdown"
+  ) {
+    process.stdout.write(formatPromotionMarkdown(meta) + "\n");
+  } else {
+    process.stdout.write(JSON.stringify(meta, null, 2) + "\n");
+  }
 } else {
   console.error(`Unknown subcommand: ${subcommand}`);
   process.exit(2);
@@ -708,6 +728,7 @@ async function buildPromotionMetadata({
   projectTrustClass,
   trustPayload,
   resolvedTrust,
+  promotionInput,
 }) {
   const derivedFiles = await listFiles(derivedRoot, derivedRoot);
   const originFiles = await listFiles(fromTemplateRoot);
@@ -751,7 +772,14 @@ async function buildPromotionMetadata({
   candidates.sort((a, b) => a.path.localeCompare(b.path));
   skipped.sort((a, b) => a.path.localeCompare(b.path));
 
-  return {
+  const entryMode = resolveEntryMode({
+    projectTrustClass,
+    promotionInput,
+  });
+
+  const checks = buildPromotionChecks({ promotionInput });
+
+  const out = {
     schemaVersion: "1.0",
     derivedProjectId,
     trustClass: projectTrustClass,
@@ -759,22 +787,163 @@ async function buildPromotionMetadata({
     templateId,
     syncEngine: engineOutput,
     baselineRevision: origin.templateRevision ?? fromRev,
-    label: "promotion: candidate",
+    label: promotionInput.label,
+    entryMode,
     candidates,
     skipped,
-    checks: [
-      { name: "schema/sync-policy", result: "pass" },
-      { name: "schema/origin-baseline", result: "pass" },
-      { name: "schema/sync-state", result: "pass" },
-      { name: "ownership/overlap-validation", result: "pass" },
-      { name: "promotion/candidate-filter", result: "pass" },
-      { name: "engine/version-compatibility", result: "pass" },
-      { name: "registry/trust-resolution", result: "pass" },
-    ],
+    checks,
     suggestedTemplateVersionImpact:
       candidates.length > 0 ? "minor" : "none",
-    relatedPromotions: [],
+    relatedPromotions: promotionInput.relatedPromotions ?? [],
   };
+  const sourcePRs = promotionInput.sourcePRs ?? [];
+  if (sourcePRs.length > 0) {
+    out.sourcePR = sourcePRs[0];
+    out.sourcePRs = sourcePRs;
+  }
+  return out;
+}
+
+function resolveEntryMode({ projectTrustClass, promotionInput }) {
+  if (
+    promotionInput.trustedAutomationUsed &&
+    projectTrustClass !== "trusted"
+  ) {
+    console.error(
+      "warning: --trusted-automation ignored because the registry grants community trust; trusted automation requires a Trusted Derived project registry entry."
+    );
+  }
+  if (
+    promotionInput.communityEntryMode === "patch" &&
+    projectTrustClass !== "community"
+  ) {
+    console.error(
+      "warning: --community-entry-mode patch ignored because the registry grants trusted status; patches are a Community Derived project entry mode."
+    );
+  }
+  if (
+    promotionInput.trustedAutomationUsed &&
+    projectTrustClass === "trusted"
+  ) {
+    return "trusted-automation";
+  }
+  if (
+    promotionInput.communityEntryMode === "patch" &&
+    projectTrustClass === "community"
+  ) {
+    return "patch";
+  }
+  return "normal-pr";
+}
+
+function buildPromotionChecks({ promotionInput }) {
+  const checks = [
+    { name: "schema/sync-policy", result: "pass", source: "engine" },
+    { name: "schema/origin-baseline", result: "pass", source: "engine" },
+    { name: "schema/sync-state", result: "pass", source: "engine" },
+    { name: "ownership/overlap-validation", result: "pass", source: "engine" },
+    { name: "promotion/candidate-filter", result: "pass", source: "engine" },
+    { name: "engine/version-compatibility", result: "pass", source: "engine" },
+    { name: "registry/trust-resolution", result: "pass", source: "engine" },
+  ];
+  for (const upstream of promotionInput.upstreamChecks ?? []) {
+    checks.push({ ...upstream, source: "upstream-pr-ci" });
+  }
+  return checks;
+}
+
+function parseCheckSpec(spec) {
+  const eq = spec.indexOf("=");
+  if (eq <= 0) {
+    throw new Error(
+      `--check entries must be NAME=RESULT (pass|fail|skip); got: ${spec}`
+    );
+  }
+  const name = spec.slice(0, eq).trim();
+  const result = spec.slice(eq + 1).trim();
+  if (!["pass", "fail", "skip"].includes(result)) {
+    throw new Error(
+      `--check result must be one of pass|fail|skip; got: ${result} (from ${spec})`
+    );
+  }
+  if (!name) {
+    throw new Error(`--check NAME=RESULT must include a non-empty name; got: ${spec}`);
+  }
+  return { name, result };
+}
+
+function parseRelatedPromotionSpec(spec) {
+  const idx = spec.indexOf(",");
+  if (idx <= 0 || idx === spec.length - 1) {
+    throw new Error(
+      `--related-promotion entries must be DERIVED_PROJECT_ID,LABEL; got: ${spec}`
+    );
+  }
+  const derivedProjectId = spec.slice(0, idx).trim();
+  const label = spec.slice(idx + 1).trim();
+  if (!derivedProjectId || !label) {
+    throw new Error(
+      `--related-promotion entries must be DERIVED_PROJECT_ID,LABEL with both parts non-empty; got: ${spec}`
+    );
+  }
+  return { derivedProjectId, label };
+}
+
+function collectPromotionInput({ args, projectTrustClass }) {
+  const label =
+    args.label ?? process.env.BEZTACK_PROMOTION_LABEL ?? null;
+  if (!label || typeof label !== "string" || label.length === 0) {
+    console.error(
+      "promotion-metadata requires --label (the PR label is the authoritative Promotion opt-in signal per issue #33). Refusing to emit Promotion metadata without a label."
+    );
+    process.exit(6);
+  }
+
+  const sourcePRs = [];
+  for (const value of arr(args["source-pr"])) {
+    if (typeof value !== "string" || value.length === 0) continue;
+    sourcePRs.push(value);
+  }
+
+  const relatedPromotions = [];
+  for (const value of arr(args["related-promotion"])) {
+    if (typeof value !== "string" || value.length === 0) continue;
+    relatedPromotions.push(parseRelatedPromotionSpec(value));
+  }
+
+  const upstreamChecks = [];
+  for (const value of arr(args.check)) {
+    if (typeof value !== "string" || value.length === 0) continue;
+    upstreamChecks.push(parseCheckSpec(value));
+  }
+
+  const trustedAutomationUsed = args["trusted-automation"] === true;
+  const communityEntryModeRaw = args["community-entry-mode"];
+  let communityEntryMode = null;
+  if (typeof communityEntryModeRaw === "string" && communityEntryModeRaw.length > 0) {
+    if (!["normal-pr", "patch"].includes(communityEntryModeRaw)) {
+      console.error(
+        `--community-entry-mode must be one of normal-pr|patch; got: ${communityEntryModeRaw}`
+      );
+      process.exit(2);
+    }
+    communityEntryMode = communityEntryModeRaw;
+  }
+
+  return {
+    label,
+    sourcePRs,
+    relatedPromotions,
+    upstreamChecks,
+    trustedAutomationUsed,
+    communityEntryMode,
+  };
+}
+
+function arr(value) {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) return value;
+  return [value];
 }
 
 async function listFiles(root, base = root) {
@@ -930,7 +1099,16 @@ function parseArgs(argv) {
         continue;
       }
       if (next === undefined || next.startsWith("--")) {
-        out[key] = true;
+        if (REPEATABLE_FLAGS.has(key)) {
+          if (!Array.isArray(out[key])) out[key] = [];
+          out[key].push(true);
+        } else {
+          out[key] = true;
+        }
+      } else if (REPEATABLE_FLAGS.has(key)) {
+        if (!Array.isArray(out[key])) out[key] = [];
+        out[key].push(next);
+        i++;
       } else {
         out[key] = next;
         i++;
