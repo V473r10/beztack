@@ -8,13 +8,19 @@ import {
   checkEngineCompatibility,
   SUPPORTED_SCHEMA_VERSIONS,
 } from "./validate.mjs";
+import {
+  formatStatusMarkdown,
+  formatPlanMarkdown,
+  summarizeApplyResult,
+} from "./format.mjs";
+import { prepareBranch } from "./prepare-branch.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 const subcommand = args._[0];
 
 if (!subcommand) {
   console.error(
-    "Usage: beztack-sync.js <status|apply|promotion-metadata> [--fixture PATH] [--from REV] [--to REV] [--derived-project PATH] [--engine NAME VERSION]"
+    "Usage: beztack-sync.js <status|apply|promotion-metadata> [--fixture PATH] [--from REV] [--to REV] [--derived-project PATH] [--engine NAME VERSION] [--format json|human] [--worktree PATH [--init-git]]"
   );
   process.exit(2);
 }
@@ -33,9 +39,13 @@ const trustClass =
   process.env.BEZTACK_TRUST_CLASS ??
   "trusted";
 const skipValidation = args["skip-validation"] === true;
+const outputFormat = args.format ?? "json";
+const worktreePath = args.worktree ? resolve(args.worktree) : null;
+const initGit = args["init-git"] === true;
 
 const fromTemplateRoot = join(fixtureRoot, "template-revisions", fromRev);
 const toTemplateRoot = join(fixtureRoot, "template-revisions", toRev);
+const revisionManifestPath = "template.json";
 
 const schemas = skipValidation ? null : await loadSchemas(schemaDir);
 
@@ -60,7 +70,7 @@ try {
 let toManifest = null;
 try {
   toManifest = JSON.parse(
-    await readFile(join(toTemplateRoot, "template.json"), "utf8")
+    await readFile(join(toTemplateRoot, revisionManifestPath), "utf8")
   );
 } catch (err) {
   if (err.code !== "ENOENT") throw err;
@@ -112,10 +122,16 @@ if (subcommand === "status") {
     origin,
     engineOutput,
   });
-  process.stdout.write(JSON.stringify(status, null, 2) + "\n");
+  if (outputFormat === "human" || outputFormat === "md" || outputFormat === "markdown") {
+    process.stdout.write(formatStatusMarkdown(status) + "\n");
+  } else {
+    process.stdout.write(JSON.stringify(status, null, 2) + "\n");
+  }
 } else if (subcommand === "apply") {
-  if (args.plan === undefined) {
-    console.error("apply requires --plan");
+  if (args.plan === undefined && !worktreePath) {
+    console.error(
+      "apply requires either --plan (emit a plan) or --worktree PATH (prepare a branch)."
+    );
     process.exit(2);
   }
   const plan = await buildApplyPlan({
@@ -131,7 +147,55 @@ if (subcommand === "status") {
     origin,
     engineOutput,
   });
-  process.stdout.write(JSON.stringify(plan, null, 2) + "\n");
+  if (worktreePath) {
+    const result = await prepareBranch({
+      derivedRoot,
+      fromTemplateRoot,
+      toTemplateRoot,
+      worktreePath,
+      policy,
+      parameters,
+      origin,
+      plan,
+      engineOutput,
+      initGit,
+    });
+    if (outputFormat === "human" || outputFormat === "md" || outputFormat === "markdown") {
+      process.stdout.write(formatPlanMarkdown(plan) + "\n\n");
+      process.stdout.write(
+        summarizeApplyResult({
+          plan,
+          worktree: result.worktree,
+          engineOutput,
+          branchCreated: result.branchCreated,
+        }) + "\n"
+      );
+    } else {
+      process.stdout.write(
+        JSON.stringify(
+          {
+            plan,
+            result: {
+              worktree: result.worktree,
+              branch: result.branch,
+              branchCreated: result.branchCreated,
+              eventId: result.eventId,
+              updatesApplied: result.updates,
+              seamsPreserved: result.seamLog,
+            },
+          },
+          null,
+          2
+        ) + "\n"
+      );
+    }
+  } else {
+    if (outputFormat === "human" || outputFormat === "md" || outputFormat === "markdown") {
+      process.stdout.write(formatPlanMarkdown(plan) + "\n");
+    } else {
+      process.stdout.write(JSON.stringify(plan, null, 2) + "\n");
+    }
+  }
 } else if (subcommand === "promotion-metadata") {
   const meta = await buildPromotionMetadata({
     derivedProjectId,
@@ -182,7 +246,8 @@ async function buildStatus({
       path === "node_modules" ||
       path.startsWith("schemas/") ||
       path.startsWith("expected/") ||
-      path.startsWith("template-revisions/")
+      path.startsWith("template-revisions/") ||
+      path === revisionManifestPath
     ) {
       continue;
     }
@@ -309,7 +374,8 @@ async function buildApplyPlan({
       path === "node_modules" ||
       path.startsWith("schemas/") ||
       path.startsWith("expected/") ||
-      path.startsWith("template-revisions/")
+      path.startsWith("template-revisions/") ||
+      path === revisionManifestPath
     ) {
       continue;
     }
@@ -679,6 +745,13 @@ function parseArgs(argv) {
     if (a.startsWith("--")) {
       const key = a.slice(2);
       const next = argv[i + 1];
+      const next2 = argv[i + 2];
+      if (key === "engine" && next && !next.startsWith("--") && next2 && !next2.startsWith("--")) {
+        out.engine = next;
+        out["engine-version"] = next2;
+        i += 2;
+        continue;
+      }
       if (next === undefined || next.startsWith("--")) {
         out[key] = true;
       } else {

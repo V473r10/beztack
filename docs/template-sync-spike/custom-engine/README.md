@@ -4,45 +4,76 @@
 > engine-agnostic fixture contract from
 > [`../../template-sync-fixture/`](../../template-sync-fixture/) in a
 > small Node-based CLI.
+>
+> Issue: [#31 — Template sync: Prove PR-only status/apply flow](https://github.com/V473r10/beztack/issues/31)
+> Parent PRD: [#27 — Template Sync System](https://github.com/V473r10/beztack/issues/27)
 
 ## What this is
 
-A throwaway prototype whose only purpose is to demonstrate that the
-Template sync engine contract can be implemented against the fixture,
-and that the implementation produces schema-versioned JSON outputs that
-satisfy the contract. It is intentionally minimal:
+A prototype that demonstrates the **PR-only Template update flow** end to
+end against the engine-agnostic fixture. It is intentionally minimal:
 
 - Reads the fixture (no real Git, no real GitHub API).
-- Emits three outputs: `status`, `apply --plan`, `promotion-metadata`.
-- Validates each output against the fixture's JSON Schemas
-  (`schemas/sync-state.schema.json`, `schemas/apply-plan.schema.json`,
-  `schemas/promotion-metadata.schema.json`).
-- Does not create branches, PRs, or commits. PR creation is a
-  follow-up concern; the engine emits a `branch` field in the apply
-  plan and stops there.
-- Does not load environment variables, look up the Trusted Derived
-  project registry, or perform any side effects. Those are follow-up
-  issues.
+- Emits three primary outputs: `status`, `apply`, `promotion-metadata`.
+- `status` and `apply` both have a **stable JSON contract** for agents
+  and CI and a **human-readable Markdown view** as a secondary view.
+- `apply` has two modes:
+  - `apply --plan` — emit the plan JSON only (no side effects).
+  - `apply --worktree PATH` — prepare a PR-ready branch in a new
+    directory, write the planned file updates, update the Origin
+    baseline / Sync state / Sync event log in that directory, and write
+    a `BRANCH_README.md` describing the work. The original Derived
+    project is **never** mutated.
+- `apply --worktree PATH --init-git` additionally initialises a Git
+  repo in the worktree, creates the branch, and commits the changes.
+- Validates every schema-versioned input and output through the
+  validator from issue #30 and refuses unsupported schema versions
+  before any planning or apply work.
+- Does not push to a remote or open a PR. PR creation is a follow-up
+  concern (see "What's still future work" below).
 
 ## Usage
 
 ```bash
 # From the repo root:
+
+# 1. Stable JSON status (for agents and CI).
 node docs/template-sync-spike/custom-engine/beztack-sync.mjs \
   status --fixture docs/template-sync-fixture
+
+# 2. Human-readable status (for humans and PR summaries).
+node docs/template-sync-spike/custom-engine/beztack-sync.mjs \
+  status --fixture docs/template-sync-fixture --format human
+
+# 3. Apply plan only (no side effects).
 node docs/template-sync-spike/custom-engine/beztack-sync.mjs \
   apply --plan --fixture docs/template-sync-fixture
+
+# 4. Human-readable apply plan.
+node docs/template-sync-spike/custom-engine/beztack-sync.mjs \
+  apply --plan --fixture docs/template-sync-fixture --format human
+
+# 5. PR-ready branch preparation (the new flow from issue #31).
+node docs/template-sync-spike/custom-engine/beztack-sync.mjs \
+  apply --worktree /tmp/example-derived-update \
+  --fixture docs/template-sync-fixture
+
+# 5b. Same, but also create a Git branch on top of the worktree.
+node docs/template-sync-spike/custom-engine/beztack-sync.mjs \
+  apply --worktree /tmp/example-derived-update --init-git \
+  --fixture docs/template-sync-fixture
+
+# 6. Promotion metadata.
 node docs/template-sync-spike/custom-engine/beztack-sync.mjs \
   promotion-metadata --fixture docs/template-sync-fixture
 
 # Compare to fixture expected/*.json (validates schemas and key semantics):
 node docs/template-sync-spike/custom-engine/compare.mjs \
   docs/template-sync-fixture
-```
 
-The compare script writes a JSON report and exits 0 only if every
-schema validates and every key semantic invariant holds. The current
-implementation passes all checks against the engine-agnostic fixture.
+# Run the new apply-flow tests (issue #31):
+node --test docs/template-sync-spike/custom-engine/tests/apply-flow.test.mjs
+```
 
 ## Options
 
@@ -51,8 +82,70 @@ implementation passes all checks against the engine-agnostic fixture.
 - `--to REV` — candidate revision (default: `v1.2.0`).
 - `--derived-project PATH` — Derived project root (default:
   `<fixture>/derived-project`).
-- `--engine NAME VERSION` — overrides `syncEngine.name` /
-  `syncEngine.version` in outputs.
+- `--engine NAME VERSION` — overrides `syncEngine.name` and
+  `syncEngine.version` in outputs. The validator gates every subcommand
+  on `compatibleEngines` and aborts with exit code 4 if the engine
+  version is below the Template minimum.
+- `--trust-class trusted|community` — overrides the trust class used
+  in Promotion metadata.
+- `--format json|human` — `json` is the default; `human` (alias:
+  `md`, `markdown`) emits a Markdown view of `status` or the apply
+  plan. `--worktree` mode also prints a one-line summary of what was
+  prepared.
+- `--worktree PATH` — apply mode only. Prepare a PR-ready branch in
+  `PATH` (the engine refuses to overwrite an existing path).
+- `--init-git` — apply + `--worktree` mode only. Initialise a Git repo
+  in the worktree, create the branch, and commit the prepared changes.
+- `--skip-validation` — skip the schema-validation gate (intended for
+  internal debugging only; do not use in CI).
+
+## The PR-only apply flow (issue #31)
+
+The minimum PR-only Template update flow that issue #31 asks for lives
+behind `apply --worktree PATH`. It does six things, in this order:
+
+1. **Validate the gate.** Refuse to plan or apply unless every
+   schema-versioned input (Sync policy, Origin baseline, Sync event
+   log, target Template manifest) passes the issue #30 gate. Refuse
+   if the manifest's `compatibleEngines` excludes the engine version.
+2. **Copy the Derived project into a fresh directory.** The original
+   Derived project is never mutated, so rollback is just
+   `rm -rf` of the worktree.
+3. **Apply the planned updates.** For each `update` in the plan:
+   - **Seam-preserved files** (e.g. `apps/api/routes.ts`) take the
+     candidate's harness and splice in the Derived project's seam
+     region, so the new harness is in place and the Derived project's
+     custom `registerRoute(...)` calls are preserved.
+   - **`package.json`** is rendered from the candidate, with
+     Template parameters (`{{appName}}` etc.) substituted from
+     `.beztack/parameters.json`. Dependency keys are union-merged
+     with the Derived project's `package.json` so custom workspace
+     dependencies are preserved while Template-owned keys take
+     precedence.
+   - **All other Template-owned updates** are written verbatim from
+     the candidate.
+   - **Custom-owned files** are never touched.
+   - **Conflict files** (Mixed ownership, no seam, both sides
+     changed) are intentionally not modified in the worktree; the
+     engine records the conflict in the plan, in the Sync event log,
+     and in `BRANCH_README.md`.
+4. **Update the Origin baseline in the worktree** so a future
+   `status` against the worktree reports `currentRevision: v1.2.0` and
+   refreshed per-file hashes.
+5. **Update the Sync state in the worktree** so a future
+   `status` against the worktree reports `currentRevision: v1.2.0`
+   and `candidateRevision` is cleared.
+6. **Append an `apply` event to the Sync event log in the worktree**,
+   recording `fromRevision`, `toRevision`, `branch`, and the
+   update / skip / conflict / blocker counts. Existing events are
+   never reordered or mutated.
+
+Lockfiles are deliberately **not** copied from the Template source.
+The Template revisions in the fixture do not ship `pnpm-lock.yaml`,
+and the engine records this in the Origin baseline and in
+`BRANCH_README.md`, which explicitly tells the reviewer to run
+`pnpm install --lockfile-only` (or the equivalent) before opening
+the PR. See `CONTEXT.md` and ADR-0006 for the domain rationale.
 
 ## Layout
 
@@ -60,30 +153,35 @@ implementation passes all checks against the engine-agnostic fixture.
 custom-engine/
 ├── README.md
 ├── package.json
-├── beztack-sync.mjs       # engine entry point
-└── compare.mjs            # fixture-vs-engine comparator
+├── beztack-sync.mjs          # engine entry point
+├── format.mjs                # human-readable Markdown formatters
+├── prepare-branch.mjs        # PR-ready branch preparation
+├── validate.mjs              # schema-validation gate (issue #30)
+├── compare.mjs               # fixture-vs-engine comparator
+└── tests/
+    └── apply-flow.test.mjs   # PR-only flow tests (issue #31)
 ```
 
 The comparator (`compare.mjs`) embeds a minimal JSON Schema validator
 sufficient for the spike (enum + required + `additionalProperties: false`).
-For the production engine, use `ajv` or another battle-tested validator.
+The new `apply-flow.test.mjs` uses a richer validator (type, const,
+enum, required, additionalProperties, properties, items, $ref, $defs,
+oneOf, allOf, pattern, date-time format) to validate the worktree's
+schema-versioned outputs against the fixture schemas.
 
-## Why this is small
+## What's still future work
 
-The spike recommendation is to **build custom**, but the spike itself
-does not need a production-quality engine. The prototype is enough to:
-
-1. Show that the contract is implementable.
-2. Validate the schemas against realistic outputs.
-3. Provide a reference for the follow-up implementation issue.
-
-The follow-up implementation issue should:
-
-- Replace the inline JSON Schema validator with `ajv` (or similar).
-- Add PR creation via the GitHub API or the `gh` CLI.
-- Add the Trusted Derived project registry lookup.
-- Add env loading and parameter rendering in `apply`.
-- Add promotion-metadata generation from a real PR (using the `gh` API
-  or webhook input).
-- Add a CI workflow that runs `compare.mjs` against the fixture on
-  every PR.
+- Real Git integration (`git fetch`, `git push`, PR creation via the
+  GitHub API or the `gh` CLI). The engine currently stops at the
+  branch / commit step; pushing and opening the PR is a follow-up
+  concern that does not need to block the contract.
+- Real `lncd` repository validation against the engine. Deferred in
+  issue #28; the fixture is the only validation target for this spike.
+- Template migration modeling. Owned by issue #34. The Template
+  manifest's `migrations` field is parsed but not executed.
+- Replacement of the inline JSON Schema validator with `ajv` or
+  another battle-tested validator. The current validator covers the
+  subset used by the fixture schemas and is explicitly
+  dependency-free.
+- A CI workflow that runs both `fixture.test.mjs` and
+  `apply-flow.test.mjs` on every PR.

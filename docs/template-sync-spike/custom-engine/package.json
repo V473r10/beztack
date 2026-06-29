@@ -1,8 +1,14 @@
 {
   "name": "@beztack/template-sync-spike",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Build-vs-adopt spike prototype for the Beztack Template sync engine. Implements the engine-agnostic fixture contract (status, apply --plan, promotion-metadata).",
-  "engines": { "node": ">=20" }
+  "description": "Build-vs-adopt spike prototype for the Beztack Template sync engine. Implements the engine-agnostic fixture contract (status, apply --plan, apply --worktree, promotion-metadata).",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test tests/apply-flow.test.mjs ../../template-sync-fixture/tests/fixture.test.mjs",
+    "test:apply": "node --test tests/apply-flow.test.mjs",
+    "test:fixture": "node --test ../../template-sync-fixture/tests/fixture.test.mjs",
+    "compare": "node compare.mjs ../../template-sync-fixture"
+  }
 }
