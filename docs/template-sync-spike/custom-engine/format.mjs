@@ -107,14 +107,18 @@ function formatStatusMarkdown(status) {
   if (fileEntries.length > 0) {
     lines.push("## Files");
     lines.push("");
-    lines.push("| Path | Ownership | Drift | Seam |");
-    lines.push("|------|-----------|-------|------|");
+    lines.push("| Path | Ownership | Drift | Seam(s) |");
+    lines.push("|------|-----------|-------|---------|");
     for (const [path, entry] of fileEntries.sort(([a], [b]) =>
       a.localeCompare(b)
     )) {
-      const seam = entry.seam ? `\`${entry.seam}\`` : "—";
+      const seams = Array.isArray(entry.seams) && entry.seams.length > 0
+        ? entry.seams.map((s) => `\`${s}\``).join(", ")
+        : entry.seam
+          ? `\`${entry.seam}\``
+          : "—";
       lines.push(
-        `| \`${path}\` | ${entry.ownership} | ${entry.drift} | ${seam} |`
+        `| \`${path}\` | ${entry.ownership} | ${entry.drift} | ${seams} |`
       );
     }
     lines.push("");
@@ -309,8 +313,12 @@ function formatPlanMarkdown(plan) {
     lines.push(`## Updates (${plan.updates.length})`);
     lines.push("");
     for (const u of plan.updates) {
-      const seam = u.seam ? ` (seam \`${u.seam}\`)` : "";
-      lines.push(`- \`${u.path}\` — ${u.ownership} — ${u.reason}${seam}`);
+      const seams = u.seams && u.seams.length > 0
+        ? ` (seam(s) ${u.seams.map((s) => `\`${s}\``).join(", ")})`
+        : u.seam
+          ? ` (seam \`${u.seam}\`)`
+          : "";
+      lines.push(`- \`${u.path}\` — ${u.ownership} — ${u.reason}${seams}`);
     }
     lines.push("");
   }
@@ -376,8 +384,38 @@ function formatBranchReadme({ plan, derivedProjectId, templateId, targetPath }) 
     lines.push("## Files updated");
     lines.push("");
     for (const u of plan.updates) {
-      const seam = u.seam ? ` (seam \`${u.seam}\`)` : "";
-      lines.push(`- \`${u.path}\` — ${u.ownership} — ${u.reason}${seam}`);
+      const seams = u.seams && u.seams.length > 0
+        ? ` (seam(s) ${u.seams.map((s) => `\`${s}\``).join(", ")})`
+        : u.seam
+          ? ` (seam \`${u.seam}\`)`
+          : "";
+      lines.push(`- \`${u.path}\` — ${u.ownership} — ${u.reason}${seams}`);
+    }
+    lines.push("");
+  }
+
+  if (plan.updates && plan.updates.some((u) => (u.seams ?? []).length > 0)) {
+    lines.push("### Sync seams preserved");
+    lines.push("");
+    lines.push(
+      "Each Sync seam listed below is an explicit extension point the Derived " +
+        "project uses to add Product domain behavior without editing " +
+        "Template-owned wiring directly. Issue #35 documents the seam design " +
+        "for routing and module wiring drift."
+    );
+    lines.push("");
+    const seamLines = new Map();
+    for (const u of plan.updates) {
+      for (const seamId of u.seams ?? []) {
+        if (!seamLines.has(seamId)) {
+          seamLines.set(seamId, u.path);
+        }
+      }
+    }
+    for (const [seamId, path] of seamLines.entries()) {
+      lines.push(
+        `- \`${seamId}\` — preserves Product domain content in \`${path}\` during this update.`
+      );
     }
     lines.push("");
   }
@@ -480,6 +518,10 @@ function summarizeApplyResult({ plan, worktree, engineOutput, branchCreated }) {
   const pendingManual = migrations.filter(
     (m) => m.execution === "manual-execution-required" && m.idempotencyStatus === "pending"
   );
+  const seamsPreserved = new Set();
+  for (const u of plan.updates ?? []) {
+    for (const s of u.seams ?? []) seamsPreserved.add(s);
+  }
   lines.push(`PR-ready branch prepared.`);
   lines.push(`- Worktree: ${worktree}`);
   lines.push(`- Branch: ${plan.branch}${branchCreated ? " (git branch created)" : " (worktree-only; commit on review)"}`);
@@ -489,6 +531,9 @@ function summarizeApplyResult({ plan, worktree, engineOutput, branchCreated }) {
   lines.push(`- Conflicts: ${plan.conflicts.length}`);
   lines.push(`- Migrations: ${migrations.length} declared (${pendingManual.length} require manual execution)`);
   lines.push(`- Blockers: ${plan.blockers.length}`);
+  if (seamsPreserved.size > 0) {
+    lines.push(`- Sync seams preserved: ${[...seamsPreserved].join(", ")}`);
+  }
   return lines.join("\n");
 }
 

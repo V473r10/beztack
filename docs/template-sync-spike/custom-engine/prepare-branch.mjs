@@ -121,46 +121,92 @@ function renderPlaceholders(text, parameters) {
  * after the first line containing the seam marker but are not themselves
  * harness code. We use the comment-marker style "Derived project seam
  * contents" / "end seam" as a more reliable signal when present.
+ *
+ * Issue #35: the marker can match a specific seam id (e.g.
+ * "api-route-registration", "product-route-registration",
+ * "product-module-registration"). The extraction matches the seam id
+ * in both the start and end markers (e.g.
+ * "api-route-registration seam — DO NOT EDIT FROM TEMPLATE SOURCE"
+ * pairs with "end api-route-registration seam"), so a single file can
+ * declare multiple seams and each region is extracted independently.
  */
 function extractSeamContents(fileText, marker) {
   const lines = fileText.split("\n");
-  const startIdx = lines.findIndex((line) => line.includes(marker));
-  if (startIdx === -1) return null;
+  const seamMarker = `${marker} seam`;
+  const endMarker = `end ${marker} seam`;
 
-  const startMarker = lines.findIndex(
-    (line) =>
-      line.includes("seam contents") ||
-      line.includes("DO NOT EDIT FROM TEMPLATE") ||
-      line.includes("start seam")
+  const startIdx = lines.findIndex(
+    (line) => line.includes(seamMarker) && line.includes("DO NOT EDIT FROM TEMPLATE")
   );
-  const endMarker = lines.findIndex(
-    (line) => line.includes("end seam") || line.includes("── end seam")
-  );
-
-  if (startMarker === -1 || endMarker === -1 || endMarker <= startMarker) {
-    return null;
+  if (startIdx === -1) {
+    const fallbackStart = lines.findIndex(
+      (line) =>
+        line.includes(seamMarker) &&
+        (line.includes("seam contents") || line.includes("start seam"))
+    );
+    if (fallbackStart === -1) return null;
+    return extractGenericSeam(lines, fallbackStart);
   }
 
-  return lines.slice(startMarker, endMarker + 1).join("\n");
+  let endIdx = -1;
+  for (let i = startIdx + 1; i < lines.length; i += 1) {
+    if (lines[i].includes(endMarker) || lines[i].includes(`── ${endMarker}`)) {
+      endIdx = i;
+      break;
+    }
+    if (
+      lines[i].includes("seam") &&
+      lines[i].includes("DO NOT EDIT FROM TEMPLATE") &&
+      i !== startIdx
+    ) {
+      // The next seam's start marker is also a "seam ... DO NOT EDIT"
+      // line; stop before it so the seam does not absorb the next region.
+      endIdx = i - 1;
+      break;
+    }
+  }
+  if (endIdx === -1) {
+    endIdx = lines.findIndex(
+      (line, idx) => idx > startIdx && (line.includes("end seam") || line.includes("── end seam"))
+    );
+  }
+  if (endIdx === -1 || endIdx <= startIdx) return null;
+
+  return lines.slice(startIdx, endIdx + 1).join("\n");
+}
+
+function extractGenericSeam(lines, startIdx) {
+  const endIdx = lines.findIndex(
+    (line, idx) =>
+      idx > startIdx &&
+      (line.includes("end seam") || line.includes("── end seam"))
+  );
+  if (endIdx === -1 || endIdx <= startIdx) return null;
+  return lines.slice(startIdx, endIdx + 1).join("\n");
 }
 
 /**
- * Splice the seam region from the derived project's file into the
+ * Splice every seam region from the derived project's file into the
  * candidate's harness. The candidate's harness is taken as-is; the
- * seam contents are appended after the candidate's existing code.
+ * Derived project's seam contents are appended (in policy order) after
+ * the candidate's existing code.
+ *
+ * Issue #35: when the policy declares multiple seams for the same file
+ * (e.g. apps/api/routes.ts uses api-route-registration AND
+ * product-route-registration), each region is preserved verbatim in
+ * the resulting branch.
  */
-function spliceSeam(candidateText, derivedText, marker) {
-  const seam = extractSeamContents(derivedText, marker);
-  if (!seam) {
-    return { text: candidateText, preservedSeam: false };
+function spliceSeams(candidateText, derivedText, seamIds) {
+  let text = candidateText;
+  const preserved = [];
+  for (const seamId of seamIds) {
+    const region = extractSeamContents(derivedText, seamId);
+    if (!region) continue;
+    const trimmed = text.endsWith("\n") ? text : text + "\n";
+    text = `${trimmed}\n${region}\n`;
+    preserved.push(seamId);
   }
-  const trimmed = candidateText.endsWith("\n")
-    ? candidateText
-    : candidateText + "\n";
-  return {
-    text: `${trimmed}\n${seam}\n`,
-    preservedSeam: true,
-  };
+  return { text, preservedSeams: preserved };
 }
 
 /**
@@ -216,8 +262,8 @@ function pickOwnership(policy, path) {
   return best ? best.strategy : "template-owned";
 }
 
-function findSeam(policy, path) {
-  return (policy.seams ?? []).find((s) => s.file === path) ?? null;
+function findSeams(policy, path) {
+  return (policy.seams ?? []).filter((s) => s.file === path);
 }
 
 function matchGlob(pattern, path) {
@@ -328,14 +374,15 @@ export async function prepareBranch({
     }
     let text = await readFile(srcPath, "utf8");
 
-    const seam = findSeam(policy, u.path);
+    const seams = findSeams(policy, u.path);
     const derivedPath = join(derivedRoot, u.path);
-    if (seam && (await pathExists(derivedPath))) {
+    if (seams.length > 0 && (await pathExists(derivedPath))) {
       const derivedText = await readFile(derivedPath, "utf8");
-      const result = spliceSeam(text, derivedText, seam.marker);
+      const seamIds = seams.map((s) => s.id);
+      const result = spliceSeams(text, derivedText, seamIds);
       text = result.text;
-      if (result.preservedSeam) {
-        seamLog.push(`${u.path}: preserved ${seam.id} seam contents`);
+      for (const preservedId of result.preservedSeams) {
+        seamLog.push(`${u.path}: preserved ${preservedId} seam contents`);
       }
     }
 
@@ -459,11 +506,13 @@ export async function prepareBranch({
   }
   for (const [path, meta] of Object.entries(newOrigin.files)) {
     const ownership = pickOwnership(policy, path);
-    const seam = findSeam(policy, path);
+    const seams = findSeams(policy, path);
+    const seamIds = seams.map((s) => s.id);
     newState.files[path] = {
       ownership,
       drift: "unchanged",
-      seam: seam ? seam.id : null,
+      seam: seamIds[0] ?? null,
+      seams: seamIds,
     };
   }
   await writeFile(
@@ -601,7 +650,7 @@ export async function prepareBranch({
 export {
   renderPlaceholders,
   extractSeamContents,
-  spliceSeam,
+  spliceSeams,
   mergePackageJson,
   newEventId,
 };

@@ -463,6 +463,82 @@ this fixture; the fixture's `derived-project/` state is what it is.
 | Community Derived projects remain supported through release notes and local tooling  | Engine still runs for community IDs; status/apply/promotion validate; `identity-registry.test.mjs` "Community Derived projects are supported through local tooling" |
 | Validated against the schema-versioned Sync state contract                           | `derived-project-registry.schema.json` pins `schemaVersion: "1.0"`; `sync-state`, `apply-plan`, `promotion-metadata` schemas all pin the trust block; `identity-registry.test.mjs` "registry file validates against the derived-project-registry schema" and "schemas refuse additional properties on the trust block" |
 
+## Sync seams for routing and module wiring drift (issue #35)
+
+The existing lncd wiring drift is treated as **evidence of missing Sync
+seams**, not as something to hide with Baseline reset or by marking the
+files Custom-owned. The fixture proves the design with two new Sync
+seams:
+
+| Seam | File | Marker | Purpose | Story |
+|------|------|--------|---------|-------|
+| `api-route-registration` | `apps/api/routes.ts` | `api-route-registration` | Platform-level routes. **Kept** from issue #31. | The general routing extension point. |
+| `product-route-registration` | `apps/api/routes.ts` | `product-route-registration` | Product domain routes (checkout, catalogue, etc.). | Issue #35. Splits Product domain routes from platform routes so each seam has a single responsibility. |
+| `product-module-registration` | `apps/api/products.ts` | `product-module-registration` | Product domain modules (request-time logic, feature flags, audits). | Issue #35. Turns the module wiring drift into an explicit extension point on a Template-owned file. |
+
+The fixture demonstrates the design:
+
+- `apps/api/routes.ts` declares both `api-route-registration` (issue #31)
+  and `product-route-registration` (issue #35) on the same file. The
+  engine preserves both seam regions verbatim during a Template update.
+  `status.files["apps/api/routes.ts"].seams` lists both seam ids in
+  policy order.
+- `apps/api/products.ts` is a new Template-owned file with the
+  `product-module-registration` seam. Derived projects register Product
+  domain modules here without editing Template-owned wiring directly.
+- `apps/api/middleware.ts` is preserved as the **negative case**: Mixed
+  ownership, no seam registered, drift surfaced as a Sync conflict. The
+  right fix is to register a seam (as `apps/api/products.ts` does), NOT
+  to mark `apps/api/middleware.ts` Custom-owned to hide the drift. The
+  fixture documents this in the Sync policy ownership note and in the
+  conflict's `detail` text.
+- The Derived project's Sync policy declares all three seams and adds an
+  explicit `mixed` ownership rule for `apps/api/products.ts`.
+- The Derived project's `apps/api/routes.ts` registers Product domain
+  routes inside the `product-route-registration` seam (e.g.
+  `/api/checkout/start`, `/api/checkout/complete`). The Derived
+  project's `apps/api/products.ts` registers Product domain modules
+  inside the `product-module-registration` seam (audit log + feature
+  flag stub).
+- The Origin baseline (`derived-project/.beztack/origin.json`) records
+  hashes for both seam-bearing files.
+
+### Schemas and engine output (issue #35)
+
+`status.files[].seams` and `apply-plan.updates[].seams` are new optional
+arrays on the schema-versioned `sync-state` and `apply-plan` schemas.
+The primary `seam` field still exists (and mirrors the first seam id)
+for backward compatibility; engines that understand multiple seams
+populate `seams[]` in policy order. The engine's `apply --worktree`
+output records every preserved seam in `result.seamsPreserved`, and the
+human-readable `BRANCH_README.md` lists the preserved seams in a
+dedicated section.
+
+### Why no Platform extraction (issue #35)
+
+The new Sync seams are explicit extension points for Product domain
+behavior; the **product domain code itself** (the `/api/checkout/...`
+routes and the Product-domain modules) stays in the Derived project and
+must not flow into the Template source through Promotion. If the seam
+design itself (the `registerProductRoute(...)` /
+`registerProductModule(...)` APIs and the harness) proves valuable to
+multiple Derived projects, the seam design becomes a Platform extraction
+candidate: the API is generalized into the Template source while the
+Product-domain implementations stay in each Derived project.
+
+## Acceptance criteria mapping (issue #35)
+
+| Issue #35 acceptance criterion                                               | Fixture artifact / test                                                                                                                  |
+|-------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| Identifies the wiring drift that currently requires Derived project edits     | `apps/api/middleware.ts` Mixed-without-seam conflict preserved as the negative case; `status.conflicts[].detail` references the right fix. |
+| Creates explicit Sync seams for product routes and product modules           | `seams[]` in the Derived project's Sync policy: `product-route-registration` on `apps/api/routes.ts`, `product-module-registration` on `apps/api/products.ts`. |
+| Preserves Template-owned wiring while allowing Derived project extension      | `apply --worktree` writes the v1.2.0 harness into `apps/api/routes.ts` and `apps/api/products.ts` while preserving the Derived project's seam regions verbatim; `seams-flow.test.mjs` "apply --worktree preserves both routing seams and the product-module seam in the branch". |
+| Avoids making broad wiring files Custom-owned solely to avoid conflicts        | `apps/api/middleware.ts` stays `mixed` ownership; the conflict is reported, not hidden. `seams.test.mjs` "conflict case apps/api/middleware.ts remains Mixed without a seam". |
+| Avoids relying on zone markers as the normal mechanism                        | The new seams use marker-named regions (`api-route-registration`, `product-route-registration`, `product-module-registration`) extracted by id, not generic `end seam` patterns. |
+| Seam behavior represented in the Sync engine contract fixture or real validation | `tests/seams.test.mjs` (14 tests) and `docs/template-sync-spike/custom-engine/tests/seams-flow.test.mjs` (8 tests) cover the contract end-to-end. |
+| Explains whether any Platform extraction is needed from lncd behavior         | The "Why no Platform extraction (issue #35)" section above: the seam **design** may become a Platform extraction candidate, but the **Product-domain implementations** stay in each Derived project and flow back only via Platform extraction, not Promotion. |
+| Result is compatible with the selected or leading Sync engine approach       | All changes live in the custom engine path under `docs/template-sync-spike/custom-engine/` selected by #28; schemas updated to support `seams[]`; `compare.mjs` reports `allPass: true`. |
+
 ## Acceptance criteria mapping (issue #34)
 
 | Issue #34 acceptance criterion                                              | Fixture artifact / test                                                              |
@@ -509,8 +585,14 @@ consistent. It checks:
   manifests validate, the Sync engine version is recorded separately,
   and an invalid schema version is rejected by the validator.
 
+`tests/seams.test.mjs` (issue #35) covers the Sync seam design for
+routing and module wiring drift end-to-end (policy declares the seams,
+template revisions document the seams, Derived project uses the seams,
+expected outputs expose the seams, schemas accept the seams).
+
 Run with Node's built-in test runner (no external dependencies):
 
 ```bash
-node --test docs/template-sync-fixture/tests/fixture.test.mjs
+node --test docs/template-sync-fixture/tests/fixture.test.mjs \
+  docs/template-sync-fixture/tests/seams.test.mjs
 ```

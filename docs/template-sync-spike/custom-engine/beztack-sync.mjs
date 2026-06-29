@@ -360,24 +360,26 @@ async function buildStatus({
     const derivedContent = derivedFiles[path] ?? null;
 
     const ownership = resolveOwnership(path, policy);
-    const seam = (policy.seams ?? []).find((s) => s.file === path);
+    const seamsForFile = (policy.seams ?? []).filter((s) => s.file === path);
     let drift = classifyDrift(fromContent, toContent, derivedContent);
 
-    if (seam && ownership === "mixed" && drift === "both-changed") {
+    if (seamsForFile.length > 0 && ownership === "mixed" && drift === "both-changed") {
       if (fromContent !== derivedContent && toContent !== derivedContent) {
         drift = "project-changed";
       }
     }
 
+    const seamIds = seamsForFile.map((s) => s.id);
     files[path] = {
       ownership,
       drift,
-      seam: seam ? seam.id : null,
+      seam: seamIds[0] ?? null,
+      seams: seamIds,
     };
 
     if (
       ownership === "mixed" &&
-      !seam &&
+      seamsForFile.length === 0 &&
       drift === "both-changed"
     ) {
       conflicts.push({
@@ -395,16 +397,27 @@ async function buildStatus({
 
   const overlapByPath = detectOverlaps(policy, allPaths);
   for (const [path, info] of overlapByPath.entries()) {
+    // Order the overlapping rules by specificity (longest path first;
+    // ties broken by segment count) so the warning text names the
+    // authoritative rule correctly.
+    const ranked = info.rules
+      .map((rule, idx) => ({ rule, strategy: info.strategies[idx] }))
+      .sort((a, b) => {
+        const lenDiff = b.rule.length - a.rule.length;
+        if (lenDiff !== 0) return lenDiff;
+        return b.rule.split("/").length - a.rule.split("/").length;
+      });
+    const winner = ranked[0];
     overlaps.push({
       path,
-      rules: info.rules,
-      strategies: info.strategies,
+      rules: ranked.map((r) => r.rule),
+      strategies: ranked.map((r) => r.strategy),
       severity: "warning",
       detail:
-        `More-specific rule wins: ${info.rules[info.rules.length - 1]} ` +
+        `More-specific rule wins: ${winner.rule} ` +
         `is authoritative. Apply preserves the file as ` +
-        `${info.strategies[info.strategies.length - 1]} and surfaces a ` +
-        `warning so reviewers can resolve the policy.`,
+        `${winner.strategy} and surfaces a warning so reviewers can ` +
+        `resolve the policy.`,
     });
   }
 
@@ -519,7 +532,8 @@ async function buildApplyPlan({
     const toContent = toFiles[path] ?? null;
     const derivedContent = derivedFiles[path] ?? null;
     const ownership = resolveOwnership(path, policy);
-    const seam = (policy.seams ?? []).find((s) => s.file === path);
+    const seamsForFile = (policy.seams ?? []).filter((s) => s.file === path);
+    const seamIds = seamsForFile.map((s) => s.id);
     const hasOverlap = overlapByPath.has(path);
 
     if (ownership === "custom-owned") {
@@ -533,7 +547,7 @@ async function buildApplyPlan({
 
     if (
       ownership === "mixed" &&
-      !seam &&
+      seamsForFile.length === 0 &&
       fromContent !== toContent &&
       derivedContent !== null &&
       derivedContent !== fromContent
@@ -567,12 +581,13 @@ async function buildApplyPlan({
       continue;
     }
 
-    if (ownership === "mixed" && seam) {
+    if (ownership === "mixed" && seamsForFile.length > 0) {
       updates.push({
         path,
         ownership,
-        reason: "template-harness-updated-seam-preserved",
-        seam: seam.id,
+        reason: "template-harness-updated-seams-preserved",
+        seam: seamIds[0] ?? null,
+        seams: seamIds,
       });
       continue;
     }
@@ -583,6 +598,7 @@ async function buildApplyPlan({
         ownership,
         reason: "render-template-parameters-and-merge",
         seam: null,
+        seams: [],
       });
       continue;
     }
@@ -592,6 +608,7 @@ async function buildApplyPlan({
       ownership,
       reason: "template-changed-no-project-change",
       seam: null,
+      seams: [],
     });
   }
 
@@ -662,7 +679,7 @@ function buildRecommendationNote({
 function buildSummary({ fromRev, toRev, derivedProjectId, updates, skipped, conflicts, migrations }) {
   const envContractUpdate = updates.some((u) => u.path === ".env.contract.json");
   const paramUpdate = updates.some((u) => u.path === "package.json");
-  const seamUpdate = updates.find((u) => u.seam);
+  const seamUpdates = updates.filter((u) => (u.seams ?? []).length > 0);
   const lockfileSkipped = skipped.some((s) => s.path === "pnpm-lock.yaml");
   const conflictPaths = conflicts.map((c) => c.path).join(", ");
   const pendingMigrations = (migrations ?? []).filter(
@@ -684,9 +701,10 @@ function buildSummary({ fromRev, toRev, derivedProjectId, updates, skipped, conf
   if (paramUpdate) {
     parts.push("Render Template parameters into package.json.");
   }
-  if (seamUpdate) {
+  for (const u of seamUpdates) {
+    const seams = u.seams ?? (u.seam ? [u.seam] : []);
     parts.push(
-      `Update ${seamUpdate.path} with the ${seamUpdate.seam} seam preserved.`
+      `Update ${u.path} with ${seams.join(" + ")} seam(s) preserved.`
     );
   }
   if (lockfileSkipped) {
@@ -741,7 +759,7 @@ async function buildPromotionMetadata({
     if (path in originFiles) continue;
 
     const ownership = resolveOwnership(path, policy);
-    const seam = (policy.seams ?? []).find((s) => s.file === path);
+    const seamsForFile = (policy.seams ?? []).filter((s) => s.file === path);
 
     if (ownership === "custom-owned") {
       skipped.push({
@@ -756,7 +774,10 @@ async function buildPromotionMetadata({
       skipped.push({
         path,
         ownership,
-        reason: seam ? "mixed-protected-by-seam" : "platform-extraction-required",
+        reason:
+          seamsForFile.length > 0
+            ? "mixed-protected-by-seam"
+            : "platform-extraction-required",
       });
       continue;
     }

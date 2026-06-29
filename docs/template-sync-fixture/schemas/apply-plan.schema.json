@@ -106,7 +106,17 @@
             "enum": ["template-owned", "custom-owned", "mixed"]
           },
           "reason": { "type": "string" },
-          "seam": { "type": ["string", "null"] }
+          "seam": {
+            "type": ["string", "null"],
+            "description": "Primary seam id preserved during the update. Issue #35 introduces seams[] for files that declare multiple Sync seams."
+          },
+          "seams": {
+            "type": "array",
+            "description": "All Sync seam ids preserved during the update for this file. Empty when the update does not go through a seam.",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },

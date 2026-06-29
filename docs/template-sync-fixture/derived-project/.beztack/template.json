@@ -30,17 +30,22 @@
     {
       "path": "apps/api/routes.ts",
       "strategy": "mixed",
-      "note": "Mixed ownership via the api-route-registration seam. Engine preserves registerRoute(...) calls."
+      "note": "Mixed ownership via two Sync seams: api-route-registration (issue #31) and product-route-registration (issue #35). Engine preserves registerRoute(...) and registerProductRoute(...) calls."
+    },
+    {
+      "path": "apps/api/products.ts",
+      "strategy": "mixed",
+      "note": "Mixed ownership via the product-module-registration Sync seam (issue #35). Engine preserves registerProductModule(...) calls."
     },
     {
       "path": "apps/api/middleware.ts",
       "strategy": "mixed",
-      "note": "Mixed ownership but no Sync seam is registered for this file in v1.1.0. The Derived project already has its own version; the Template source v1.2.0 also adds one. Engine MUST report this as a conflict and not silently merge."
+      "note": "Mixed ownership but no Sync seam is registered for this file in v1.1.0. The Derived project already has its own version; the Template source v1.2.0 also adds one. Engine MUST report this as a conflict and not silently merge. Issue #35 documents this as the negative case that justifies the new product-module-registration seam on apps/api/products.ts."
     },
     {
       "path": "apps/**",
       "strategy": "template-owned",
-      "note": "Catch-all for app scaffolding owned by the Template source. The more specific apps/checkout/** and apps/api/routes.ts rules win precedence."
+      "note": "Catch-all for app scaffolding owned by the Template source. The more specific apps/checkout/**, apps/api/routes.ts, apps/api/products.ts, and apps/api/middleware.ts rules win precedence."
     },
     {
       "path": "pnpm-lock.yaml",
@@ -52,8 +57,20 @@
     {
       "id": "api-route-registration",
       "file": "apps/api/routes.ts",
-      "marker": "registerRoute(",
-      "note": "Derived projects register custom routes inside this seam without editing the surrounding harness."
+      "marker": "api-route-registration",
+      "note": "Derived projects register generic routes inside this seam without editing the surrounding harness. Issue #31."
+    },
+    {
+      "id": "product-route-registration",
+      "file": "apps/api/routes.ts",
+      "marker": "product-route-registration",
+      "note": "Derived projects register Product domain routes (checkout, catalogue, etc.) inside this seam. Issue #35 separates Product domain routes from generic platform routes so the seam responsibility is clear and zone markers are not required."
+    },
+    {
+      "id": "product-module-registration",
+      "file": "apps/api/products.ts",
+      "marker": "product-module-registration",
+      "note": "Derived projects register Product domain modules (request-time logic, feature flags, audits) inside this seam. Issue #35 turns the existing lncd module-wiring drift into an explicit extension point so middleware-style concerns route through the seam instead of editing apps/api/middleware.ts directly."
     }
   ],
   "environmentContract": {

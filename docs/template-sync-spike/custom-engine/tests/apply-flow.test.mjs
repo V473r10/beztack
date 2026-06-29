@@ -421,6 +421,8 @@ test("apply --worktree preserves the Sync seam contents in apps/api/routes.ts", 
   assert.match(updated, /routeCount/, "worktree must include the v1.2.0-only routeCount() function");
   assert.match(updated, /registerRoute\("\/health"/, "worktree must preserve the Derived project's /health route");
   assert.match(updated, /registerRoute\("\/api\/products\/:id"/, "worktree must preserve the Derived project's /api/products/:id route");
+  assert.match(updated, /registerProductRoute\("\/api\/checkout\/start"/, "worktree must preserve the Derived project's product-route-registration seam contents");
+  assert.match(updated, /registerProductRoute\("\/api\/checkout\/complete"/, "worktree must preserve the Derived project's product-route-registration seam contents");
   assert.ok(updated.length > harness.length, "worktree file must be longer than the v1.2.0 candidate (seam content added)");
   assert.ok(updated.length > derived.length, "worktree file must be longer than the original Derived project file (candidate harness applied)");
 
@@ -428,8 +430,9 @@ test("apply --worktree preserves the Sync seam contents in apps/api/routes.ts", 
   assert.ok(
     Array.isArray(envelopeResult.seamsPreserved) &&
       envelopeResult.seamsPreserved.length > 0 &&
-      envelopeResult.seamsPreserved[0].includes("api-route-registration"),
-    "engine must report that the api-route-registration seam was preserved"
+      envelopeResult.seamsPreserved.some((entry) => entry.includes("api-route-registration")) &&
+      envelopeResult.seamsPreserved.some((entry) => entry.includes("product-route-registration")),
+    "engine must report that both the api-route-registration and product-route-registration seams were preserved"
   );
 });
 

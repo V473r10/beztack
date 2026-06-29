@@ -9,7 +9,7 @@
     "version": "0.0.0"
   },
   "branch": "template-sync/v1.1.0-to-v1.2.0",
-  "summary": "Apply Beztack template v1.2.0 onto Derived project dp_01HMV... (Trusted). Updates the routing harness with the api-route-registration seam preserved, refreshes the Environment contract with WEBHOOK_SIGNING_SECRET, and renders Template parameters into package.json. One Sync conflict (apps/api/middleware.ts) requires an explicit decision. Two ownership overlaps (packages/auth/session.ts, apps/checkout/payment-handler.ts) are reported as warnings and resolved by the more-specific rule. The pnpm-lock.yaml lockfile is preserved as Custom-owned and is regenerated locally by the Derived project's package manager after the apply branch is prepared; engines must not copy a lockfile from the Template source. Template migrations are surfaced as separate steps: marker-environments-contract-v1.2.0 is already-applied (engine surfaces only), rotate-webhook-signing-secret is pending and requires manual human execution on the apply branch (interactive + destructive), and register-trusted-only-secrets-bundle is pending and requires manual execution (Trusted trust class). The engine does not execute any migration; the apply branch's MIGRATIONS.md documents each step for the reviewer.",
+  "summary": "Apply Beztack template v1.2.0 onto Derived project dp_01HMV... (Trusted). Updates apps/api/products.ts with the product-module-registration seam preserved, updates apps/api/routes.ts with the api-route-registration and product-route-registration seams preserved (issue #35), refreshes the Environment contract with WEBHOOK_SIGNING_SECRET, and renders Template parameters into package.json. One Sync conflict (apps/api/middleware.ts) requires an explicit decision: the file has no Sync seam registered in v1.1.0, so registering a seam is the right fix instead of marking the file Custom-owned. Two ownership overlaps (packages/auth/session.ts, apps/checkout/payment-handler.ts) are reported as warnings and resolved by the more-specific rule. The pnpm-lock.yaml lockfile is preserved as Custom-owned and is regenerated locally by the Derived project's package manager after the apply branch is prepared; engines must not copy a lockfile from the Template source. Template migrations are surfaced as separate steps: marker-environments-contract-v1.2.0 is already-applied (engine surfaces only), rotate-webhook-signing-secret is pending and requires manual human execution on the apply branch (interactive + destructive), and register-trusted-only-secrets-bundle is pending and requires manual execution (Trusted trust class). The engine does not execute any migration; the apply branch's MIGRATIONS.md documents each step for the reviewer.",
   "trust": {
     "trustClass": "trusted",
     "effectiveTrustClass": "trusted",
@@ -32,19 +32,34 @@
       "path": ".env.contract.json",
       "ownership": "template-owned",
       "reason": "template-changed-no-project-change",
-      "seam": null
+      "seam": null,
+      "seams": []
+    },
+    {
+      "path": "apps/api/products.ts",
+      "ownership": "mixed",
+      "reason": "template-harness-updated-seams-preserved",
+      "seam": "product-module-registration",
+      "seams": [
+        "product-module-registration"
+      ]
+    },
+    {
+      "path": "apps/api/routes.ts",
+      "ownership": "mixed",
+      "reason": "template-harness-updated-seams-preserved",
+      "seam": "api-route-registration",
+      "seams": [
+        "api-route-registration",
+        "product-route-registration"
+      ]
     },
     {
       "path": "package.json",
       "ownership": "template-owned",
       "reason": "render-template-parameters-and-merge",
-      "seam": null
-    },
-    {
-      "path": "apps/api/routes.ts",
-      "ownership": "mixed",
-      "reason": "template-harness-updated-seam-preserved",
-      "seam": "api-route-registration"
+      "seam": null,
+      "seams": []
     }
   ],
   "skipped": [
@@ -94,7 +109,7 @@
       "path": "apps/api/middleware.ts",
       "reason": "both-changed-no-seam",
       "ownership": "mixed",
-      "detail": "Template source v1.2.0 introduces a default middleware on a Mixed-ownership path; the Derived project already has its own implementation and no Sync seam is registered for this file. Apply does not silently merge. Resolve by registering a Sync seam, taking the Template version, or skipping the update."
+      "detail": "Template source v1.2.0 introduces a default middleware on a Mixed-ownership path; the Derived project already has its own implementation and no Sync seam is registered for this file. Apply does not silently merge. Issue #35 documents this as the negative case that motivates the new product-module-registration seam on apps/api/products.ts: the right fix is to register an explicit seam so Derived projects can extend the framework, not to mark apps/api/middleware.ts Custom-owned to hide the drift."
     }
   ],
   "migrations": [

@@ -144,7 +144,14 @@
           },
           "seam": {
             "type": ["string", "null"],
-            "description": "Seam id if the file uses one, otherwise null."
+            "description": "Primary seam id if the file uses one, otherwise null. Issue #35 introduces seams[] for files that declare multiple Sync seams (e.g. apps/api/routes.ts uses both api-route-registration and product-route-registration)."
+          },
+          "seams": {
+            "type": "array",
+            "description": "All Sync seam ids declared for this file. Issue #35. When a file uses a single seam, seams[] contains that id and seam mirrors it; when a file uses multiple seams, seam is the first id and seams[] lists them in policy order. Empty when the file has no seam.",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

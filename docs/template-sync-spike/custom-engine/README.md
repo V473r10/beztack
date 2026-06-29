@@ -5,7 +5,7 @@
 > [`../../template-sync-fixture/`](../../template-sync-fixture/) in a
 > small Node-based CLI.
 >
-> Issues: [#31 — Template sync: Prove PR-only status/apply flow](https://github.com/V473r10/beztack/issues/31), [#34 — Template sync: Model Template migrations safely](https://github.com/V473r10/beztack/issues/34), [#32 — Template sync: Add Trusted Derived project identity and registry](https://github.com/V473r10/beztack/issues/32)
+> Issues: [#31 — Template sync: Prove PR-only status/apply flow](https://github.com/V473r10/beztack/issues/31), [#34 — Template sync: Model Template migrations safely](https://github.com/V473r10/beztack/issues/34), [#32 — Template sync: Add Trusted Derived project identity and registry](https://github.com/V473r10/beztack/issues/32), [#35 — Template sync: Add Sync seams for lncd wiring drift](https://github.com/V473r10/beztack/issues/35)
 > Parent PRD: [#27 — Template Sync System](https://github.com/V473r10/beztack/issues/27)
 
 ## What this is
@@ -169,7 +169,9 @@ custom-engine/
 └── tests/
     ├── apply-flow.test.mjs      # PR-only flow tests (issue #31)
     ├── migration-flow.test.mjs  # migration flow tests (issue #34)
-    └── identity-registry.test.mjs # identity + registry tests (issue #32)
+    ├── identity-registry.test.mjs # identity + registry tests (issue #32)
+    ├── promotion-flow.test.mjs  # promotion label and metadata tests (issue #33)
+    └── seams-flow.test.mjs      # Sync seams tests (issue #35)
 ```
 
 The comparator (`compare.mjs`) embeds a minimal JSON Schema validator
@@ -191,9 +193,10 @@ schema-versioned outputs against the fixture schemas.
   another battle-tested validator. The current validator covers the
   subset used by the fixture schemas and is explicitly
   dependency-free.
-- A CI workflow that runs both `fixture.test.mjs`,
-  `apply-flow.test.mjs`, `migration-flow.test.mjs`, and
-  `identity-registry.test.mjs` on every PR.
+- A CI workflow that runs `fixture.test.mjs`, `seams.test.mjs`,
+  `apply-flow.test.mjs`, `migration-flow.test.mjs`,
+  `identity-registry.test.mjs`, `promotion-flow.test.mjs`, and
+  `seams-flow.test.mjs` on every PR.
 
 ## Trusted Derived project identity and registry (issue #32)
 
@@ -292,6 +295,38 @@ branch, but it **never executes** migrations. The flow is:
    trusted automation is allowed.
 6. **PR-only** — migrations never cause direct mutation of a Derived
    project's main branch. The engine surfaces them; humans run them.
+
+## Sync seams for routing and module wiring drift (issue #35)
+
+The existing lncd wiring drift is treated as **evidence of missing Sync
+seams**, not as something to hide with Baseline reset or by marking the
+files Custom-owned. The engine supports multiple Sync seams per file
+and preserves every seam region verbatim during `apply --worktree`:
+
+- `apps/api/routes.ts` declares both `api-route-registration`
+  (issue #31) and `product-route-registration` (issue #35). The engine
+  preserves both `registerRoute(...)` and `registerProductRoute(...)`
+  calls during a Template update.
+- `apps/api/products.ts` is a new Template-owned file with the
+  `product-module-registration` seam. Derived projects register
+  `registerProductModule(...)` calls here without editing Template-owned
+  wiring directly.
+- `apps/api/middleware.ts` is preserved as the **negative case**: Mixed
+  ownership, no seam registered, drift surfaced as a Sync conflict.
+  The right fix is to register a seam (as `apps/api/products.ts`
+  demonstrates), NOT to mark the file Custom-owned to hide the drift.
+
+The schemas gain optional `seams[]` arrays on `status.files[].seams`
+and `apply-plan.updates[].seams`. The primary `seam` field still exists
+(and mirrors the first seam id) for backward compatibility; engines
+that understand multiple seams populate `seams[]` in policy order.
+
+The `apply --worktree` flow extracts each seam region by id (e.g.
+`api-route-registration seam`, `product-route-registration seam`,
+`product-module-registration seam`) and splices them onto the candidate
+harness in policy order. The `BRANCH_README.md` lists every preserved
+seam in a dedicated section, and the engine's `result.seamsPreserved`
+array names each one explicitly.
 
 Layout:
 

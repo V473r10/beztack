@@ -11,8 +11,12 @@
       "projectHash": "sha256:affab9b4d3240dfb3c188a139364beffe3b0865040998826881c0c17f8c0469f"
     },
     "apps/api/routes.ts": {
-      "templateHash": "sha256:d9c9660452b67c527fceff0b879911ee0909e2bf85659567e1299915df91927b",
-      "projectHash": "sha256:d9c9660452b67c527fceff0b879911ee0909e2bf85659567e1299915df91927b"
+      "templateHash": "sha256:42283c0905f34e4155278be974f947eb203bbe1e1dee1ddb29c3c551df917645",
+      "projectHash": "sha256:42283c0905f34e4155278be974f947eb203bbe1e1dee1ddb29c3c551df917645"
+    },
+    "apps/api/products.ts": {
+      "templateHash": "sha256:a136f48bc73772ece2b120a98e01194145429cd617745a5e57c51e75d0bd3369",
+      "projectHash": "sha256:a136f48bc73772ece2b120a98e01194145429cd617745a5e57c51e75d0bd3369"
     },
     ".env.contract.json": {
       "templateHash": "sha256:af2c92ce508c53974410c5180ca12c2cfc4bbb403ccdefc5bfb5aa1cd0bbba27",

@@ -77,62 +77,85 @@
     "packages/auth/session.ts": {
       "ownership": "custom-owned",
       "drift": "template-changed",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     "apps/api/routes.ts": {
       "ownership": "mixed",
       "drift": "project-changed",
-      "seam": "api-route-registration"
+      "seam": "api-route-registration",
+      "seams": [
+        "api-route-registration",
+        "product-route-registration"
+      ]
+    },
+    "apps/api/products.ts": {
+      "ownership": "mixed",
+      "drift": "project-changed",
+      "seam": "product-module-registration",
+      "seams": [
+        "product-module-registration"
+      ]
     },
     "apps/api/middleware.ts": {
       "ownership": "mixed",
       "drift": "both-changed",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     "apps/checkout/index.ts": {
       "ownership": "custom-owned",
       "drift": "added",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     "apps/checkout/payment-handler.ts": {
       "ownership": "custom-owned",
       "drift": "added",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     "apps/checkout/README.md": {
       "ownership": "custom-owned",
       "drift": "added",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     "packages/util/retry.ts": {
       "ownership": "template-owned",
       "drift": "added",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     "packages/util/package.json": {
       "ownership": "template-owned",
       "drift": "added",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     ".env.contract.json": {
       "ownership": "template-owned",
       "drift": "template-changed",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     ".env.example": {
       "ownership": "custom-owned",
       "drift": "added",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     "pnpm-lock.yaml": {
       "ownership": "custom-owned",
       "drift": "added",
-      "seam": null
+      "seam": null,
+      "seams": []
     },
     "package.json": {
       "ownership": "template-owned",
       "drift": "both-changed",
-      "seam": null
+      "seam": null,
+      "seams": []
     }
   },
   "conflicts": [
@@ -140,28 +163,63 @@
       "path": "apps/api/middleware.ts",
       "reason": "both-changed-no-seam",
       "ownership": "mixed",
-      "detail": "Template source v1.2.0 introduces a default middleware on a Mixed-ownership path, but no Sync seam is registered for this file and the Derived project already has its own implementation. Engine must report this and refuse to silently merge."
+      "detail": "Template source v1.2.0 introduces a default middleware on a Mixed-ownership path, but no Sync seam is registered for this file and the Derived project already has its own implementation. Engine must report this and refuse to silently merge. Issue #35 documents this as the negative case that justifies the new product-module-registration seam on apps/api/products.ts: the right fix is to register an explicit seam, not to mark apps/api/middleware.ts Custom-owned."
     }
   ],
   "overlaps": [
     {
-      "path": "packages/auth/session.ts",
-      "rules": ["packages/**", "packages/auth/**"],
-      "strategies": ["template-owned", "custom-owned"],
+      "path": "apps/api/products.ts",
+      "rules": ["apps/api/products.ts", "apps/**"],
+      "strategies": ["mixed", "template-owned"],
       "severity": "warning",
-      "detail": "More-specific rule wins: packages/auth/** is authoritative. Apply skips this file as custom-owned-preserved and surfaces a warning so reviewers can resolve the policy."
+      "detail": "More-specific rule wins: apps/api/products.ts is authoritative. Apply preserves the file as mixed and surfaces a warning so reviewers can resolve the policy."
+    },
+    {
+      "path": "apps/api/routes.ts",
+      "rules": ["apps/api/routes.ts", "apps/**"],
+      "strategies": ["mixed", "template-owned"],
+      "severity": "warning",
+      "detail": "More-specific rule wins: apps/api/routes.ts is authoritative. Apply preserves the file as mixed and surfaces a warning so reviewers can resolve the policy."
+    },
+    {
+      "path": "packages/auth/session.ts",
+      "rules": ["packages/auth/**", "packages/**"],
+      "strategies": ["custom-owned", "template-owned"],
+      "severity": "warning",
+      "detail": "More-specific rule wins: packages/auth/** is authoritative. Apply preserves the file as custom-owned and surfaces a warning so reviewers can resolve the policy."
+    },
+    {
+      "path": "apps/api/middleware.ts",
+      "rules": ["apps/api/middleware.ts", "apps/**"],
+      "strategies": ["mixed", "template-owned"],
+      "severity": "warning",
+      "detail": "More-specific rule wins: apps/api/middleware.ts is authoritative. Apply preserves the file as mixed and surfaces a warning so reviewers can resolve the policy."
+    },
+    {
+      "path": "apps/checkout/README.md",
+      "rules": ["apps/checkout/**", "apps/**"],
+      "strategies": ["custom-owned", "template-owned"],
+      "severity": "warning",
+      "detail": "More-specific rule wins: apps/checkout/** is authoritative. Apply preserves the file as custom-owned and surfaces a warning so reviewers can resolve the policy."
+    },
+    {
+      "path": "apps/checkout/index.ts",
+      "rules": ["apps/checkout/**", "apps/**"],
+      "strategies": ["custom-owned", "template-owned"],
+      "severity": "warning",
+      "detail": "More-specific rule wins: apps/checkout/** is authoritative. Apply preserves the file as custom-owned and surfaces a warning so reviewers can resolve the policy."
     },
     {
       "path": "apps/checkout/payment-handler.ts",
-      "rules": ["apps/**", "apps/checkout/**"],
-      "strategies": ["template-owned", "custom-owned"],
+      "rules": ["apps/checkout/**", "apps/**"],
+      "strategies": ["custom-owned", "template-owned"],
       "severity": "warning",
-      "detail": "More-specific rule wins: apps/checkout/** is authoritative. Apply preserves the file as custom-owned."
+      "detail": "More-specific rule wins: apps/checkout/** is authoritative. Apply preserves the file as custom-owned and surfaces a warning so reviewers can resolve the policy."
     }
   ],
   "recommendation": {
     "action": "review-conflicts",
     "command": "beztack-sync apply --to v1.2.0",
-    "note": "One Sync conflict (apps/api/middleware.ts) requires an explicit decision. After resolving, apply proceeds on a branch and the Environment contract update is included automatically. Two Template migrations are pending manual execution on the apply branch: rotate-webhook-signing-secret (interactive, destructive) and register-trusted-only-secrets-bundle (trusted-only). One migration is already applied (marker-environments-contract-v1.2.0) and only surfaced for visibility."
+    "note": "One Sync conflict (apps/api/middleware.ts) requires an explicit decision. After resolving, apply proceeds on a branch and the Environment contract update is included automatically. Two Template migrations are pending manual execution on the apply branch: rotate-webhook-signing-secret (interactive, destructive) and register-trusted-only-secrets-bundle (trusted-only). One migration is already applied (marker-environments-contract-v1.2.0) and only surfaced for visibility. Three Sync seams preserve the Derived project's wiring: api-route-registration and product-route-registration on apps/api/routes.ts, and product-module-registration on apps/api/products.ts."
   }
 }
