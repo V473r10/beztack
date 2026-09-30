@@ -18,17 +18,45 @@ _Avoid_: apply count, sync run number, local version
 A proposed move from one accepted Template revision to a newer Template revision in a Derived project.
 _Avoid_: sync patch, upstream pull, template bump
 
+**Low-risk update candidate**:
+A Template update candidate where the available evidence suggests Template ownership, no observed Derived project drift, and a normal review-and-check path; it still requires user approval before any mutation.
+_Avoid_: safe update, auto-apply, approved change
+
+**Review-required update candidate**:
+A Template update candidate with enough uncertainty, drift, ownership ambiguity, or framework impact that an agent must present trade-offs and ask for a decision before any mutation.
+_Avoid_: risky update, failed sync, unsafe file
+
 **Sync engine**:
 The tool that plans, validates, or applies template sync actions for a Derived project.
 _Avoid_: template, CLI version, sync policy
+
+**Sync inspection harness**:
+A read-only tool that gathers template sync evidence for an agent or human reviewer without applying updates, rewriting the Origin baseline, or making ownership decisions on its own.
+_Avoid_: sync engine, apply tool, baseline reset
+
+**Sync inspection report**:
+The evidence produced by a Sync inspection harness for agent or human review. Its stable JSON form is the primary evidence, while Markdown is a derived human view. It may include candidate classifications and risk hints, but it does not approve a Template update or decide that changes are safe to apply.
+_Avoid_: apply plan, sync state, approval, source of truth
+
+**Structural sync evidence**:
+Inspection evidence that records paths, metadata shape, ownership classifications, seam observations, and check recommendations without copying Derived project secrets, Product domain data, or code content into the Template source repository.
+_Avoid_: full project snapshot, code excerpt, product data dump
+
+**Comparison basis**:
+The explicit Template revision evidence used to compare a Derived project against a Template update. Without a Comparison basis, a Sync inspection report may describe metadata, ownership, and seam observations, but must not claim a complete Template diff.
+_Avoid_: inferred baseline, current version, best-guess revision
+
+**Sync review workflow**:
+The agent- or human-facing guidance for interpreting a Sync inspection report, presenting Template update options, and asking for explicit approval of a concrete option before mutation. It is not a source of truth like Sync policy or Origin baseline.
+_Avoid_: sync policy, schema, automated decision
 
 **Sync engine version**:
 The version of the tool that planned or applied template sync, recorded separately from the Template version.
 _Avoid_: template version, Beztack version, platform version
 
 **Template revision**:
-A verifiable Template source state, usually a Git tag or commit, used as the primary baseline for template sync.
-_Avoid_: hash list, generated snapshot, local cache
+A verifiable Template source state, usually an explicitly selected Git ref or commit, used as the primary baseline for template sync. Generic repository tags do not count unless they are designated Template source states; CLI or Sync engine tags are separate.
+_Avoid_: hash list, generated snapshot, local cache, CLI version tag
 
 **Template parameter**:
 A persisted Derived project value used to render Template source content during scaffolding and later template sync.
@@ -70,6 +98,10 @@ _Avoid_: manifest, config, sync settings
 The Sync policy classification for a path or file region: Template-owned, Custom-owned, or Mixed ownership.
 _Avoid_: merge mode, sync behavior, file status
 
+**Provisional ownership resolution**:
+An ownership classification derived from Legacy sync metadata when no current Sync policy is available. It may use the most specific matching legacy path rule as evidence, but must report overlaps and confidence limits instead of pretending to be authoritative Sync policy.
+_Avoid_: Sync policy, final ownership, hidden precedence
+
 **Template-owned**:
 An Ownership strategy where the Template source owns updates for the path or file region.
 _Avoid_: upstream-owned, generated, shared
@@ -90,6 +122,10 @@ _Avoid_: custom zone, zone policy, merge rule
 An explicit extension point where a Derived project can add product-specific behavior without editing Template source-owned code.
 _Avoid_: zone marker, local patch, override block
 
+**Filesystem sync seam**:
+A Sync seam expressed through framework or repository file structure, such as reserved route directories, where a Derived project can add Product domain files without editing Template source-owned code.
+_Avoid_: central route registry, marker region, path ownership rule
+
 **Environment contract**:
 The Template source-owned set of required environment variables, meanings, and platform defaults that Derived projects must satisfy.
 _Avoid_: `.env.example`, local env file, deployment secret list
@@ -102,6 +138,10 @@ _Avoid_: merge error, failed apply, broken sync
 The current machine-readable template sync status of a Derived project.
 _Avoid_: manifest, origin file, report
 
+**Legacy sync metadata**:
+Recognized older template sync metadata in a Derived project that can still provide evidence but lacks the current Sync policy, Sync state, or Origin baseline shape. It is a compatibility finding that limits inspection confidence, not proof of corruption.
+_Avoid_: invalid manifest, broken origin, migration failure
+
 **Sync event log**:
 The append-only audit trail of template sync actions and Promotions for a Derived project.
 _Avoid_: sync state, changelog, report
@@ -111,7 +151,7 @@ The Template revision a Derived project last accepted for sync comparison, with 
 _Avoid_: source of truth, lockfile, sync database
 
 **Baseline reset**:
-An explicit acceptance of a reviewed Template revision and reconciled file metadata as the new Origin baseline.
+An explicit acceptance of a reviewed Template revision and reconciled file metadata as the new Origin baseline. Legacy hash evidence may inform a Baseline reset, but it does not prove that a Template revision was accepted and must not be rewritten into an Origin baseline without review.
 _Avoid_: origin rebuild, hash fix, cleanup
 
 **Promotion**:
@@ -125,6 +165,10 @@ _Avoid_: useful downstream change, upstreamable change
 **Platform extraction**:
 The design of reusable Template source behavior inspired by a Product domain change without copying product-owned behavior directly.
 _Avoid_: promotion, upstream copy, generalization by copy-paste
+
+**Platform extraction candidate**:
+A Derived project change or Template update pressure that may reveal reusable Template source behavior, but requires design before anything is copied or promoted.
+_Avoid_: Promotion candidate, reusable custom code, direct upstream copy
 
 **Promotion label**:
 The PR label on a Derived project change that explicitly opts the change into Promotion consideration.

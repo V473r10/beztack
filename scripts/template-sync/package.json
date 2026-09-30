@@ -1,0 +1,17 @@
+{
+  "name": "@beztack/template-sync-inspect",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only Template Sync inspection harness. Produces a Sync inspection report from a local Derived project checkout against an explicit Template revision pair. No apply, no Origin baseline rewrite.",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "beztack-template-sync-inspect": "./inspect.mjs"
+  },
+  "scripts": {
+    "inspect": "node ./inspect.mjs",
+    "test": "node --test tests/inspect.test.mjs"
+  }
+}

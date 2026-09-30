@@ -1,0 +1,13 @@
+{
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "files": {
+    "package.json": {
+      "projectHash": "00project",
+      "templateHash": "00template"
+    },
+    "apps/api/server/routes/api/menu/index.ts": {
+      "projectHash": "11project",
+      "templateHash": "11template"
+    }
+  }
+}
