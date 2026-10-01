@@ -77,7 +77,36 @@ So the porting question is mostly "which lncd details improve Beztack's module",
 | `billing-amount-resolver.ts` (+ test), `subscription-discovery.ts`, `mercadopago.ts`, `payment-events.ts` | C | Formatting only. `billing-amount-resolver.ts` `"UYU"` fallback is identical on both sides. |
 | `lifecycle-transition.ts` (+ test) (lncd-only) | B | Order/Delivery "change commits, then announce" module (ADR-0010). Not a Subscription lifecycle despite the name in the scope list. |
 
-_(routes, UI and schema in progress)_
+### `apps/api/server/routes/api/**`
+
+| File | Class | Reason |
+|---|---|---|
+| `subscriptions/[id].get.ts`, `[id].delete.ts` | A (gate only) | In organization mode both call `requireOrganizationBillingManagerAccess` (`feature: "Subscription detail" / "Subscription cancellation"`). Beztack lets any `isSubscriptionOwnedByUser` caller read or cancel the organization's Subscription. |
+| `subscriptions/[id].patch.ts` | B (+ gate) | lncd still routes `productId` plan changes through PATCH into `acceptPlanChange`; Beztack answers 410 and sends callers to `plan-change/*` (#17 stories 40-41 -- Beztack is ahead). The Billing manager gate on status changes rides with `billing-access.ts`. |
+| `subscriptions/checkout.post.ts` | A (gate only) | Adds the Billing manager gate (`feature: "Checkout"`) in organization mode. Otherwise Beztack ahead (`checkout-callback-urls.ts`); both reject `upgrade` (lncd 400, Beztack 410) and both refuse yearly on MP. |
+| `subscriptions/index.get.ts` | A | Organization listing behind the Billing manager gate (Beztack: any member) and each Subscription returned with its `pendingPlanChange` (`direction`, `effectiveAt`, `targetTier`, `targetBillingCadence`, `targetAmount/Currency`). Beztack has no read path for Pending Plan change at all -- the UI cannot show "Downgrade to Basic on 2026-11-01" or offer to cancel it. #17 deliberately has no "Pending Plan change query Interface"; this would be a projection read in the route/store, not a module method. |
+| `subscriptions/products.get.ts` | C | Identical. |
+| `subscriptions/webhooks.post.ts` | B | Beztack ahead: provider-neutral envelope (`createProjectionEventEnvelopeFromWebhookPayload`, `deliveryId`), 500 on `failed` outcome. lncd re-parses the raw body to derive `providerEventId`. |
+| `payments/mercado-pago/webhook.post.ts` | A (one piece) | `providerActions.updateSubscriptionAmount` (PUT preapproval `transaction_amount`, then fail if MP did not echo the amount) -- the provider half of the renewal-activation fix above. Otherwise lncd moved MP-specific mapping into the route and adds `currency_id ?? "UYU"` (`:42`); Beztack's route is thinner. |
+| `payments/mercado-pago/webhook/[orgId].post.ts` (lncd-only) | B | Restaurant order payments with per-organization MP credentials; scope of #41. |
+| `subscriptions/preview-upgrade.get.ts` (lncd-only) | B | Upgrade-shaped preview; Beztack replaced it with `plan-change/preview.post.ts` (#17 stories 40-41). |
+| `subscriptions/[id]/pending-plan-change.delete.ts` (lncd-only) | B (+ A detail) | Equivalent of Beztack `plan-change/pending.delete.ts`. A detail: records `canceledByUserId` and reason via the A store above. Authorization repeats the rank rule inline. |
+| `subscriptions/changes/apply-due.post.ts`, `changes/[changeId]/index.delete.ts` (lncd-only) | B | Engine 1 (`@beztack/payments/server`). `apply-due` inlines the cron-secret check that #42 already proposes as `cron-request.ts`. |
+| `organization/billing-access.get.ts` (lncd-only) | A | `GET` -> `{ isBillingManager, memberRole, organizationId, billingManagedByRole }` for the active organization; feeds `use-billing-access.ts` / `billing-manager-route.tsx`. |
+| `membership/status.get.ts` | C | Ignores `organizationId` outside organization mode and swaps to the shared `app-admin.ts` (#40). |
+| `membership/user.get.ts`, `membership/organization/[id].get.ts` | B | Add engine 1's `pendingChange` from `subscription.pending_*` columns. |
+| `membership/admin-tier-override.delete.ts` | C | Shared `app-admin.ts` swap only. |
+| `admin/plans/**` (Beztack: `auth/admin/plans/**`) | A (small) / C | `index.post.ts`, `[id].patch.ts` accept `soon` (with `highlighted`) -> rides with `plan.soon` and core `Product.soon`; lncd also makes `canonicalTierId` non-nullable on patch. `[id].delete.ts`, `import.post.ts`, `index.get.ts`, `sync-status.get.ts`, `sync.post.ts`: C. Beztack moved the folder under `auth/` (`a494320`). |
+
+### `apps/api/lib/payments/**`
+
+| File | Class | Reason |
+|---|---|---|
+| `catalog-mp.ts`, `catalog.ts` | A (small) | Carry `soon` alongside `highlighted` from DB plans into products; same slice as `plan.soon`. |
+| `index.ts` | B | Drops Beztack's `env.PAYMENT_PROVIDER ?? "polar"` fallback because lncd's env defaults to `mercadopago` (#42: a template must not pick a default; the CLI asks). |
+| `config.ts`, `types.ts`, `sync.ts`, `README.md` | C | Identical or formatting. |
+
+_(UI and schema in progress)_
 
 ## Class-A pieces vs `packages/payments/core`
 
