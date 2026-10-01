@@ -106,7 +106,46 @@ So the porting question is mostly "which lncd details improve Beztack's module",
 | `index.ts` | B | Drops Beztack's `env.PAYMENT_PROVIDER ?? "polar"` fallback because lncd's env defaults to `mercadopago` (#42: a template must not pick a default; the CLI asks). |
 | `config.ts`, `types.ts`, `sync.ts`, `README.md` | C | Identical or formatting. |
 
-_(UI and schema in progress)_
+### `apps/ui/src/**` (billing)
+
+lncd moved billing pages under `app/private/` (Beztack: `app/`); compared by role. Pure
+`queryKeys` / `useTranslation` swaps follow #42's query-keys and i18n recommendations and are
+not counted here.
+
+| File | Class | Reason |
+|---|---|---|
+| `components/payments/billing-dashboard.tsx` | A | `PendingPlanChangeNotice` with "Cancel Pending Plan change" button; usable-subscription rule includes `trialing`; when two subscriptions overlap (old one still in paid period) prefers the non-`proratedDowngrade` one. Beztack's UI never reads or cancels a Pending Plan change (no caller of `plan-change/pending.delete.ts`). |
+| `components/payments/membership-badge.tsx` (+ test) | A | Shows "Changes to {tier} {cadence} on {date}" when a Pending Plan change exists. Date via bare `toLocaleDateString()` -- fine (user locale). |
+| `components/payments/pricing-card.tsx` | A | `period_change` plan-change type ("Switch Billing" + `RefreshCw`) so a same-tier cadence move is a first-class action (#17 story 5), and `soon` tiers rendered disabled. Port fix: the "Próximamente" badge text is hardcoded Spanish JSX, not a `t()` key. |
+| `components/payments/plan-change-dialog.tsx` | A (behaviour) / B (endpoint) | Fetches the server preview (`useQuery` on `/api/subscriptions/preview-upgrade`) and shows its error instead of computing `priceDiff` on the client like Beztack -- preview is the authority (#17 stories 1-2). Point it at Beztack's `plan-change/preview.post.ts`; the lncd endpoint is B. |
+| `components/payments/upgrade-dialog.tsx` | B | Beztack is ahead: it already calls `plan-change/preview` and merges server preview with the client estimate for all three directions. lncd's version reads the old Upgrade-shaped endpoint; its only extra is defaulting the cadence toggle to the current `billingCadence` (rides with `membership.ts`). |
+| `contexts/membership-context.tsx`, `contexts/membership/membership-types.ts` | A (state) / B (wiring) | A: `PendingPlanChange` type, `pendingPlanChange(s)`, `billingCadence`, `cancelPendingPlanChange`, `getPlanChangeType(tier, cadence)` returning `period_change`, `trialing`/`unpaid` statuses, and subscription/membership query keys **scoped by `activeOrganizationId`** (Beztack's `["subscriptions","list"]` key is shared across organizations, so switching organization can show the previous one's billing until refetch). B: accepts plan changes via `PATCH /api/subscriptions/:id` and previews via `preview-upgrade` instead of Beztack's `plan-change/accept`. |
+| `hooks/use-billing-access.ts` (lncd-only) | A | `useBillingAccess()` / `useIsBillingManager()` over `GET /api/organization/billing-access`. |
+| `components/billing-manager-route.tsx` (lncd-only) | A | Route gate on Billing manager (not owner/admin), so `billingManagedByRole = "member"` works. Port fix: redirects to lncd's `/auth/restaurant/sign-in`. |
+| `components/admin-tier-override-banner.tsx` (+ test) | C | Identical (1 token). |
+| `app/private/billing/billing.tsx` | A (with dashboard) | Passes `pendingPlanChange` / cancel handler to the dashboard; strings moved to i18n keys (Beztack hardcodes English). |
+| `app/private/billing/pricing.tsx` | C | Visual rework (Beztack keeps an FAQ accordion, lncd drops it) plus cadence-aware `getPlanChangeType`, already covered by `pricing-card.tsx`. |
+| `app/private/billing/checkout-success.tsx`, `subscription-welcome.tsx` | A (i18n only) / B | Strings to `t()` keys (Beztack mixes hardcoded English and Spanish, e.g. "Suscripcion no encontrada"). B: "create restaurant" CTA, `/organizations` redirect. |
+| `app/private/billing/checkout-confirm.tsx` (lncd-only) | A (optional) | `/checkout-confirm?tier=&billingPeriod=` resumes the plan picked before sign-up (`sign-up/components/form.tsx:95`). Port fix: local `formatCurrency` hardcodes `"en-US"` and `?? "USD"`. |
+| `app/private/home/components/subscription-card.tsx` (lncd-only) | B | lncd dashboard home card. |
+| `billing-plan-change-ui.test.ts` (lncd-only) | B | Asserts source text with `readFile` (`toContain("/api/subscriptions/preview-upgrade")`, restaurant routes). Brittle; not a pattern to port. |
+| `app/private/admin/components/plan-sync/**` | A (small) / C | `create-plan-sheet.tsx`, `plan-edit-card.tsx`, `types.ts`, `constants.ts`: `soon` toggle (slice with `plan.soon`). `plan-sync-screen.tsx`, `hooks.ts`, `synced-plan-card.tsx`, `diff-table.tsx`, `helpers.ts`: i18n/query-keys only -> C here (`helpers.ts#formatPrice` is #42's `format-price.ts` item). |
+| `components/payments/{usage-metrics,index}.tsx/ts`, `components/payments/mercado-pago/**`, `components/payment-provider-wrapper.tsx`, `contexts/membership/tier-config.ts`, `hooks/{use-payment-events,use-subscriptions,use-subscription-details}.ts`, `types/{pricing,polar-pricing}.ts` | C | Identical or query-key swaps. `use-subscription-details.ts:246` `Intl.NumberFormat("es-AR")` is on both sides. |
+| `app/public/**` checkout, `features/delivery/**`, `app/private/orders/**` pricing files | B | Order/delivery domain, picked up by the filename filter only. |
+
+### `packages/db/src/schema.ts` (payment parts)
+
+Regenerate, never copy (see #42 "Schema history").
+
+| Change | Class | Reason |
+|---|---|---|
+| `pending_plan_change`: `accepted_by_user_id`, `canceled_by_user_id`, `canceled_at`, `activated_at`, `metadata` (cancel reason), status kept instead of row delete | A | Audit of who accepted/canceled and why. Keep Beztack's `target_plan_snapshot` jsonb and `provider_confirmed_plan_change_id`; do not adopt lncd's flattened `target_product_id/target_tier/target_amount/target_currency` (it loses `tierRank`/`id` of the confirmed snapshot) or `serial` id. |
+| `user/organization.subscription_billing_cadence` | A | Backs `MembershipInfo.billingCadence`. |
+| `plan.soon` | A (small) | Pricing "coming soon" flag. |
+| `subscription.pending_*` (6 columns + 2 indexes), `subscription_change_history`, `subscription_change_retry` | B | Engine 1. If Beztack wants durable retries for renewal activation, design it inside the Plan change store, not as these columns. |
+| `webhook_log.provider_event_id` + unique(`provider`,`provider_event_id`) vs Beztack `event_key` | C | Same idempotency guarantee, different key shape; Beztack's works. |
+| `organization_payment_credentials` | B | Per-organization MP credentials for restaurant orders; #41. |
+| `organization.currency DEFAULT 'UYU'`, `organization.timezone DEFAULT 'America/Montevideo'` | see section 3 | Generic idea, not as defaults. |
 
 ## Class-A pieces vs `packages/payments/core`
 
