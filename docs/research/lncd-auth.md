@@ -42,7 +42,7 @@ difference.
 | `apps/ui/src/app.tsx` | A (guard wiring) / B (routes) | Base `4b4e9df`; Beztack only split `/admin` into its own `AdminRoute` + `MainLayout` tree and added `AdminTierOverrideBanner` (lncd has the banner too). lncd's generic delta is **where guards are applied**: `/organizations` wrapped in `OrgAdminRoute`, `/billing` in `BillingManagerRoute`, and `ProtectedRoute` gained `allowedRoles` / `signInPath` / `unauthorizedPath` (`components/protected-route.tsx`, outside this ticket's list but required by it). In Beztack `OrgAdminRoute` is exported from `admin-route.tsx` and **used nowhere**, and `/billing` has no UI gate. Port the `ProtectedRoute` props and the wrapping; decide separately whether plain members lose `/organizations` (it also hosts `UserInvitations`, so with the accept-invitation page ported that is fine). B: ~60 menu/orders/rider/account/storefront routes, `/auth/{restaurant,consumer}/*`, `RiderRoute`/`RiderShell`. |
 | `apps/ui/src/contexts/membership-context.tsx` | C (for this ticket) | Base `1c6e554`; both sides grew it (Beztack 544 -> 728 lines in `551a596`, `b718450`, `7e8dda7`; lncd -> 884). The auth-relevant parts already converged: org-scoped subscriptions via `VITE_SUBSCRIPTION_MODE === "organization"` + `activeOrganizationId`, and `isAppAdmin` read from the server's `/api/membership/status` instead of sniffing the client role. The remaining delta is plan-change / pending-plan-change / admin-tier-override response shapes, owned by the subscriptions research (ADR 0001/0002/0004), not here. |
 
-Counts: **A 11, B 7, C 5** (23 entries). "A (x) / B (y)" rows count as A: port the named generic
+Counts: **A 9, B 6, C 4** (19 entries). "A (x) / B (y)" rows count as A: port the named generic
 part only. `caller-identity/**` and the invitation flow are one entry each.
 
 Adjacent, outside the ticket's file list but needed to port the A items:
@@ -54,7 +54,52 @@ domain file; Beztack has no org-role API guard at all -- routes read `member.rol
 
 ## Role model
 
-TBD
+lncd ended up with **two independent axes plus non-user principals**, and ADR-0007
+(`docs/adr/0007-organization-role-tier-access-control.md` in lncd) is the written decision.
+
+**1. App-level role (`user.role`, better-auth `admin` plugin)**
+
+| Role | Meaning | Generic? |
+|---|---|---|
+| `sudo` | App admin (platform operator). Effective only with the email in `APP_ADMIN_EMAILS` (`isAppAdminActor`); allowlisted users are auto-promoted on auth activity; better-auth `/admin/*` endpoints are gated by a `hooks.before` on the same check. `adminRoles: ["sudo"]`, `sudo: adminAc`. | Generic. Beztack already uses the name but its `admin()` config does not register it (see `auth.ts` row). |
+| `user` | Default role (`defaultRole: "user"`). In lncd it means "restaurant account". | Generic as "default account". |
+| `consumer` | End-customer account, chosen at sign-up via `userType`, kept out of the staff app (`ProtectedRoute allowedRoles`), routed to `/account`. | **lncd-domain** (storefront customer vs business account). |
+
+**2. Organization role (`member.role`, better-auth `organization` plugin), scoped to the active org**
+
+| Role | Access (ADR-0007) | Generic? |
+|---|---|---|
+| `owner`, `admin` | Full: org settings, members, billing, plus all domain CRUD. API guard `requireOrgAdmin`; UI `useIsOrgAdmin` / `OrgAdminRoute`. | Generic (better-auth `defaultRoles`). |
+| `member` | "Staff": domain CRUD but not org settings / billing / member management. API guard `requireStaffMember` (= not `rider`). | Generic. |
+| `rider` | `memberAc` org role restricted to the `/rider` PWA; may read an Order/Delivery only when assigned. | **lncd-domain** (delivery). |
+
+Plus one configurable capability on the org: **billing manager** = role >= `organization.billingManagedByRole`
+(default `owner`; ADR-0007 "Billing exception"), with App admins always passing. Beztack already has the
+column and uses it in `subscriptions/plan-change/accept.post.ts`; lncd adds the
+`/api/organization/billing-access` read and the UI gate (`useIsBillingManager`, `BillingManagerRoute`,
+sidebar filter). Generic, but owned by the subscriptions research.
+
+**3. Non-user principals (all lncd-domain)**: Guest Session (QR table cookie), and the two
+TRANSITIONAL bearer kinds `catalog-bearer` / `id-bearer` in `caller-identity` (ADR-0011 replaces them
+with an Order access token). `businessType` (`restaurant` / `supermarket`) is an org attribute that
+seeds demo data, not a role -- also domain.
+
+**Decisions worth carrying into Beztack**
+- Keep the two axes separate: App role never grants org access, org role never grants platform access.
+  ADR-0007 explicitly rejects a sudo bypass on org guards ("adding a bypass later is additive,
+  removing one is hard"). Beztack's UI currently goes the other way (`useIsAdmin` = sudo **or**
+  org owner/admin); pick one deliberately -- lncd's is the safer default for a public product.
+- Access follows the **active-org** membership (a user can be `admin` in one org and `member` in
+  another).
+- Named API guards (`requireActiveOrganization`, `requireOrgAdmin`, `requireStaffMember`) instead of
+  `allowRoles` arrays at call sites. Beztack has none of these; extract them from lncd's `menu.ts`
+  into e.g. `utils/organization-access.ts`, renaming `requireStaffMember` to whatever "any non-restricted
+  member" means once Beztack has a restricted role (with only `owner/admin/member` it is just
+  `requireActiveOrganization`).
+- One role parser (`getAuthRoles`) shared by API and UI; no substring `includes("sudo")`.
+- Beztack generic target model: App roles `sudo` + `user`; org roles `owner` / `admin` / `member`;
+  billing manager capability. Projects add their own (`consumer`, `rider`...) by extending the role
+  maps, which is exactly how lncd added them.
 
 ## The `domain/<name>/{contract,implementation,production,testing}` seam
 
