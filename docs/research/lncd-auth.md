@@ -103,4 +103,55 @@ seeds demo data, not a role -- also domain.
 
 ## The `domain/<name>/{contract,implementation,production,testing}` seam
 
-TBD
+**Verdict: adopt as a documented, opt-in convention -- not as a default for every module.**
+
+What it is (lncd `AGENTS.md` "Module Shape"; reference implementations `domain/address-resolution/`
+and `domain/caller-identity/`): `contract.ts` (types + interface + errors), `index.ts` (re-exports the
+contract and the one production instance; callers import the directory), `implementation.ts` (a
+factory taking one dependencies object whose fields are all optional and **fail closed** by
+default), `internal/` (nothing outside may import it), and adapters at that one seam:
+`production.ts` (real `db`, session, cookie), `testing.ts` (hand-written in-memory world),
+`test-database.ts` only where real SQL semantics matter (PGlite).
+
+Why it earns its place in Beztack:
+- `caller-identity` shows the payoff: 141 lines of tests cover every 401/403/kind branch through
+  `createCallerIdentityTestModule({ userId, memberships, ... })` -- no database, no cookies, no
+  `vi.mock` of module paths. Beztack's equivalents mock module paths (`vi.mock("@/server/utils/...")`)
+  and its auth decisions are scattered (`require-auth.ts`, `utils/membership.ts`,
+  `utils/subscription-ownership.ts`, ad-hoc `member.role` reads in plan-change routes).
+- The contract doc-comments carry the decision record next to the code (status semantics, which
+  resource admits which caller, what is TRANSITIONAL and which issue deletes it).
+- It is already half-present in Beztack's vocabulary: ADR 0001 is literally a "subscription
+  projection seam".
+
+Why not by default (lncd's own guard rail, worth copying verbatim): two adapters make a real seam;
+one makes a hypothetical one. A single function with one optional dependency (lncd's
+`lifecycle-transition.ts`) is the more common right answer. Beztack-specific cautions:
+- `index.ts` exporting the production instance means importing the directory pulls `@beztack/db`;
+  tests must import `./testing` / `./implementation` directly (lncd does).
+- The "nothing imports `internal/`" rule is convention only; nothing enforces it. If adopted, add a
+  lint rule (Vite+/oxlint `no-restricted-imports` pattern) when the toolchain ticket lands.
+- `domain/` is an API-only folder in lncd; Beztack would need to say whether packages
+  (`packages/payments/*`) follow the same shape or keep their package boundary as the seam.
+
+Concrete first candidate in Beztack: an **organization/access** module that owns "may this caller act
+on this Organization / Subscription" -- consolidating `isAppAdminActor`, the org-role guards from lncd
+`menu.ts`, the billing-manager check and `subscription-ownership.ts` -- with `production` (db +
+better-auth session) and `testing` (in-memory memberships) adapters. That has two real adapters from
+day one. `caller-identity` itself is **not** portable (Order/Delivery domain); its shape is.
+
+Porting the convention means: copy the "Module Shape" section into Beztack `AGENTS.md` (already
+flagged A in #42), minus lncd ADR numbers, keeping the "When not to reach for it" paragraph.
+
+## Open questions / not determined
+
+- Beztack's top-level `after: [...]` in `auth.ts` being ignored and `sudo` lacking an admin-plugin AC
+  entry were established by reading better-auth 1.4.6 sources (`options.hooks.*` only;
+  `hasPermission` over `options.roles || defaultRoles`), not by running Beztack. Confirm with a sign-up
+  (welcome email sent?) and an `authClient.admin.listUsers` call as an allowlisted user before
+  prioritising the fix.
+- lncd is on better-auth `^1.5.6`; whether `hooks.before` on `/admin/*` and `adminAc`/`userAc`
+  imports behave identically on 1.4.6 was not checked. Port together with the better-auth bump if
+  needed.
+- Whether App admins should implicitly be org admins in Beztack (lncd: no; Beztack UI: yes) is a
+  product decision for the grilling, not a research finding.
