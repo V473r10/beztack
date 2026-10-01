@@ -145,16 +145,149 @@ Regenerate, never copy (see #42 "Schema history").
 | `subscription.pending_*` (6 columns + 2 indexes), `subscription_change_history`, `subscription_change_retry` | B | Engine 1. If Beztack wants durable retries for renewal activation, design it inside the Plan change store, not as these columns. |
 | `webhook_log.provider_event_id` + unique(`provider`,`provider_event_id`) vs Beztack `event_key` | C | Same idempotency guarantee, different key shape; Beztack's works. |
 | `organization_payment_credentials` | B | Per-organization MP credentials for restaurant orders; #41. |
-| `organization.currency DEFAULT 'UYU'`, `organization.timezone DEFAULT 'America/Montevideo'` | see section 3 | Generic idea, not as defaults. |
+| `organization.currency DEFAULT 'UYU'`, `organization.timezone DEFAULT 'America/Montevideo'` | B (as written) | Generic idea, but only as project config without defaults (section 3). |
 
 ## Class-A pieces vs `packages/payments/core`
 
-_(pending)_
+Beztack's Plan change logic lives in `apps/api/server/utils/plan-change.ts` behind its own
+ports, not in `packages/payments/core`. That is the right home for the domain rules (they
+need the DB, auth roles and the Pricing catalog, which a provider package must not know).
+"Fits core" below therefore means: the provider-facing half is expressible through the
+provider-neutral `PaymentProviderAdapter` (so a Polar project gets it), and the rest stays
+in the API module.
+
+| A piece | Where it goes | Core interface needed |
+|---|---|---|
+| Renewal activation applies the target plan at the provider (`subscription-projection.ts:598` + `webhook.post.ts:98`, completed with `updateAtEffective`'s plan id + frequency) | **Core.** Beztack `activatePendingPlanChange` gains a provider step through its `PlanChangePaymentAdapter`/projection deps; the MP adapter implements it. | Core already has `updateSubscription(id, { productId, prorationBehavior })`, but Beztack's MP adapter ignores `productId` (only `status`). Define it as "switch the recurring plan from the next charge": MP = PUT `/preapproval/{id}` with `preapproval_plan_id`, `auto_recurring.transaction_amount/currency_id/frequency/frequency_type`, then verify the echo and `application_id`; Polar = native `subscriptions.update({ productId, prorationBehavior: "none" })`. The existing `adjustSubscriptionAmount` after a prorated Upgrade is the amount-only case of the same call. No new `scheduleDowngrade`-style hooks: lncd's are no-ops on MP. |
+| Rank-based Billing manager rule + `requireOrganizationBillingManagerAccess` + `GET /api/organization/billing-access` + `use-billing-access.ts` + `billing-manager-route.tsx` | **API/UI only** (auth domain, not provider). Becomes the single implementation behind Beztack's `PlanChangeStore.isBillingManager` and the subscription list/get/delete/checkout routes. Coordinate with #40/#45 (roles), which own `app-admin.ts` and role ranks. | None. |
+| Upgrade credit from the amount actually billed | **API module**, using the provider-neutral `Subscription` metadata via `billing-amount-resolver.ts` (already in Beztack). | None new: `getSubscription` + `getProduct` suffice. `calculateProration` must not be imported from `@beztack/mercadopago` (lncd does); Beztack's internal calculation stays. |
+| Pending Plan change audit (accepted/canceled by, timestamps, reason, keep row) | **API store + schema.** Provider-agnostic. | None. |
+| Pending Plan change read path (`index.get.ts` `pendingPlanChange`, `membership-context` state, `billing-dashboard` notice + cancel, `membership-badge` label, `billing.tsx`) | **API route/store + UI.** | None. |
+| `billingCadence` in `MembershipInfo` + `subscription_billing_cadence` projection | **API + schema.** Cadence is derived from provider-neutral `Product.interval/intervalCount` (lncd already normalizes `month x 12` as yearly). | None. |
+| Organization-scoped query keys in `membership-context` | **UI.** Rides with #42's query-keys slice. | None. |
+| `period_change` plan-change type in `pricing-card` / `getPlanChangeType` | **UI.** Note MP currently refuses Cadence change acceptance in Beztack (#17 story 24) and refuses yearly checkout, so the button must reflect provider support. | A capability flag would help: e.g. `PaymentProviderAdapter.capabilities?.cadenceChange` (or an outcome from preview) so the UI can hide "Switch Billing" for MP without hardcoding provider names. |
+| Server-authoritative preview in `plan-change-dialog.tsx` | **UI**, pointed at `plan-change/preview.post.ts`. | None. |
+| `soon` flag (`plan.soon`, core `Product.soon`, catalog, admin plan-sync, `usePricingTiers`, pricing card) | **Core types** (`Product.soon?`, next to existing `highlighted?`) + DB + UI. Provider-neutral: comes from Beztack's DB plan, not the provider. | Add `soon?: boolean` to `Product`/`PricingTier` in core. |
+| `cadence` in MP `external_reference` | **MP adapter only.** Polar carries metadata natively. | None. |
+| App admin = `sudo` + allow-listed email in `subscription-ownership.ts` | **API** (`app-admin.ts`, owned by #40). | None. |
+| `checkout-confirm.tsx` resume-after-sign-up | **UI** (optional). | None. |
+| i18n of billing pages | **UI** (rides with #42's i18n/locale work). | None. |
+
+Not ported, but worth one idea for the subscriptions grilling: engine 1's `applyDueSubscriptionChange`
+claims the row (`pending_status = "applying"`), applies, and on failure records `failed` +
+a `subscription_change_retry` row. Beztack activates only from webhook evidence, so a failed
+provider write at renewal currently has no retry path besides the webhook log.
 
 ## Hardcoded currency / timezone defaults in the class-A set
 
-_(pending)_
+None of the class-A pieces introduces a new `UYU` / `America/Montevideo` default; the ones
+they touch are:
+
+- `apps/api/server/routes/api/payments/mercado-pago/webhook.post.ts:42` `currency: payment.currency_id ?? "UYU"` -- in the route that carries the A `updateSubscriptionAmount` action (Beztack's equivalent fallback is `subscription-projection.ts:1599`).
+- `apps/api/server/utils/billing-amount-resolver.ts:49` `"UYU"` fallback (comment: "matches the current deployment (Uruguay)") -- used by the A "credit from billed amount" piece; **identical in Beztack** (`:54`).
+- `packages/payments/mercado-pago/src/adapter.ts:407,791` `currency = "UYU"`, `MERCADO_PAGO_CURRENCY ?? "UYU"` -- the adapter that would implement the provider half of renewal activation; **identical in Beztack** (`:420,766`).
+- `apps/ui/src/components/payments/pricing-card.tsx:382` `formatCurrency(amount, currency = "USD")` with `Intl.NumberFormat("en-US")` -- **identical in Beztack** (`:376`); the A `soon` badge next to it hardcodes `"Próximamente"` (`:206`, a locale string, not via `t()`).
+- `apps/ui/src/app/private/billing/checkout-confirm.tsx:29-30,95` `currency = "USD"`, `"en-US"`, `?? "USD"`.
+- `apps/ui/src/contexts/membership-context.tsx:443` `currency: "USD"`, `amount: 0` placeholder in the plan-change result.
+- `apps/ui/src/app/private/billing/subscription-welcome.tsx:273` `toLocaleDateString("es-AR")` (Beztack same file, same call).
+- Schema (if `organization.currency`/`timezone` are ever ported): `DEFAULT 'UYU'`, `DEFAULT 'America/Montevideo' NOT NULL`; lncd uses `timezone` only for daily order numbering (B).
+- `packages/payments/core/src/server/index.ts:270` `billingCurrency ?? "UYU"` is in the B engine (not ported).
+
+Dates in the A UI pieces (`billing-dashboard`, `membership-badge`, `plan-change-dialog`) use
+bare `toLocaleDateString()` (browser locale) -- acceptable. No timezone is hardcoded in the
+class-A set. Recommendation as in #42: one project-level `DEFAULT_CURRENCY` / `DEFAULT_LOCALE`
+(no baked-in value, asked by the CLI), and let the price's own currency win wherever a
+product or payment carries one.
 
 ## #17 / #15 stories lncd already solves
 
-_(pending)_
+Status for lncd; Beztack `main` given for contrast because Beztack already implements most of
+#17 in `plan-change.ts` (so "lncd solves it" rarely means "port lncd's version").
+F = full, P = partial, N = no.
+
+### #17 Deepen Plan change decisions
+
+| # | lncd | Beztack main | Note |
+|---|---|---|---|
+| 1 preview before accepting | F | F | |
+| 2 preview = acceptance rules | F | F | lncd accept calls `previewPlanChange` |
+| 3-4 Upgrade/Downgrade by tier rank | P | F | lncd rank is a hardcoded map (`TIER_RANK`), engine 1 still classifies by price |
+| 5 Cadence change direction | F | F | |
+| 6 same tier+cadence rejected | F | F | |
+| 7 Upgrade credits unused value | F | F | lncd credits the billed amount (A) |
+| 8 Membership up after Payment | F | F | |
+| 9 Downgrade keeps access until period end | F | F | |
+| 10 Cadence change at renewal | P | N (unsupported) | lncd accepts and activates but only changes the MP amount, not frequency |
+| 11 cancel Pending before renewal | F (API + UI) | P (API only) | lncd UI notice/cancel is A |
+| 12-13 one Pending, newest replaces | F | F | |
+| 14 confirmed target snapshot at renewal | F | F | lncd flattened columns; Beztack jsonb snapshot |
+| 15 Reconciling Plan change state | P | F | lncd only surfaces evidence |
+| 16 missing Current Subscription fails | F | F | |
+| 17 Payment integration mismatch fails closed | P | F | lncd relies on adapter filtering only |
+| 18-20 Billing manager preview/accept, authz in module | F | P | Beztack exact-role match (owner refused when threshold is `admin`), rule duplicated in 3 routes |
+| 21 App admin real changes | F | F | |
+| 22 Admin tier override separate | F | F | |
+| 23 MP Application isolation in Plan change | F | F | |
+| 24 MP Cadence change acceptance fails clearly | N | F | lncd accepts it |
+| 25 Cadence preview classified anyway | F | F | |
+| 26 Upgrade confirmation behind module | P | F | |
+| 27 Downgrade provider-confirmed before storing | N | P | Beztack "confirmation" is a `getProduct` lookup |
+| 28 preview + accept one Interface | P | F | |
+| 29 Pricing catalog owns tier rank | N | P | Beztack uses `plan.displayOrder` as rank |
+| 30 dedicated Beztack-owned Pending state | F | F | |
+| 31 projection calls activation | P | F | lncd activates via the store directly; but lncd also updates the provider amount (A), Beztack does not |
+| 32 projection calls reconciliation | P | F | |
+| 33 routes transport-only | P | P | Beztack's `plan-change/*` routes are 400-660 lines of store wiring |
+| 34-35 Current Subscription + authz inside module | F | F | |
+| 36 narrow provider seam | N | F | lncd passes the full `PaymentProviderAdapter` |
+| 37-38 test adapter, substitutable Pending store | P / F | F / F | |
+| 39 no provider-metadata Pending | P | F | lncd projection still reads `pendingPlanChange*` metadata; engine 1 coexists |
+| 40-41 Plan change vocabulary, old Upgrade routes removed | N | F | lncd keeps `preview-upgrade` and `PATCH /subscriptions/:id` |
+| 42 domain-shaped errors | P | F | lncd: HTTP-status errors, no codes |
+| 43-45 (agent stories) | -- | -- | not code |
+
+### #15 Isolate Mercado Pago subscriptions by native Application
+
+| # | lncd | Beztack main | Note |
+|---|---|---|---|
+| 1-3 plans/subscriptions per Application, hide same-email others | F | F | lncd adapter filters + scans pages for both |
+| 4 same-Application Subscription visible without local row | F | F | |
+| 5 org mode: payer email insufficient | N | F | lncd `subscription-ownership.ts` matches payer email before org identity |
+| 6 user mode by payer email / user id | F | F | |
+| 7 startup fails without Application ID | F | F | |
+| 8-9 missing/mismatched identity hidden, cross-App = not found | F | F | |
+| 10 same-App wrong owner = forbidden | F | F | |
+| 11 minimal skip diagnostics | N | N | neither adapter logs skipped resources |
+| 12 created resources verified | F | F | |
+| 13 page scanning | F | F | |
+| 14 other-App local plans need re-linking | F | F | `sync.ts` identical |
+| 15-16 Membership cache validates cached subscription id | N | F | `canUseCachedMembership` is Beztack-only |
+| 17-18 webhooks from other App skipped; payment events need verified subscription | F | F | |
+| 19 adapter contract requires native boundary | P | P | both MP-only |
+| 20-21 docs: App ID vs integrator ID, checklist | N | F | Beztack `apps/docs/content/docs/payments/mercado-pago.mdx` |
+| 22 ADR | F | F | lncd ADR-0003 copy |
+
+Takeaway for #44: #15 is effectively done in Beztack (lncd adds nothing); #17 is mostly done
+in Beztack's module, and lncd contributes the pieces in section 2 -- above all provider-side
+renewal activation, the shared Billing manager gate, Pending Plan change audit + read path +
+UI, and `billingCadence`.
+
+## Counts
+
+**A 28, B 22, C 17** (67 entries; a row grouping several files counts once; a row is counted
+by its leading class, so "B (+ A pieces)" counts as B and "A (one piece)" as A). Most A rows
+are *pieces* of a file, not whole files: no lncd module should be copied wholesale, because
+Beztack's `plan-change.ts`, Subscription projection, MP adapter and #15 isolation are ahead.
+
+## Open questions
+
+- Renewal activation retry: keep webhook-driven activation only (Beztack today) or add a
+  claim/apply/retry worker like lncd engine 1's `applyDueSubscriptionChange`? Decide in #44.
+- Cadence change for MP: Beztack refuses acceptance (#17 story 24) and yearly checkout; with
+  `updateSubscription({ productId })` implemented as plan + frequency switch, MP could accept
+  it. Not verified against the MP API (no sandbox call made here).
+- Whether the Billing manager rank (`member < admin < owner`) belongs to #45's role model or to
+  billing; lncd's `rider` rank shows the coupling.
+- Not determined: whether lncd's activation amount update ever ran in production (no logs
+  read), and whether Beztack's `confirmPendingPlanChange` (`getProduct` lookup) is meant as the
+  final "provider confirmation" or a placeholder.
