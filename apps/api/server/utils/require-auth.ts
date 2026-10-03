@@ -18,7 +18,10 @@ type AuthenticatedSession = NonNullable<Session>;
  * This strict double-check mitigates role escalation vulnerabilities.
  */
 function isAppAdmin(session: AuthenticatedSession): boolean {
-  const role = session.user?.role;
+  // better-auth's base user type does not declare `role`; it is a custom field
+  // present at runtime. Read it through a narrow cast rather than widening the
+  // whole session type. Behaviour is identical to the previous untyped access.
+  const role = (session.user as { role?: string | string[] } | undefined)?.role;
   const hasAppAdminRole = role?.includes("sudo");
 
   if (!hasAppAdminRole) {

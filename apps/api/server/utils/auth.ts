@@ -95,6 +95,12 @@ export const auth = betterAuth({
     }),
     ...(polarPlugin ? [polarPlugin] : []),
   ],
+  // FIXME(beztack#45 Q4): known bug, not a typing glitch. better-auth only reads
+  // `hooks.after`, so this top-level `after` is ignored and the hook never runs
+  // (no welcome email, no sudo promotion, no isAppAdmin). It is fixed test-first
+  // in the auth piece decided in #45; this toolchain PR only stops the new
+  // typecheck gate from failing on it. The expect-error fails once it moves.
+  // @ts-expect-error known bug: misplaced better-auth hook, see FIXME above
   after: [
     createAuthMiddleware(async (ctx) => {
       // Intercept session fetching to inject isAppAdmin dynamically

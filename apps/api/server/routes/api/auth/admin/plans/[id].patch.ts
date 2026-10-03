@@ -9,7 +9,9 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const updateSchema = z.object({
-  canonicalTierId: z.string().nullable().optional(),
+  // canonicalTierId is a NOT NULL column (packages/db schema): accept a value
+  // to change it, but never null — nulling a required column is a type error.
+  canonicalTierId: z.string().optional(),
   displayName: z.string().optional(),
   description: z.string().nullable().optional(),
   features: z.array(z.string()).optional(),

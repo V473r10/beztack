@@ -1,5 +1,5 @@
 import { db, schema } from "@beztack/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createError, defineEventHandler, getRouterParam } from "h3";
 import { auth } from "@/server/utils/auth";
 
@@ -54,8 +54,12 @@ export default defineEventHandler(async (event) => {
     const membership = await db
       .select()
       .from(schema.member)
-      .where(eq(schema.member.organizationId, organizationId))
-      .where(eq(schema.member.userId, session.user.id))
+      .where(
+        and(
+          eq(schema.member.organizationId, organizationId),
+          eq(schema.member.userId, session.user.id),
+        ),
+      )
       .limit(1);
 
     if (membership.length === 0) {
@@ -83,7 +87,7 @@ export default defineEventHandler(async (event) => {
       memberRole: membership[0].role,
     };
   } catch (error) {
-    if (error.statusCode) {
+    if (error && typeof error === "object" && "statusCode" in error && error.statusCode) {
       throw error;
     }
     throw createError({

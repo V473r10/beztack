@@ -1,5 +1,10 @@
 import { createError, defineEventHandler, getQuery } from "h3";
-import { getMembershipInfo, hasAccessToTier, requireAuth } from "@/server/utils/membership";
+import {
+  getMembershipInfo,
+  hasAccessToTier,
+  type MembershipTier,
+  requireAuth,
+} from "@/server/utils/membership";
 
 export default defineEventHandler(async (event) => {
   // Require authentication
@@ -20,8 +25,11 @@ export default defineEventHandler(async (event) => {
     // Get membership info for the organization
     const membership = await getMembershipInfo(user.user.id, organizationId);
 
-    // Define features available for each tier
-    const features = {
+    // Define features available for each tier. Typed as a partial map over
+    // every tier so indexing by `basic`/`ultimate` type-checks; the `|| free`
+    // fallback below preserves the existing runtime behaviour for tiers that
+    // are not explicitly listed here.
+    const features: Record<"free", string[]> & Partial<Record<MembershipTier, string[]>> = {
       free: ["basic_dashboard", "up_to_5_users", "community_support"],
       pro: [
         "basic_dashboard",
@@ -48,8 +56,14 @@ export default defineEventHandler(async (event) => {
     // Get available features based on membership tier
     const availableFeatures: string[] = features[membership.tier] || features.free;
 
-    // Feature limits based on tier
-    const limits = {
+    // Feature limits based on tier (same partial-map typing as `features`).
+    type TierLimits = {
+      users: number;
+      projects: number;
+      storage_gb: number;
+      api_calls_per_month: number;
+    };
+    const limits: Record<"free", TierLimits> & Partial<Record<MembershipTier, TierLimits>> = {
       free: {
         users: 5,
         projects: 3,

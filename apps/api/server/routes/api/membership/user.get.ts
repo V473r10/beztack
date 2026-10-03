@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
       })),
     };
   } catch (error) {
-    if (error.statusCode) {
+    if (error && typeof error === "object" && "statusCode" in error && error.statusCode) {
       throw error;
     }
     throw createError({

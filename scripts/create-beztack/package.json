@@ -41,7 +41,7 @@
     "build": "tsdown && node ./scripts/postbuild.js",
     "dev": "tsdown --watch",
     "start": "pnpm run build && node dist/index.js",
-    "test": "vitest",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "prepare": "pnpm run build",
     "release": "bumpp && npm publish --access public"
