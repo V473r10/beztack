@@ -16,7 +16,6 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepare": "pnpm build",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
