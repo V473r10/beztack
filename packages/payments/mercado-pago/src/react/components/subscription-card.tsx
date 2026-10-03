@@ -5,10 +5,7 @@ import {
   formatPriceLocalized,
   getTranslations,
 } from "../../i18n/index.js";
-import {
-  getSubscriptionStatusConfig,
-  type SubscriptionStatusConfig,
-} from "./status-badge.js";
+import { getSubscriptionStatusConfig, type SubscriptionStatusConfig } from "./status-badge.js";
 
 // ============================================================================
 // Types
@@ -62,10 +59,7 @@ function getIntlLocale(locale: string): string {
   return locale === "es-UY" || locale === "es" ? "es-UY" : "en-US";
 }
 
-function formatDate(
-  dateStr: string | null | undefined,
-  locale: string
-): string | null {
+function formatDate(dateStr: string | null | undefined, locale: string): string | null {
   if (!dateStr) {
     return null;
   }
@@ -80,10 +74,7 @@ function formatDate(
   });
 }
 
-function formatDateTime(
-  dateStr: string | null | undefined,
-  locale: string
-): string | null {
+function formatDateTime(dateStr: string | null | undefined, locale: string): string | null {
   if (!dateStr) {
     return null;
   }
@@ -102,32 +93,21 @@ function formatDateTime(
 
 function buildRenderProps(
   subscription: SubscriptionData,
-  locale: string
+  locale: string,
 ): SubscriptionCardRenderProps {
   const statusConfig = getSubscriptionStatusConfig(subscription.status, locale);
 
   const formattedPrice =
     subscription.transactionAmount && subscription.currencyId
-      ? formatPriceLocalized(
-          subscription.transactionAmount,
-          subscription.currencyId,
-          locale
-        )
+      ? formatPriceLocalized(subscription.transactionAmount, subscription.currencyId, locale)
       : null;
 
   const formattedFrequency =
     subscription.frequency && subscription.frequencyType
-      ? formatFrequencyLocalized(
-          subscription.frequency,
-          subscription.frequencyType,
-          locale
-        )
+      ? formatFrequencyLocalized(subscription.frequency, subscription.frequencyType, locale)
       : null;
 
-  const formattedNextPayment = formatDateTime(
-    subscription.nextPaymentDate,
-    locale
-  );
+  const formattedNextPayment = formatDateTime(subscription.nextPaymentDate, locale);
   const formattedDateCreated = formatDate(subscription.dateCreated, locale);
 
   return {
@@ -210,9 +190,7 @@ export function SubscriptionCard({
             {subscription.reason || t.components.subscription}
           </h3>
           {subscription.payerEmail && (
-            <p className="truncate text-gray-500 text-sm">
-              {subscription.payerEmail}
-            </p>
+            <p className="truncate text-gray-500 text-sm">{subscription.payerEmail}</p>
           )}
         </div>
         <span
@@ -225,13 +203,9 @@ export function SubscriptionCard({
       {/* Price */}
       {formattedPrice && (
         <div className="mt-3">
-          <span className="font-bold text-2xl text-gray-900">
-            {formattedPrice}
-          </span>
+          <span className="font-bold text-2xl text-gray-900">{formattedPrice}</span>
           {formattedFrequency && (
-            <span className="ml-1 text-gray-500 text-sm">
-              {formattedFrequency}
-            </span>
+            <span className="ml-1 text-gray-500 text-sm">{formattedFrequency}</span>
           )}
         </div>
       )}
@@ -239,8 +213,7 @@ export function SubscriptionCard({
       {/* Next payment */}
       {showNextPayment && formattedNextPayment && (
         <div className="mt-3 text-gray-600 text-sm">
-          <span className="font-medium">{t.components.nextPayment}:</span>{" "}
-          {formattedNextPayment}
+          <span className="font-medium">{t.components.nextPayment}:</span> {formattedNextPayment}
         </div>
       )}
 
@@ -257,7 +230,7 @@ export function SubscriptionCard({
               {formatPriceLocalized(
                 subscription.chargedAmount,
                 subscription.currencyId || "UYU",
-                locale
+                locale,
               )}
             </div>
           )}

@@ -1,10 +1,7 @@
 import pc from "picocolors";
 import { readManifest } from "../core/manifest.js";
 import { buildUpdatePlan } from "../core/planner.js";
-import {
-  ensureTemplateRoot,
-  resolveTemplateRoot,
-} from "../core/post-checks.js";
+import { ensureTemplateRoot, resolveTemplateRoot } from "../core/post-checks.js";
 import { writePlanReport } from "../core/report.js";
 import { readTemplateVersion } from "../core/template-version.js";
 
@@ -49,7 +46,7 @@ export async function runStatus(options: StatusOptions): Promise<void> {
         "- Pending changes: unavailable\n" +
         "- Conflicts: unavailable\n" +
         `- Template root: ${templateRoot}\n` +
-        "- Hint: generate or point to a template root with --template-root\n"
+        "- Hint: generate or point to a template root with --template-root\n",
     );
     return;
   }
@@ -70,7 +67,7 @@ export async function runStatus(options: StatusOptions): Promise<void> {
       `- Pending changes: ${plan.changes.length}\n` +
       `- Skipped unchanged template files: ${plan.skippedUnchangedTemplateFiles}\n` +
       `- Conflicts: ${plan.conflicts.length}\n` +
-      `- Report: ${reportPath}\n`
+      `- Report: ${reportPath}\n`,
   );
 }
 

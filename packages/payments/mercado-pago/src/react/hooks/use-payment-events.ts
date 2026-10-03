@@ -11,12 +11,7 @@ const MAX_STORED_EVENTS = 100;
 // Types
 // ============================================================================
 
-export type PaymentEventType =
-  | "payment"
-  | "subscription"
-  | "invoice"
-  | "order"
-  | "chargeback";
+export type PaymentEventType = "payment" | "subscription" | "invoice" | "order" | "chargeback";
 
 export type PaymentEvent = {
   id: string;
@@ -48,27 +43,16 @@ export type UsePaymentEventsReturn = {
 // Hook
 // ============================================================================
 
-export function usePaymentEvents(
-  options: UsePaymentEventsOptions = {}
-): UsePaymentEventsReturn {
+export function usePaymentEvents(options: UsePaymentEventsOptions = {}): UsePaymentEventsReturn {
   const { endpoints } = useMercadoPagoContext();
-  const {
-    enabled = true,
-    onEvent,
-    onError,
-    reconnectInterval = 5000,
-    maxRetries = 5,
-  } = options;
+  const { enabled = true, onEvent, onError, reconnectInterval = 5000, maxRetries = 5 } = options;
 
   const [events, setEvents] = useState<PaymentEvent[]>([]);
-  const [connectionStatus, setConnectionStatus] =
-    useState<ConnectionStatus>("disconnected");
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const retriesRef = useRef(0);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -102,9 +86,7 @@ export function usePaymentEvents(
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as PaymentEvent;
-        setEvents((prev: PaymentEvent[]) =>
-          [data, ...prev].slice(0, MAX_STORED_EVENTS)
-        );
+        setEvents((prev: PaymentEvent[]) => [data, ...prev].slice(0, MAX_STORED_EVENTS));
         onEvent?.(data);
       } catch {
         // Ignore parse errors for heartbeat messages

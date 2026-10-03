@@ -1,8 +1,4 @@
-export type SyncStatus =
-  | "synced"
-  | "local-only"
-  | "remote-only"
-  | "out-of-sync";
+export type SyncStatus = "synced" | "local-only" | "remote-only" | "out-of-sync";
 
 export type SyncDiff = {
   field: string;

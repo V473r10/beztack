@@ -18,11 +18,7 @@ import {
 //   DialogTitle,
 //   DialogTrigger,
 // } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   useActiveOrganization,
   useOrganizations,
@@ -46,10 +42,8 @@ export function OrganizationSwitcher({
   const [open, setOpen] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const { data: organizations = [], isLoading: isLoadingOrganizations } =
-    useOrganizations();
-  const { data: activeOrganization, isLoading: isLoadingActive } =
-    useActiveOrganization();
+  const { data: organizations = [], isLoading: isLoadingOrganizations } = useOrganizations();
+  const { data: activeOrganization, isLoading: isLoadingActive } = useActiveOrganization();
   const setActiveOrganization = useSetActiveOrganization();
 
   const handleSelectOrganization = (organization: Organization) => {
@@ -87,18 +81,11 @@ export function OrganizationSwitcher({
   if (!organizations.length) {
     return (
       <div className={cn("flex items-center space-x-2", className)}>
-        <Button
-          className="justify-start"
-          onClick={handleCreateClick}
-          variant="outline"
-        >
+        <Button className="justify-start" onClick={handleCreateClick} variant="outline">
           <Plus className="mr-2 h-4 w-4" />
           Create Organization
         </Button>
-        <CreateOrganizationDialog
-          onOpenChange={setShowCreateDialog}
-          open={showCreateDialog}
-        />
+        <CreateOrganizationDialog onOpenChange={setShowCreateDialog} open={showCreateDialog} />
       </div>
     );
   }
@@ -118,9 +105,7 @@ export function OrganizationSwitcher({
               <div className="flex h-5 w-5 items-center justify-center rounded bg-muted">
                 <Building2 className="h-3 w-3" />
               </div>
-              <span className="truncate">
-                {activeOrganization?.name || "Select organization"}
-              </span>
+              <span className="truncate">{activeOrganization?.name || "Select organization"}</span>
             </div>
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -156,9 +141,7 @@ export function OrganizationSwitcher({
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
-                        activeOrganization?.id === organization.id
-                          ? "opacity-100"
-                          : "opacity-0"
+                        activeOrganization?.id === organization.id ? "opacity-100" : "opacity-0",
                       )}
                     />
                   </CommandItem>
@@ -182,10 +165,7 @@ export function OrganizationSwitcher({
         </PopoverContent>
       </Popover>
 
-      <CreateOrganizationDialog
-        onOpenChange={setShowCreateDialog}
-        open={showCreateDialog}
-      />
+      <CreateOrganizationDialog onOpenChange={setShowCreateDialog} open={showCreateDialog} />
     </>
   );
 }

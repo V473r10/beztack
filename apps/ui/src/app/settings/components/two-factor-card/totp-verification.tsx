@@ -1,10 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { TOTP_CODE_LENGTH } from "../../lib/constants";
 
 type TotpVerificationProps = {
@@ -39,12 +35,7 @@ export function TotpVerification({
         {t("account.settings.twoFactor.enter6DigitCode")}
       </p>
       <div className="flex items-center space-x-2">
-        <InputOTP
-          maxLength={6}
-          onChange={onCodeChange}
-          onKeyDown={handleKeyDown}
-          value={totpCode}
-        >
+        <InputOTP maxLength={6} onChange={onCodeChange} onKeyDown={handleKeyDown} value={totpCode}>
           <InputOTPGroup>
             <InputOTPSlot index={0} />
             <InputOTPSlot index={1} />
@@ -57,11 +48,7 @@ export function TotpVerification({
           </InputOTPGroup>
         </InputOTP>
         <Button
-          disabled={
-            isVerifying ||
-            totpCode.length !== TOTP_CODE_LENGTH ||
-            !hasConfirmedBackupCodes
-          }
+          disabled={isVerifying || totpCode.length !== TOTP_CODE_LENGTH || !hasConfirmedBackupCodes}
           onClick={onVerify}
         >
           {isVerifying

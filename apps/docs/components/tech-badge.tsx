@@ -8,12 +8,7 @@ interface TechBadgeProps {
   logoComponent?: React.ReactNode;
 }
 
-export function TechBadge({
-  name,
-  logoUrl,
-  logoUrlLight,
-  logoComponent,
-}: Partial<TechBadgeProps>) {
+export function TechBadge({ name, logoUrl, logoUrlLight, logoComponent }: Partial<TechBadgeProps>) {
   return (
     <div className="group flex items-center gap-3 rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
       <div className="flex h-6 w-6 items-center justify-center">

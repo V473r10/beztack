@@ -2,10 +2,7 @@
 
 export type { BillingDashboardProps } from "./billing-dashboard";
 export { BillingDashboard } from "./billing-dashboard";
-export type {
-  MembershipBadgeProps,
-  MembershipStatusProps,
-} from "./membership-badge";
+export type { MembershipBadgeProps, MembershipStatusProps } from "./membership-badge";
 export { MembershipBadge, MembershipStatus } from "./membership-badge";
 // Types re-exports for convenience
 export type { PricingCardProps } from "./pricing-card";

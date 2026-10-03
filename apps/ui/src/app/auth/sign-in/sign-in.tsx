@@ -16,12 +16,8 @@ export default function SignIn() {
   return (
     <>
       <div className="space-y-1 text-center">
-        <h1 className="font-semibold text-2xl tracking-tight">
-          {t("auth.signIn.title")}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t("auth.signIn.description")}
-        </p>
+        <h1 className="font-semibold text-2xl tracking-tight">{t("auth.signIn.title")}</h1>
+        <p className="text-muted-foreground text-sm">{t("auth.signIn.description")}</p>
       </div>
 
       <Card className="w-full">
@@ -34,15 +30,8 @@ export default function SignIn() {
         </CardContent>
         <CardFooter className="flex flex-wrap items-center justify-between gap-2">
           <div className="text-muted-foreground text-sm">
-            <span className="mr-1 hidden sm:inline-block">
-              {t("auth.signIn.noAccount")}
-            </span>
-            <Button
-              aria-label="Sign up"
-              asChild
-              className="h-auto p-0 text-primary"
-              variant="link"
-            >
+            <span className="mr-1 hidden sm:inline-block">{t("auth.signIn.noAccount")}</span>
+            <Button aria-label="Sign up" asChild className="h-auto p-0 text-primary" variant="link">
               <Link to="/auth/sign-up">{t("auth.signIn.signUp")}</Link>
             </Button>
           </div>
@@ -52,9 +41,7 @@ export default function SignIn() {
             className="h-auto p-0 text-primary"
             variant="link"
           >
-            <Link to="/auth/reset-password">
-              {t("auth.signIn.forgotPassword")}
-            </Link>
+            <Link to="/auth/reset-password">{t("auth.signIn.forgotPassword")}</Link>
           </Button>
         </CardFooter>
       </Card>

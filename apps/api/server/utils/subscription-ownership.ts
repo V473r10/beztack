@@ -29,10 +29,9 @@ function normalizeEmail(value: string): string {
 export function isSubscriptionOwnedByUser(
   subscription: Subscription,
   auth: AuthenticatedUser,
-  subscriptionMode: SubscriptionMode = "user"
+  subscriptionMode: SubscriptionMode = "user",
 ): boolean {
-  const authRole =
-    (auth as { role?: unknown }).role ?? (auth.user as { role?: unknown }).role;
+  const authRole = (auth as { role?: unknown }).role ?? (auth.user as { role?: unknown }).role;
 
   if (hasAdminRole(authRole)) {
     return true;
@@ -58,8 +57,7 @@ export function isSubscriptionOwnedByUser(
 
   if (
     subscription.customerEmail &&
-    normalizeEmail(subscription.customerEmail) ===
-      normalizeEmail(auth.user.email)
+    normalizeEmail(subscription.customerEmail) === normalizeEmail(auth.user.email)
   ) {
     return true;
   }

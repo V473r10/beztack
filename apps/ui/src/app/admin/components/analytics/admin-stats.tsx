@@ -1,9 +1,4 @@
-import {
-  IconClock,
-  IconUserCheck,
-  IconUsers,
-  IconUserX,
-} from "@tabler/icons-react";
+import { IconClock, IconUserCheck, IconUsers, IconUserX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
@@ -37,9 +32,7 @@ async function fetchAdminStats(): Promise<AdminStats> {
   const RECENT_SIGNUP_DAYS = 7;
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - RECENT_SIGNUP_DAYS);
-  const recentSignups = users.filter(
-    (user) => new Date(user.createdAt) > sevenDaysAgo
-  ).length;
+  const recentSignups = users.filter((user) => new Date(user.createdAt) > sevenDaysAgo).length;
 
   return {
     totalUsers,
@@ -81,9 +74,7 @@ export function AdminStats() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-muted-foreground text-sm">
-            Failed to load admin statistics
-          </p>
+          <p className="text-muted-foreground text-sm">Failed to load admin statistics</p>
         </CardContent>
       </Card>
     );
@@ -123,16 +114,12 @@ export function AdminStats() {
         return (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">
-                {stat.title}
-              </CardTitle>
+              <CardTitle className="font-medium text-sm">{stat.title}</CardTitle>
               <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="font-bold text-2xl">{stat.value}</div>
-              <p className="text-muted-foreground text-xs">
-                {stat.description}
-              </p>
+              <p className="text-muted-foreground text-xs">{stat.description}</p>
             </CardContent>
           </Card>
         );

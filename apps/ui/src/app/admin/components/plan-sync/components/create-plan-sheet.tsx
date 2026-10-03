@@ -99,8 +99,7 @@ export function CreatePlanSheet({
         <SheetHeader>
           <SheetTitle>Create Plan</SheetTitle>
           <SheetDescription>
-            Add a new subscription plan. It will be synced with the payment
-            provider automatically.
+            Add a new subscription plan. It will be synced with the payment provider automatically.
           </SheetDescription>
         </SheetHeader>
 
@@ -108,9 +107,7 @@ export function CreatePlanSheet({
           <div className="space-y-2">
             <Label>Display Name *</Label>
             <Input
-              onChange={(e) =>
-                setForm((s) => ({ ...s, displayName: e.target.value }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, displayName: e.target.value }))}
               placeholder="e.g. Pro Plan (Monthly)"
               value={form.displayName}
             />
@@ -119,9 +116,7 @@ export function CreatePlanSheet({
           <div className="space-y-2">
             <Label>Description</Label>
             <Input
-              onChange={(e) =>
-                setForm((s) => ({ ...s, description: e.target.value }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
               placeholder="Short description"
               value={form.description}
             />
@@ -130,9 +125,7 @@ export function CreatePlanSheet({
           <div className="space-y-2">
             <Label>Canonical Tier</Label>
             <Select
-              onValueChange={(v) =>
-                setForm((s) => ({ ...s, canonicalTierId: v }))
-              }
+              onValueChange={(v) => setForm((s) => ({ ...s, canonicalTierId: v }))}
               value={form.canonicalTierId}
             >
               <SelectTrigger>
@@ -152,9 +145,7 @@ export function CreatePlanSheet({
             <div className="space-y-2">
               <Label>Price *</Label>
               <Input
-                onChange={(e) =>
-                  setForm((s) => ({ ...s, price: e.target.value }))
-                }
+                onChange={(e) => setForm((s) => ({ ...s, price: e.target.value }))}
                 placeholder="9.99"
                 type="number"
                 value={form.price}
@@ -163,9 +154,7 @@ export function CreatePlanSheet({
             <div className="space-y-2">
               <Label>Currency</Label>
               <Input
-                onChange={(e) =>
-                  setForm((s) => ({ ...s, currency: e.target.value }))
-                }
+                onChange={(e) => setForm((s) => ({ ...s, currency: e.target.value }))}
                 placeholder="USD"
                 value={form.currency}
               />
@@ -184,13 +173,11 @@ export function CreatePlanSheet({
                   <SelectValue placeholder="Select interval" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(isMercadoPago ? MP_INTERVAL_OPTIONS : INTERVAL_OPTIONS).map(
-                    (i) => (
-                      <SelectItem key={i.value} value={i.value}>
-                        {i.label}
-                      </SelectItem>
-                    )
-                  )}
+                  {(isMercadoPago ? MP_INTERVAL_OPTIONS : INTERVAL_OPTIONS).map((i) => (
+                    <SelectItem key={i.value} value={i.value}>
+                      {i.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -198,9 +185,7 @@ export function CreatePlanSheet({
               <Label>Interval Count</Label>
               <Input
                 disabled={isMercadoPago}
-                onChange={(e) =>
-                  setForm((s) => ({ ...s, intervalCount: e.target.value }))
-                }
+                onChange={(e) => setForm((s) => ({ ...s, intervalCount: e.target.value }))}
                 placeholder="1"
                 type="number"
                 value={isMercadoPago ? "1" : form.intervalCount}
@@ -216,18 +201,12 @@ export function CreatePlanSheet({
           <div className="space-y-2">
             <Label className="flex justify-between">
               <span>Features</span>
-              <span className="font-normal text-muted-foreground text-xs">
-                One per line
-              </span>
+              <span className="font-normal text-muted-foreground text-xs">One per line</span>
             </Label>
             <Textarea
               className="min-h-[100px] resize-y"
-              onChange={(e) =>
-                setForm((s) => ({ ...s, features: e.target.value }))
-              }
-              placeholder={
-                "Unlimited projects\nPriority support\nCustom domains"
-              }
+              onChange={(e) => setForm((s) => ({ ...s, features: e.target.value }))}
+              placeholder={"Unlimited projects\nPriority support\nCustom domains"}
               value={form.features}
             />
           </div>
@@ -236,9 +215,7 @@ export function CreatePlanSheet({
             <Label>Limits (JSON)</Label>
             <Textarea
               className="min-h-[80px] font-mono text-xs"
-              onChange={(e) =>
-                setForm((s) => ({ ...s, limits: e.target.value }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, limits: e.target.value }))}
               placeholder={'{\n  "maxProjects": 10\n}'}
               value={form.limits}
             />
@@ -247,15 +224,11 @@ export function CreatePlanSheet({
           <div className="space-y-2">
             <Label className="flex justify-between">
               <span>Permissions</span>
-              <span className="font-normal text-muted-foreground text-xs">
-                One per line
-              </span>
+              <span className="font-normal text-muted-foreground text-xs">One per line</span>
             </Label>
             <Textarea
               className="min-h-[80px] resize-y"
-              onChange={(e) =>
-                setForm((s) => ({ ...s, permissions: e.target.value }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, permissions: e.target.value }))}
               placeholder={"create:project\nmanage:billing"}
               value={form.permissions}
             />
@@ -264,9 +237,7 @@ export function CreatePlanSheet({
           <div className="space-y-2">
             <Label>Display Order</Label>
             <Input
-              onChange={(e) =>
-                setForm((s) => ({ ...s, displayOrder: e.target.value }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, displayOrder: e.target.value }))}
               placeholder="0, 1, 2..."
               type="number"
               value={form.displayOrder}
@@ -276,24 +247,18 @@ export function CreatePlanSheet({
           <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
             <div className="space-y-0.5">
               <Label>Highlighted</Label>
-              <p className="text-muted-foreground text-xs">
-                Mark as a featured plan
-              </p>
+              <p className="text-muted-foreground text-xs">Mark as a featured plan</p>
             </div>
             <Switch
               checked={form.highlighted}
-              onCheckedChange={(v) =>
-                setForm((s) => ({ ...s, highlighted: v }))
-              }
+              onCheckedChange={(v) => setForm((s) => ({ ...s, highlighted: v }))}
             />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
             <div className="space-y-0.5">
               <Label>Visible</Label>
-              <p className="text-muted-foreground text-xs">
-                Show on the pricing page
-              </p>
+              <p className="text-muted-foreground text-xs">Show on the pricing page</p>
             </div>
             <Switch
               checked={form.visible}

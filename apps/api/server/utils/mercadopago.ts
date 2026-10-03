@@ -31,11 +31,7 @@ export type PaymentStatus =
   | "refunded"
   | "charged_back";
 
-export type SubscriptionStatus =
-  | "pending"
-  | "authorized"
-  | "paused"
-  | "cancelled";
+export type SubscriptionStatus = "pending" | "authorized" | "paused" | "cancelled";
 
 export type MPPaymentResponse = {
   id?: number;
@@ -223,7 +219,7 @@ export type MPChargebackResponse = {
 export function validateWebhookSignature(
   xSignature: string | null,
   xRequestId: string | null,
-  dataId: string
+  dataId: string,
 ): boolean {
   const secret = env.MERCADO_PAGO_WEBHOOK_SECRET;
 
@@ -231,7 +227,7 @@ export function validateWebhookSignature(
   if (!secret) {
     // biome-ignore lint/suspicious/noConsole: Warning for missing webhook secret
     console.warn(
-      "[MP Webhook] MERCADO_PAGO_WEBHOOK_SECRET not configured, skipping signature validation"
+      "[MP Webhook] MERCADO_PAGO_WEBHOOK_SECRET not configured, skipping signature validation",
     );
     return true;
   }
@@ -291,8 +287,7 @@ async function mpFetch<T>(endpoint: string): Promise<T> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(
-      (error as { message?: string }).message ||
-        `Mercado Pago API error: ${response.status}`
+      (error as { message?: string }).message || `Mercado Pago API error: ${response.status}`,
     );
   }
 
@@ -309,9 +304,7 @@ export function fetchPayment(paymentId: string): Promise<MPPaymentResponse> {
 /**
  * Fetch subscription (preapproval) details from Mercado Pago API
  */
-export function fetchSubscription(
-  subscriptionId: string
-): Promise<MPSubscriptionResponse> {
+export function fetchSubscription(subscriptionId: string): Promise<MPSubscriptionResponse> {
   return mpFetch<MPSubscriptionResponse>(`/preapproval/${subscriptionId}`);
 }
 
@@ -325,18 +318,14 @@ export function fetchInvoice(invoiceId: string): Promise<MPInvoiceResponse> {
 /**
  * Fetch merchant order details from Mercado Pago API
  */
-export function fetchMerchantOrder(
-  orderId: string
-): Promise<MPMerchantOrderResponse> {
+export function fetchMerchantOrder(orderId: string): Promise<MPMerchantOrderResponse> {
   return mpFetch<MPMerchantOrderResponse>(`/merchant_orders/${orderId}`);
 }
 
 /**
  * Fetch chargeback details from Mercado Pago API
  */
-export function fetchChargeback(
-  chargebackId: string
-): Promise<MPChargebackResponse> {
+export function fetchChargeback(chargebackId: string): Promise<MPChargebackResponse> {
   return mpFetch<MPChargebackResponse>(`/v1/chargebacks/${chargebackId}`);
 }
 
@@ -358,9 +347,7 @@ export function parseDate(dateStr: string | undefined | null): Date | null {
 /**
  * Safe string conversion for numeric IDs
  */
-export function toStringId(
-  id: number | string | undefined | null
-): string | null {
+export function toStringId(id: number | string | undefined | null): string | null {
   if (id === undefined || id === null) {
     return null;
   }

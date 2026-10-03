@@ -30,7 +30,9 @@ Beztack is structured as a monorepo using **Nx** with **pnpm**, which lets us ef
 ## Applications
 
 ### UI (`apps/ui`)
+
 A **React 19** app built with **Vite**.
+
 - **Styling:** Tailwind CSS v4 + shadcn/ui (Radix UI primitives).
 - **Server State:** TanStack Query (React Query).
 - **Forms:** React Hook Form + Zod validation.
@@ -40,7 +42,9 @@ A **React 19** app built with **Vite**.
 - **Auth:** Better Auth client.
 
 ### API (`apps/api`)
+
 A **Nitro** server (the engine behind Nuxt) that provides a fast and lightweight REST API.
+
 - **Routes:** File-based routing in `server/routes/`.
 - **Unified payment routes:** `/api/subscriptions/*` for all providers.
 - **Admin routes:** `/api/admin/plans/*` for plan management.
@@ -49,24 +53,25 @@ A **Nitro** server (the engine behind Nuxt) that provides a fast and lightweight
 - **Utilities:** Server utilities in `server/utils/` (auth, membership, payment provider).
 
 ### Docs (`apps/docs`)
+
 A **Next.js** app with **Fumadocs** for the landing page and documentation.
 
 ## Shared Packages
 
 Reusable code lives in `packages/` to keep apps clean and DRY.
 
-| Package | Description |
-|---------|-------------|
-| `@beztack/ai` | AI SDK integration with Vercel AI and Amazon Bedrock |
-| `@beztack/cli` | Project scaffolding + Template Sync commands (`status`, `plan`, `apply`, `rollback`, `inspect`) |
-| `@beztack/db` | Database schema, Drizzle ORM client, and migrations for PostgreSQL |
-| `@beztack/email` | Email templates built with React Email, sent via Resend |
-| `@beztack/env` | Centralized environment variable validation using T3 Env + Zod |
-| `@beztack/ocr` | OCR utilities powered by Tesseract.js |
-| `@beztack/payments` | Provider-agnostic payment types and `PaymentProviderAdapter` interface |
-| `@beztack/payments-polar` | Polar payment provider implementation |
-| `@beztack/mercadopago` | MercadoPago payment provider implementation |
-| `@beztack/state` | URL-based state management using nuqs |
+| Package                   | Description                                                                                     |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `@beztack/ai`             | AI SDK integration with Vercel AI and Amazon Bedrock                                            |
+| `@beztack/cli`            | Project scaffolding + Template Sync commands (`status`, `plan`, `apply`, `rollback`, `inspect`) |
+| `@beztack/db`             | Database schema, Drizzle ORM client, and migrations for PostgreSQL                              |
+| `@beztack/email`          | Email templates built with React Email, sent via Resend                                         |
+| `@beztack/env`            | Centralized environment variable validation using T3 Env + Zod                                  |
+| `@beztack/ocr`            | OCR utilities powered by Tesseract.js                                                           |
+| `@beztack/payments`       | Provider-agnostic payment types and `PaymentProviderAdapter` interface                          |
+| `@beztack/payments-polar` | Polar payment provider implementation                                                           |
+| `@beztack/mercadopago`    | MercadoPago payment provider implementation                                                     |
+| `@beztack/state`          | URL-based state management using nuqs                                                           |
 
 ## Payments Architecture
 

@@ -18,15 +18,15 @@ PAYMENT_PROVIDER=mercadopago
 
 All endpoints work with both providers transparently:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/subscriptions/products` | List available products/plans |
-| POST | `/api/subscriptions/checkout` | Create checkout session |
-| GET | `/api/subscriptions` | List user's subscriptions |
-| GET | `/api/subscriptions/:id` | Get subscription details |
-| PATCH | `/api/subscriptions/:id` | Update subscription (pause/resume/change plan) |
-| DELETE | `/api/subscriptions/:id` | Cancel subscription |
-| POST | `/api/subscriptions/webhooks` | Webhook handler |
+| Method | Endpoint                      | Description                                    |
+| ------ | ----------------------------- | ---------------------------------------------- |
+| GET    | `/api/subscriptions/products` | List available products/plans                  |
+| POST   | `/api/subscriptions/checkout` | Create checkout session                        |
+| GET    | `/api/subscriptions`          | List user's subscriptions                      |
+| GET    | `/api/subscriptions/:id`      | Get subscription details                       |
+| PATCH  | `/api/subscriptions/:id`      | Update subscription (pause/resume/change plan) |
+| DELETE | `/api/subscriptions/:id`      | Cancel subscription                            |
+| POST   | `/api/subscriptions/webhooks` | Webhook handler                                |
 
 ## Usage
 
@@ -71,11 +71,13 @@ window.location.href = checkoutUrl;
 ## Provider-Specific Notes
 
 ### Polar
+
 - Products are managed in the Polar dashboard
 - Uses UUID product IDs
 - Supports customer portal for self-service
 
 ### Mercado Pago
+
 - Plans are created via `preapproval_plan` API
 - Subscriptions use `preapproval` API
 - Checkout redirects to Mercado Pago payment page

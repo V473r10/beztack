@@ -72,9 +72,7 @@ export function usePlans(options?: { status?: string; enabled?: boolean }) {
         params.append("status", status);
       }
 
-      const url = params.toString()
-        ? `${endpoints.plans}?${params.toString()}`
-        : endpoints.plans;
+      const url = params.toString() ? `${endpoints.plans}?${params.toString()}` : endpoints.plans;
 
       const response = await fetch(url);
 

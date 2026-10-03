@@ -17,13 +17,7 @@ export type Product = {
 
 export type Subscription = {
   id: string;
-  status:
-    | "active"
-    | "inactive"
-    | "pending"
-    | "canceled"
-    | "paused"
-    | "past_due";
+  status: "active" | "inactive" | "pending" | "canceled" | "paused" | "past_due";
   productId: string;
   productName?: string;
   customerId?: string;

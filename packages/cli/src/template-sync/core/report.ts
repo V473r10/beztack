@@ -2,10 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { UpdatePlan } from "./types.js";
 
-export async function writePlanReport(
-  workspaceRoot: string,
-  plan: UpdatePlan
-): Promise<string> {
+export async function writePlanReport(workspaceRoot: string, plan: UpdatePlan): Promise<string> {
   const reportPath = join(workspaceRoot, "beztack-sync-report.md");
   const lines: string[] = [
     "# Beztack Template Sync Report",
@@ -32,9 +29,7 @@ export async function writePlanReport(
     lines.push("No conflicts detected.");
   } else {
     for (const conflict of plan.conflicts) {
-      lines.push(
-        `- ${conflict.path}: ${conflict.conflictReason || "unknown conflict"}`
-      );
+      lines.push(`- ${conflict.path}: ${conflict.conflictReason || "unknown conflict"}`);
     }
   }
 

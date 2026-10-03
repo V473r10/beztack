@@ -14,14 +14,7 @@ type StatsCardProps = {
   className?: string;
 };
 
-export function StatsCard({
-  title,
-  description,
-  value,
-  icon,
-  trend,
-  className,
-}: StatsCardProps) {
+export function StatsCard({ title, description, value, icon, trend, className }: StatsCardProps) {
   return (
     <div className={cn("", className)}>
       <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
@@ -34,23 +27,19 @@ export function StatsCard({
         </CardHeader>
         <CardContent className="relative z-10">
           <div className="font-bold text-2xl">{value}</div>
-          {description && (
-            <p className="mt-1 text-muted-foreground text-xs">{description}</p>
-          )}
+          {description && <p className="mt-1 text-muted-foreground text-xs">{description}</p>}
           {trend && (
             <div className="mt-2 flex items-center">
               <span
                 className={cn(
                   "font-medium text-xs",
-                  trend.value >= 0 ? "text-green-600" : "text-red-600"
+                  trend.value >= 0 ? "text-green-600" : "text-red-600",
                 )}
               >
                 {trend.value >= 0 ? "+" : ""}
                 {trend.value}%
               </span>
-              <span className="ml-1 text-muted-foreground text-xs">
-                {trend.label}
-              </span>
+              <span className="ml-1 text-muted-foreground text-xs">{trend.label}</span>
             </div>
           )}
         </CardContent>

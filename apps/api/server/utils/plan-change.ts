@@ -45,25 +45,14 @@ export type FindCurrentSubscriptionInput = {
 };
 
 export type PlanChangeStore = {
-  cancelPendingPlanChange(
-    subscriptionId: string
-  ): Promise<PendingPlanChangeRecord | null>;
-  clearPendingPlanChange(
-    subscriptionId: string
-  ): Promise<PendingPlanChangeRecord | null>;
+  cancelPendingPlanChange(subscriptionId: string): Promise<PendingPlanChangeRecord | null>;
+  clearPendingPlanChange(subscriptionId: string): Promise<PendingPlanChangeRecord | null>;
   findCurrentSubscription(
-    input: FindCurrentSubscriptionInput
+    input: FindCurrentSubscriptionInput,
   ): Promise<PlanChangeCurrentSubscription | null>;
-  findPendingPlanChange(
-    subscriptionId: string
-  ): Promise<PendingPlanChangeRecord | null>;
-  isBillingManager(input: {
-    actorUserId: string;
-    organizationId: string;
-  }): Promise<boolean>;
-  listActiveVisiblePricingCatalogPlans(
-    paymentProvider: string
-  ): Promise<PlanChangeCatalogPlan[]>;
+  findPendingPlanChange(subscriptionId: string): Promise<PendingPlanChangeRecord | null>;
+  isBillingManager(input: { actorUserId: string; organizationId: string }): Promise<boolean>;
+  listActiveVisiblePricingCatalogPlans(paymentProvider: string): Promise<PlanChangeCatalogPlan[]>;
   moveMembershipToPlan(input: {
     membershipTarget: PlanChangeMembershipTarget;
     paymentId: string;
@@ -71,7 +60,7 @@ export type PlanChangeStore = {
     targetPlan: PlanChangeCatalogPlan;
   }): Promise<void>;
   savePendingPlanChange(
-    input: Omit<PendingPlanChangeRecord, "id">
+    input: Omit<PendingPlanChangeRecord, "id">,
   ): Promise<PendingPlanChangeRecord>;
 };
 
@@ -206,9 +195,7 @@ export type ProviderConfirmedPlanChangeEvidence = {
 
 export type PlanChangeReconciliationStore = Pick<
   PlanChangeStore,
-  | "findPendingPlanChange"
-  | "listActiveVisiblePricingCatalogPlans"
-  | "savePendingPlanChange"
+  "findPendingPlanChange" | "listActiveVisiblePricingCatalogPlans" | "savePendingPlanChange"
 >;
 
 export type PlanChangeProjectionStore = PendingPlanChangeActivationStore &
@@ -259,51 +246,42 @@ const HTTP_CONFLICT = 409;
 const HTTP_FORBIDDEN = 403;
 const MILLISECONDS_PER_DAY = 86_400_000;
 
-function fail(
-  code: PlanChangeErrorCode,
-  message: string,
-  statusCode = HTTP_BAD_REQUEST
-): never {
+function fail(code: PlanChangeErrorCode, message: string, statusCode = HTTP_BAD_REQUEST): never {
   throw new PlanChangeError(code, message, statusCode);
 }
 
 function sameBillingCadence(
   left: PlanChangeBillingCadence,
-  right: PlanChangeBillingCadence
+  right: PlanChangeBillingCadence,
 ): boolean {
   return left === right;
 }
 
 function matchesCurrentPlan(
   plan: PlanChangeCatalogPlan,
-  subscription: PlanChangeCurrentSubscription
+  subscription: PlanChangeCurrentSubscription,
 ): boolean {
   if (subscription.planId && plan.id === subscription.planId) {
     return true;
   }
 
-  if (
-    subscription.providerPlanId &&
-    plan.providerPlanId === subscription.providerPlanId
-  ) {
+  if (subscription.providerPlanId && plan.providerPlanId === subscription.providerPlanId) {
     return true;
   }
 
   return Boolean(
     subscription.canonicalTierId &&
-      subscription.billingCadence &&
-      plan.canonicalTierId === subscription.canonicalTierId &&
-      plan.billingCadence === subscription.billingCadence
+    subscription.billingCadence &&
+    plan.canonicalTierId === subscription.canonicalTierId &&
+    plan.billingCadence === subscription.billingCadence,
   );
 }
 
 function resolveCurrentPlan(
   plans: PlanChangeCatalogPlan[],
-  subscription: PlanChangeCurrentSubscription
+  subscription: PlanChangeCurrentSubscription,
 ): PlanChangeCatalogPlan {
-  const matches = plans.filter((plan) =>
-    matchesCurrentPlan(plan, subscription)
-  );
+  const matches = plans.filter((plan) => matchesCurrentPlan(plan, subscription));
 
   if (matches.length === 1) {
     return matches[0];
@@ -313,19 +291,19 @@ function resolveCurrentPlan(
     fail(
       "invalid_current_subscription",
       "Current Subscription matches multiple Pricing catalog plans",
-      HTTP_CONFLICT
+      HTTP_CONFLICT,
     );
   }
 
   fail(
     "invalid_current_subscription",
-    "Current Subscription does not match an active visible Pricing catalog plan"
+    "Current Subscription does not match an active visible Pricing catalog plan",
   );
 }
 
 function matchesTargetPlan(
   plan: PlanChangeCatalogPlan,
-  target: PreviewPlanChangeInput["target"]
+  target: PreviewPlanChangeInput["target"],
 ): boolean {
   if (target.planId) {
     return (
@@ -336,14 +314,14 @@ function matchesTargetPlan(
 
   return Boolean(
     target.tierId &&
-      plan.canonicalTierId === target.tierId &&
-      plan.billingCadence === target.billingCadence
+    plan.canonicalTierId === target.tierId &&
+    plan.billingCadence === target.billingCadence,
   );
 }
 
 function resolveTargetPlan(
   plans: PlanChangeCatalogPlan[],
-  target: PreviewPlanChangeInput["target"]
+  target: PreviewPlanChangeInput["target"],
 ): PlanChangeCatalogPlan {
   const matches = plans.filter((plan) => matchesTargetPlan(plan, target));
 
@@ -355,23 +333,22 @@ function resolveTargetPlan(
     fail(
       "invalid_target",
       "Target Plan change request matches multiple Pricing catalog plans",
-      HTTP_CONFLICT
+      HTTP_CONFLICT,
     );
   }
 
   fail(
     "invalid_target",
-    "Target Plan change request does not match an active visible Pricing catalog plan"
+    "Target Plan change request does not match an active visible Pricing catalog plan",
   );
 }
 
 function matchesReconciliationTargetPlan(
   plan: PlanChangeCatalogPlan,
-  target: PlanChangeReconciliationTarget
+  target: PlanChangeReconciliationTarget,
 ): boolean {
   if (target.planId) {
-    const planMatches =
-      plan.id === target.planId || plan.providerPlanId === target.planId;
+    const planMatches = plan.id === target.planId || plan.providerPlanId === target.planId;
     return target.billingCadence
       ? planMatches && plan.billingCadence === target.billingCadence
       : planMatches;
@@ -379,19 +356,17 @@ function matchesReconciliationTargetPlan(
 
   return Boolean(
     target.tierId &&
-      target.billingCadence &&
-      plan.canonicalTierId === target.tierId &&
-      plan.billingCadence === target.billingCadence
+    target.billingCadence &&
+    plan.canonicalTierId === target.tierId &&
+    plan.billingCadence === target.billingCadence,
   );
 }
 
 function resolveReconciliationTargetPlan(
   plans: PlanChangeCatalogPlan[],
-  target: PlanChangeReconciliationTarget
+  target: PlanChangeReconciliationTarget,
 ): PlanChangeCatalogPlan {
-  const matches = plans.filter((plan) =>
-    matchesReconciliationTargetPlan(plan, target)
-  );
+  const matches = plans.filter((plan) => matchesReconciliationTargetPlan(plan, target));
 
   if (matches.length === 1) {
     return matches[0];
@@ -401,13 +376,13 @@ function resolveReconciliationTargetPlan(
     fail(
       "invalid_target",
       "Provider-confirmed Plan change evidence matches multiple Pricing catalog plans",
-      HTTP_CONFLICT
+      HTTP_CONFLICT,
     );
   }
 
   fail(
     "invalid_target",
-    "Provider-confirmed Plan change evidence does not match an active visible Pricing catalog plan"
+    "Provider-confirmed Plan change evidence does not match an active visible Pricing catalog plan",
   );
 }
 
@@ -419,16 +394,15 @@ function assertPaymentIntegrationMatches(input: {
   if (input.currentSubscription.paymentProvider !== input.paymentProvider) {
     fail(
       "payment_integration_mismatch",
-      "Current Subscription belongs to a different Payment provider"
+      "Current Subscription belongs to a different Payment provider",
     );
   }
 
-  const subscriptionIntegrationId =
-    input.currentSubscription.paymentIntegrationId ?? undefined;
+  const subscriptionIntegrationId = input.currentSubscription.paymentIntegrationId ?? undefined;
   if (subscriptionIntegrationId !== input.paymentIntegrationId) {
     fail(
       "payment_integration_mismatch",
-      "Current Subscription belongs to a different Payment integration"
+      "Current Subscription belongs to a different Payment integration",
     );
   }
 }
@@ -444,16 +418,14 @@ async function assertAuthorizedForPlanChange(input: {
   }
 
   if (input.membershipTarget.type === "user") {
-    if (
-      input.currentSubscription.subscriptionOwnerUserId === input.actor.userId
-    ) {
+    if (input.currentSubscription.subscriptionOwnerUserId === input.actor.userId) {
       return;
     }
 
     fail(
       "unauthorized_plan_change",
       "Plan change requires Subscription owner authorization",
-      HTTP_FORBIDDEN
+      HTTP_FORBIDDEN,
     );
   }
 
@@ -468,13 +440,13 @@ async function assertAuthorizedForPlanChange(input: {
   fail(
     "unauthorized_plan_change",
     "Plan change requires Billing manager authorization",
-    HTTP_FORBIDDEN
+    HTTP_FORBIDDEN,
   );
 }
 
 function classifyPlanChange(
   currentPlan: PlanChangeCatalogPlan,
-  targetPlan: PlanChangeCatalogPlan
+  targetPlan: PlanChangeCatalogPlan,
 ): PlanChangeDirection {
   if (targetPlan.tierRank > currentPlan.tierRank) {
     return "upgrade";
@@ -484,16 +456,11 @@ function classifyPlanChange(
     return "downgrade";
   }
 
-  if (
-    !sameBillingCadence(currentPlan.billingCadence, targetPlan.billingCadence)
-  ) {
+  if (!sameBillingCadence(currentPlan.billingCadence, targetPlan.billingCadence)) {
     return "cadence_change";
   }
 
-  fail(
-    "not_a_plan_change",
-    "Same-tier, same-Billing cadence request is not a Plan change"
-  );
+  fail("not_a_plan_change", "Same-tier, same-Billing cadence request is not a Plan change");
 }
 
 function calculateProratedFirstPayment(input: {
@@ -509,27 +476,17 @@ function calculateProratedFirstPayment(input: {
 
   const totalMs = Math.max(
     input.currentPeriodEnd.getTime() - input.currentPeriodStart.getTime(),
-    MILLISECONDS_PER_DAY
+    MILLISECONDS_PER_DAY,
   );
-  const remainingMs = Math.max(
-    input.currentPeriodEnd.getTime() - input.now.getTime(),
-    0
-  );
+  const remainingMs = Math.max(input.currentPeriodEnd.getTime() - input.now.getTime(), 0);
   const totalDays = Math.max(Math.ceil(totalMs / MILLISECONDS_PER_DAY), 1);
-  const daysRemaining = Math.max(
-    Math.ceil(remainingMs / MILLISECONDS_PER_DAY),
-    0
-  );
-  const unusedCredit = Math.round(
-    (input.currentAmount / totalDays) * daysRemaining
-  );
+  const daysRemaining = Math.max(Math.ceil(remainingMs / MILLISECONDS_PER_DAY), 0);
+  const unusedCredit = Math.round((input.currentAmount / totalDays) * daysRemaining);
 
   return Math.max(input.targetAmount - unusedCredit, 0);
 }
 
-export async function previewPlanChange(
-  input: PreviewPlanChangeInput
-): Promise<PlanChangePreview> {
+export async function previewPlanChange(input: PreviewPlanChangeInput): Promise<PlanChangePreview> {
   const [currentSubscription, catalogPlans] = await Promise.all([
     input.store.findCurrentSubscription({
       membershipTarget: input.membershipTarget,
@@ -542,7 +499,7 @@ export async function previewPlanChange(
   if (!currentSubscription) {
     fail(
       "missing_current_subscription",
-      "No Current Subscription exists for the Membership target"
+      "No Current Subscription exists for the Membership target",
     );
   }
 
@@ -581,8 +538,7 @@ export async function previewPlanChange(
     currentPlan,
     effectiveAt: currentSubscription.currentPeriodEnd ?? null,
     targetPlan,
-    effectiveTiming:
-      direction === "upgrade" ? "after_first_payment" : "next_renewal",
+    effectiveTiming: direction === "upgrade" ? "after_first_payment" : "next_renewal",
     firstPayment: {
       amount: firstPaymentAmount,
       currency: targetPlan.price.currency,
@@ -599,16 +555,14 @@ function assertPaymentAdapterMatches(input: {
   if (input.paymentAdapter.paymentProvider !== input.paymentProvider) {
     fail(
       "payment_integration_mismatch",
-      "Plan change Payment Adapter belongs to a different Payment provider"
+      "Plan change Payment Adapter belongs to a different Payment provider",
     );
   }
 
-  if (
-    input.paymentAdapter.paymentIntegrationId !== input.paymentIntegrationId
-  ) {
+  if (input.paymentAdapter.paymentIntegrationId !== input.paymentIntegrationId) {
     fail(
       "payment_integration_mismatch",
-      "Plan change Payment Adapter belongs to a different Payment integration"
+      "Plan change Payment Adapter belongs to a different Payment integration",
     );
   }
 }
@@ -616,7 +570,7 @@ function assertPaymentAdapterMatches(input: {
 export async function acceptPlanChange(
   input: PreviewPlanChangeInput & {
     paymentAdapter: PlanChangePaymentAdapter;
-  }
+  },
 ): Promise<PlanChangeAcceptance> {
   assertPaymentAdapterMatches({
     paymentAdapter: input.paymentAdapter,
@@ -663,7 +617,7 @@ export async function acceptPlanChange(
   if (preview.direction !== "downgrade") {
     fail(
       "unsupported_plan_change_acceptance",
-      "Only Upgrade and Downgrade acceptance are supported in this Plan change slice"
+      "Only Upgrade and Downgrade acceptance are supported in this Plan change slice",
     );
   }
 
@@ -692,9 +646,7 @@ export async function acceptPlanChange(
   } catch (error) {
     reconciliationStatus = "reconciling";
     reconciliationReason =
-      error instanceof Error
-        ? error.message
-        : "Pending Plan change could not be stored";
+      error instanceof Error ? error.message : "Pending Plan change could not be stored";
   }
 
   return {
@@ -719,32 +671,28 @@ export async function reconcileProviderConfirmedPlanChange(input: {
   store: PlanChangeReconciliationStore;
 }): Promise<PlanChangeReconciliation> {
   const existingPendingPlanChange = await input.store.findPendingPlanChange(
-    input.evidence.currentSubscriptionId
+    input.evidence.currentSubscriptionId,
   );
   if (existingPendingPlanChange) {
     return {
       kind: "plan-change-reconciliation",
       currentSubscriptionId: input.evidence.currentSubscriptionId,
       pendingPlanChange: existingPendingPlanChange,
-      providerConfirmedPlanChangeId:
-        input.evidence.providerConfirmedPlanChangeId,
+      providerConfirmedPlanChangeId: input.evidence.providerConfirmedPlanChangeId,
       status: "already_pending",
     };
   }
 
   try {
     const targetPlan = resolveReconciliationTargetPlan(
-      await input.store.listActiveVisiblePricingCatalogPlans(
-        input.evidence.paymentProvider
-      ),
-      input.evidence.target
+      await input.store.listActiveVisiblePricingCatalogPlans(input.evidence.paymentProvider),
+      input.evidence.target,
     );
     const pendingPlanChange = await input.store.savePendingPlanChange({
       direction: input.evidence.direction,
       effectiveAt: input.evidence.effectiveAt,
       membershipTarget: input.evidence.membershipTarget,
-      providerConfirmedPlanChangeId:
-        input.evidence.providerConfirmedPlanChangeId,
+      providerConfirmedPlanChangeId: input.evidence.providerConfirmedPlanChangeId,
       subscriptionId: input.evidence.currentSubscriptionId,
       targetPlanSnapshot: targetPlan,
     });
@@ -753,8 +701,7 @@ export async function reconcileProviderConfirmedPlanChange(input: {
       kind: "plan-change-reconciliation",
       currentSubscriptionId: input.evidence.currentSubscriptionId,
       pendingPlanChange,
-      providerConfirmedPlanChangeId:
-        input.evidence.providerConfirmedPlanChangeId,
+      providerConfirmedPlanChangeId: input.evidence.providerConfirmedPlanChangeId,
       status: "stored_pending",
     };
   } catch (error) {
@@ -762,8 +709,7 @@ export async function reconcileProviderConfirmedPlanChange(input: {
       kind: "plan-change-reconciliation",
       currentSubscriptionId: input.evidence.currentSubscriptionId,
       pendingPlanChange: null,
-      providerConfirmedPlanChangeId:
-        input.evidence.providerConfirmedPlanChangeId,
+      providerConfirmedPlanChangeId: input.evidence.providerConfirmedPlanChangeId,
       reason:
         error instanceof Error
           ? error.message
@@ -789,7 +735,7 @@ export async function cancelPendingPlanChange(input: {
   if (!currentSubscription) {
     fail(
       "missing_current_subscription",
-      "No Current Subscription exists for the Membership target"
+      "No Current Subscription exists for the Membership target",
     );
   }
 
@@ -807,7 +753,7 @@ export async function cancelPendingPlanChange(input: {
   });
 
   const canceledPendingPlanChange = await input.store.cancelPendingPlanChange(
-    currentSubscription.id
+    currentSubscription.id,
   );
 
   return {
@@ -823,9 +769,7 @@ export async function activatePendingPlanChange(input: {
   renewalEvidence: PendingPlanChangeRenewalEvidence;
   store: PendingPlanChangeActivationStore;
 }): Promise<PendingPlanChangeActivation> {
-  const pendingPlanChange = await input.store.findPendingPlanChange(
-    input.currentSubscriptionId
-  );
+  const pendingPlanChange = await input.store.findPendingPlanChange(input.currentSubscriptionId);
   if (!pendingPlanChange) {
     return {
       kind: "pending-plan-change-activation",
@@ -836,12 +780,9 @@ export async function activatePendingPlanChange(input: {
     };
   }
 
-  if (
-    input.renewalEvidence.state === "canceled" ||
-    input.renewalEvidence.state === "failed"
-  ) {
+  if (input.renewalEvidence.state === "canceled" || input.renewalEvidence.state === "failed") {
     const canceledPendingPlanChange = await input.store.cancelPendingPlanChange(
-      input.currentSubscriptionId
+      input.currentSubscriptionId,
     );
 
     return {
@@ -878,14 +819,12 @@ export async function activatePendingPlanChange(input: {
 
   await input.store.moveMembershipToPlan({
     membershipTarget: pendingPlanChange.membershipTarget,
-    paymentId:
-      input.renewalEvidence.paymentId ??
-      `renewal:${input.currentSubscriptionId}`,
+    paymentId: input.renewalEvidence.paymentId ?? `renewal:${input.currentSubscriptionId}`,
     subscriptionId: input.currentSubscriptionId,
     targetPlan: pendingPlanChange.targetPlanSnapshot,
   });
   const clearedPendingPlanChange = await input.store.clearPendingPlanChange(
-    input.currentSubscriptionId
+    input.currentSubscriptionId,
   );
 
   return {

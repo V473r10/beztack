@@ -51,7 +51,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
       e.stopPropagation();
       form.handleSubmit();
     },
-    [form]
+    [form],
   );
 
   return (
@@ -148,9 +148,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
                 <field.FormLabel>Período</field.FormLabel>
                 <Select
                   disabled={createPlan.isPending}
-                  onValueChange={(value) =>
-                    field.handleChange(value as "days" | "months")
-                  }
+                  onValueChange={(value) => field.handleChange(value as "days" | "months")}
                   value={field.state.value}
                 >
                   <field.FormControl>
@@ -181,9 +179,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
             </Button>
           )}
           <Button disabled={createPlan.isPending} type="submit">
-            {createPlan.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {createPlan.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Crear Plan
           </Button>
         </div>

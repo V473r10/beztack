@@ -23,8 +23,7 @@ import { Polar } from "@polar-sh/sdk";
 const CENTS_TO_DOLLARS = 100;
 const MIN_PRICE_CENTS = 50;
 const DEFAULT_LIMIT = 50;
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function maskEmail(email?: string): string | undefined {
   if (!email) {
@@ -132,9 +131,7 @@ function mapPolarProduct(product: PolarProductResponse): Product {
   };
 }
 
-export function createPolarAdapter(
-  config: PolarAdapterConfig
-): PaymentProviderAdapter {
+export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderAdapter {
   const client = new Polar({
     accessToken: config.accessToken,
     server: config.server,
@@ -148,9 +145,7 @@ export function createPolarAdapter(
         organizationId: config.organizationId,
         isArchived: false,
       });
-      const products = Array.isArray(response)
-        ? response
-        : response.result.items;
+      const products = Array.isArray(response) ? response : response.result.items;
 
       return products.map((product) => mapPolarProduct(product));
     },
@@ -176,23 +171,18 @@ export function createPolarAdapter(
             amountType: "fixed" as const,
             priceAmount: Math.max(
               Math.round(options.price.amount * CENTS_TO_DOLLARS),
-              MIN_PRICE_CENTS
+              MIN_PRICE_CENTS,
             ),
             priceCurrency: options.price.currency.toLowerCase(),
           },
         ],
-        metadata: options.metadata as
-          | Record<string, string | number | boolean>
-          | undefined,
+        metadata: options.metadata as Record<string, string | number | boolean> | undefined,
       });
 
       return mapPolarProduct(product);
     },
 
-    async updateProduct(
-      productId: string,
-      options: UpdateProductOptions
-    ): Promise<Product> {
+    async updateProduct(productId: string, options: UpdateProductOptions): Promise<Product> {
       const productUpdate: Record<string, unknown> = {};
 
       if (options.name !== undefined) {
@@ -213,7 +203,7 @@ export function createPolarAdapter(
             amountType: "fixed" as const,
             priceAmount: Math.max(
               Math.round(options.price.amount * CENTS_TO_DOLLARS),
-              MIN_PRICE_CENTS
+              MIN_PRICE_CENTS,
             ),
             priceCurrency: options.price.currency.toLowerCase(),
           },
@@ -236,17 +226,13 @@ export function createPolarAdapter(
       });
     },
 
-    async createCheckout(
-      options: CreateCheckoutOptions
-    ): Promise<CheckoutResult> {
+    async createCheckout(options: CreateCheckoutOptions): Promise<CheckoutResult> {
       const checkout = await client.checkouts.create({
         products: [options.productId],
         successUrl: options.successUrl,
         externalCustomerId: options.customerId,
         customerEmail: options.customerEmail,
-        metadata: options.metadata as
-          | Record<string, string | number | boolean>
-          | undefined,
+        metadata: options.metadata as Record<string, string | number | boolean> | undefined,
       });
 
       return {
@@ -255,9 +241,7 @@ export function createPolarAdapter(
       };
     },
 
-    async createSubscription(
-      options: CreateSubscriptionOptions
-    ): Promise<Subscription> {
+    async createSubscription(options: CreateSubscriptionOptions): Promise<Subscription> {
       if (!options.productId) {
         throw new Error("productId is required for Polar subscriptions");
       }
@@ -267,9 +251,7 @@ export function createPolarAdapter(
         successUrl: config.successUrl,
         externalCustomerId: options.customerId,
         customerEmail: options.customerEmail,
-        metadata: options.metadata as
-          | Record<string, string | number | boolean>
-          | undefined,
+        metadata: options.metadata as Record<string, string | number | boolean> | undefined,
       });
 
       return {
@@ -282,9 +264,7 @@ export function createPolarAdapter(
       };
     },
 
-    async getSubscription(
-      subscriptionId: string
-    ): Promise<Subscription | null> {
+    async getSubscription(subscriptionId: string): Promise<Subscription | null> {
       try {
         const sub = await client.subscriptions.get({
           id: subscriptionId,
@@ -296,12 +276,8 @@ export function createPolarAdapter(
           productName: sub.product?.name,
           customerId: sub.customerId,
           customerEmail: sub.customer?.email,
-          currentPeriodStart: sub.currentPeriodStart
-            ? new Date(sub.currentPeriodStart)
-            : undefined,
-          currentPeriodEnd: sub.currentPeriodEnd
-            ? new Date(sub.currentPeriodEnd)
-            : undefined,
+          currentPeriodStart: sub.currentPeriodStart ? new Date(sub.currentPeriodStart) : undefined,
+          currentPeriodEnd: sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : undefined,
           cancelAtPeriodEnd: sub.cancelAtPeriodEnd ?? undefined,
           metadata: sub.metadata as Record<string, unknown> | undefined,
         };
@@ -312,16 +288,14 @@ export function createPolarAdapter(
 
     async updateSubscription(
       subscriptionId: string,
-      options: UpdateSubscriptionOptions
+      options: UpdateSubscriptionOptions,
     ): Promise<Subscription> {
       const updated = await client.subscriptions.update({
         id: subscriptionId,
         subscriptionUpdate: {
           productId: options.productId as string,
           prorationBehavior:
-            options.prorationBehavior === "none"
-              ? undefined
-              : options.prorationBehavior,
+            options.prorationBehavior === "none" ? undefined : options.prorationBehavior,
         },
       });
 
@@ -331,18 +305,13 @@ export function createPolarAdapter(
         productId: updated.productId ?? "",
         productName: updated.product?.name,
         customerId: updated.customerId,
-        currentPeriodEnd: updated.currentPeriodEnd
-          ? new Date(updated.currentPeriodEnd)
-          : undefined,
+        currentPeriodEnd: updated.currentPeriodEnd ? new Date(updated.currentPeriodEnd) : undefined,
         cancelAtPeriodEnd: updated.cancelAtPeriodEnd ?? undefined,
         metadata: updated.metadata as Record<string, unknown> | undefined,
       };
     },
 
-    async cancelSubscription(
-      subscriptionId: string,
-      immediately = false
-    ): Promise<Subscription> {
+    async cancelSubscription(subscriptionId: string, immediately = false): Promise<Subscription> {
       const canceled = await client.subscriptions.update({
         id: subscriptionId,
         subscriptionUpdate: {
@@ -363,16 +332,10 @@ export function createPolarAdapter(
       };
     },
 
-    async listSubscriptions(
-      options: ListSubscriptionsOptions
-    ): Promise<Subscription[]> {
-      let customerId = isUuid(options.customerId)
-        ? options.customerId
-        : undefined;
+    async listSubscriptions(options: ListSubscriptionsOptions): Promise<Subscription[]> {
+      let customerId = isUuid(options.customerId) ? options.customerId : undefined;
       const externalCustomerId =
-        options.customerId && !isUuid(options.customerId)
-          ? options.customerId
-          : undefined;
+        options.customerId && !isUuid(options.customerId) ? options.customerId : undefined;
 
       // biome-ignore lint/suspicious/noConsole: Debugging subscription listing flow
       console.log("[PolarAdapter] listSubscriptions:start", {
@@ -445,12 +408,8 @@ export function createPolarAdapter(
         productName: sub.product?.name,
         customerId: sub.customer?.externalId ?? sub.customerId,
         customerEmail: sub.customer?.email,
-        currentPeriodStart: sub.currentPeriodStart
-          ? new Date(sub.currentPeriodStart)
-          : undefined,
-        currentPeriodEnd: sub.currentPeriodEnd
-          ? new Date(sub.currentPeriodEnd)
-          : undefined,
+        currentPeriodStart: sub.currentPeriodStart ? new Date(sub.currentPeriodStart) : undefined,
+        currentPeriodEnd: sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : undefined,
         cancelAtPeriodEnd: sub.cancelAtPeriodEnd ?? undefined,
         metadata: sub.metadata as Record<string, unknown> | undefined,
       }));
@@ -472,15 +431,10 @@ export function createPolarAdapter(
       return subscriptions;
     },
 
-    async createCustomer(
-      email: string,
-      metadata?: Record<string, unknown>
-    ): Promise<Customer> {
+    async createCustomer(email: string, metadata?: Record<string, unknown>): Promise<Customer> {
       const customer = await client.customers.create({
         email,
-        metadata: metadata as
-          | Record<string, string | number | boolean>
-          | undefined,
+        metadata: metadata as Record<string, string | number | boolean> | undefined,
       });
 
       return {
@@ -561,10 +515,7 @@ export function createPolarAdapter(
       });
     },
 
-    async createPortalSession(
-      customerId: string,
-      _returnUrl: string
-    ): Promise<string> {
+    async createPortalSession(customerId: string, _returnUrl: string): Promise<string> {
       const session = await client.customerSessions.create({
         customerId,
       });
@@ -577,9 +528,7 @@ export function createPolarAdapter(
  * Factory function matching the ProviderAdapterFactory signature.
  * Used by the core factory registry.
  */
-export function createAdapter(
-  config: Record<string, string>
-): PaymentProviderAdapter {
+export function createAdapter(config: Record<string, string>): PaymentProviderAdapter {
   return createPolarAdapter({
     accessToken: config.POLAR_ACCESS_TOKEN ?? "",
     server: (config.POLAR_SERVER ?? "sandbox") as "sandbox" | "production",

@@ -57,12 +57,7 @@ export class MercadoPagoError extends Error {
   errorCause?: unknown;
   retryable: boolean;
 
-  constructor(
-    message: string,
-    statusCode: number,
-    errorCause?: unknown,
-    retryable = false
-  ) {
+  constructor(message: string, statusCode: number, errorCause?: unknown, retryable = false) {
     super(message);
     this.name = "MercadoPagoError";
     this.statusCode = statusCode;
@@ -76,10 +71,7 @@ export class MercadoPagoError extends Error {
 // ============================================================================
 
 function isRetryableStatus(status: number): boolean {
-  return (
-    status === RATE_LIMIT_STATUS ||
-    (status >= SERVER_ERROR_MIN && status < SERVER_ERROR_MAX)
-  );
+  return status === RATE_LIMIT_STATUS || (status >= SERVER_ERROR_MIN && status < SERVER_ERROR_MAX);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -99,11 +91,8 @@ type AttemptFetchParams = {
   options?: RequestInit;
 };
 
-async function attemptFetch<T>(
-  params: AttemptFetchParams
-): Promise<FetchResult<T>> {
-  const { baseUrl, endpoint, accessToken, timeout, integratorId, options } =
-    params;
+async function attemptFetch<T>(params: AttemptFetchParams): Promise<FetchResult<T>> {
+  const { baseUrl, endpoint, accessToken, timeout, integratorId, options } = params;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -130,9 +119,7 @@ async function attemptFetch<T>(
       };
 
       const errorMessage =
-        error.message ??
-        error.error ??
-        `Mercado Pago API error: ${response.status}`;
+        error.message ?? error.error ?? `Mercado Pago API error: ${response.status}`;
 
       return {
         success: false,
@@ -141,7 +128,7 @@ async function attemptFetch<T>(
           errorMessage,
           response.status,
           error.cause,
-          isRetryableStatus(response.status)
+          isRetryableStatus(response.status),
         ),
       };
     }
@@ -162,12 +149,7 @@ async function attemptFetch<T>(
       return {
         success: false,
         shouldRetry: true,
-        error: new MercadoPagoError(
-          `Request timeout after ${timeout}ms`,
-          0,
-          err,
-          true
-        ),
+        error: new MercadoPagoError(`Request timeout after ${timeout}ms`, 0, err, true),
       };
     }
 
@@ -187,13 +169,12 @@ async function attemptFetch<T>(
 async function mpFetch<T>(
   config: MercadoPagoConfig,
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> {
   const baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
   const timeout = config.timeout ?? DEFAULT_TIMEOUT;
   const maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
-  const initialRetryDelay =
-    config.initialRetryDelay ?? DEFAULT_INITIAL_RETRY_DELAY;
+  const initialRetryDelay = config.initialRetryDelay ?? DEFAULT_INITIAL_RETRY_DELAY;
 
   let lastError: MercadoPagoError | undefined;
 
@@ -227,9 +208,7 @@ async function mpFetch<T>(
   throw lastError ?? new Error("Unexpected error in mpFetch");
 }
 
-function parseSignatureHeader(
-  xSignature: string
-): { ts: string; v1: string } | null {
+function parseSignatureHeader(xSignature: string): { ts: string; v1: string } | null {
   const parts = xSignature.split(",");
   let ts: string | undefined;
   let v1: string | undefined;
@@ -251,10 +230,7 @@ function parseSignatureHeader(
   return { ts, v1 };
 }
 
-function buildSearchEndpoint(
-  basePath: string,
-  params: URLSearchParams
-): string {
+function buildSearchEndpoint(basePath: string, params: URLSearchParams): string {
   const query = params.toString();
   return query ? `${basePath}?${query}` : basePath;
 }
@@ -262,7 +238,7 @@ function buildSearchEndpoint(
 function setSearchParam(
   params: URLSearchParams,
   key: string,
-  value: string | number | undefined
+  value: string | number | undefined,
 ): void {
   if (value !== undefined) {
     params.set(key, String(value));
@@ -279,11 +255,7 @@ function createWebhooksModule(config: MercadoPagoConfig) {
      * Validates Mercado Pago webhook signature using HMAC-SHA256
      * @see https://www.mercadopago.com.uy/developers/es/docs/checkout-pro/additional-content/notifications/webhooks
      */
-    validate(
-      xSignature: string | null,
-      xRequestId: string | null,
-      dataId: string
-    ): boolean {
+    validate(xSignature: string | null, xRequestId: string | null, dataId: string): boolean {
       const secret = config.webhookSecret;
 
       if (!secret) {
@@ -309,10 +281,7 @@ function createWebhooksModule(config: MercadoPagoConfig) {
       const generatedSignature = hmac.digest("hex");
 
       try {
-        return timingSafeEqual(
-          Buffer.from(v1),
-          Buffer.from(generatedSignature)
-        );
+        return timingSafeEqual(Buffer.from(v1), Buffer.from(generatedSignature));
       } catch {
         return false;
       }
@@ -398,11 +367,7 @@ function createPaymentsModule(config: MercadoPagoConfig) {
       setSearchParam(searchParams, "end_date", params?.end_date);
       setSearchParam(searchParams, "sort", params?.sort);
       setSearchParam(searchParams, "criteria", params?.criteria);
-      setSearchParam(
-        searchParams,
-        "external_reference",
-        params?.external_reference
-      );
+      setSearchParam(searchParams, "external_reference", params?.external_reference);
       setSearchParam(searchParams, "status", params?.status);
       setSearchParam(searchParams, "offset", params?.offset);
       setSearchParam(searchParams, "limit", params?.limit);
@@ -427,19 +392,12 @@ function createPaymentsModule(config: MercadoPagoConfig) {
      * const partialRefund = await mp.payments.refund("123456789", 50.00)
      * ```
      */
-    refund(
-      paymentId: string | number,
-      amount?: number
-    ): Promise<MPRefundResponse> {
+    refund(paymentId: string | number, amount?: number): Promise<MPRefundResponse> {
       const body = amount !== undefined ? { amount } : {};
-      return mpFetch<MPRefundResponse>(
-        config,
-        `/v1/payments/${paymentId}/refunds`,
-        {
-          method: "POST",
-          body: JSON.stringify(body),
-        }
-      );
+      return mpFetch<MPRefundResponse>(config, `/v1/payments/${paymentId}/refunds`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
     },
 
     /**
@@ -455,10 +413,7 @@ function createPaymentsModule(config: MercadoPagoConfig) {
      * ```
      */
     getRefunds(paymentId: string | number): Promise<MPRefundResponse[]> {
-      return mpFetch<MPRefundResponse[]>(
-        config,
-        `/v1/payments/${paymentId}/refunds`
-      );
+      return mpFetch<MPRefundResponse[]>(config, `/v1/payments/${paymentId}/refunds`);
     },
   };
 }
@@ -480,11 +435,7 @@ function createPlansModule(config: MercadoPagoConfig) {
      * const { results } = await mp.plans.list({ status: "active" })
      * ```
      */
-    list(params?: {
-      status?: string;
-      limit?: number;
-      offset?: number;
-    }): Promise<{
+    list(params?: { status?: string; limit?: number; offset?: number }): Promise<{
       results: MPPreapprovalPlan[];
       paging?: { total?: number; limit?: number; offset?: number };
     }> {
@@ -499,10 +450,7 @@ function createPlansModule(config: MercadoPagoConfig) {
         searchParams.set("offset", String(params.offset));
       }
 
-      const endpoint = buildSearchEndpoint(
-        "/preapproval_plan/search",
-        searchParams
-      );
+      const endpoint = buildSearchEndpoint("/preapproval_plan/search", searchParams);
       return mpFetch<{
         results: MPPreapprovalPlan[];
         paging?: { total?: number; limit?: number; offset?: number };
@@ -593,7 +541,7 @@ function createPlansModule(config: MercadoPagoConfig) {
           billing_day_proportional?: boolean;
         };
         back_url?: string;
-      }
+      },
     ): Promise<MPPreapprovalPlan> {
       return mpFetch<MPPreapprovalPlan>(config, `/preapproval_plan/${planId}`, {
         method: "PUT",
@@ -627,16 +575,12 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
       auto_recurring?: {
         transaction_amount?: number;
       };
-    }
+    },
   ): Promise<MPSubscriptionResponse> => {
-    return mpFetch<MPSubscriptionResponse>(
-      config,
-      `/preapproval/${subscriptionId}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(data),
-      }
-    );
+    return mpFetch<MPSubscriptionResponse>(config, `/preapproval/${subscriptionId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
   };
 
   return {
@@ -668,10 +612,7 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
      * Get a subscription by ID
      */
     get(subscriptionId: string): Promise<MPSubscriptionResponse> {
-      return mpFetch<MPSubscriptionResponse>(
-        config,
-        `/preapproval/${subscriptionId}`
-      );
+      return mpFetch<MPSubscriptionResponse>(config, `/preapproval/${subscriptionId}`);
     },
 
     update,
@@ -743,7 +684,7 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
         status?: string;
         limit?: number;
         offset?: number;
-      }
+      },
     ): Promise<MPInvoiceSearchResponse> {
       const searchParams = new URLSearchParams();
       searchParams.set("preapproval_id", subscriptionId);
@@ -758,10 +699,7 @@ function createSubscriptionsModule(config: MercadoPagoConfig) {
         searchParams.set("offset", String(params.offset));
       }
 
-      const endpoint = buildSearchEndpoint(
-        "/authorized_payments/search",
-        searchParams
-      );
+      const endpoint = buildSearchEndpoint("/authorized_payments/search", searchParams);
       return mpFetch<MPInvoiceSearchResponse>(config, endpoint);
     },
   };
@@ -791,21 +729,16 @@ function createCustomersModule(config: MercadoPagoConfig) {
      * Get a customer by ID
      */
     get(customerId: string): Promise<{ id: string; email: string }> {
-      return mpFetch<{ id: string; email: string }>(
-        config,
-        `/v1/customers/${customerId}`
-      );
+      return mpFetch<{ id: string; email: string }>(config, `/v1/customers/${customerId}`);
     },
 
     /**
      * Search customers by email
      */
-    searchByEmail(
-      email: string
-    ): Promise<{ results: { id: string; email: string }[] }> {
+    searchByEmail(email: string): Promise<{ results: { id: string; email: string }[] }> {
       return mpFetch<{ results: { id: string; email: string }[] }>(
         config,
-        `/v1/customers/search?email=${encodeURIComponent(email)}`
+        `/v1/customers/search?email=${encodeURIComponent(email)}`,
       );
     },
   };
@@ -831,10 +764,7 @@ function createCheckoutModule(config: MercadoPagoConfig) {
      * Get a checkout preference by ID
      */
     getPreference(preferenceId: string): Promise<PreferenceResponse> {
-      return mpFetch<PreferenceResponse>(
-        config,
-        `/checkout/preferences/${preferenceId}`
-      );
+      return mpFetch<PreferenceResponse>(config, `/checkout/preferences/${preferenceId}`);
     },
   };
 }
@@ -849,10 +779,7 @@ function createInvoicesModule(config: MercadoPagoConfig) {
      * Get an invoice (authorized payment) by ID
      */
     get(invoiceId: string): Promise<MPInvoiceResponse> {
-      return mpFetch<MPInvoiceResponse>(
-        config,
-        `/authorized_payments/${invoiceId}`
-      );
+      return mpFetch<MPInvoiceResponse>(config, `/authorized_payments/${invoiceId}`);
     },
 
     /**
@@ -879,10 +806,7 @@ function createInvoicesModule(config: MercadoPagoConfig) {
         searchParams.set("offset", String(params.offset));
       }
 
-      const endpoint = buildSearchEndpoint(
-        "/authorized_payments/search",
-        searchParams
-      );
+      const endpoint = buildSearchEndpoint("/authorized_payments/search", searchParams);
       return mpFetch<MPInvoiceSearchResponse>(config, endpoint);
     },
   };
@@ -898,10 +822,7 @@ function createMerchantOrdersModule(config: MercadoPagoConfig) {
      * Get a merchant order by ID
      */
     get(orderId: string): Promise<MPMerchantOrderResponse> {
-      return mpFetch<MPMerchantOrderResponse>(
-        config,
-        `/merchant_orders/${orderId}`
-      );
+      return mpFetch<MPMerchantOrderResponse>(config, `/merchant_orders/${orderId}`);
     },
   };
 }
@@ -916,10 +837,7 @@ function createChargebacksModule(config: MercadoPagoConfig) {
      * Get a chargeback by ID
      */
     get(chargebackId: string): Promise<MPChargebackResponse> {
-      return mpFetch<MPChargebackResponse>(
-        config,
-        `/v1/chargebacks/${chargebackId}`
-      );
+      return mpFetch<MPChargebackResponse>(config, `/v1/chargebacks/${chargebackId}`);
     },
   };
 }
@@ -983,9 +901,7 @@ export type MercadoPagoClient = {
  * const isValid = mp.webhooks.validate(xSignature, xRequestId, dataId)
  * ```
  */
-export function createMercadoPagoClient(
-  config: MercadoPagoConfig
-): MercadoPagoClient {
+export function createMercadoPagoClient(config: MercadoPagoConfig): MercadoPagoClient {
   return {
     config,
     webhooks: createWebhooksModule(config),

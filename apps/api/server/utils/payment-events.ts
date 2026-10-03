@@ -83,7 +83,7 @@ export const paymentEvents = PaymentEventEmitter.getInstance();
 
 export function createPaymentEvent(
   type: PaymentEventType,
-  data: PaymentEvent["data"]
+  data: PaymentEvent["data"],
 ): PaymentEvent {
   return {
     type,
@@ -92,9 +92,7 @@ export function createPaymentEvent(
   };
 }
 
-export function mapPaymentStatusToEventType(
-  status: string
-): PaymentEventType | null {
+export function mapPaymentStatusToEventType(status: string): PaymentEventType | null {
   switch (status) {
     case "approved":
       return "payment.approved";
@@ -111,9 +109,7 @@ export function mapPaymentStatusToEventType(
   }
 }
 
-export function mapSubscriptionStatusToEventType(
-  status: string
-): PaymentEventType | null {
+export function mapSubscriptionStatusToEventType(status: string): PaymentEventType | null {
   switch (status) {
     case "authorized":
       return "subscription.authorized";
@@ -128,9 +124,7 @@ export function mapSubscriptionStatusToEventType(
   }
 }
 
-export function mapInvoiceStatusToEventType(
-  status: string
-): PaymentEventType | null {
+export function mapInvoiceStatusToEventType(status: string): PaymentEventType | null {
   switch (status) {
     case "processed":
     case "paid":

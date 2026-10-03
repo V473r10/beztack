@@ -46,16 +46,8 @@ export default defineEventHandler(async (event) => {
         organizationLogo: schema.organization.logo,
       })
       .from(schema.invitation)
-      .leftJoin(
-        schema.organization,
-        eq(schema.invitation.organizationId, schema.organization.id)
-      )
-      .where(
-        and(
-          eq(schema.invitation.email, userEmail),
-          eq(schema.invitation.status, "pending")
-        )
-      )
+      .leftJoin(schema.organization, eq(schema.invitation.organizationId, schema.organization.id))
+      .where(and(eq(schema.invitation.email, userEmail), eq(schema.invitation.status, "pending")))
       .orderBy(schema.invitation.createdAt);
 
     // Map to the expected format

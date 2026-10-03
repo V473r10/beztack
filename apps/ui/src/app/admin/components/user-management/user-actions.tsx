@@ -123,9 +123,7 @@ export function UserActions({ user, onEdit, onRefresh }: UserActionsProps) {
   };
 
   const isLoading =
-    banUserMutation.isPending ||
-    unbanUserMutation.isPending ||
-    deleteUserMutation.isPending;
+    banUserMutation.isPending || unbanUserMutation.isPending || deleteUserMutation.isPending;
 
   return (
     <>
@@ -160,27 +158,18 @@ export function UserActions({ user, onEdit, onRefresh }: UserActionsProps) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {user.banned ? (
-            <DropdownMenuItem
-              className="text-green-600"
-              onClick={() => setPendingAction("unban")}
-            >
+            <DropdownMenuItem className="text-green-600" onClick={() => setPendingAction("unban")}>
               <IconUserCheck className="mr-2 h-4 w-4" />
               Unban User
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem
-              className="text-orange-600"
-              onClick={() => setPendingAction("ban")}
-            >
+            <DropdownMenuItem className="text-orange-600" onClick={() => setPendingAction("ban")}>
               <IconUserX className="mr-2 h-4 w-4" />
               Ban User
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="text-red-600"
-            onClick={() => setPendingAction("delete")}
-          >
+          <DropdownMenuItem className="text-red-600" onClick={() => setPendingAction("delete")}>
             <IconTrash className="mr-2 h-4 w-4" />
             Delete User
           </DropdownMenuItem>
@@ -188,16 +177,13 @@ export function UserActions({ user, onEdit, onRefresh }: UserActionsProps) {
       </DropdownMenu>
 
       {/* Ban Confirmation Dialog */}
-      <AlertDialog
-        onOpenChange={() => setPendingAction(null)}
-        open={pendingAction === "ban"}
-      >
+      <AlertDialog onOpenChange={() => setPendingAction(null)} open={pendingAction === "ban"}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Ban User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to ban {user.name || user.email}? This will
-              prevent them from accessing the application.
+              Are you sure you want to ban {user.name || user.email}? This will prevent them from
+              accessing the application.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -213,39 +199,30 @@ export function UserActions({ user, onEdit, onRefresh }: UserActionsProps) {
       </AlertDialog>
 
       {/* Unban Confirmation Dialog */}
-      <AlertDialog
-        onOpenChange={() => setPendingAction(null)}
-        open={pendingAction === "unban"}
-      >
+      <AlertDialog onOpenChange={() => setPendingAction(null)} open={pendingAction === "unban"}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Unban User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to unban {user.name || user.email}? This
-              will restore their access to the application.
+              Are you sure you want to unban {user.name || user.email}? This will restore their
+              access to the application.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUnbanUser}>
-              Unban User
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleUnbanUser}>Unban User</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        onOpenChange={() => setPendingAction(null)}
-        open={pendingAction === "delete"}
-      >
+      <AlertDialog onOpenChange={() => setPendingAction(null)} open={pendingAction === "delete"}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to permanently delete{" "}
-              {user.name || user.email}? This action cannot be undone and will
-              remove all user data.
+              Are you sure you want to permanently delete {user.name || user.email}? This action
+              cannot be undone and will remove all user data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

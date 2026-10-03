@@ -12,10 +12,10 @@ Auth integration and subscription-oriented flows.
 
 - Use **Polar** when your product is centered on Better Auth checkout/portal
   workflows and recurring SaaS subscriptions.
-    -  Don't use **Polar** if you want to sell physical products/services.
+  - Don't use **Polar** if you want to sell physical products/services.
 - Use **Mercado Pago** when you need direct Mercado Pago APIs, plan sync, card
   processing, and MP-specific events.
-    - Don't use **Mercado Pago** if you want to sell worldwide.
+  - Don't use **Mercado Pago** if you want to sell worldwide.
 
 See also: [Mercado Pago](/docs/payments/mercado-pago)
 
@@ -66,10 +66,10 @@ const response = await fetch("/api/subscriptions/checkout", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ productId: "<polar-product-id>" }),
-})
+});
 
-const data = await response.json()
-window.location.href = data.checkoutUrl
+const data = await response.json();
+window.location.href = data.checkoutUrl;
 ```
 
 ### 3) Subscription management

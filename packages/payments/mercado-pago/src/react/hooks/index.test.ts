@@ -17,11 +17,7 @@ describe("react/hooks", () => {
     });
 
     it("generates detail key", () => {
-      expect(plansKeys.detail("plan_123")).toEqual([
-        "mp-plans",
-        "detail",
-        "plan_123",
-      ]);
+      expect(plansKeys.detail("plan_123")).toEqual(["mp-plans", "detail", "plan_123"]);
     });
   });
 
@@ -36,18 +32,11 @@ describe("react/hooks", () => {
 
     it("generates list key with filters", () => {
       const filters = { status: "active", limit: 10 };
-      expect(subscriptionsKeys.list(filters)).toEqual([
-        "mp-subscriptions",
-        "list",
-        filters,
-      ]);
+      expect(subscriptionsKeys.list(filters)).toEqual(["mp-subscriptions", "list", filters]);
     });
 
     it("generates details key", () => {
-      expect(subscriptionsKeys.details()).toEqual([
-        "mp-subscriptions",
-        "detail",
-      ]);
+      expect(subscriptionsKeys.details()).toEqual(["mp-subscriptions", "detail"]);
     });
 
     it("generates detail key for specific id", () => {

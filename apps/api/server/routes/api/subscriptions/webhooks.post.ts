@@ -22,10 +22,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const signature =
-    getHeader(event, "x-signature") ??
-    getHeader(event, "x-polar-signature") ??
-    "";
+  const signature = getHeader(event, "x-signature") ?? getHeader(event, "x-polar-signature") ?? "";
   const deliveryId = getHeader(event, "x-request-id");
   const payload = await provider.parseWebhook(rawBody, signature);
   const envelope = createProjectionEventEnvelopeFromWebhookPayload({
@@ -35,12 +32,8 @@ export default defineEventHandler(async (event) => {
     deliveryId,
     subscriptionId: payload.subscription?.id,
   });
-  const dependencies =
-    await getDefaultSubscriptionProjectionDependencies(provider);
-  const outcome = await projectSubscriptionProviderEvent(
-    envelope,
-    dependencies
-  );
+  const dependencies = await getDefaultSubscriptionProjectionDependencies(provider);
+  const outcome = await projectSubscriptionProviderEvent(envelope, dependencies);
 
   if (outcome.status === "failed") {
     throw createError({

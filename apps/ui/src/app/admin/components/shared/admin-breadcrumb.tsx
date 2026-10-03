@@ -40,8 +40,7 @@ export function AdminBreadcrumb() {
       };
 
       const label =
-        segmentLabels[nextSegment] ||
-        nextSegment.charAt(0).toUpperCase() + nextSegment.slice(1);
+        segmentLabels[nextSegment] || nextSegment.charAt(0).toUpperCase() + nextSegment.slice(1);
       breadcrumbItems.push({ label });
     }
   }

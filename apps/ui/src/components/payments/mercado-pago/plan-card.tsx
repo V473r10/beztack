@@ -24,7 +24,7 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
       className={cn(
         "relative transition-all",
         isClickable && "cursor-pointer hover:border-primary/50",
-        selected && "border-primary ring-2 ring-primary/20"
+        selected && "border-primary ring-2 ring-primary/20",
       )}
       onClick={() => onSelect?.(plan)}
     >
@@ -37,10 +37,7 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg">{plan.reason}</CardTitle>
-          <Badge
-            className={cn("text-white", getStatusColor(plan.status))}
-            variant="secondary"
-          >
+          <Badge className={cn("text-white", getStatusColor(plan.status))} variant="secondary">
             {getStatusLabel(plan.status)}
           </Badge>
         </div>
@@ -58,9 +55,7 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
           </div>
 
           {plan.repetitions && (
-            <p className="text-muted-foreground text-sm">
-              {plan.repetitions} cobros en total
-            </p>
+            <p className="text-muted-foreground text-sm">{plan.repetitions} cobros en total</p>
           )}
         </div>
       </CardContent>

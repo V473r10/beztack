@@ -44,8 +44,7 @@ export default defineEventHandler(async (event) => {
     const now = new Date();
     const isSubscriptionActive =
       userData.subscriptionStatus === "active" &&
-      (!userData.subscriptionValidUntil ||
-        userData.subscriptionValidUntil > now);
+      (!userData.subscriptionValidUntil || userData.subscriptionValidUntil > now);
 
     // Get user's organizations
     const organizations = await db
@@ -58,10 +57,7 @@ export default defineEventHandler(async (event) => {
         memberRole: schema.member.role,
       })
       .from(schema.member)
-      .innerJoin(
-        schema.organization,
-        eq(schema.member.organizationId, schema.organization.id)
-      )
+      .innerJoin(schema.organization, eq(schema.member.organizationId, schema.organization.id))
       .where(eq(schema.member.userId, session.user.id));
 
     return {

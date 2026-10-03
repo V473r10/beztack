@@ -51,18 +51,10 @@ export type ProjectionPayment = {
 
 export type SubscriptionProjectionProviderAdapter = {
   provider: string;
-  getSubscription(
-    subscriptionId: string
-  ): Promise<ProjectionSubscription | null>;
+  getSubscription(subscriptionId: string): Promise<ProjectionSubscription | null>;
   getPayment(paymentId: string): Promise<ProjectionPayment | null>;
-  adjustSubscriptionAmount(
-    subscriptionId: string,
-    fullAmount: number
-  ): Promise<void>;
-  cancelSubscription(
-    subscriptionId: string,
-    immediately?: boolean
-  ): Promise<void>;
+  adjustSubscriptionAmount(subscriptionId: string, fullAmount: number): Promise<void>;
+  cancelSubscription(subscriptionId: string, immediately?: boolean): Promise<void>;
 };
 
 export type WebhookLogRecord = {
@@ -122,13 +114,10 @@ export type SubscriptionProjectionStore = {
   findUserIdByEmail(email: string): Promise<string | null>;
   userExists(userId: string): Promise<boolean>;
   organizationExists(organizationId: string): Promise<boolean>;
-  updateUserMembership(
-    userId: string,
-    updates: MembershipCacheUpdates
-  ): Promise<void>;
+  updateUserMembership(userId: string, updates: MembershipCacheUpdates): Promise<void>;
   updateOrganizationMembership(
     organizationId: string,
-    updates: MembershipCacheUpdates
+    updates: MembershipCacheUpdates,
   ): Promise<void>;
 };
 
@@ -140,11 +129,7 @@ export type SubscriptionProjectionDependencies = {
   now?: () => Date;
 };
 
-export type SubscriptionProjectionOutcomeStatus =
-  | "processed"
-  | "skipped"
-  | "duplicate"
-  | "failed";
+export type SubscriptionProjectionOutcomeStatus = "processed" | "skipped" | "duplicate" | "failed";
 
 export type SubscriptionProjectionOutcome = {
   status: SubscriptionProjectionOutcomeStatus;
@@ -194,15 +179,12 @@ function stableStringify(value: unknown): string {
     return `[${value.map((item) => stableStringify(item)).join(",")}]`;
   }
 
-  const entries = Object.entries(value as Record<string, unknown>).sort(
-    ([left], [right]) => left.localeCompare(right)
+  const entries = Object.entries(value as Record<string, unknown>).sort(([left], [right]) =>
+    left.localeCompare(right),
   );
 
   return `{${entries
-    .map(
-      ([key, entryValue]) =>
-        `${JSON.stringify(key)}:${stableStringify(entryValue)}`
-    )
+    .map(([key, entryValue]) => `${JSON.stringify(key)}:${stableStringify(entryValue)}`)
     .join(",")}}`;
 }
 
@@ -212,7 +194,7 @@ function hashRawPayload(rawPayload: unknown): string {
 
 function readString(
   source: Record<string, unknown> | null | undefined,
-  key: string
+  key: string,
 ): string | undefined {
   const value = source?.[key];
   return typeof value === "string" && value.length > 0 ? value : undefined;
@@ -220,7 +202,7 @@ function readString(
 
 function readNumber(
   source: Record<string, unknown> | null | undefined,
-  key: string
+  key: string,
 ): number | undefined {
   const value = source?.[key];
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -233,10 +215,7 @@ function readNumber(
   return;
 }
 
-function readBoolean(
-  source: Record<string, unknown> | null | undefined,
-  key: string
-): boolean {
+function readBoolean(source: Record<string, unknown> | null | undefined, key: string): boolean {
   const value = source?.[key];
   return value === true || value === "true";
 }
@@ -248,7 +227,7 @@ function normalizeRawStatus(status: string): string {
 export function deriveMembershipStatus(
   rawStatus: string,
   validUntil: Date | null,
-  now: Date
+  now: Date,
 ): string {
   const normalized = normalizeRawStatus(rawStatus);
 
@@ -272,7 +251,7 @@ export function deriveMembershipStatus(
 }
 
 export function createSubscriptionProjectionEventKey(
-  envelope: SubscriptionProjectionEventEnvelope
+  envelope: SubscriptionProjectionEventEnvelope,
 ): string {
   if (envelope.eventId !== undefined && envelope.eventId !== null) {
     return `${envelope.provider}:event:${String(envelope.eventId)}`;
@@ -295,7 +274,7 @@ export function createSubscriptionProjectionEventKey(
 async function resolveUserTarget(
   metadata: Record<string, unknown> | null | undefined,
   customerEmail: string | null | undefined,
-  store: SubscriptionProjectionStore
+  store: SubscriptionProjectionStore,
 ): Promise<MembershipTarget | null> {
   const userId = readString(metadata, "userId");
 
@@ -315,7 +294,7 @@ async function resolveUserTarget(
 
 async function resolveOrganizationTarget(
   metadata: Record<string, unknown> | null | undefined,
-  store: SubscriptionProjectionStore
+  store: SubscriptionProjectionStore,
 ): Promise<MembershipTarget | null> {
   const organizationId =
     readString(metadata, "organizationId") ??
@@ -340,16 +319,12 @@ function resolveMembershipTarget(options: {
     return resolveOrganizationTarget(options.metadata, options.store);
   }
 
-  return resolveUserTarget(
-    options.metadata,
-    options.customerEmail,
-    options.store
-  );
+  return resolveUserTarget(options.metadata, options.customerEmail, options.store);
 }
 
 function membershipTargetFromTouched(
   touched: SubscriptionProjectionOutcome["touched"],
-  fallback: MembershipTarget | null
+  fallback: MembershipTarget | null,
 ): MembershipTarget | null {
   if (touched.userId) {
     return { type: "user", id: touched.userId };
@@ -371,8 +346,7 @@ function buildStoredSubscription(options: {
   return {
     id: subscription.id,
     provider,
-    providerSubscriptionId:
-      subscription.providerSubscriptionId ?? subscription.id ?? null,
+    providerSubscriptionId: subscription.providerSubscriptionId ?? subscription.id ?? null,
     userId: target?.type === "user" ? target.id : null,
     organizationId: target?.type === "organization" ? target.id : null,
     planId: null,
@@ -393,7 +367,7 @@ function resolveMembershipTier(options: {
 }
 
 function resolvePendingPlanChangeRenewalState(
-  rawStatus: string
+  rawStatus: string,
 ): PendingPlanChangeRenewalEvidence["state"] {
   const normalized = normalizeRawStatus(rawStatus);
 
@@ -417,7 +391,7 @@ function resolvePendingPlanChangeRenewalState(
 }
 
 function readPlanChangeBillingCadence(
-  metadata: Record<string, unknown> | null | undefined
+  metadata: Record<string, unknown> | null | undefined,
 ): PlanChangeBillingCadence | undefined {
   const interval = readString(metadata, "billingInterval");
   const intervalCount = readNumber(metadata, "billingFrequency") ?? 1;
@@ -448,9 +422,7 @@ function readProviderConfirmedPlanChangeEvidence(input: {
   const metadata = input.subscription.metadata;
   const direction = readString(metadata, "direction");
   const isDowngradeEvidence = readBoolean(metadata, "proratedDowngrade");
-  let planChangeDirection:
-    | ProviderConfirmedPlanChangeEvidence["direction"]
-    | null = null;
+  let planChangeDirection: ProviderConfirmedPlanChangeEvidence["direction"] | null = null;
   if (direction === "downgrade" || direction === "cadence_change") {
     planChangeDirection = direction;
   } else if (isDowngradeEvidence) {
@@ -522,16 +494,12 @@ async function activatePendingPlanChangeFromProjection(options: {
     currentSubscriptionId: options.subscription.id,
     renewalEvidence: {
       occurredAt: options.now,
-      state: resolvePendingPlanChangeRenewalState(
-        options.subscription.rawStatus
-      ),
+      state: resolvePendingPlanChangeRenewalState(options.subscription.rawStatus),
     },
     store: options.planChangeStore,
   });
 
-  return activation.action === "skipped"
-    ? undefined
-    : activation.pendingPlanChange?.id;
+  return activation.action === "skipped" ? undefined : activation.pendingPlanChange?.id;
 }
 
 async function projectMembershipCache(options: {
@@ -542,9 +510,7 @@ async function projectMembershipCache(options: {
   now: Date;
 }): Promise<string[]> {
   if (!options.target) {
-    return [
-      `Membership target could not be resolved for Subscription ${options.subscription.id}`,
-    ];
+    return [`Membership target could not be resolved for Subscription ${options.subscription.id}`];
   }
 
   const updates = {
@@ -552,17 +518,14 @@ async function projectMembershipCache(options: {
     subscriptionStatus: deriveMembershipStatus(
       options.subscription.rawStatus,
       options.subscription.currentPeriodEnd ?? null,
-      options.now
+      options.now,
     ),
     subscriptionId: options.subscription.id,
     subscriptionValidUntil: options.subscription.currentPeriodEnd ?? null,
   } satisfies MembershipCacheUpdates;
 
   if (options.target.type === "organization") {
-    await options.store.updateOrganizationMembership(
-      options.target.id,
-      updates
-    );
+    await options.store.updateOrganizationMembership(options.target.id, updates);
     return [];
   }
 
@@ -578,15 +541,11 @@ async function projectSubscriptionResource(options: {
   subscriptionMode: MembershipTargetType;
   now: Date;
 }): Promise<ProjectionWorkResult> {
-  const subscription = await options.provider.getSubscription(
-    options.subscriptionId
-  );
+  const subscription = await options.provider.getSubscription(options.subscriptionId);
   if (!subscription) {
     return {
       status: "skipped",
-      warnings: [
-        `Provider Subscription ${options.subscriptionId} was not found`,
-      ],
+      warnings: [`Provider Subscription ${options.subscriptionId} was not found`],
       touched: {},
     };
   }
@@ -603,7 +562,7 @@ async function projectSubscriptionResource(options: {
       provider: options.provider.provider,
       subscription,
       target,
-    })
+    }),
   );
   const reconciliation = await reconcilePendingPlanChangeFromProjection({
     planChangeStore: options.planChangeStore,
@@ -625,7 +584,7 @@ async function projectSubscriptionResource(options: {
   });
   if (reconciliation?.status === "reconciling") {
     warnings.push(
-      `Plan change ${reconciliation.providerConfirmedPlanChangeId} is still reconciling: ${reconciliation.reason}`
+      `Plan change ${reconciliation.providerConfirmedPlanChangeId} is still reconciling: ${reconciliation.reason}`,
     );
   }
   const pendingPlanChangeId = await activatePendingPlanChangeFromProjection({
@@ -668,14 +627,12 @@ function buildStoredPayment(options: {
     provider: options.provider,
     providerPaymentId: options.payment.id,
     userId: options.target?.type === "user" ? options.target.id : null,
-    subscriptionId: options.subscriptionPersisted
-      ? (options.payment.subscriptionId ?? null)
-      : null,
+    subscriptionId: options.subscriptionPersisted ? (options.payment.subscriptionId ?? null) : null,
     status: options.payment.status,
     amount: String(options.payment.amount),
     currency: options.payment.currency,
     metadata: {
-      ...(options.payment.metadata ?? {}),
+      ...options.payment.metadata,
       payerEmail: options.payment.payerEmail,
       externalReference: options.payment.externalReference,
     },
@@ -696,10 +653,7 @@ async function projectApprovedPaymentSubscription(options: {
   touched: SubscriptionProjectionOutcome["touched"];
   warnings: string[];
 }> {
-  if (
-    options.payment.status !== "approved" ||
-    !options.payment.subscriptionId
-  ) {
+  if (options.payment.status !== "approved" || !options.payment.subscriptionId) {
     return {
       target: options.target,
       subscriptionPersisted: false,
@@ -718,10 +672,7 @@ async function projectApprovedPaymentSubscription(options: {
   });
 
   return {
-    target: membershipTargetFromTouched(
-      subscriptionResult.touched,
-      options.target
-    ),
+    target: membershipTargetFromTouched(subscriptionResult.touched, options.target),
     subscriptionPersisted: Boolean(subscriptionResult.touched.subscriptionId),
     touched: subscriptionResult.touched,
     warnings: subscriptionResult.warnings,
@@ -740,16 +691,10 @@ async function applyApprovedPaymentFollowUps(options: {
   const touched: SubscriptionProjectionOutcome["touched"] = {};
   const fullAmount = readNumber(options.payment.metadata, "fullAmount");
   if (fullAmount && options.payment.subscriptionId) {
-    await options.provider.adjustSubscriptionAmount(
-      options.payment.subscriptionId,
-      fullAmount
-    );
+    await options.provider.adjustSubscriptionAmount(options.payment.subscriptionId, fullAmount);
   }
 
-  const previousSubscriptionId = readString(
-    options.payment.metadata,
-    "previousSubscriptionId"
-  );
+  const previousSubscriptionId = readString(options.payment.metadata, "previousSubscriptionId");
   if (previousSubscriptionId) {
     await options.provider.cancelSubscription(previousSubscriptionId, true);
     touched.canceledSubscriptionId = previousSubscriptionId;
@@ -798,7 +743,7 @@ async function projectPaymentResource(options: {
       payment,
       target,
       subscriptionPersisted: subscriptionProjection.subscriptionPersisted,
-    })
+    }),
   );
 
   const touched: SubscriptionProjectionOutcome["touched"] = {
@@ -826,7 +771,7 @@ async function projectPaymentResource(options: {
 }
 
 function resolveResourceType(
-  envelope: SubscriptionProjectionEventEnvelope
+  envelope: SubscriptionProjectionEventEnvelope,
 ): "subscription" | "payment" | "unknown" {
   if (envelope.resourceType) {
     return envelope.resourceType;
@@ -881,11 +826,10 @@ function executeProjectionWork(options: {
 
 export async function projectSubscriptionProviderEvent(
   envelope: SubscriptionProjectionEventEnvelope,
-  dependencies: SubscriptionProjectionDependencies
+  dependencies: SubscriptionProjectionDependencies,
 ): Promise<SubscriptionProjectionOutcome> {
   const eventKey = createSubscriptionProjectionEventKey(envelope);
-  const existingLog =
-    await dependencies.store.findWebhookLogByEventKey(eventKey);
+  const existingLog = await dependencies.store.findWebhookLogByEventKey(eventKey);
 
   if (existingLog?.status === "processed") {
     return {
@@ -931,8 +875,7 @@ export async function projectSubscriptionProviderEvent(
       },
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     await dependencies.store.markWebhookLogFailed(logEntry.id, errorMessage);
     return {
       status: "failed",
@@ -991,9 +934,7 @@ function readPayloadType(rawPayload: unknown): string | undefined {
   return typeof rawPayload.type === "string" ? rawPayload.type : undefined;
 }
 
-function resolveMercadoPagoResourceType(
-  type: string
-): "subscription" | "payment" | "unknown" {
+function resolveMercadoPagoResourceType(type: string): "subscription" | "payment" | "unknown" {
   if (type === "payment") {
     return "payment";
   }
@@ -1006,7 +947,7 @@ function resolveMercadoPagoResourceType(
 }
 
 function resolveWebhookPayloadResourceType(
-  eventType: string
+  eventType: string,
 ): "subscription" | "payment" | "unknown" {
   if (eventType.startsWith("payment.")) {
     return "payment";
@@ -1021,7 +962,7 @@ function resolveWebhookPayloadResourceType(
 
 export function createMercadoPagoProjectionEventEnvelope(
   payload: unknown,
-  deliveryId?: string | null
+  deliveryId?: string | null,
 ): SubscriptionProjectionEventEnvelope {
   const type = readPayloadType(payload) ?? "unknown";
   const action = readPayloadAction(payload);
@@ -1082,15 +1023,11 @@ type PendingPlanChangeRow = {
   } | null;
 };
 
-function isPlanChangeBillingCadence(
-  value: string
-): value is PlanChangeBillingCadence {
+function isPlanChangeBillingCadence(value: string): value is PlanChangeBillingCadence {
   return value === "monthly" || value === "yearly";
 }
 
-function mapPendingDirection(
-  direction: string
-): PendingPlanChangeRecord["direction"] {
+function mapPendingDirection(direction: string): PendingPlanChangeRecord["direction"] {
   if (direction === "downgrade" || direction === "cadence_change") {
     return direction;
   }
@@ -1106,22 +1043,18 @@ function mapPendingMembershipTarget(input: {
     return { type: input.type, id: input.id };
   }
 
-  throw new Error(
-    "Stored Pending Plan change has an invalid Membership target"
-  );
+  throw new Error("Stored Pending Plan change has an invalid Membership target");
 }
 
 function mapTargetPlanSnapshot(
-  snapshot: PendingPlanChangeRow["targetPlanSnapshot"]
+  snapshot: PendingPlanChangeRow["targetPlanSnapshot"],
 ): PlanChangeCatalogPlan {
   if (!snapshot) {
     throw new Error("Stored Pending Plan change is missing its target Plan");
   }
 
   if (!isPlanChangeBillingCadence(snapshot.billingCadence)) {
-    throw new Error(
-      "Stored Pending Plan change target Plan has an invalid Billing cadence"
-    );
+    throw new Error("Stored Pending Plan change target Plan has an invalid Billing cadence");
   }
 
   return {
@@ -1130,9 +1063,7 @@ function mapTargetPlanSnapshot(
   };
 }
 
-function mapPendingPlanChangeRecord(
-  row: PendingPlanChangeRow
-): PendingPlanChangeRecord {
+function mapPendingPlanChangeRecord(row: PendingPlanChangeRow): PendingPlanChangeRecord {
   return {
     direction: mapPendingDirection(row.direction),
     effectiveAt: row.effectiveAt,
@@ -1180,28 +1111,25 @@ export async function createDbPendingPlanChangeActivationStore(): Promise<PlanCh
     id: schema.pendingPlanChange.id,
     membershipTargetId: schema.pendingPlanChange.membershipTargetId,
     membershipTargetType: schema.pendingPlanChange.membershipTargetType,
-    providerConfirmedPlanChangeId:
-      schema.pendingPlanChange.providerConfirmedPlanChangeId,
+    providerConfirmedPlanChangeId: schema.pendingPlanChange.providerConfirmedPlanChangeId,
     subscriptionId: schema.pendingPlanChange.subscriptionId,
     targetPlanSnapshot: schema.pendingPlanChange.targetPlanSnapshot,
   });
 
   const deletePendingPlanChange = async (
-    subscriptionId: string
+    subscriptionId: string,
   ): Promise<PendingPlanChangeRecord | null> => {
     const [deletedPendingPlanChange] = await db
       .delete(schema.pendingPlanChange)
       .where(
         and(
           eq(schema.pendingPlanChange.subscriptionId, subscriptionId),
-          eq(schema.pendingPlanChange.status, "pending")
-        )
+          eq(schema.pendingPlanChange.status, "pending"),
+        ),
       )
       .returning(selectPendingPlanChangeFields());
 
-    return deletedPendingPlanChange
-      ? mapPendingPlanChangeRecord(deletedPendingPlanChange)
-      : null;
+    return deletedPendingPlanChange ? mapPendingPlanChangeRecord(deletedPendingPlanChange) : null;
   };
 
   return {
@@ -1214,14 +1142,12 @@ export async function createDbPendingPlanChangeActivationStore(): Promise<PlanCh
         .where(
           and(
             eq(schema.pendingPlanChange.subscriptionId, subscriptionId),
-            eq(schema.pendingPlanChange.status, "pending")
-          )
+            eq(schema.pendingPlanChange.status, "pending"),
+          ),
         )
         .limit(1);
 
-      return pendingPlanChange
-        ? mapPendingPlanChangeRecord(pendingPlanChange)
-        : null;
+      return pendingPlanChange ? mapPendingPlanChangeRecord(pendingPlanChange) : null;
     },
     async listActiveVisiblePricingCatalogPlans(paymentProvider) {
       const rows = await db
@@ -1241,8 +1167,8 @@ export async function createDbPendingPlanChangeActivationStore(): Promise<PlanCh
           and(
             eq(schema.plan.provider, paymentProvider),
             eq(schema.plan.visible, true),
-            eq(schema.plan.status, "active")
-          )
+            eq(schema.plan.status, "active"),
+          ),
         );
 
       return rows.flatMap((row) => {
@@ -1323,9 +1249,7 @@ export async function createDbSubscriptionProjectionStore(): Promise<Subscriptio
     import("drizzle-orm"),
   ]);
 
-  const findWebhookLogByEventKey = async (
-    eventKey: string
-  ): Promise<WebhookLogRecord | null> => {
+  const findWebhookLogByEventKey = async (eventKey: string): Promise<WebhookLogRecord | null> => {
     const [log] = await db
       .select({
         id: schema.webhookLog.id,
@@ -1408,10 +1332,7 @@ export async function createDbSubscriptionProjectionStore(): Promise<Subscriptio
         return;
       }
 
-      await db
-        .update(schema.subscription)
-        .set(input)
-        .where(eq(schema.subscription.id, input.id));
+      await db.update(schema.subscription).set(input).where(eq(schema.subscription.id, input.id));
     },
     async upsertPayment(input) {
       const existing = await db
@@ -1425,10 +1346,7 @@ export async function createDbSubscriptionProjectionStore(): Promise<Subscriptio
         return;
       }
 
-      await db
-        .update(schema.payment)
-        .set(input)
-        .where(eq(schema.payment.id, input.id));
+      await db.update(schema.payment).set(input).where(eq(schema.payment.id, input.id));
     },
     async findUserIdByEmail(email) {
       const [matchedUser] = await db
@@ -1458,10 +1376,7 @@ export async function createDbSubscriptionProjectionStore(): Promise<Subscriptio
       return Boolean(matchedOrganization);
     },
     async updateUserMembership(userId, updates) {
-      await db
-        .update(schema.user)
-        .set(updates)
-        .where(eq(schema.user.id, userId));
+      await db.update(schema.user).set(updates).where(eq(schema.user.id, userId));
     },
     async updateOrganizationMembership(organizationId, updates) {
       await db
@@ -1492,26 +1407,21 @@ function normalizeMercadoPagoApplicationId(value: unknown): string | null {
 function requireMercadoPagoApplicationId(value: string): string {
   const applicationId = normalizeMercadoPagoApplicationId(value);
   if (!applicationId) {
-    throw new Error(
-      "MERCADO_PAGO_APPLICATION_ID is required when using Mercado Pago"
-    );
+    throw new Error("MERCADO_PAGO_APPLICATION_ID is required when using Mercado Pago");
   }
   return applicationId;
 }
 
 function belongsToMercadoPagoApplication(
   resource: { application_id?: unknown },
-  expectedApplicationId: string
+  expectedApplicationId: string,
 ): boolean {
-  return (
-    normalizeMercadoPagoApplicationId(resource.application_id) ===
-    expectedApplicationId
-  );
+  return normalizeMercadoPagoApplicationId(resource.application_id) === expectedApplicationId;
 }
 
 function assertMercadoPagoApplicationResource(
   resource: { application_id?: unknown },
-  expectedApplicationId: string
+  expectedApplicationId: string,
 ): void {
   if (belongsToMercadoPagoApplication(resource, expectedApplicationId)) {
     return;
@@ -1531,28 +1441,17 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
     webhookSecret: env.MERCADO_PAGO_WEBHOOK_SECRET,
     integratorId: env.MERCADO_PAGO_INTEGRATOR_ID,
   });
-  const applicationId = requireMercadoPagoApplicationId(
-    env.MERCADO_PAGO_APPLICATION_ID
-  );
+  const applicationId = requireMercadoPagoApplicationId(env.MERCADO_PAGO_APPLICATION_ID);
 
   return {
     provider: "mercadopago",
     async getSubscription(subscriptionId) {
       const subscription = await client.subscriptions.get(subscriptionId);
-      if (
-        !(
-          subscription.id &&
-          belongsToMercadoPagoApplication(subscription, applicationId)
-        )
-      ) {
+      if (!(subscription.id && belongsToMercadoPagoApplication(subscription, applicationId))) {
         return null;
       }
-      const providerIntegrationId = normalizeMercadoPagoApplicationId(
-        subscription.application_id
-      );
-      const metadata = mercadoPago.decodeExternalReference(
-        subscription.external_reference
-      );
+      const providerIntegrationId = normalizeMercadoPagoApplicationId(subscription.application_id);
+      const metadata = mercadoPago.decodeExternalReference(subscription.external_reference);
 
       return {
         id: subscription.id,
@@ -1561,22 +1460,16 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
         productId: subscription.preapproval_plan_id ?? null,
         productName: subscription.reason ?? null,
         customerEmail: subscription.payer_email ?? null,
-        currentPeriodStart: mercadoPagoServer.parseDate(
-          subscription.date_created
-        ),
-        currentPeriodEnd: mercadoPagoServer.parseDate(
-          subscription.next_payment_date
-        ),
+        currentPeriodStart: mercadoPagoServer.parseDate(subscription.date_created),
+        currentPeriodEnd: mercadoPagoServer.parseDate(subscription.next_payment_date),
         cancelAtPeriodEnd: false,
         externalReference: subscription.external_reference ?? null,
         metadata: {
-          ...(metadata ?? {}),
+          ...metadata,
           ...(providerIntegrationId ? { providerIntegrationId } : {}),
           billingAmount: subscription.auto_recurring?.transaction_amount,
           billingCurrency: subscription.auto_recurring?.currency_id,
-          billingInterval: mapInterval(
-            subscription.auto_recurring?.frequency_type
-          ),
+          billingInterval: mapInterval(subscription.auto_recurring?.frequency_type),
           billingFrequency: subscription.auto_recurring?.frequency,
           payerEmail: subscription.payer_email,
           reason: subscription.reason,
@@ -1588,9 +1481,7 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
       if (!payment.id) {
         return null;
       }
-      const metadata = mercadoPago.decodeExternalReference(
-        payment.external_reference
-      );
+      const metadata = mercadoPago.decodeExternalReference(payment.external_reference);
 
       return {
         id: String(payment.id),
@@ -1599,11 +1490,9 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
         currency: payment.currency_id ?? "UYU",
         payerEmail: payment.payer?.email ?? null,
         externalReference: payment.external_reference ?? null,
-        subscriptionId:
-          payment.point_of_interaction?.transaction_data?.subscription_id ??
-          null,
+        subscriptionId: payment.point_of_interaction?.transaction_data?.subscription_id ?? null,
         metadata: {
-          ...(metadata ?? {}),
+          ...metadata,
           statusDetail: payment.status_detail,
         },
       };
@@ -1640,10 +1529,7 @@ export function createPaymentProviderSubscriptionProjectionProvider(provider: {
     cancelAtPeriodEnd?: boolean;
     metadata?: Record<string, unknown>;
   } | null>;
-  cancelSubscription(
-    subscriptionId: string,
-    immediately?: boolean
-  ): Promise<unknown>;
+  cancelSubscription(subscriptionId: string, immediately?: boolean): Promise<unknown>;
 }): SubscriptionProjectionProviderAdapter {
   return {
     provider: provider.provider,
@@ -1690,10 +1576,7 @@ export async function getDefaultSubscriptionProjectionDependencies(provider?: {
     cancelAtPeriodEnd?: boolean;
     metadata?: Record<string, unknown>;
   } | null>;
-  cancelSubscription(
-    subscriptionId: string,
-    immediately?: boolean
-  ): Promise<unknown>;
+  cancelSubscription(subscriptionId: string, immediately?: boolean): Promise<unknown>;
 }): Promise<SubscriptionProjectionDependencies> {
   const [{ env }, store, planChangeStore] = await Promise.all([
     import("@/env"),

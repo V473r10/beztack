@@ -69,11 +69,7 @@ export type PaginationInfo = {
   hasPrev: boolean;
 };
 
-export function calculatePagination(
-  total: number,
-  limit: number,
-  offset: number
-): PaginationInfo {
+export function calculatePagination(total: number, limit: number, offset: number): PaginationInfo {
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
   const nextOffset = Math.min(offset + limit, total - 1);
@@ -95,11 +91,7 @@ export type AdminActionHandlers = {
   onEditUser: (userId: string, updates: Partial<AdminUser>) => Promise<void>;
   onSetRole: (userId: string, role: string | string[]) => Promise<void>;
   onSetPassword: (userId: string, newPassword: string) => Promise<void>;
-  onBanUser: (
-    userId: string,
-    banReason?: string,
-    banExpiresIn?: number
-  ) => Promise<void>;
+  onBanUser: (userId: string, banReason?: string, banExpiresIn?: number) => Promise<void>;
   onUnbanUser: (userId: string) => Promise<void>;
   onDeleteUser: (userId: string) => Promise<void>;
   onRevokeSession: (sessionToken: string) => Promise<void>;

@@ -61,8 +61,7 @@ export default defineEventHandler(async (event) => {
     if (membership.length === 0) {
       throw createError({
         statusCode: 403,
-        statusMessage:
-          "Access denied: You are not a member of this organization",
+        statusMessage: "Access denied: You are not a member of this organization",
       });
     }
 

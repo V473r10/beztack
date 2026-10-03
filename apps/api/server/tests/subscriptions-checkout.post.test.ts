@@ -59,8 +59,9 @@ vi.mock("@/server/utils/subscription-ownership", () => ({
 }));
 describe("POST /api/subscriptions/checkout", () => {
   it("applies an Admin tier override before initializing the payment provider", async () => {
-    const handler = (await import("../routes/api/subscriptions/checkout.post"))
-      .default as (event: unknown) => Promise<unknown>;
+    const handler = (await import("../routes/api/subscriptions/checkout.post")).default as (
+      event: unknown,
+    ) => Promise<unknown>;
     mocks.requireAuth.mockResolvedValue({
       user: {
         id: "admin_1",
@@ -95,7 +96,7 @@ describe("POST /api/subscriptions/checkout", () => {
         sourceAction: "checkout",
         subscriptionMode: "user",
         userId: "admin_1",
-      })
+      }),
     );
     expect(response).toEqual({
       provider: "beztack",

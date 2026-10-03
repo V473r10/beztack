@@ -66,36 +66,36 @@ Template diff normalization ignores scaffold-only differences such as:
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `create` | Create a new Beztack project (default) |
-| `init` | Configure modules in an existing project |
+| Command    | Description                                      |
+| ---------- | ------------------------------------------------ |
+| `create`   | Create a new Beztack project (default)           |
+| `init`     | Configure modules in an existing project         |
 | `template` | Run template status/plan/apply/rollback commands |
-| `help` | Show help message |
+| `help`     | Show help message                                |
 
 ### `create` non-interactive flags
 
-| Flag | Description |
-|------|-------------|
-| `--yes` | Enables non-interactive mode and uses defaults for missing values |
-| `--non-interactive` | Enables non-interactive mode |
-| `--name <project-name>` | Sets project name |
-| `--description <text>` | Sets project description |
-| `--git` / `--no-git` | Enable/disable git initialization |
-| `--install` / `--no-install` | Enable/disable dependency installation |
-| `--init` / `--no-init` | Enable/disable module configuration |
-| `--template-source <path-or-url>` | Clone template from a custom git source |
+| Flag                              | Description                                                       |
+| --------------------------------- | ----------------------------------------------------------------- |
+| `--yes`                           | Enables non-interactive mode and uses defaults for missing values |
+| `--non-interactive`               | Enables non-interactive mode                                      |
+| `--name <project-name>`           | Sets project name                                                 |
+| `--description <text>`            | Sets project description                                          |
+| `--git` / `--no-git`              | Enable/disable git initialization                                 |
+| `--install` / `--no-install`      | Enable/disable dependency installation                            |
+| `--init` / `--no-init`            | Enable/disable module configuration                               |
+| `--template-source <path-or-url>` | Clone template from a custom git source                           |
 
 ## Available Modules
 
-| Module | Required | Description |
-|--------|----------|-------------|
-| **auth** | ✅ | Authentication with Better Auth |
-| **payments** | ❌ | Payment processing (Polar or Mercado Pago) |
-| **email** | ❌ | Email sending with Resend and React Email |
-| **ai** | ❌ | AI integration with Vercel AI SDK |
-| **ocr** | ❌ | Optical Character Recognition with Tesseract.js |
-| **state** | ❌ | URL state management with nuqs |
+| Module       | Required | Description                                     |
+| ------------ | -------- | ----------------------------------------------- |
+| **auth**     | ✅       | Authentication with Better Auth                 |
+| **payments** | ❌       | Payment processing (Polar or Mercado Pago)      |
+| **email**    | ❌       | Email sending with Resend and React Email       |
+| **ai**       | ❌       | AI integration with Vercel AI SDK               |
+| **ocr**      | ❌       | Optical Character Recognition with Tesseract.js |
+| **state**    | ❌       | URL state management with nuqs                  |
 
 ## How it works
 

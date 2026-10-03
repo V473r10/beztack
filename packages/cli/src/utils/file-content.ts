@@ -68,10 +68,7 @@ type ContentClassification = "text" | "binary" | "unknown";
  * Classifies file content with a path-first strategy and byte-level fallback.
  * Unknown file types default to binary to avoid accidental corruption.
  */
-export function isBinaryFileContent(
-  relativePath: string,
-  buffer: Buffer
-): boolean {
+export function isBinaryFileContent(relativePath: string, buffer: Buffer): boolean {
   const normalizedPath = relativePath.replaceAll("\\", "/");
   const filename = basename(normalizedPath);
   const extension = extname(filename).toLowerCase();
@@ -114,8 +111,7 @@ function classifyByBytes(buffer: Buffer): ContentClassification {
       return "binary";
     }
 
-    const isAllowedControl =
-      byte === 9 || byte === 10 || byte === 13 || byte === 12;
+    const isAllowedControl = byte === 9 || byte === 10 || byte === 13 || byte === 12;
     const isControlCharacter =
       (byte >= 0 && byte <= 8) ||
       (byte >= 11 && byte <= 12) ||

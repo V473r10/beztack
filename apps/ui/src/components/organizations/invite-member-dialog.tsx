@@ -71,7 +71,7 @@ export function InviteMemberDialog({
       e.stopPropagation();
       form.handleSubmit();
     },
-    [form]
+    [form],
   );
 
   // Reset form when dialog closes
@@ -101,8 +101,8 @@ export function InviteMemberDialog({
             <span>Invite Member</span>
           </DialogTitle>
           <DialogDescription>
-            Send an invitation to join this organization. They will receive an
-            email with instructions.
+            Send an invitation to join this organization. They will receive an email with
+            instructions.
           </DialogDescription>
         </DialogHeader>
         <form.AppForm>
@@ -137,9 +137,7 @@ export function InviteMemberDialog({
                     <Select
                       disabled={inviteMember.isPending}
                       onValueChange={(value) =>
-                        field.handleChange(
-                          value as "admin" | "member" | "owner"
-                        )
+                        field.handleChange(value as "admin" | "member" | "owner")
                       }
                       value={field.state.value}
                     >
@@ -154,15 +152,9 @@ export function InviteMemberDialog({
                                 {getRoleIcon(role)}
                               </div>
                               <div>
-                                <p className="font-medium leading-tight">
-                                  {label}
-                                </p>
+                                <p className="font-medium leading-tight">{label}</p>
                                 <p className="text-muted-foreground text-sm leading-snug">
-                                  {
-                                    ROLE_DESCRIPTIONS[
-                                      role as keyof typeof ROLE_DESCRIPTIONS
-                                    ]
-                                  }
+                                  {ROLE_DESCRIPTIONS[role as keyof typeof ROLE_DESCRIPTIONS]}
                                 </p>
                               </div>
                             </div>
@@ -218,9 +210,7 @@ export function InviteMemberDialog({
                 Cancel
               </Button>
               <Button disabled={inviteMember.isPending} type="submit">
-                {inviteMember.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {inviteMember.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Send Invitation
               </Button>
             </DialogFooter>

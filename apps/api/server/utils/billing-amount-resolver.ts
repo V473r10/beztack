@@ -11,10 +11,7 @@ const INTERVAL_MS: Record<string, number> = {
  * Estimate periodEnd when MercadoPago hasn't returned next_payment_date yet.
  * Uses currentPeriodStart + billing interval from metadata.
  */
-export function estimatePeriodEnd(
-  activeSub: Subscription,
-  interval: string
-): Date {
+export function estimatePeriodEnd(activeSub: Subscription, interval: string): Date {
   const start = activeSub.currentPeriodStart;
   if (!start) {
     return new Date();
@@ -42,12 +39,10 @@ export function estimatePeriodEnd(
  */
 export const resolveCurrentBillingAmount = async (
   activeSub: Subscription,
-  provider: PaymentProviderAdapter
+  provider: PaymentProviderAdapter,
 ): Promise<{ amount: number; currency: string; interval: string }> => {
   const metaAmount =
-    typeof activeSub.metadata?.billingAmount === "number"
-      ? activeSub.metadata.billingAmount
-      : 0;
+    typeof activeSub.metadata?.billingAmount === "number" ? activeSub.metadata.billingAmount : 0;
   const metaCurrency =
     typeof activeSub.metadata?.billingCurrency === "string"
       ? activeSub.metadata.billingCurrency

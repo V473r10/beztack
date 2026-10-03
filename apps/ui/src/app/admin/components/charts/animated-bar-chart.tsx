@@ -1,13 +1,5 @@
 import { motion } from "motion/react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type AnimatedBarChartProps = {
   data: Array<{
@@ -37,52 +29,23 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
       transition={{ duration: 0.6, delay: 0.2 }}
     >
       <ResponsiveContainer height="100%" width="100%">
-        <BarChart
-          data={data}
-          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-        >
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <defs>
             <linearGradient id="barGradientGood" x1="0" x2="0" y1="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="hsl(142 76% 36%)"
-                stopOpacity={0.9}
-              />
-              <stop
-                offset="95%"
-                stopColor="hsl(142 76% 36%)"
-                stopOpacity={0.4}
-              />
+              <stop offset="5%" stopColor="hsl(142 76% 36%)" stopOpacity={0.9} />
+              <stop offset="95%" stopColor="hsl(142 76% 36%)" stopOpacity={0.4} />
             </linearGradient>
             <linearGradient id="barGradientWarning" x1="0" x2="0" y1="0" y2="1">
               <stop offset="5%" stopColor="hsl(38 92% 50%)" stopOpacity={0.9} />
-              <stop
-                offset="95%"
-                stopColor="hsl(38 92% 50%)"
-                stopOpacity={0.4}
-              />
+              <stop offset="95%" stopColor="hsl(38 92% 50%)" stopOpacity={0.4} />
             </linearGradient>
-            <linearGradient
-              id="barGradientCritical"
-              x1="0"
-              x2="0"
-              y1="0"
-              y2="1"
-            >
+            <linearGradient id="barGradientCritical" x1="0" x2="0" y1="0" y2="1">
               <stop offset="5%" stopColor="hsl(0 72% 51%)" stopOpacity={0.9} />
               <stop offset="95%" stopColor="hsl(0 72% 51%)" stopOpacity={0.4} />
             </linearGradient>
             <linearGradient id="barGradientDefault" x1="0" x2="0" y1="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="hsl(var(--chart-2))"
-                stopOpacity={0.9}
-              />
-              <stop
-                offset="95%"
-                stopColor="hsl(var(--chart-2))"
-                stopOpacity={0.4}
-              />
+              <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9} />
+              <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
             </linearGradient>
           </defs>
           <XAxis
@@ -91,11 +54,7 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
             tick={{ fontSize: 12, fill: "#6b7280" }}
             tickLine={false}
           />
-          <YAxis
-            axisLine={false}
-            tick={{ fontSize: 12, fill: "#6b7280" }}
-            tickLine={false}
-          />
+          <YAxis axisLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} tickLine={false} />
           <Tooltip
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
@@ -117,9 +76,8 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
                       className="font-mono text-sm"
                       style={{
                         color:
-                          statusColors[
-                            chartData.status as keyof typeof statusColors
-                          ] || "hsl(var(--chart-2))",
+                          statusColors[chartData.status as keyof typeof statusColors] ||
+                          "hsl(var(--chart-2))",
                       }}
                     >
                       {payload[0].value}
@@ -153,12 +111,7 @@ export function AnimatedBarChart({ data }: AnimatedBarChartProps) {
                   fillColor = "url(#barGradientDefault)";
                   break;
               }
-              return (
-                <Cell
-                  fill={fillColor}
-                  key={entry.label || `fallback-${index}`}
-                />
-              );
+              return <Cell fill={fillColor} key={entry.label || `fallback-${index}`} />;
             })}
           </Bar>
         </BarChart>

@@ -3,12 +3,7 @@ import { sendEmail } from "@beztack/email";
 import { createPolarAuthPlugin } from "@beztack/payments-polar/auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import {
-  admin,
-  createAuthMiddleware,
-  organization,
-  twoFactor,
-} from "better-auth/plugins";
+import { admin, createAuthMiddleware, organization, twoFactor } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { env } from "@/env";
 import { getPolarProductMappings } from "@/lib/payments/config";
@@ -54,7 +49,7 @@ export const auth = betterAuth({
     `https://${projectName}-api.vercel.app`, // Add API domain as trusted origin
     `https://${projectName}-api.codedicated.com`,
     `https://${projectName}-ui.codedicated.com`,
-    `https://app.beztack.com`
+    `https://app.beztack.com`,
   ],
   plugins: [
     twoFactor({
@@ -109,8 +104,8 @@ export const auth = betterAuth({
           .filter(Boolean);
 
         if (appAdminEmails.includes(ctx.context.session.user.email.toLowerCase())) {
-           // @ts-ignore - custom property
-           ctx.context.session.user.isAppAdmin = true;
+          // @ts-ignore - custom property
+          ctx.context.session.user.isAppAdmin = true;
         }
       }
 
@@ -136,10 +131,7 @@ export const auth = betterAuth({
           if (appAdminEmails.includes(session.user.email.toLowerCase())) {
             // Mark user as app admin directly in db for backward compat
             if (session.user.role !== "sudo") {
-              await db
-                .update(user)
-                .set({ role: "sudo" })
-                .where(eq(user.id, session.user.id));
+              await db.update(user).set({ role: "sudo" }).where(eq(user.id, session.user.id));
             }
             // Also update the session context directly so the frontend gets it immediately
             if (ctx.context.newSession) {

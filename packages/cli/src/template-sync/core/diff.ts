@@ -44,7 +44,7 @@ interface FileMapEntry {
  */
 export async function computeDiff(
   workspaceRoot: string,
-  templateRoot: string
+  templateRoot: string,
 ): Promise<DiffComputationResult> {
   const currentFiles = await loadFileMap(workspaceRoot);
   const templateFiles = await loadFileMap(templateRoot);
@@ -91,9 +91,7 @@ export async function computeDiff(
 
       const userModified = currentHash !== originEntry.projectHash;
 
-      changes.push(
-        createModifyChange(path, currentFile, templateFile, userModified)
-      );
+      changes.push(createModifyChange(path, currentFile, templateFile, userModified));
       continue;
     }
 
@@ -171,7 +169,7 @@ function createModifyChange(
   path: string,
   currentFile: FileMapEntry,
   templateFile: FileMapEntry,
-  userModified?: boolean
+  userModified?: boolean,
 ): FileChange {
   const isBinary = currentFile.isBinary || templateFile.isBinary;
   if (isBinary) {
@@ -249,10 +247,7 @@ async function listFiles(root: string): Promise<string[]> {
   return filterGitIgnoredFiles(root, collected);
 }
 
-async function filterGitIgnoredFiles(
-  root: string,
-  absolutePaths: string[]
-): Promise<string[]> {
+async function filterGitIgnoredFiles(root: string, absolutePaths: string[]): Promise<string[]> {
   if (absolutePaths.length === 0) {
     return absolutePaths;
   }
@@ -262,7 +257,7 @@ async function filterGitIgnoredFiles(
   }
 
   const relativePaths = absolutePaths.map((absolutePath) =>
-    normalizePath(relative(root, absolutePath))
+    normalizePath(relative(root, absolutePath)),
   );
   const ignored = await findGitIgnoredPaths(root, relativePaths);
 
@@ -272,10 +267,7 @@ async function filterGitIgnoredFiles(
   });
 }
 
-async function findGitIgnoredPaths(
-  root: string,
-  relativePaths: string[]
-): Promise<Set<string>> {
+async function findGitIgnoredPaths(root: string, relativePaths: string[]): Promise<Set<string>> {
   const ignored = new Set<string>();
 
   const chunkSize = 200;

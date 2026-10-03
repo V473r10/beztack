@@ -112,14 +112,14 @@ export function PaymentBrick({
         setIsProcessing(false);
       }
     },
-    [amount, description, onSuccess, onError, endpoints.processPayment]
+    [amount, description, onSuccess, onError, endpoints.processPayment],
   );
 
   const handleError = useCallback(
     (error: BrickError) => {
       onError?.(new Error(error.message ?? "Brick error"));
     },
-    [onError]
+    [onError],
   );
 
   const handleReady = useCallback(() => {
@@ -127,11 +127,7 @@ export function PaymentBrick({
   }, [onReady]);
 
   if (!isInitialized) {
-    return (
-      <div
-        className={`h-64 animate-pulse rounded-lg bg-muted ${className ?? ""}`}
-      />
-    );
+    return <div className={`h-64 animate-pulse rounded-lg bg-muted ${className ?? ""}`} />;
   }
 
   return (

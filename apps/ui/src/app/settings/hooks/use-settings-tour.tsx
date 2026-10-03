@@ -20,7 +20,7 @@ export function useSettingsTour() {
         position: "right",
       },
     ],
-    [t]
+    [t],
   );
 
   useEffect(() => {

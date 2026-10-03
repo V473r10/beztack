@@ -43,9 +43,7 @@ export function RegeneratedCodesDialog({
     >
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {t("account.settings.twoFactor.regeneratedCodes.title")}
-          </DialogTitle>
+          <DialogTitle>{t("account.settings.twoFactor.regeneratedCodes.title")}</DialogTitle>
           <DialogDescription>
             {t("account.settings.twoFactor.regeneratedCodes.description")}
           </DialogDescription>
@@ -81,10 +79,7 @@ export function RegeneratedCodesDialog({
               id="regenerated-codes-saved"
               onCheckedChange={(checked) => onConfirm(checked === true)}
             />
-            <Label
-              className="font-medium text-sm"
-              htmlFor="regenerated-codes-saved"
-            >
+            <Label className="font-medium text-sm" htmlFor="regenerated-codes-saved">
               {t("account.settings.twoFactor.confirmSavedCodes")}
             </Label>
           </div>

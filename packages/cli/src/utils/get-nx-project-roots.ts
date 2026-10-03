@@ -13,11 +13,7 @@ export function getNxProjectsRootsForModule(projectNames: string[]): string[] {
   const projectLocations = ["apps", "packages"];
 
   for (const projectName of projectNames) {
-    const found = findProjectInLocations(
-      workspaceRoot,
-      projectName,
-      projectLocations
-    );
+    const found = findProjectInLocations(workspaceRoot, projectName, projectLocations);
     if (found) {
       roots.push(found);
     }
@@ -29,7 +25,7 @@ export function getNxProjectsRootsForModule(projectNames: string[]): string[] {
 function findProjectInLocations(
   workspaceRoot: string,
   projectName: string,
-  locations: string[]
+  locations: string[],
 ): string | null {
   // First, check standard locations
   for (const location of locations) {

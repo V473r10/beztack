@@ -50,10 +50,7 @@ export default function UsersPage() {
             description="Manage user accounts, roles, and permissions"
             title="User Management"
           />
-          <UserList
-            onCreateUser={handleCreateUser}
-            onEditUser={handleEditUser}
-          />
+          <UserList onCreateUser={handleCreateUser} onEditUser={handleEditUser} />
         </>
       ) : (
         <>
@@ -68,10 +65,7 @@ export default function UsersPage() {
             title={selectedUser?.name || selectedUser?.email || "User Details"}
           />
           {selectedUser && (
-            <UserDetails
-              onEdit={() => handleEditUser(selectedUser)}
-              user={selectedUser}
-            />
+            <UserDetails onEdit={() => handleEditUser(selectedUser)} user={selectedUser} />
           )}
         </>
       )}

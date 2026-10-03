@@ -211,7 +211,7 @@ export const plan = pgTable(
     index("plan_provider_idx").on(table.provider),
     index("plan_tier_idx").on(table.canonicalTierId),
     index("plan_status_idx").on(table.status),
-  ]
+  ],
 );
 
 export const subscription = pgTable(
@@ -241,7 +241,7 @@ export const subscription = pgTable(
     index("subscription_org_idx").on(table.organizationId),
     index("subscription_plan_idx").on(table.planId),
     index("subscription_status_idx").on(table.status),
-  ]
+  ],
 );
 
 export const payment = pgTable(
@@ -267,7 +267,7 @@ export const payment = pgTable(
     index("payment_user_idx").on(table.userId),
     index("payment_subscription_idx").on(table.subscriptionId),
     index("payment_status_idx").on(table.status),
-  ]
+  ],
 );
 
 export const adminTierOverride = pgTable(
@@ -289,12 +289,9 @@ export const adminTierOverride = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("admin_tier_override_target_uidx").on(
-      table.targetType,
-      table.targetId
-    ),
+    uniqueIndex("admin_tier_override_target_uidx").on(table.targetType, table.targetId),
     index("admin_tier_override_actor_idx").on(table.actorUserId),
-  ]
+  ],
 );
 
 export const adminTierOverrideAudit = pgTable(
@@ -313,12 +310,9 @@ export const adminTierOverrideAudit = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("admin_tier_override_audit_target_idx").on(
-      table.targetType,
-      table.targetId
-    ),
+    index("admin_tier_override_audit_target_idx").on(table.targetType, table.targetId),
     index("admin_tier_override_audit_actor_idx").on(table.actorUserId),
-  ]
+  ],
 );
 
 export const pendingPlanChange = pgTable(
@@ -343,9 +337,7 @@ export const pendingPlanChange = pgTable(
         currency: string;
       };
     }>(),
-    providerConfirmedPlanChangeId: text(
-      "provider_confirmed_plan_change_id"
-    ).notNull(),
+    providerConfirmedPlanChangeId: text("provider_confirmed_plan_change_id").notNull(),
     effectiveAt: timestamp("effective_at"),
     status: text("status").default("pending").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -355,12 +347,10 @@ export const pendingPlanChange = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("pending_plan_change_subscription_uidx").on(
-      table.subscriptionId
-    ),
+    uniqueIndex("pending_plan_change_subscription_uidx").on(table.subscriptionId),
     index("pending_plan_change_status_idx").on(table.status),
     index("pending_plan_change_effective_at_idx").on(table.effectiveAt),
-  ]
+  ],
 );
 
 export const webhookLog = pgTable(
@@ -381,7 +371,7 @@ export const webhookLog = pgTable(
     index("webhook_log_event_type_idx").on(table.eventType),
     index("webhook_log_status_idx").on(table.status),
     uniqueIndex("webhook_log_event_key_idx").on(table.eventKey),
-  ]
+  ],
 );
 
 // Export schema object for Better Auth drizzle adapter

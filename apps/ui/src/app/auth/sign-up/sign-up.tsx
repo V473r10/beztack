@@ -16,12 +16,8 @@ export default function SignUp() {
   return (
     <>
       <div className="space-y-1 text-center">
-        <h1 className="font-semibold text-2xl tracking-tight">
-          {t("auth.signUp.title")}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t("auth.signUp.description")}
-        </p>
+        <h1 className="font-semibold text-2xl tracking-tight">{t("auth.signUp.title")}</h1>
+        <p className="text-muted-foreground text-sm">{t("auth.signUp.description")}</p>
       </div>
 
       <Card className="w-full">
@@ -35,12 +31,7 @@ export default function SignUp() {
         <CardFooter className="flex flex-wrap items-center justify-center gap-2">
           <div className="text-muted-foreground text-sm">
             <span className="mr-1">{t("auth.signUp.hasAccount")}</span>
-            <Button
-              aria-label="Sign in"
-              asChild
-              className="h-auto p-0 text-primary"
-              variant="link"
-            >
+            <Button aria-label="Sign in" asChild className="h-auto p-0 text-primary" variant="link">
               <Link to="/auth/sign-in">{t("auth.signUp.signIn")}</Link>
             </Button>
           </div>

@@ -96,27 +96,9 @@ const CustomizedDot = (props: React.SVGProps<SVGCircleElement>) => {
       {/* Main dot */}
       <circle cx={cx} cy={cy} fill={stroke} r={3} />
       {/* Ping animation circles */}
-      <circle
-        cx={cx}
-        cy={cy}
-        fill="none"
-        opacity="0.8"
-        r={3}
-        stroke={stroke}
-        strokeWidth="1"
-      >
-        <animate
-          attributeName="r"
-          dur="1s"
-          repeatCount="indefinite"
-          values="3;10"
-        />
-        <animate
-          attributeName="opacity"
-          dur="1s"
-          repeatCount="indefinite"
-          values="0.8;0"
-        />
+      <circle cx={cx} cy={cy} fill="none" opacity="0.8" r={3} stroke={stroke} strokeWidth="1">
+        <animate attributeName="r" dur="1s" repeatCount="indefinite" values="3;10" />
+        <animate attributeName="opacity" dur="1s" repeatCount="indefinite" values="0.8;0" />
       </circle>
     </g>
   );
@@ -136,14 +118,7 @@ const ActiveDot = (props: ActiveDotProps) => {
       {/* Active dot background */}
       <circle cx={cx} cy={cy} fill={stroke} opacity={0.3} r={8} />
       {/* Main active dot */}
-      <circle
-        cx={cx}
-        cy={cy}
-        fill={stroke}
-        r={5}
-        stroke="hsl(var(--background))"
-        strokeWidth={2}
-      />
+      <circle cx={cx} cy={cy} fill={stroke} r={5} stroke="hsl(var(--background))" strokeWidth={2} />
     </g>
   );
 };

@@ -36,14 +36,12 @@ function getNumberRecord(value: unknown): Record<string, number> {
   return Object.fromEntries(
     Object.entries(value).filter(
       (entry): entry is [string, number] =>
-        typeof entry[1] === "number" && Number.isFinite(entry[1])
-    )
+        typeof entry[1] === "number" && Number.isFinite(entry[1]),
+    ),
   );
 }
 
-function mapIntervalToFrequencyType(
-  interval: Product["interval"]
-): CatalogPlan["frequencyType"] {
+function mapIntervalToFrequencyType(interval: Product["interval"]): CatalogPlan["frequencyType"] {
   switch (interval) {
     case "year":
       return "years";
@@ -82,8 +80,7 @@ export function buildCatalogPlanFromProduct(product: Product): CatalogPlan {
     initPoint: null,
     highlighted: metadata?.highlighted === true,
     visible: metadata?.visible !== false,
-    displayOrder:
-      typeof metadata?.displayOrder === "number" ? metadata.displayOrder : null,
+    displayOrder: typeof metadata?.displayOrder === "number" ? metadata.displayOrder : null,
   };
 }
 
@@ -94,7 +91,7 @@ export function buildCatalogPlanFromProduct(product: Product): CatalogPlan {
 export function resolveProductByCanonicalPlan(
   products: Product[],
   planId: string,
-  billingPeriod: "monthly" | "yearly"
+  billingPeriod: "monthly" | "yearly",
 ): Product | null {
   const expectedInterval = billingPeriod === "yearly" ? "year" : "month";
 
@@ -104,9 +101,7 @@ export function resolveProductByCanonicalPlan(
     }
 
     const productPlanId =
-      typeof product.metadata?.planId === "string"
-        ? product.metadata.planId
-        : undefined;
+      typeof product.metadata?.planId === "string" ? product.metadata.planId : undefined;
     if (productPlanId === planId) {
       return product;
     }

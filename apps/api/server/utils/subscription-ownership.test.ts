@@ -45,24 +45,16 @@ function subscription(metadata?: Record<string, unknown>): Subscription {
 
 describe("isSubscriptionOwnedByUser", () => {
   it("does not treat payer email as organization ownership", () => {
-    expect(
-      isSubscriptionOwnedByUser(subscription(), auth(), "organization")
-    ).toBe(false);
+    expect(isSubscriptionOwnedByUser(subscription(), auth(), "organization")).toBe(false);
   });
 
   it("accepts organization identity evidence in organization mode", () => {
     expect(
-      isSubscriptionOwnedByUser(
-        subscription({ organizationId: "org_1" }),
-        auth(),
-        "organization"
-      )
+      isSubscriptionOwnedByUser(subscription({ organizationId: "org_1" }), auth(), "organization"),
     ).toBe(true);
   });
 
   it("keeps payer email ownership available in user mode", () => {
-    expect(isSubscriptionOwnedByUser(subscription(), auth(), "user")).toBe(
-      true
-    );
+    expect(isSubscriptionOwnedByUser(subscription(), auth(), "user")).toBe(true);
   });
 });

@@ -36,10 +36,7 @@ vi.mock("h3", () => ({
     statusCode?: number;
     statusMessage?: string;
   }) {
-    return Object.assign(
-      new Error(input.message ?? input.statusMessage ?? "Error"),
-      input
-    );
+    return Object.assign(new Error(input.message ?? input.statusMessage ?? "Error"), input);
   },
   defineEventHandler(handler: unknown) {
     return handler;
@@ -99,9 +96,8 @@ describe("POST /api/subscriptions/plan-change/accept", () => {
       targetTierId: "pro",
     });
     mocks.acceptPlanChange.mockResolvedValue(expectedAcceptance);
-    const handler = (
-      await import("../routes/api/subscriptions/plan-change/accept.post")
-    ).default as (event: unknown) => Promise<unknown>;
+    const handler = (await import("../routes/api/subscriptions/plan-change/accept.post"))
+      .default as (event: unknown) => Promise<unknown>;
 
     const response = await handler({});
 
@@ -119,7 +115,7 @@ describe("POST /api/subscriptions/plan-change/accept", () => {
           billingCadence: "monthly",
           tierId: "pro",
         },
-      })
+      }),
     );
     expect(response).toEqual({
       provider: "mercadopago",

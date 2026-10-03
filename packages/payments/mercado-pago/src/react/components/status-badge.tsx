@@ -92,7 +92,7 @@ export type PaymentStatusBadgeProps = {
  */
 export function getPaymentStatusConfig(
   status: PaymentStatus | string,
-  locale: string = DEFAULT_LOCALE
+  locale: string = DEFAULT_LOCALE,
 ): PaymentStatusConfig {
   const style = PAYMENT_STATUS_STYLES[status as PaymentStatus] ?? DEFAULT_STYLE;
   const label = getPaymentStatusLabel(status, locale);
@@ -158,10 +158,7 @@ type SubscriptionStatusStyle = {
   borderColor: string;
 };
 
-const SUBSCRIPTION_STATUS_STYLES: Record<
-  SubscriptionStatus,
-  SubscriptionStatusStyle
-> = {
+const SUBSCRIPTION_STATUS_STYLES: Record<SubscriptionStatus, SubscriptionStatusStyle> = {
   pending: {
     color: "text-yellow-700",
     bgColor: "bg-yellow-100",
@@ -204,10 +201,9 @@ export type SubscriptionStatusBadgeProps = {
  */
 export function getSubscriptionStatusConfig(
   status: SubscriptionStatus | string,
-  locale: string = DEFAULT_LOCALE
+  locale: string = DEFAULT_LOCALE,
 ): SubscriptionStatusConfig {
-  const style =
-    SUBSCRIPTION_STATUS_STYLES[status as SubscriptionStatus] ?? DEFAULT_STYLE;
+  const style = SUBSCRIPTION_STATUS_STYLES[status as SubscriptionStatus] ?? DEFAULT_STYLE;
   const label = getSubscriptionStatusLabel(status, locale);
 
   return { label, ...style };

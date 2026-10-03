@@ -117,12 +117,9 @@ export function SubscriptionActions({
 }: SubscriptionActionsProps) {
   const t = getTranslations(locale);
 
-  const canPause =
-    !!onPause && canPerformAction(subscription.status, PAUSABLE_STATUSES);
-  const canResume =
-    !!onResume && canPerformAction(subscription.status, RESUMABLE_STATUSES);
-  const canCancel =
-    !!onCancel && canPerformAction(subscription.status, CANCELLABLE_STATUSES);
+  const canPause = !!onPause && canPerformAction(subscription.status, PAUSABLE_STATUSES);
+  const canResume = !!onResume && canPerformAction(subscription.status, RESUMABLE_STATUSES);
+  const canCancel = !!onCancel && canPerformAction(subscription.status, CANCELLABLE_STATUSES);
 
   const handlePause = () => {
     onPause?.(subscription);

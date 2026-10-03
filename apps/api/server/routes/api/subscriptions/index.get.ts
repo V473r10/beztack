@@ -15,19 +15,11 @@ function readQueryString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-async function assertOrganizationMember(
-  userId: string,
-  organizationId: string
-): Promise<void> {
+async function assertOrganizationMember(userId: string, organizationId: string): Promise<void> {
   const [membership] = await db
     .select({ id: memberTable.id })
     .from(memberTable)
-    .where(
-      and(
-        eq(memberTable.userId, userId),
-        eq(memberTable.organizationId, organizationId)
-      )
-    )
+    .where(and(eq(memberTable.userId, userId), eq(memberTable.organizationId, organizationId)))
     .limit(1);
 
   if (!membership) {
@@ -40,7 +32,7 @@ async function assertOrganizationMember(
 
 function withSubscriptionOrganization(
   auth: AuthenticatedUser,
-  organizationId: string | undefined
+  organizationId: string | undefined,
 ): AuthenticatedUser {
   if (!(env.SUBSCRIPTION_MODE === "organization" && organizationId)) {
     return auth;
@@ -65,9 +57,7 @@ export default defineEventHandler(async (event) => {
   const requestedOrganizationId = readQueryString(query.organizationId);
   const organizationId =
     env.SUBSCRIPTION_MODE === "organization"
-      ? (requestedOrganizationId ??
-        auth.session.activeOrganizationId ??
-        undefined)
+      ? (requestedOrganizationId ?? auth.session.activeOrganizationId ?? undefined)
       : undefined;
 
   if (env.SUBSCRIPTION_MODE === "organization" && requestedOrganizationId) {
@@ -97,7 +87,7 @@ export default defineEventHandler(async (event) => {
   }
 
   subscriptions = subscriptions.filter((subscription) =>
-    isSubscriptionOwnedByUser(subscription, scopedAuth, env.SUBSCRIPTION_MODE)
+    isSubscriptionOwnedByUser(subscription, scopedAuth, env.SUBSCRIPTION_MODE),
   );
 
   return {

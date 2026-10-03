@@ -23,6 +23,7 @@ npx create-beztack
 ```
 
 The script will guide you through a few configuration steps:
+
 - **Project name**: The name of your new project (lowercase with hyphens)
 - **Project description**: A brief description for your project
 - **Initialize Git repository?**: Choose whether to initialize a new Git repository
@@ -65,6 +66,7 @@ This will start both the UI (on port 5173) and API servers in development mode.
 ## Features
 
 Beztack comes with:
+
 - **NX Monorepo**: Efficient build system and caching
 - **TypeScript**: Full type safety across the stack
 - **Ultracite**: Lightning-fast linting and formatting with Biome

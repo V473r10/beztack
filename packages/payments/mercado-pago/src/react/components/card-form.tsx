@@ -99,14 +99,14 @@ export function CardForm({
         setIsProcessing(false);
       }
     },
-    [amount, description, onSuccess, onError, endpoints.processPayment]
+    [amount, description, onSuccess, onError, endpoints.processPayment],
   );
 
   const handleError = useCallback(
     (error: BrickError) => {
       onError?.(new Error(error.message ?? "Card form error"));
     },
-    [onError]
+    [onError],
   );
 
   const handleReady = useCallback(() => {
@@ -114,11 +114,7 @@ export function CardForm({
   }, [onReady]);
 
   if (!isInitialized) {
-    return (
-      <div
-        className={`h-64 animate-pulse rounded-lg bg-muted ${className ?? ""}`}
-      />
-    );
+    return <div className={`h-64 animate-pulse rounded-lg bg-muted ${className ?? ""}`} />;
   }
 
   return (

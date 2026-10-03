@@ -21,7 +21,7 @@ function toDisplayAmount(amount: number, provider: PaymentProvider): number {
 function createEmptyTierConfig(
   id: MembershipTier,
   name: string,
-  description: string
+  description: string,
 ): MutableTierConfig {
   return {
     id,
@@ -50,10 +50,7 @@ function isYearlyCatalogPlan(plan: CatalogPlan): boolean {
   );
 }
 
-function applyCatalogPlanDetails(
-  tierConfig: MutableTierConfig,
-  plan: CatalogPlan
-): void {
+function applyCatalogPlanDetails(tierConfig: MutableTierConfig, plan: CatalogPlan): void {
   tierConfig.name = plan.displayName;
 
   if (plan.description) {
@@ -73,7 +70,7 @@ function applyCatalogPlanDetails(
 function applyCatalogPlanBilling(
   tierConfig: MutableTierConfig,
   plan: CatalogPlan,
-  provider: PaymentProvider
+  provider: PaymentProvider,
 ): void {
   const displayPrice = toDisplayAmount(plan.price.amount, provider);
 
@@ -104,7 +101,7 @@ function applyCatalogPlanBilling(
 function applyCatalogPlanToTier(
   tiers: Record<MembershipTier, MutableTierConfig>,
   plan: CatalogPlan,
-  provider: PaymentProvider
+  provider: PaymentProvider,
 ): void {
   const tierId = plan.canonicalTierId;
   if (!tierId) {
@@ -118,7 +115,7 @@ function applyCatalogPlanToTier(
 
 function getMetadataStringArray(
   metadata: Record<string, unknown> | undefined,
-  key: "features" | "permissions"
+  key: "features" | "permissions",
 ): string[] | null {
   const value = metadata?.[key];
 
@@ -130,7 +127,7 @@ function getMetadataStringArray(
 }
 
 function getMetadataLimits(
-  metadata: Record<string, unknown> | undefined
+  metadata: Record<string, unknown> | undefined,
 ): Record<string, number> | null {
   const limits = metadata?.limits;
 
@@ -141,15 +138,12 @@ function getMetadataLimits(
   return Object.fromEntries(
     Object.entries(limits).filter(
       (entry): entry is [string, number] =>
-        typeof entry[1] === "number" && Number.isFinite(entry[1])
-    )
+        typeof entry[1] === "number" && Number.isFinite(entry[1]),
+    ),
   );
 }
 
-function applyProductDisplayFallback(
-  tierConfig: MutableTierConfig,
-  product: Product
-): void {
+function applyProductDisplayFallback(tierConfig: MutableTierConfig, product: Product): void {
   if (tierConfig.features.length !== 0) {
     return;
   }
@@ -164,7 +158,7 @@ function applyProductDisplayFallback(
 function applyProductBillingFallback(
   tierConfig: MutableTierConfig,
   product: Product,
-  provider: PaymentProvider
+  provider: PaymentProvider,
 ): void {
   if (product.interval === "month" && !tierConfig.monthly) {
     tierConfig.price.monthly = toDisplayAmount(product.price.amount, provider);
@@ -191,10 +185,7 @@ function applyProductBillingFallback(
   }
 }
 
-function applyProductMetadataFallback(
-  tierConfig: MutableTierConfig,
-  product: Product
-): void {
+function applyProductMetadataFallback(tierConfig: MutableTierConfig, product: Product): void {
   if (tierConfig.features.length !== 0) {
     return;
   }
@@ -218,7 +209,7 @@ function applyProductMetadataFallback(
 function applyProductToTier(
   tiers: Record<MembershipTier, MutableTierConfig>,
   product: Product,
-  provider: PaymentProvider
+  provider: PaymentProvider,
 ): void {
   const tierId = parseTierIdFromProduct(product);
   const tierConfig = tiers[tierId];
@@ -245,10 +236,9 @@ export function parseTierIdFromName(raw: string | undefined): MembershipTier {
 }
 
 export function parseTierIdFromMetadata(
-  metadata: Record<string, unknown> | undefined
+  metadata: Record<string, unknown> | undefined,
 ): MembershipTier {
-  const planId =
-    typeof metadata?.planId === "string" ? metadata.planId : undefined;
+  const planId = typeof metadata?.planId === "string" ? metadata.planId : undefined;
   if (planId) {
     return parseTierIdFromName(planId);
   }
@@ -273,7 +263,7 @@ export function parseTierIdFromProduct(product: Product): MembershipTier {
 export function buildTierConfigFromPlansAndProducts(
   products: Product[],
   plans: CatalogPlan[] | undefined,
-  provider: PaymentProvider
+  provider: PaymentProvider,
 ): MembershipTierConfig[] {
   const tiers = createInitialTierConfigs();
 

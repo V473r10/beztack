@@ -82,10 +82,7 @@ export function PlanEditCard({
       return;
     }
 
-    updateMutation.mutate(
-      { planId: plan.id, data },
-      { onSuccess: () => onCancelEdit() }
-    );
+    updateMutation.mutate({ planId: plan.id, data }, { onSuccess: () => onCancelEdit() });
   };
 
   if (isEditing) {
@@ -94,12 +91,8 @@ export function PlanEditCard({
         <CardHeader className="border-b bg-muted/30 pb-4">
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-lg">
-                Edit Plan: {plan.displayName}
-              </CardTitle>
-              <CardDescription className="mt-1.5 font-mono text-xs">
-                {plan.id}
-              </CardDescription>
+              <CardTitle className="text-lg">Edit Plan: {plan.displayName}</CardTitle>
+              <CardDescription className="mt-1.5 font-mono text-xs">{plan.id}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button
@@ -201,9 +194,7 @@ export function PlanEditCard({
               <div className="space-y-2">
                 <Label className="flex justify-between">
                   <span>Features</span>
-                  <span className="font-normal text-muted-foreground text-xs">
-                    One per line
-                  </span>
+                  <span className="font-normal text-muted-foreground text-xs">One per line</span>
                 </Label>
                 <Textarea
                   className="min-h-[120px] resize-y"
@@ -213,18 +204,14 @@ export function PlanEditCard({
                       features: e.target.value,
                     }))
                   }
-                  placeholder={
-                    "Unlimited projects\nPriority support\nCustom domains"
-                  }
+                  placeholder={"Unlimited projects\nPriority support\nCustom domains"}
                   value={editState.features}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="flex justify-between">
                   <span>Permissions</span>
-                  <span className="font-normal text-muted-foreground text-xs">
-                    One per line
-                  </span>
+                  <span className="font-normal text-muted-foreground text-xs">One per line</span>
                 </Label>
                 <Textarea
                   className="min-h-[120px] resize-y"
@@ -243,9 +230,7 @@ export function PlanEditCard({
               <Label>Limits (JSON)</Label>
               <Textarea
                 className="min-h-[100px] font-mono text-xs"
-                onChange={(e) =>
-                  setEditState((s) => ({ ...s, limits: e.target.value }))
-                }
+                onChange={(e) => setEditState((s) => ({ ...s, limits: e.target.value }))}
                 placeholder={'{\n  "maxProjects": 10,\n  "storageGB": 5\n}'}
                 value={editState.limits}
               />
@@ -266,8 +251,7 @@ export function PlanEditCard({
                   onChange={(e) =>
                     setEditState((s) => ({
                       ...s,
-                      displayOrder:
-                        e.target.value === "" ? null : Number(e.target.value),
+                      displayOrder: e.target.value === "" ? null : Number(e.target.value),
                     }))
                   }
                   placeholder="0, 1, 2..."
@@ -280,9 +264,7 @@ export function PlanEditCard({
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={editState.visible}
-                    onCheckedChange={(v) =>
-                      setEditState((s) => ({ ...s, visible: v }))
-                    }
+                    onCheckedChange={(v) => setEditState((s) => ({ ...s, visible: v }))}
                   />
                   <span className="text-muted-foreground text-sm">
                     {editState.visible ? "Visible to users" : "Hidden"}
@@ -294,9 +276,7 @@ export function PlanEditCard({
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={editState.highlighted}
-                    onCheckedChange={(v) =>
-                      setEditState((s) => ({ ...s, highlighted: v }))
-                    }
+                    onCheckedChange={(v) => setEditState((s) => ({ ...s, highlighted: v }))}
                   />
                   <span className="text-muted-foreground text-sm">
                     {editState.highlighted ? "Featured plan" : "Standard"}
@@ -320,9 +300,7 @@ export function PlanEditCard({
         isActive
           ? "border-border hover:border-primary/40 hover:shadow-md"
           : "border-dashed bg-muted/20 opacity-80",
-        isHighlighted &&
-          isActive &&
-          "border-primary/50 shadow-sm ring-primary/10"
+        isHighlighted && isActive && "border-primary/50 shadow-sm ring-primary/10",
       )}
     >
       <CardHeader className="pb-4">
@@ -334,10 +312,7 @@ export function PlanEditCard({
               </CardTitle>
               <div className="flex items-center gap-1.5">
                 {plan.canonicalTierId && (
-                  <Badge
-                    className="px-2 py-0.5 text-[10px] capitalize"
-                    variant="outline"
-                  >
+                  <Badge className="px-2 py-0.5 text-[10px] capitalize" variant="outline">
                     {plan.canonicalTierId}
                   </Badge>
                 )}
@@ -352,15 +327,11 @@ export function PlanEditCard({
               </div>
             </div>
             {plan.description && (
-              <CardDescription className="line-clamp-2 text-sm">
-                {plan.description}
-              </CardDescription>
+              <CardDescription className="line-clamp-2 text-sm">{plan.description}</CardDescription>
             )}
           </div>
           <div className="shrink-0 text-right">
-            <div className="font-bold text-2xl tracking-tight">
-              ${plan.price}
-            </div>
+            <div className="font-bold text-2xl tracking-tight">${plan.price}</div>
             <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
               {plan.currency} / {plan.interval ?? "month"}
             </div>
@@ -373,10 +344,7 @@ export function PlanEditCard({
           {plan.features && plan.features.length > 0 ? (
             <ul className="grid gap-2 text-sm">
               {plan.features.slice(0, MAX_FEATURES_DISPLAY).map((feature) => (
-                <li
-                  className="flex items-start gap-2 text-muted-foreground"
-                  key={feature}
-                >
+                <li className="flex items-start gap-2 text-muted-foreground" key={feature}>
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span className="leading-tight">{feature}</span>
                 </li>
@@ -407,9 +375,7 @@ export function PlanEditCard({
             <div className="h-3 w-px bg-border" />
             <div className="text-muted-foreground">
               Order:{" "}
-              <span className="font-medium text-foreground">
-                {plan.displayOrder ?? "None"}
-              </span>
+              <span className="font-medium text-foreground">{plan.displayOrder ?? "None"}</span>
             </div>
           </div>
         </div>

@@ -3,13 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useSyncMutation } from "../hooks";
 import type { SyncDiff } from "../types";
 
-export function DiffTable({
-  diffs,
-  planId,
-}: {
-  diffs: SyncDiff[];
-  planId: string;
-}) {
+export function DiffTable({ diffs, planId }: { diffs: SyncDiff[]; planId: string }) {
   const syncMutation = useSyncMutation();
 
   return (

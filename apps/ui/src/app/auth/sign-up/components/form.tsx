@@ -70,9 +70,7 @@ export function SignUpForm() {
         navigate("/");
       } catch (err) {
         const errorMessage =
-          err instanceof Error
-            ? err.message
-            : t("notifications.account.creationFailed");
+          err instanceof Error ? err.message : t("notifications.account.creationFailed");
         toast.error(errorMessage);
       } finally {
         setIsLoading(false);
@@ -86,7 +84,7 @@ export function SignUpForm() {
       e.stopPropagation();
       form.handleSubmit();
     },
-    [form]
+    [form],
   );
 
   return (
@@ -151,21 +149,13 @@ export function SignUpForm() {
                       value={value}
                     />
                     <button
-                      aria-label={
-                        showPassword
-                          ? t("form.password.hide")
-                          : t("form.password.show")
-                      }
+                      aria-label={showPassword ? t("form.password.hide") : t("form.password.show")}
                       className="-translate-y-1/2 absolute top-1/2 right-3 text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                       tabIndex={-1}
                       type="button"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </field.FormControl>
@@ -188,9 +178,7 @@ export function SignUpForm() {
         <form.AppField name="confirmPassword">
           {(field) => (
             <field.FormItem>
-              <field.FormLabel>
-                {t("form.confirmPassword.label")}
-              </field.FormLabel>
+              <field.FormLabel>{t("form.confirmPassword.label")}</field.FormLabel>
               <field.FormControl>
                 <div className="relative">
                   <Input
@@ -203,21 +191,13 @@ export function SignUpForm() {
                     value={field.state.value}
                   />
                   <button
-                    aria-label={
-                      showPassword
-                        ? t("form.password.hide")
-                        : t("form.password.show")
-                    }
+                    aria-label={showPassword ? t("form.password.hide") : t("form.password.show")}
                     className="-translate-y-1/2 absolute top-1/2 right-3 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
                     type="button"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </field.FormControl>

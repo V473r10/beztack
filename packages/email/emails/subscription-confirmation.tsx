@@ -1,13 +1,4 @@
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Hr,
-  Html,
-  Preview,
-  Text,
-} from "@react-email/components";
+import { Body, Button, Container, Head, Hr, Html, Preview, Text } from "@react-email/components";
 
 type SubscriptionConfirmationEmailProps = {
   username?: string;
@@ -32,8 +23,8 @@ export const SubscriptionConfirmationEmail = ({
         <Text style={title}>¡Suscripción Confirmada!</Text>
         <Text style={paragraph}>Hola {username},</Text>
         <Text style={paragraph}>
-          ¡Gracias por suscribirte al plan <strong>{planName}</strong> de
-          beztack! Tu suscripción está ahora activa.
+          ¡Gracias por suscribirte al plan <strong>{planName}</strong> de beztack! Tu suscripción
+          está ahora activa.
         </Text>
 
         <div style={detailsContainer}>
@@ -52,8 +43,8 @@ export const SubscriptionConfirmationEmail = ({
         <Hr style={hr} />
 
         <Text style={paragraph}>
-          Ahora tenés acceso a todas las funcionalidades premium de tu plan.
-          Podés gestionar tu suscripción desde tu panel de control:
+          Ahora tenés acceso a todas las funcionalidades premium de tu plan. Podés gestionar tu
+          suscripción desde tu panel de control:
         </Text>
 
         <Button href={dashboardUrl} style={button}>
@@ -61,8 +52,7 @@ export const SubscriptionConfirmationEmail = ({
         </Button>
 
         <Text style={paragraph}>
-          Si tenés alguna pregunta sobre tu suscripción, no dudes en
-          contactarnos.
+          Si tenés alguna pregunta sobre tu suscripción, no dudes en contactarnos.
         </Text>
 
         <Text style={footer}>

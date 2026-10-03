@@ -11,9 +11,7 @@ export const env = createEnv({
    * This makes sure the app isn't built with invalid env vars.
    */
   server: {
-    NODE_ENV: z
-      .enum(["development", "production", "test"])
-      .default("development"),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
 
   /**

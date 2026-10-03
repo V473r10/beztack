@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  decodeExternalReference,
-  encodeExternalReference,
-} from "./external-reference.js";
+import { decodeExternalReference, encodeExternalReference } from "./external-reference.js";
 
 const PRO_PLAN_AMOUNT = 6000;
 

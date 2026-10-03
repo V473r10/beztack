@@ -67,7 +67,7 @@ function createAdapter() {
 
 function plan(
   id: string,
-  applicationId: string | number | null = APPLICATION_ID
+  applicationId: string | number | null = APPLICATION_ID,
 ): MPPreapprovalPlan {
   const result: MPPreapprovalPlan = {
     id,
@@ -92,7 +92,7 @@ function plan(
 
 function subscription(
   id: string,
-  applicationId: string | number | null = APPLICATION_ID
+  applicationId: string | number | null = APPLICATION_ID,
 ): MPPreapproval {
   const result: MPPreapproval = {
     id,
@@ -131,7 +131,7 @@ describe("createMercadoPagoAdapter", () => {
       createMercadoPagoAdapter({
         accessToken: "access-token",
         successUrl: "https://example.com/success",
-      })
+      }),
     ).toThrow("MERCADO_PAGO_APPLICATION_ID");
   });
 
@@ -148,35 +148,27 @@ describe("createMercadoPagoAdapter", () => {
 
     const products = await createAdapter().listProducts();
 
-    expect(products.map((product: Product) => product.id)).toEqual([
-      "plan_match",
-    ]);
+    expect(products.map((product: Product) => product.id)).toEqual(["plan_match"]);
     expect(client.plans.list).toHaveBeenCalledTimes(2);
   });
 
   it("treats cross-Application plan reads as not found", async () => {
-    client.plans.get.mockResolvedValueOnce(
-      plan("plan_other", OTHER_APPLICATION_ID)
-    );
+    client.plans.get.mockResolvedValueOnce(plan("plan_other", OTHER_APPLICATION_ID));
 
     await expect(createAdapter().getProduct("plan_other")).resolves.toBeNull();
   });
 
   it("blocks cross-Application plan mutations", async () => {
-    client.plans.get.mockResolvedValueOnce(
-      plan("plan_other", OTHER_APPLICATION_ID)
-    );
+    client.plans.get.mockResolvedValueOnce(plan("plan_other", OTHER_APPLICATION_ID));
 
-    await expect(
-      createAdapter().updateProduct("plan_other", { name: "New name" })
-    ).rejects.toThrow("Product not found");
+    await expect(createAdapter().updateProduct("plan_other", { name: "New name" })).rejects.toThrow(
+      "Product not found",
+    );
     expect(client.plans.update).not.toHaveBeenCalled();
   });
 
   it("verifies newly created plans belong to the configured Application", async () => {
-    client.plans.create.mockResolvedValueOnce(
-      plan("plan_other", OTHER_APPLICATION_ID)
-    );
+    client.plans.create.mockResolvedValueOnce(plan("plan_other", OTHER_APPLICATION_ID));
 
     await expect(
       createAdapter().createProduct({
@@ -185,7 +177,7 @@ describe("createMercadoPagoAdapter", () => {
         price: { amount: 1000, currency: "UYU" },
         interval: "month",
         intervalCount: 1,
-      })
+      }),
     ).rejects.toThrow("configured Mercado Pago Application");
   });
 
@@ -205,9 +197,7 @@ describe("createMercadoPagoAdapter", () => {
       limit: 1,
     });
 
-    expect(subscriptions.map((item: Subscription) => item.id)).toEqual([
-      "sub_match",
-    ]);
+    expect(subscriptions.map((item: Subscription) => item.id)).toEqual(["sub_match"]);
     expect(client.subscriptions.search).toHaveBeenCalledTimes(2);
   });
 
@@ -235,7 +225,7 @@ describe("createMercadoPagoAdapter", () => {
       expect.not.objectContaining({
         card_token_id: expect.any(String),
         preapproval_plan_id: expect.any(String),
-      })
+      }),
     );
     expect(client.subscriptions.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -248,7 +238,7 @@ describe("createMercadoPagoAdapter", () => {
         external_reference: "beztack_uid=user_1&tier=pro&tplan=plan_match",
         payer_email: "payer@example.com",
         reason: "Plan plan_match",
-      })
+      }),
     );
     expect(checkout).toEqual({
       id: "sub_created",
@@ -257,23 +247,17 @@ describe("createMercadoPagoAdapter", () => {
   });
 
   it("treats missing subscription Application identity as not found", async () => {
-    client.subscriptions.get.mockResolvedValueOnce(
-      subscription("sub_missing", null)
-    );
+    client.subscriptions.get.mockResolvedValueOnce(subscription("sub_missing", null));
 
-    await expect(
-      createAdapter().getSubscription("sub_missing")
-    ).resolves.toBeNull();
+    await expect(createAdapter().getSubscription("sub_missing")).resolves.toBeNull();
   });
 
   it("blocks cross-Application subscription mutations", async () => {
-    client.subscriptions.get.mockResolvedValueOnce(
-      subscription("sub_other", OTHER_APPLICATION_ID)
-    );
+    client.subscriptions.get.mockResolvedValueOnce(subscription("sub_other", OTHER_APPLICATION_ID));
 
-    await expect(
-      createAdapter().cancelSubscription("sub_other")
-    ).rejects.toThrow("Subscription not found");
+    await expect(createAdapter().cancelSubscription("sub_other")).rejects.toThrow(
+      "Subscription not found",
+    );
     expect(client.subscriptions.cancel).not.toHaveBeenCalled();
   });
 });

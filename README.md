@@ -80,20 +80,20 @@ packages/
 
 ## Tech Stack
 
-| Category | Technology |
-|----------|------------|
-| **Monorepo** | NX |
-| **Package Manager** | pnpm |
-| **Frontend** | Vite, React, shadcn/ui, Tailwind CSS |
-| **Backend** | Nitro (h3), Drizzle ORM |
-| **Auth** | better-auth |
-| **Payments** | Polar |
-| **AI** | Vercel AI SDK, Amazon Bedrock |
-| **Docs** | Next.js, Fumadocs |
-| **Validation** | Zod, T3 Env |
-| **State** | nuqs, TanStack Query |
-| **Code Quality** | Biome, Ultracite, TypeScript |
-| **Git Hooks** | Lefthook |
+| Category            | Technology                           |
+| ------------------- | ------------------------------------ |
+| **Monorepo**        | NX                                   |
+| **Package Manager** | pnpm                                 |
+| **Frontend**        | Vite, React, shadcn/ui, Tailwind CSS |
+| **Backend**         | Nitro (h3), Drizzle ORM              |
+| **Auth**            | better-auth                          |
+| **Payments**        | Polar                                |
+| **AI**              | Vercel AI SDK, Amazon Bedrock        |
+| **Docs**            | Next.js, Fumadocs                    |
+| **Validation**      | Zod, T3 Env                          |
+| **State**           | nuqs, TanStack Query                 |
+| **Code Quality**    | Biome, Ultracite, TypeScript         |
+| **Git Hooks**       | Lefthook                             |
 
 ## Features
 
@@ -108,18 +108,23 @@ packages/
 ## Packages
 
 ### `@beztack/ai`
+
 AI SDK integration with Amazon Bedrock provider. Supports streaming, tool calling, structured output, and multi-modal capabilities.
 
 ### `@beztack/env`
+
 Centralized environment variable validation using T3 Env and Zod schemas.
 
 ### `@beztack/state`
+
 URL state management with nuqs. Type-safe parsers for synchronizing component state with URLs.
 
 ### `@beztack/email`
+
 Email templates built with React Email for transactional emails.
 
 ### `@beztack/cli`
+
 Command-line tools for project scaffolding and development utilities.
 
 ## Development

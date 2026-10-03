@@ -36,11 +36,7 @@ export type PaymentEvent = {
   };
 };
 
-export type ConnectionStatus =
-  | "connecting"
-  | "connected"
-  | "disconnected"
-  | "error";
+export type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 
 type UsePaymentEventsOptions = {
   /** User ID to filter events (optional, uses authenticated user by default) */
@@ -88,7 +84,7 @@ const EVENT_LABELS: Record<
 
 function formatAmount(
   amount: string | null | undefined,
-  currency: string | null | undefined
+  currency: string | null | undefined,
 ): string {
   if (!amount) {
     return "";
@@ -126,16 +122,14 @@ export function usePaymentEvents(options: UsePaymentEventsOptions = {}) {
   const [lastEvent, setLastEvent] = useState<PaymentEvent | null>(null);
 
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const updateStatus = useCallback(
     (newStatus: ConnectionStatus) => {
       setStatus(newStatus);
       onStatusChange?.(newStatus);
     },
-    [onStatusChange]
+    [onStatusChange],
   );
 
   const handleEvent = useCallback(
@@ -147,8 +141,7 @@ export function usePaymentEvents(options: UsePaymentEventsOptions = {}) {
       if (showToasts) {
         const label = EVENT_LABELS[event.type];
         const amount = formatAmount(event.data.amount, event.data.currency);
-        const description =
-          event.data.description || event.data.reason || event.data.id;
+        const description = event.data.description || event.data.reason || event.data.id;
 
         const message = amount ? `${description} - ${amount}` : description;
 
@@ -167,7 +160,7 @@ export function usePaymentEvents(options: UsePaymentEventsOptions = {}) {
         }
       }
     },
-    [onEvent, showToasts]
+    [onEvent, showToasts],
   );
 
   const connect = useCallback(() => {
@@ -225,14 +218,7 @@ export function usePaymentEvents(options: UsePaymentEventsOptions = {}) {
         }, reconnectDelay);
       }
     };
-  }, [
-    userId,
-    listenToAll,
-    updateStatus,
-    handleEvent,
-    autoReconnect,
-    reconnectDelay,
-  ]);
+  }, [userId, listenToAll, updateStatus, handleEvent, autoReconnect, reconnectDelay]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

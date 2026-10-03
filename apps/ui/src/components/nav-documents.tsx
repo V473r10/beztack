@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type Icon,
-  IconDots,
-  IconFolder,
-  IconShare3,
-  IconTrash,
-} from "@tabler/icons-react";
+import { type Icon, IconDots, IconFolder, IconShare3, IconTrash } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import {
@@ -52,10 +46,7 @@ export function NavDocuments({
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuAction
-                  className="rounded-sm data-[state=open]:bg-accent"
-                  showOnHover
-                >
+                <SidebarMenuAction className="rounded-sm data-[state=open]:bg-accent" showOnHover>
                   <IconDots />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>

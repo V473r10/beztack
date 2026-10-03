@@ -74,10 +74,7 @@ const KNOWN_GOOGLE_FONTS = [
 ];
 
 // Helper function to extract Google Fonts from a font family string
-function addGoogleFontsFromFamily(
-  fontFamily: string,
-  googleFonts: string[]
-): void {
+function addGoogleFontsFromFamily(fontFamily: string, googleFonts: string[]): void {
   for (const font of KNOWN_GOOGLE_FONTS) {
     if (fontFamily.includes(font) && !googleFonts.includes(font)) {
       googleFonts.push(font);
@@ -132,9 +129,7 @@ export function extractFonts(variables: Record<string, string>): {
 }
 
 // Extract theme colors from CSS variables
-export function extractThemeColors(
-  variables: Record<string, string>
-): ParsedThemeColors {
+export function extractThemeColors(variables: Record<string, string>): ParsedThemeColors {
   return {
     background: variables.background || "hsl(0 0% 100%)",
     foreground: variables.foreground || "hsl(222.2 84% 4.9%)",
@@ -158,9 +153,7 @@ export function parseThemeCSS(cssContent: string): ParsedTheme {
 }
 
 // Load and parse theme CSS file
-export async function loadThemeCSS(
-  themeName: string
-): Promise<ParsedTheme | null> {
+export async function loadThemeCSS(themeName: string): Promise<ParsedTheme | null> {
   if (themeName === "default") {
     return {
       colors: {

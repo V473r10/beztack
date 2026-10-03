@@ -27,9 +27,7 @@ const planChangePendingCancellationSchema = z.object({
   organizationId: z.string().min(1).optional(),
 });
 
-type PlanChangePendingCancellationRequest = z.infer<
-  typeof planChangePendingCancellationSchema
->;
+type PlanChangePendingCancellationRequest = z.infer<typeof planChangePendingCancellationSchema>;
 
 type PendingPlanChangeRow = {
   direction: string;
@@ -63,11 +61,10 @@ function resolvePaymentIntegrationId(providerName: string): string | undefined {
 
 function resolveMembershipTarget(
   auth: AuthenticatedUser,
-  body: PlanChangePendingCancellationRequest
+  body: PlanChangePendingCancellationRequest,
 ) {
   if (env.SUBSCRIPTION_MODE === "organization") {
-    const organizationId =
-      body.organizationId ?? auth.session.activeOrganizationId ?? undefined;
+    const organizationId = body.organizationId ?? auth.session.activeOrganizationId ?? undefined;
     if (!organizationId) {
       throw createError({
         statusCode: 400,
@@ -104,10 +101,7 @@ function isAppAdmin(auth: AuthenticatedUser): boolean {
     .includes(auth.user.email.trim().toLowerCase());
 }
 
-function readString(
-  source: Record<string, unknown> | undefined,
-  key: string
-): string | undefined {
+function readString(source: Record<string, unknown> | undefined, key: string): string | undefined {
   const value = source?.[key];
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
@@ -115,15 +109,15 @@ function readString(
 function isCurrentSubscription(subscription: Subscription): boolean {
   return Boolean(
     subscription.status === "active" ||
-      (subscription.status === "canceled" &&
-        subscription.currentPeriodEnd &&
-        subscription.currentPeriodEnd > new Date())
+    (subscription.status === "canceled" &&
+      subscription.currentPeriodEnd &&
+      subscription.currentPeriodEnd > new Date()),
   );
 }
 
 function readMembershipTargetId(
   subscription: Subscription,
-  targetType: "user" | "organization"
+  targetType: "user" | "organization",
 ): string | undefined {
   if (targetType === "organization") {
     return (
@@ -151,20 +145,16 @@ function roleListIncludes(role: string | null, expectedRole: string): boolean {
 
 function subscriptionMatchesTarget(
   subscription: Subscription,
-  target: ReturnType<typeof resolveMembershipTarget>
+  target: ReturnType<typeof resolveMembershipTarget>,
 ): boolean {
   return readMembershipTargetId(subscription, target.type) === target.id;
 }
 
-function isPlanChangeBillingCadence(
-  value: string
-): value is PlanChangeBillingCadence {
+function isPlanChangeBillingCadence(value: string): value is PlanChangeBillingCadence {
   return value === "monthly" || value === "yearly";
 }
 
-function mapPendingDirection(
-  direction: string
-): PendingPlanChangeRecord["direction"] {
+function mapPendingDirection(direction: string): PendingPlanChangeRecord["direction"] {
   if (direction === "downgrade" || direction === "cadence_change") {
     return direction;
   }
@@ -180,22 +170,18 @@ function mapPendingMembershipTarget(input: {
     return { type: input.type, id: input.id };
   }
 
-  throw new Error(
-    "Stored Pending Plan change has an invalid Membership target"
-  );
+  throw new Error("Stored Pending Plan change has an invalid Membership target");
 }
 
 function mapTargetPlanSnapshot(
-  snapshot: PendingPlanChangeRow["targetPlanSnapshot"]
+  snapshot: PendingPlanChangeRow["targetPlanSnapshot"],
 ): PlanChangeCatalogPlan {
   if (!snapshot) {
     throw new Error("Stored Pending Plan change is missing its target Plan");
   }
 
   if (!isPlanChangeBillingCadence(snapshot.billingCadence)) {
-    throw new Error(
-      "Stored Pending Plan change target Plan has an invalid Billing cadence"
-    );
+    throw new Error("Stored Pending Plan change target Plan has an invalid Billing cadence");
   }
 
   return {
@@ -204,9 +190,7 @@ function mapTargetPlanSnapshot(
   };
 }
 
-function mapPendingPlanChangeRecord(
-  row: PendingPlanChangeRow
-): PendingPlanChangeRecord {
+function mapPendingPlanChangeRecord(row: PendingPlanChangeRow): PendingPlanChangeRecord {
   return {
     direction: mapPendingDirection(row.direction),
     effectiveAt: row.effectiveAt,
@@ -228,8 +212,7 @@ function selectPendingPlanChangeFields() {
     id: pendingPlanChangeTable.id,
     membershipTargetId: pendingPlanChangeTable.membershipTargetId,
     membershipTargetType: pendingPlanChangeTable.membershipTargetType,
-    providerConfirmedPlanChangeId:
-      pendingPlanChangeTable.providerConfirmedPlanChangeId,
+    providerConfirmedPlanChangeId: pendingPlanChangeTable.providerConfirmedPlanChangeId,
     subscriptionId: pendingPlanChangeTable.subscriptionId,
     targetPlanSnapshot: pendingPlanChangeTable.targetPlanSnapshot,
   };
@@ -246,14 +229,12 @@ function createPlanChangeStore(options: {
         .where(
           and(
             eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending")
-          )
+            eq(pendingPlanChangeTable.status, "pending"),
+          ),
         )
         .returning(selectPendingPlanChangeFields());
 
-      return deletedPendingPlanChange
-        ? mapPendingPlanChangeRecord(deletedPendingPlanChange)
-        : null;
+      return deletedPendingPlanChange ? mapPendingPlanChangeRecord(deletedPendingPlanChange) : null;
     },
     async clearPendingPlanChange(subscriptionId) {
       const [deletedPendingPlanChange] = await db
@@ -261,14 +242,12 @@ function createPlanChangeStore(options: {
         .where(
           and(
             eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending")
-          )
+            eq(pendingPlanChangeTable.status, "pending"),
+          ),
         )
         .returning(selectPendingPlanChangeFields());
 
-      return deletedPendingPlanChange
-        ? mapPendingPlanChangeRecord(deletedPendingPlanChange)
-        : null;
+      return deletedPendingPlanChange ? mapPendingPlanChangeRecord(deletedPendingPlanChange) : null;
     },
     async findCurrentSubscription(input) {
       let subscriptions = await options.provider.listSubscriptions({
@@ -278,17 +257,12 @@ function createPlanChangeStore(options: {
       });
 
       if (subscriptions.length === 0) {
-        subscriptions = await discoverSubscriptionsFromDb(
-          options.auth.user.id,
-          options.provider
-        );
+        subscriptions = await discoverSubscriptionsFromDb(options.auth.user.id, options.provider);
       }
 
       const currentSubscription = subscriptions
         .filter(isCurrentSubscription)
-        .find((subscription) =>
-          subscriptionMatchesTarget(subscription, input.membershipTarget)
-        );
+        .find((subscription) => subscriptionMatchesTarget(subscription, input.membershipTarget));
       if (!currentSubscription) {
         return null;
       }
@@ -296,18 +270,9 @@ function createPlanChangeStore(options: {
       return {
         id: currentSubscription.id,
         paymentProvider: options.provider.provider,
-        paymentIntegrationId: readString(
-          currentSubscription.metadata,
-          "providerIntegrationId"
-        ),
-        organizationId: readMembershipTargetId(
-          currentSubscription,
-          "organization"
-        ),
-        subscriptionOwnerUserId: readMembershipTargetId(
-          currentSubscription,
-          "user"
-        ),
+        paymentIntegrationId: readString(currentSubscription.metadata, "providerIntegrationId"),
+        organizationId: readMembershipTargetId(currentSubscription, "organization"),
+        subscriptionOwnerUserId: readMembershipTargetId(currentSubscription, "user"),
       };
     },
     async findPendingPlanChange(subscriptionId) {
@@ -317,14 +282,12 @@ function createPlanChangeStore(options: {
         .where(
           and(
             eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending")
-          )
+            eq(pendingPlanChangeTable.status, "pending"),
+          ),
         )
         .limit(1);
 
-      return pendingPlanChange
-        ? mapPendingPlanChangeRecord(pendingPlanChange)
-        : null;
+      return pendingPlanChange ? mapPendingPlanChangeRecord(pendingPlanChange) : null;
     },
     async isBillingManager(input) {
       const [membership] = await db
@@ -333,15 +296,12 @@ function createPlanChangeStore(options: {
           memberRole: memberTable.role,
         })
         .from(memberTable)
-        .innerJoin(
-          organizationTable,
-          eq(memberTable.organizationId, organizationTable.id)
-        )
+        .innerJoin(organizationTable, eq(memberTable.organizationId, organizationTable.id))
         .where(
           and(
             eq(memberTable.userId, input.actorUserId),
-            eq(memberTable.organizationId, input.organizationId)
-          )
+            eq(memberTable.organizationId, input.organizationId),
+          ),
         )
         .limit(1);
 
@@ -351,7 +311,7 @@ function createPlanChangeStore(options: {
 
       return roleListIncludes(
         membership.memberRole,
-        membership.billingManagedByRole ?? DEFAULT_BILLING_MANAGER_ROLE
+        membership.billingManagedByRole ?? DEFAULT_BILLING_MANAGER_ROLE,
       );
     },
     listActiveVisiblePricingCatalogPlans() {
@@ -393,10 +353,7 @@ function rethrowPlanChangeCancellationError(error: unknown): never {
 
   throw createError({
     statusCode: 500,
-    message:
-      error instanceof Error
-        ? error.message
-        : "Failed to cancel Pending Plan change",
+    message: error instanceof Error ? error.message : "Failed to cancel Pending Plan change",
   });
 }
 
@@ -404,9 +361,7 @@ export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
 
   try {
-    const body = planChangePendingCancellationSchema.parse(
-      (await readBody(event)) ?? {}
-    );
+    const body = planChangePendingCancellationSchema.parse((await readBody(event)) ?? {});
     const provider = await ensurePaymentProvider();
     const paymentIntegrationId = resolvePaymentIntegrationId(provider.provider);
     const membershipTarget = resolveMembershipTarget(auth, body);

@@ -11,10 +11,7 @@ interface RemoveModuleOptions {
   skipInstall?: boolean; // Reserved for future use
 }
 
-export async function removeModule(
-  name: string,
-  _options: RemoveModuleOptions = {}
-) {
+export async function removeModule(name: string, _options: RemoveModuleOptions = {}) {
   const mod = modules.find((m) => m.name === name);
   if (!mod) {
     throw new Error(`Unknown module: ${name}`);
@@ -38,10 +35,7 @@ export async function removeModule(
   await runCodemods(mod.codemods);
 }
 
-async function removePackageDir(
-  workspaceRoot: string,
-  packageDir?: string
-): Promise<void> {
+async function removePackageDir(workspaceRoot: string, packageDir?: string): Promise<void> {
   if (!packageDir) {
     return;
   }
@@ -66,10 +60,7 @@ async function cleanProjectDependencies(mod: {
   }
 }
 
-async function removeModuleFiles(
-  workspaceRoot: string,
-  fileGlobs?: string[]
-): Promise<void> {
+async function removeModuleFiles(workspaceRoot: string, fileGlobs?: string[]): Promise<void> {
   if (!fileGlobs?.length) {
     return;
   }
@@ -96,9 +87,7 @@ async function runCodemods(codemods?: string[]): Promise<void> {
       await run();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      process.stderr.write(
-        pc.yellow(`Warning: Failed to run codemod ${codemod}: ${message}\n`)
-      );
+      process.stderr.write(pc.yellow(`Warning: Failed to run codemod ${codemod}: ${message}\n`));
     }
   }
 }

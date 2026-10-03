@@ -49,7 +49,7 @@ const SHA256_PREFIX_LENGTH = 7;
 export function verifyWebhookSignature(
   payload: string,
   signature: string,
-  secret: string
+  secret: string,
 ): boolean {
   try {
     const expectedSignature = crypto
@@ -63,7 +63,7 @@ export function verifyWebhookSignature(
 
     return crypto.timingSafeEqual(
       Buffer.from(expectedSignature, "hex"),
-      Buffer.from(normalizedSignature, "hex")
+      Buffer.from(normalizedSignature, "hex"),
     );
   } catch (_error) {
     return false;
@@ -119,9 +119,7 @@ export type WebhookPayloadData = {
 /**
  * Webhook payload handler function type
  */
-export type WebhookPayloadHandler = (
-  payload: WebhookPayloadData
-) => Promise<void>;
+export type WebhookPayloadHandler = (payload: WebhookPayloadData) => Promise<void>;
 
 /**
  * Webhook payload types from Polar
@@ -147,15 +145,10 @@ export type MembershipUpdate = {
  * Webhook event handlers
  */
 export class WebhookEventHandler {
-  private readonly membershipUpdateCallback?: (
-    update: MembershipUpdate
-  ) => Promise<void>;
-  private readonly customHandlers: Map<string, WebhookPayloadHandler> =
-    new Map();
+  private readonly membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>;
+  private readonly customHandlers: Map<string, WebhookPayloadHandler> = new Map();
 
-  constructor(
-    membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>
-  ) {
+  constructor(membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>) {
     this.membershipUpdateCallback = membershipUpdateCallback;
   }
 
@@ -225,9 +218,7 @@ export class WebhookEventHandler {
   /**
    * Handle active subscription
    */
-  private async handleSubscriptionActive(
-    subscription?: Subscription
-  ): Promise<void> {
+  private async handleSubscriptionActive(subscription?: Subscription): Promise<void> {
     if (!(subscription?.metadata?.userId && subscription.metadata.tier)) {
       return;
     }
@@ -249,9 +240,7 @@ export class WebhookEventHandler {
   /**
    * Handle canceled subscription
    */
-  private async handleSubscriptionCanceled(
-    subscription?: Subscription
-  ): Promise<void> {
+  private async handleSubscriptionCanceled(subscription?: Subscription): Promise<void> {
     if (!subscription?.metadata?.userId) {
       return;
     }
@@ -273,9 +262,7 @@ export class WebhookEventHandler {
   /**
    * Handle revoked subscription (immediate termination)
    */
-  private async handleSubscriptionRevoked(
-    subscription?: Subscription
-  ): Promise<void> {
+  private async handleSubscriptionRevoked(subscription?: Subscription): Promise<void> {
     if (!subscription?.metadata?.userId) {
       return;
     }
@@ -295,9 +282,7 @@ export class WebhookEventHandler {
   /**
    * Handle past due subscription
    */
-  private async handleSubscriptionPastDue(
-    subscription?: Subscription
-  ): Promise<void> {
+  private async handleSubscriptionPastDue(subscription?: Subscription): Promise<void> {
     if (!(subscription?.metadata?.userId && subscription.metadata.tier)) {
       return;
     }
@@ -319,9 +304,7 @@ export class WebhookEventHandler {
   /**
    * Handle subscription updated (plan change/upgrade/downgrade)
    */
-  private async handleSubscriptionUpdated(
-    subscription?: Subscription
-  ): Promise<void> {
+  private async handleSubscriptionUpdated(subscription?: Subscription): Promise<void> {
     if (!subscription?.metadata?.userId) {
       return;
     }
@@ -330,10 +313,7 @@ export class WebhookEventHandler {
     let newTier: MembershipTier = "free";
     const productName = subscription.product?.name?.toLowerCase() || "";
 
-    if (
-      productName.includes("ultimate") ||
-      productName.includes("enterprise")
-    ) {
+    if (productName.includes("ultimate") || productName.includes("enterprise")) {
       newTier = "enterprise";
     } else if (productName.includes("pro")) {
       newTier = "pro";
@@ -378,7 +358,7 @@ export class WebhookEventHandler {
  * Create webhook handler with database integration
  */
 export function createWebhookHandler(
-  membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>
+  membershipUpdateCallback?: (update: MembershipUpdate) => Promise<void>,
 ): WebhookEventHandler {
   return new WebhookEventHandler(membershipUpdateCallback);
 }
@@ -387,7 +367,7 @@ export function createWebhookHandler(
  * Create default webhook handlers for common events
  */
 export function createDefaultWebhookHandlers(
-  customHandlers: Record<string, WebhookPayloadHandler> = {}
+  customHandlers: Record<string, WebhookPayloadHandler> = {},
 ): Record<string, WebhookPayloadHandler> {
   return {
     "order.paid":
@@ -431,9 +411,7 @@ export function createDefaultWebhookHandlers(
         // Default no-op handler
       }),
     // Add any custom handlers
-    ...Object.fromEntries(
-      Object.entries(customHandlers).filter(([key]) => !key.startsWith("on"))
-    ),
+    ...Object.fromEntries(Object.entries(customHandlers).filter(([key]) => !key.startsWith("on"))),
   };
 }
 
@@ -448,21 +426,16 @@ export async function handleWebhookRequest(
       };
     };
   },
-  handlers: Record<string, WebhookPayloadHandler>
+  handlers: Record<string, WebhookPayloadHandler>,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Import h3 readBody function dynamically
     const { readBody, getHeader } = await import("h3");
 
-    const body = await readBody(
-      event as unknown as H3Event<EventHandlerRequest>
-    );
+    const body = await readBody(event as unknown as H3Event<EventHandlerRequest>);
     const bodyString = typeof body === "string" ? body : JSON.stringify(body);
     const signature =
-      getHeader(
-        event as unknown as H3Event<EventHandlerRequest>,
-        "x-polar-signature"
-      ) || "";
+      getHeader(event as unknown as H3Event<EventHandlerRequest>, "x-polar-signature") || "";
 
     const { env } = await import("@/env");
     const webhookSecret = env.POLAR_WEBHOOK_SECRET;
@@ -473,8 +446,7 @@ export async function handleWebhookRequest(
     }
 
     // Parse payload
-    const payload: PolarWebhookPayload =
-      typeof body === "string" ? JSON.parse(body) : body;
+    const payload: PolarWebhookPayload = typeof body === "string" ? JSON.parse(body) : body;
 
     // Handle the event with registered handlers
     const handler = handlers[payload.type];

@@ -35,9 +35,7 @@ function isAppAdmin(session: AuthenticatedSession): boolean {
 /**
  * Get authenticated session or throw 401
  */
-async function getAuthenticatedSession(
-  event: H3Event
-): Promise<AuthenticatedSession> {
+async function getAuthenticatedSession(event: H3Event): Promise<AuthenticatedSession> {
   const session = await auth.api.getSession({ headers: event.headers });
 
   if (!session) {
@@ -84,7 +82,7 @@ export const requireAdmin: EventHandler = async (event: H3Event) => {
  */
 export async function requireOwnerOrAdmin(
   event: H3Event,
-  resourceOwnerId: string | null | undefined
+  resourceOwnerId: string | null | undefined,
 ): Promise<AuthenticatedSession> {
   const session = await getAuthenticatedSession(event);
 
@@ -105,9 +103,7 @@ export async function requireOwnerOrAdmin(
  * Get current session without requiring authentication.
  * Returns null if not authenticated.
  */
-export async function getOptionalSession(
-  event: H3Event
-): Promise<Session | null> {
+export async function getOptionalSession(event: H3Event): Promise<Session | null> {
   const session = await auth.api.getSession({ headers: event.headers });
   if (session) {
     event.context.auth = session;

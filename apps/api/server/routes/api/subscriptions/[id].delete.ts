@@ -32,23 +32,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (
-      !isSubscriptionOwnedByUser(
-        currentSubscription,
-        auth,
-        env.SUBSCRIPTION_MODE
-      )
-    ) {
+    if (!isSubscriptionOwnedByUser(currentSubscription, auth, env.SUBSCRIPTION_MODE)) {
       throw createError({
         statusCode: 403,
         message: "Access denied",
       });
     }
 
-    const subscription = await provider.cancelSubscription(
-      subscriptionId,
-      immediately
-    );
+    const subscription = await provider.cancelSubscription(subscriptionId, immediately);
 
     return {
       provider: provider.provider,
@@ -69,10 +60,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to cancel subscription",
+      message: error instanceof Error ? error.message : "Failed to cancel subscription",
     });
   }
 });

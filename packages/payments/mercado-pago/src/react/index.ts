@@ -18,12 +18,7 @@ export type {
 } from "../types.js";
 
 // Re-export utility functions
-export {
-  formatFrequency,
-  formatPlanPrice,
-  getStatusColor,
-  getStatusLabel,
-} from "../types.js";
+export { formatFrequency, formatPlanPrice, getStatusColor, getStatusLabel } from "../types.js";
 
 // Components
 export {

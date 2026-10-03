@@ -64,12 +64,7 @@ export const createPlanSchema = z.object({
       .max(MAX_TRANSACTION_AMOUNT, "Amount is too large"),
     currency_id: z.string().min(1, "Currency is required"),
     repetitions: z.number().int().positive().optional(),
-    billing_day: z
-      .number()
-      .int()
-      .min(MIN_BILLING_DAY)
-      .max(MAX_BILLING_DAY)
-      .optional(),
+    billing_day: z.number().int().min(MIN_BILLING_DAY).max(MAX_BILLING_DAY).optional(),
     billing_day_proportional: z.boolean().optional(),
     free_trial: z
       .object({
@@ -399,11 +394,7 @@ export type MPRefundResponse = {
 export type MPPaymentSearchParams = {
   begin_date?: string;
   end_date?: string;
-  sort?:
-    | "date_created"
-    | "date_approved"
-    | "date_last_updated"
-    | "money_release_date";
+  sort?: "date_created" | "date_approved" | "date_last_updated" | "money_release_date";
   criteria?: "asc" | "desc";
   external_reference?: string;
   status?: PaymentStatus;
@@ -592,12 +583,8 @@ export type ProcessPaymentResponse = {
 // Utility Functions
 // ============================================================================
 
-export function formatPlanPrice(
-  amount: number | string,
-  currencyId: string
-): string {
-  const numAmount =
-    typeof amount === "string" ? Number.parseFloat(amount) : amount;
+export function formatPlanPrice(amount: number | string, currencyId: string): string {
+  const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
   return new Intl.NumberFormat("es-UY", {
     style: "currency",
     currency: currencyId,
@@ -606,10 +593,7 @@ export function formatPlanPrice(
   }).format(numAmount);
 }
 
-export function formatFrequency(
-  frequency: number,
-  frequencyType: string
-): string {
+export function formatFrequency(frequency: number, frequencyType: string): string {
   const typeLabel = frequencyType === "months" ? "mes" : "día";
   const plural = frequency > 1 ? (frequencyType === "months" ? "es" : "s") : "";
 
@@ -657,9 +641,7 @@ export function parseDate(dateStr: string | undefined | null): Date | null {
 /**
  * Safe string conversion for numeric IDs
  */
-export function toStringId(
-  id: number | string | undefined | null
-): string | null {
+export function toStringId(id: number | string | undefined | null): string | null {
   if (id === undefined || id === null) {
     return null;
   }

@@ -40,7 +40,4 @@ export type {
 } from "./types.js";
 
 // Webhook utilities
-export {
-  createDefaultWebhookHandlers,
-  verifyWebhookSignature,
-} from "./webhooks.js";
+export { createDefaultWebhookHandlers, verifyWebhookSignature } from "./webhooks.js";

@@ -23,11 +23,7 @@ export default defineEventHandler(async (event) => {
   const rawBody = await readBody(event);
   const body = syncSchema.parse(rawBody);
 
-  const [dbPlan] = await db
-    .select()
-    .from(plan)
-    .where(eq(plan.id, body.planId))
-    .limit(1);
+  const [dbPlan] = await db.select().from(plan).where(eq(plan.id, body.planId)).limit(1);
 
   if (body.direction === "push-to-provider") {
     if (!dbPlan) {

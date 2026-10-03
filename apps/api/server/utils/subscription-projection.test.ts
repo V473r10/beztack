@@ -13,22 +13,16 @@ import {
   type SubscriptionProjectionStore,
 } from "./subscription-projection";
 
-type StoredSubscription = Parameters<
-  SubscriptionProjectionStore["upsertSubscription"]
->[0];
+type StoredSubscription = Parameters<SubscriptionProjectionStore["upsertSubscription"]>[0];
 
-type StoredPayment = Parameters<
-  SubscriptionProjectionStore["upsertPayment"]
->[0];
+type StoredPayment = Parameters<SubscriptionProjectionStore["upsertPayment"]>[0];
 
 const FIRST_WEBHOOK_LOG_ID = 1;
 const PRORATED_UPGRADE_AMOUNT = 250;
 const FULL_UPGRADE_AMOUNT = 1000;
 const PLAN_CHANGE_EFFECTIVE_AT = new Date("2026-06-01T00:00:00.000Z");
 
-function catalogPlan(
-  overrides: Partial<PlanChangeCatalogPlan> = {}
-): PlanChangeCatalogPlan {
+function catalogPlan(overrides: Partial<PlanChangeCatalogPlan> = {}): PlanChangeCatalogPlan {
   return {
     id: "mercadopago_basic_month",
     paymentProvider: "mercadopago",
@@ -42,7 +36,7 @@ function catalogPlan(
 }
 
 function pendingPlanChange(
-  overrides: Partial<PendingPlanChangeRecord> = {}
+  overrides: Partial<PendingPlanChangeRecord> = {},
 ): PendingPlanChangeRecord {
   return {
     id: "pending_sub_1",
@@ -71,9 +65,7 @@ function createStore(options?: {
     organizationMemberships: Map<string, Record<string, unknown>>;
     webhookLogs: Map<string, { id: number; status: string | null }>;
     pendingPlanChanges: Map<string, PendingPlanChangeRecord>;
-    planChangeMembershipMoves: Parameters<
-      PlanChangeProjectionStore["moveMembershipToPlan"]
-    >[0][];
+    planChangeMembershipMoves: Parameters<PlanChangeProjectionStore["moveMembershipToPlan"]>[0][];
   } {
   let nextLogId = FIRST_WEBHOOK_LOG_ID;
   const users = new Set(options?.users ?? []);
@@ -89,10 +81,7 @@ function createStore(options?: {
     PlanChangeProjectionStore["moveMembershipToPlan"]
   >[0][] = [];
   for (const existingPendingPlanChange of options?.pendingPlanChanges ?? []) {
-    pendingPlanChanges.set(
-      existingPendingPlanChange.subscriptionId,
-      existingPendingPlanChange
-    );
+    pendingPlanChanges.set(existingPendingPlanChange.subscriptionId, existingPendingPlanChange);
   }
 
   return {
@@ -104,14 +93,12 @@ function createStore(options?: {
     pendingPlanChanges,
     planChangeMembershipMoves,
     cancelPendingPlanChange(subscriptionId) {
-      const canceledPendingPlanChange =
-        pendingPlanChanges.get(subscriptionId) ?? null;
+      const canceledPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
       pendingPlanChanges.delete(subscriptionId);
       return Promise.resolve(canceledPendingPlanChange);
     },
     clearPendingPlanChange(subscriptionId) {
-      const clearedPendingPlanChange =
-        pendingPlanChanges.get(subscriptionId) ?? null;
+      const clearedPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
       pendingPlanChanges.delete(subscriptionId);
       return Promise.resolve(clearedPendingPlanChange);
     },
@@ -121,8 +108,8 @@ function createStore(options?: {
     listActiveVisiblePricingCatalogPlans(paymentProvider) {
       return Promise.resolve(
         (options?.plans ?? [catalogPlan()]).filter(
-          (plan) => plan.paymentProvider === paymentProvider
-        )
+          (plan) => plan.paymentProvider === paymentProvider,
+        ),
       );
     },
     findWebhookLogByEventKey(eventKey) {
@@ -194,14 +181,14 @@ function createStore(options?: {
 
       if (input.membershipTarget.type === "organization") {
         organizationMemberships.set(input.membershipTarget.id, {
-          ...(organizationMemberships.get(input.membershipTarget.id) ?? {}),
+          ...organizationMemberships.get(input.membershipTarget.id),
           ...updates,
         });
         return Promise.resolve();
       }
 
       userMemberships.set(input.membershipTarget.id, {
-        ...(userMemberships.get(input.membershipTarget.id) ?? {}),
+        ...userMemberships.get(input.membershipTarget.id),
         ...updates,
       });
       return Promise.resolve();
@@ -227,9 +214,7 @@ function createProvider(options: {
 }): SubscriptionProjectionProviderAdapter {
   return {
     provider: "mercadopago",
-    getSubscription: vi.fn((id) =>
-      Promise.resolve(options.subscriptions?.[id] ?? null)
-    ),
+    getSubscription: vi.fn((id) => Promise.resolve(options.subscriptions?.[id] ?? null)),
     getPayment: vi.fn((id) => Promise.resolve(options.payments?.[id] ?? null)),
     adjustSubscriptionAmount: vi.fn(() => Promise.resolve()),
     cancelSubscription: vi.fn(() => Promise.resolve()),
@@ -237,7 +222,7 @@ function createProvider(options: {
 }
 
 function subscriptionEnvelope(
-  overrides: Partial<SubscriptionProjectionEventEnvelope> = {}
+  overrides: Partial<SubscriptionProjectionEventEnvelope> = {},
 ): SubscriptionProjectionEventEnvelope {
   return {
     provider: "mercadopago",
@@ -252,7 +237,7 @@ function subscriptionEnvelope(
 }
 
 function paymentEnvelope(
-  overrides: Partial<SubscriptionProjectionEventEnvelope> = {}
+  overrides: Partial<SubscriptionProjectionEventEnvelope> = {},
 ): SubscriptionProjectionEventEnvelope {
   return {
     provider: "mercadopago",
@@ -286,14 +271,11 @@ describe("projectSubscriptionProviderEvent", () => {
       },
     });
 
-    const outcome = await projectSubscriptionProviderEvent(
-      subscriptionEnvelope(),
-      {
-        store,
-        provider,
-        subscriptionMode: "user",
-      }
-    );
+    const outcome = await projectSubscriptionProviderEvent(subscriptionEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+    });
 
     expect(outcome.status).toBe("processed");
     expect(store.subscriptions.get("sub_1")).toMatchObject({
@@ -354,10 +336,7 @@ describe("projectSubscriptionProviderEvent", () => {
     });
 
     expect(outcome.status).toBe("processed");
-    expect(provider.adjustSubscriptionAmount).toHaveBeenCalledWith(
-      "sub_new",
-      FULL_UPGRADE_AMOUNT
-    );
+    expect(provider.adjustSubscriptionAmount).toHaveBeenCalledWith("sub_new", FULL_UPGRADE_AMOUNT);
     expect(provider.cancelSubscription).toHaveBeenCalledWith("sub_old", true);
     expect(store.payments.get("pay_1")).toMatchObject({
       id: "pay_1",
@@ -402,7 +381,7 @@ describe("projectSubscriptionProviderEvent", () => {
         store,
         provider,
         subscriptionMode: "user",
-      }
+      },
     );
 
     expect(outcome.status).toBe("processed");
@@ -483,18 +462,15 @@ describe("projectSubscriptionProviderEvent", () => {
       },
     });
 
-    const outcome = await projectSubscriptionProviderEvent(
-      subscriptionEnvelope(),
-      {
-        store,
-        provider,
-        subscriptionMode: "user",
-      }
-    );
+    const outcome = await projectSubscriptionProviderEvent(subscriptionEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+    });
 
     expect(outcome.status).toBe("processed");
     expect(outcome.warnings).toContain(
-      "Membership target could not be resolved for Subscription sub_1"
+      "Membership target could not be resolved for Subscription sub_1",
     );
     expect(store.subscriptions.get("sub_1")).toMatchObject({
       id: "sub_1",
@@ -535,7 +511,7 @@ describe("projectSubscriptionProviderEvent", () => {
         store,
         provider,
         subscriptionMode: "organization",
-      }
+      },
     );
 
     expect(outcome.status).toBe("processed");
@@ -556,13 +532,11 @@ describe("projectSubscriptionProviderEvent", () => {
         store,
         provider,
         subscriptionMode: "user",
-      }
+      },
     );
 
     expect(outcome.status).toBe("skipped");
-    expect(outcome.warnings).toContain(
-      "Provider Subscription sub_cross_app was not found"
-    );
+    expect(outcome.warnings).toContain("Provider Subscription sub_cross_app was not found");
     expect(store.subscriptions.size).toBe(0);
     expect(store.userMemberships.size).toBe(0);
   });
@@ -637,16 +611,13 @@ describe("projectSubscriptionProviderEvent", () => {
       },
     });
 
-    const outcome = await projectSubscriptionProviderEvent(
-      subscriptionEnvelope(),
-      {
-        store,
-        provider,
-        subscriptionMode: "user",
-        planChangeStore: store,
-        now: () => PLAN_CHANGE_EFFECTIVE_AT,
-      }
-    );
+    const outcome = await projectSubscriptionProviderEvent(subscriptionEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+      planChangeStore: store,
+      now: () => PLAN_CHANGE_EFFECTIVE_AT,
+    });
 
     expect(outcome.status).toBe("processed");
     expect(outcome.touched.pendingPlanChangeId).toBe("pending_sub_1");
@@ -693,12 +664,12 @@ describe("projectSubscriptionProviderEvent", () => {
         subscriptionMode: "user",
         planChangeStore: store,
         now: () => PLAN_CHANGE_EFFECTIVE_AT,
-      }
+      },
     );
 
     expect(outcome.status).toBe("processed");
     expect(outcome.warnings).toContain(
-      "Plan change provider_basic_year is still reconciling: database unavailable"
+      "Plan change provider_basic_year is still reconciling: database unavailable",
     );
     expect(store.pendingPlanChanges).toEqual(new Map());
   });
@@ -712,9 +683,7 @@ describe("projectSubscriptionProviderEvent", () => {
     });
     const store = createStore({
       users: ["user_1"],
-      pendingPlanChanges: [
-        pendingPlanChange({ targetPlanSnapshot: acceptedTargetSnapshot }),
-      ],
+      pendingPlanChanges: [pendingPlanChange({ targetPlanSnapshot: acceptedTargetSnapshot })],
     });
     const provider = createProvider({
       subscriptions: {
@@ -733,16 +702,13 @@ describe("projectSubscriptionProviderEvent", () => {
       },
     });
 
-    const outcome = await projectSubscriptionProviderEvent(
-      subscriptionEnvelope(),
-      {
-        store,
-        provider,
-        subscriptionMode: "user",
-        planChangeStore: store,
-        now: () => PLAN_CHANGE_EFFECTIVE_AT,
-      }
-    );
+    const outcome = await projectSubscriptionProviderEvent(subscriptionEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+      planChangeStore: store,
+      now: () => PLAN_CHANGE_EFFECTIVE_AT,
+    });
 
     expect(outcome.status).toBe("processed");
     expect(outcome.touched.pendingPlanChangeId).toBe("pending_sub_1");
@@ -784,16 +750,13 @@ describe("projectSubscriptionProviderEvent", () => {
       },
     });
 
-    const outcome = await projectSubscriptionProviderEvent(
-      subscriptionEnvelope(),
-      {
-        store,
-        provider,
-        subscriptionMode: "user",
-        planChangeStore: store,
-        now: () => PLAN_CHANGE_EFFECTIVE_AT,
-      }
-    );
+    const outcome = await projectSubscriptionProviderEvent(subscriptionEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+      planChangeStore: store,
+      now: () => PLAN_CHANGE_EFFECTIVE_AT,
+    });
 
     expect(outcome.status).toBe("processed");
     expect(outcome.touched.pendingPlanChangeId).toBe("pending_sub_1");
@@ -836,7 +799,7 @@ describe("projectSubscriptionProviderEvent", () => {
         subscriptionMode: "user",
         planChangeStore: store,
         now: () => PLAN_CHANGE_EFFECTIVE_AT,
-      }
+      },
     );
 
     expect(outcome.status).toBe("processed");
@@ -866,22 +829,16 @@ describe("projectSubscriptionProviderEvent", () => {
         },
       });
 
-    const first = await projectSubscriptionProviderEvent(
-      subscriptionEnvelope(),
-      {
-        store,
-        provider,
-        subscriptionMode: "user",
-      }
-    );
-    const second = await projectSubscriptionProviderEvent(
-      subscriptionEnvelope(),
-      {
-        store,
-        provider,
-        subscriptionMode: "user",
-      }
-    );
+    const first = await projectSubscriptionProviderEvent(subscriptionEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+    });
+    const second = await projectSubscriptionProviderEvent(subscriptionEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+    });
 
     expect(first.status).toBe("failed");
     expect(second.status).toBe("processed");

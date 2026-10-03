@@ -8,9 +8,7 @@ interface RollbackOptions {
 
 export async function runRollback(options: RollbackOptions): Promise<void> {
   const snapshotId =
-    typeof options.parsed.flags.snapshot === "string"
-      ? options.parsed.flags.snapshot
-      : undefined;
+    typeof options.parsed.flags.snapshot === "string" ? options.parsed.flags.snapshot : undefined;
 
   if (!snapshotId) {
     throw new Error("Missing --snapshot <id> for rollback");

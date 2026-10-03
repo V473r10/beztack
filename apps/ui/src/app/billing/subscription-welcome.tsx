@@ -44,9 +44,7 @@ function LoadingSkeleton() {
       <Card className="w-full">
         <CardContent className="flex flex-col items-center gap-4 py-12">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">
-            Cargando informacion de tu suscripcion...
-          </p>
+          <p className="text-muted-foreground">Cargando informacion de tu suscripcion...</p>
         </CardContent>
       </Card>
     </div>
@@ -65,29 +63,26 @@ function ErrorDisplay({
   onRetry: () => void;
   onGoHome: () => void;
 }) {
-  const errorMessages: Record<string, { title: string; description: string }> =
-    {
-      SUBSCRIPTION_NOT_FOUND: {
-        title: "Suscripcion no encontrada",
-        description:
-          "No pudimos encontrar la suscripcion. Verifica que el enlace sea correcto.",
-      },
-      SUBSCRIPTION_ACCESS_DENIED: {
-        title: "Acceso denegado",
-        description:
-          "No tienes permisos para ver esta suscripcion. Por favor inicia sesion con la cuenta correcta.",
-      },
-      SUBSCRIPTION_ID_REQUIRED: {
-        title: "Enlace incompleto",
-        description:
-          "El enlace no contiene la informacion necesaria. Por favor usa el enlace completo que recibiste.",
-      },
-      SUBSCRIPTION_FETCH_ERROR: {
-        title: "Error de conexion",
-        description:
-          "No pudimos conectar con el servidor. Por favor intenta de nuevo.",
-      },
-    };
+  const errorMessages: Record<string, { title: string; description: string }> = {
+    SUBSCRIPTION_NOT_FOUND: {
+      title: "Suscripcion no encontrada",
+      description: "No pudimos encontrar la suscripcion. Verifica que el enlace sea correcto.",
+    },
+    SUBSCRIPTION_ACCESS_DENIED: {
+      title: "Acceso denegado",
+      description:
+        "No tienes permisos para ver esta suscripcion. Por favor inicia sesion con la cuenta correcta.",
+    },
+    SUBSCRIPTION_ID_REQUIRED: {
+      title: "Enlace incompleto",
+      description:
+        "El enlace no contiene la informacion necesaria. Por favor usa el enlace completo que recibiste.",
+    },
+    SUBSCRIPTION_FETCH_ERROR: {
+      title: "Error de conexion",
+      description: "No pudimos conectar con el servidor. Por favor intenta de nuevo.",
+    },
+  };
 
   const errorInfo = errorMessages[error.message] || {
     title: "Error inesperado",
@@ -108,11 +103,7 @@ function ErrorDisplay({
         </CardHeader>
         <CardFooter className="flex flex-col gap-3">
           {error.message === "SUBSCRIPTION_FETCH_ERROR" && (
-            <Button
-              className="w-full gap-2"
-              onClick={onRetry}
-              variant="outline"
-            >
+            <Button className="w-full gap-2" onClick={onRetry} variant="outline">
               <RefreshCw className="h-4 w-4" />
               Intentar de nuevo
             </Button>
@@ -141,9 +132,8 @@ function MissingIdDisplay({ onGoHome }: { onGoHome: () => void }) {
           </div>
           <CardTitle>Enlace incompleto</CardTitle>
           <CardDescription>
-            Este enlace no contiene la informacion de tu suscripcion. Si acabas
-            de suscribirte, revisa el correo de confirmacion o contacta a
-            soporte.
+            Este enlace no contiene la informacion de tu suscripcion. Si acabas de suscribirte,
+            revisa el correo de confirmacion o contacta a soporte.
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -172,12 +162,7 @@ export default function SubscriptionWelcome() {
   const userName = session?.user?.name || undefined;
 
   // Fetch subscription details
-  const {
-    data: subscription,
-    isLoading,
-    error,
-    refetch,
-  } = useSubscriptionDetails(preapprovalId);
+  const { data: subscription, isLoading, error, refetch } = useSubscriptionDetails(preapprovalId);
 
   // Navigation handlers
   const handleNavigateToDashboard = () => navigate("/");
@@ -197,11 +182,7 @@ export default function SubscriptionWelcome() {
   // Handle error state
   if (error) {
     return (
-      <ErrorDisplay
-        error={error}
-        onGoHome={handleNavigateToDashboard}
-        onRetry={() => refetch()}
-      />
+      <ErrorDisplay error={error} onGoHome={handleNavigateToDashboard} onRetry={() => refetch()} />
     );
   }
 
@@ -211,13 +192,10 @@ export default function SubscriptionWelcome() {
   }
 
   const statusInfo = getStatusLabel(subscription.status);
-  const formattedPrice = formatAmount(
-    subscription.price.amount,
-    subscription.price.currency
-  );
+  const formattedPrice = formatAmount(subscription.price.amount, subscription.price.currency);
   const formattedFrequency = formatFrequency(
     subscription.price.frequency,
-    subscription.price.frequencyType
+    subscription.price.frequencyType,
   );
 
   return (
@@ -256,25 +234,17 @@ export default function SubscriptionWelcome() {
               <Receipt className="h-5 w-5" />
               Detalles del plan
             </CardTitle>
-            <CardDescription>
-              Informacion de tu suscripcion activa
-            </CardDescription>
+            <CardDescription>Informacion de tu suscripcion activa</CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">
             {/* Plan name and price */}
             <div className="rounded-lg bg-muted/50 p-4 text-center">
               <p className="mb-1 text-muted-foreground text-sm">Tu plan</p>
-              <h2 className="mb-2 font-semibold text-xl">
-                {subscription.plan.name}
-              </h2>
+              <h2 className="mb-2 font-semibold text-xl">{subscription.plan.name}</h2>
               <div className="flex items-baseline justify-center gap-1">
-                <span className="font-bold text-3xl text-primary">
-                  {formattedPrice}
-                </span>
-                <span className="text-muted-foreground">
-                  / {formattedFrequency}
-                </span>
+                <span className="font-bold text-3xl text-primary">{formattedPrice}</span>
+                <span className="text-muted-foreground">/ {formattedFrequency}</span>
               </div>
             </div>
 
@@ -288,14 +258,13 @@ export default function SubscriptionWelcome() {
                     <Calendar className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-xs">
-                      Proximo cobro
-                    </p>
+                    <p className="text-muted-foreground text-xs">Proximo cobro</p>
                     <p className="font-medium">
-                      {subscription.dates.nextPayment.toLocaleDateString(
-                        "es-AR",
-                        { day: "numeric", month: "long", year: "numeric" }
-                      )}
+                      {subscription.dates.nextPayment.toLocaleDateString("es-AR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
                     </p>
                   </div>
                 </div>
@@ -307,9 +276,7 @@ export default function SubscriptionWelcome() {
                     <CreditCard className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-xs">
-                      Metodo de pago
-                    </p>
+                    <p className="text-muted-foreground text-xs">Metodo de pago</p>
                     <p className="font-medium capitalize">
                       {subscription.paymentMethod.replace(/_/g, " ")}
                     </p>
@@ -366,9 +333,7 @@ export default function SubscriptionWelcome() {
 
         {/* Reference ID */}
         <div className="text-center">
-          <p className="font-mono text-muted-foreground text-xs">
-            Referencia: {subscription.id}
-          </p>
+          <p className="font-mono text-muted-foreground text-xs">Referencia: {subscription.id}</p>
         </div>
       </div>
     </div>

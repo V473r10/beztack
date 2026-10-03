@@ -81,9 +81,7 @@ export function NavUser() {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-muted-foreground text-xs">
-                  {user.email}
-                </span>
+                <span className="truncate text-muted-foreground text-xs">{user.email}</span>
                 <div className="mt-1">
                   <MembershipBadge size="sm" tier={currentTier} />
                 </div>
@@ -105,9 +103,7 @@ export function NavUser() {
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-muted-foreground text-xs">
-                    {user.email}
-                  </span>
+                  <span className="truncate text-muted-foreground text-xs">{user.email}</span>
                   <div className="mt-1">
                     <MembershipBadge size="sm" tier={currentTier} />
                   </div>

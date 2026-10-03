@@ -1,7 +1,6 @@
 {
   "name": "docs",
   "version": "0.1.0",
-
   "scripts": {
     "build": "next build",
     "dev": "next dev --port 3002",

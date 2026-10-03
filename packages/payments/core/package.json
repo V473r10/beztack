@@ -18,6 +18,15 @@
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "@types/node": "^24.10.2",
+    "@types/react": "^19.1.8",
+    "better-auth": "^1.0.0",
+    "react": "^19.0.0",
+    "typescript": "^5.9.3",
+    "zod": "^3.25.60"
+  },
   "peerDependencies": {
     "@beztack/mercadopago": "workspace:*",
     "@beztack/payments-polar": "workspace:*",
@@ -42,14 +51,5 @@
     "better-auth": {
       "optional": true
     }
-  },
-  "devDependencies": {
-    "@tanstack/react-query": "^5.0.0",
-    "@types/node": "^24.10.2",
-    "@types/react": "^19.1.8",
-    "better-auth": "^1.0.0",
-    "react": "^19.0.0",
-    "typescript": "^5.9.3",
-    "zod": "^3.25.60"
   }
 }

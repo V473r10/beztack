@@ -9,7 +9,7 @@ const PAYMENT_PROVIDERS = ["polar", "mercadopago"] as const;
 function assertRequired(name: string, value: string): void {
   if (!value) {
     throw new Error(
-      `Missing required environment variable "${name}" for the selected payment provider`
+      `Missing required environment variable "${name}" for the selected payment provider`,
     );
   }
 }
@@ -88,9 +88,7 @@ export const env = createEnv({
     APP_URL: z.string().url(),
 
     // Node
-    NODE_ENV: z
-      .enum(["development", "production", "test"])
-      .default("development"),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
 
   /**
@@ -118,57 +116,24 @@ assertUrl("PAYMENTS_CANCEL_URL/POLAR_CANCEL_URL", cancelUrl);
 if (activePaymentProvider === "polar") {
   assertRequired("POLAR_ACCESS_TOKEN", env.POLAR_ACCESS_TOKEN);
   assertRequired("POLAR_WEBHOOK_SECRET", env.POLAR_WEBHOOK_SECRET);
-  assertRequired(
-    "POLAR_BASIC_MONTHLY_PRODUCT_ID",
-    env.POLAR_BASIC_MONTHLY_PRODUCT_ID
-  );
-  assertRequired(
-    "POLAR_BASIC_YEARLY_PRODUCT_ID",
-    env.POLAR_BASIC_YEARLY_PRODUCT_ID
-  );
-  assertRequired(
-    "POLAR_PRO_MONTHLY_PRODUCT_ID",
-    env.POLAR_PRO_MONTHLY_PRODUCT_ID
-  );
-  assertRequired(
-    "POLAR_PRO_YEARLY_PRODUCT_ID",
-    env.POLAR_PRO_YEARLY_PRODUCT_ID
-  );
-  assertRequired(
-    "POLAR_ULTIMATE_MONTHLY_PRODUCT_ID",
-    env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID
-  );
-  assertRequired(
-    "POLAR_ULTIMATE_YEARLY_PRODUCT_ID",
-    env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID
-  );
+  assertRequired("POLAR_BASIC_MONTHLY_PRODUCT_ID", env.POLAR_BASIC_MONTHLY_PRODUCT_ID);
+  assertRequired("POLAR_BASIC_YEARLY_PRODUCT_ID", env.POLAR_BASIC_YEARLY_PRODUCT_ID);
+  assertRequired("POLAR_PRO_MONTHLY_PRODUCT_ID", env.POLAR_PRO_MONTHLY_PRODUCT_ID);
+  assertRequired("POLAR_PRO_YEARLY_PRODUCT_ID", env.POLAR_PRO_YEARLY_PRODUCT_ID);
+  assertRequired("POLAR_ULTIMATE_MONTHLY_PRODUCT_ID", env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID);
+  assertRequired("POLAR_ULTIMATE_YEARLY_PRODUCT_ID", env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID);
   assertRequired("POLAR_ORGANIZATION_ID", env.POLAR_ORGANIZATION_ID);
 
-  assertUuid(
-    "POLAR_BASIC_MONTHLY_PRODUCT_ID",
-    env.POLAR_BASIC_MONTHLY_PRODUCT_ID
-  );
-  assertUuid(
-    "POLAR_BASIC_YEARLY_PRODUCT_ID",
-    env.POLAR_BASIC_YEARLY_PRODUCT_ID
-  );
+  assertUuid("POLAR_BASIC_MONTHLY_PRODUCT_ID", env.POLAR_BASIC_MONTHLY_PRODUCT_ID);
+  assertUuid("POLAR_BASIC_YEARLY_PRODUCT_ID", env.POLAR_BASIC_YEARLY_PRODUCT_ID);
   assertUuid("POLAR_PRO_MONTHLY_PRODUCT_ID", env.POLAR_PRO_MONTHLY_PRODUCT_ID);
   assertUuid("POLAR_PRO_YEARLY_PRODUCT_ID", env.POLAR_PRO_YEARLY_PRODUCT_ID);
-  assertUuid(
-    "POLAR_ULTIMATE_MONTHLY_PRODUCT_ID",
-    env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID
-  );
-  assertUuid(
-    "POLAR_ULTIMATE_YEARLY_PRODUCT_ID",
-    env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID
-  );
+  assertUuid("POLAR_ULTIMATE_MONTHLY_PRODUCT_ID", env.POLAR_ULTIMATE_MONTHLY_PRODUCT_ID);
+  assertUuid("POLAR_ULTIMATE_YEARLY_PRODUCT_ID", env.POLAR_ULTIMATE_YEARLY_PRODUCT_ID);
   assertUuid("POLAR_ORGANIZATION_ID", env.POLAR_ORGANIZATION_ID);
 }
 
 if (activePaymentProvider === "mercadopago") {
   assertRequired("MERCADO_PAGO_ACCESS_TOKEN", env.MERCADO_PAGO_ACCESS_TOKEN);
-  assertRequired(
-    "MERCADO_PAGO_APPLICATION_ID",
-    env.MERCADO_PAGO_APPLICATION_ID
-  );
+  assertRequired("MERCADO_PAGO_APPLICATION_ID", env.MERCADO_PAGO_APPLICATION_ID);
 }

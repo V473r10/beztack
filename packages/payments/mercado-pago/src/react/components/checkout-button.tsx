@@ -14,10 +14,7 @@ export type CheckoutButtonProps = {
   pictureUrl?: string;
   onPreferenceCreated?: (preferenceId: string) => void;
   onError?: (error: Error) => void;
-  renderTrigger?: (props: {
-    onClick: () => void;
-    isLoading: boolean;
-  }) => React.ReactNode;
+  renderTrigger?: (props: { onClick: () => void; isLoading: boolean }) => React.ReactNode;
   className?: string;
 };
 
@@ -85,11 +82,7 @@ export function CheckoutButton({
   ]);
 
   if (!isInitialized) {
-    return (
-      <div
-        className={`h-12 animate-pulse rounded-lg bg-muted ${className ?? ""}`}
-      />
-    );
+    return <div className={`h-12 animate-pulse rounded-lg bg-muted ${className ?? ""}`} />;
   }
 
   return (
@@ -106,9 +99,7 @@ export function CheckoutButton({
           {isLoading ? "Cargando..." : "Pagar con Mercado Pago"}
         </button>
       )}
-      {preferenceId && (
-        <Wallet customization={{}} initialization={{ preferenceId }} />
-      )}
+      {preferenceId && <Wallet customization={{}} initialization={{ preferenceId }} />}
     </div>
   );
 }

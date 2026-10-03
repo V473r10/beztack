@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 import { DEFAULT_LOCALE, formatPriceLocalized, t } from "../../i18n/index.js";
-import {
-  getPaymentStatusConfig,
-  type PaymentStatusConfig,
-} from "./status-badge.js";
+import { getPaymentStatusConfig, type PaymentStatusConfig } from "./status-badge.js";
 
 // ============================================================================
 // Types
@@ -62,10 +59,7 @@ export type BillingHistoryProps = {
 // Helpers
 // ============================================================================
 
-function formatDate(
-  dateStr: string | null | undefined,
-  locale: string
-): string | null {
+function formatDate(dateStr: string | null | undefined, locale: string): string | null {
   if (!dateStr) {
     return null;
   }
@@ -85,16 +79,9 @@ function createFormatInvoice(locale: string) {
     const statusConfig = getPaymentStatusConfig(invoice.status, locale);
     const formattedAmount =
       invoice.transactionAmount && invoice.currencyId
-        ? formatPriceLocalized(
-            invoice.transactionAmount,
-            invoice.currencyId,
-            locale
-          )
+        ? formatPriceLocalized(invoice.transactionAmount, invoice.currencyId, locale)
         : null;
-    const formattedDate = formatDate(
-      invoice.debitDate || invoice.dateCreated,
-      locale
-    );
+    const formattedDate = formatDate(invoice.debitDate || invoice.dateCreated, locale);
 
     return {
       invoice,
@@ -126,13 +113,7 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-function InvoiceItem({
-  formatted,
-  locale,
-}: {
-  formatted: FormattedInvoice;
-  locale: string;
-}) {
+function InvoiceItem({ formatted, locale }: { formatted: FormattedInvoice; locale: string }) {
   const { invoice, statusConfig, formattedAmount, formattedDate } = formatted;
   const retryAttempt = invoice.retryAttempt ?? 0;
 
@@ -140,9 +121,7 @@ function InvoiceItem({
     <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 text-sm">
-            {formattedAmount || "-"}
-          </span>
+          <span className="font-medium text-gray-900 text-sm">{formattedAmount || "-"}</span>
           <span
             className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${statusConfig.bgColor} ${statusConfig.color} ${statusConfig.borderColor}`}
           >
@@ -150,15 +129,11 @@ function InvoiceItem({
           </span>
         </div>
         {invoice.reason && (
-          <p className="mt-0.5 truncate text-gray-500 text-xs">
-            {invoice.reason}
-          </p>
+          <p className="mt-0.5 truncate text-gray-500 text-xs">{invoice.reason}</p>
         )}
       </div>
       <div className="ml-4 shrink-0 text-right">
-        {formattedDate && (
-          <p className="text-gray-500 text-xs">{formattedDate}</p>
-        )}
+        {formattedDate && <p className="text-gray-500 text-xs">{formattedDate}</p>}
         {retryAttempt > 0 && (
           <p className="text-orange-600 text-xs">
             {t(locale, "components.attempt")} {retryAttempt}
@@ -213,10 +188,8 @@ export function BillingHistory({
   const isEmpty = invoices.length === 0;
 
   // Use i18n defaults if not provided
-  const resolvedEmptyMessage =
-    emptyMessage ?? t(locale, "components.noInvoices");
-  const resolvedLoadingMessage =
-    loadingMessage ?? t(locale, "components.loadingHistory");
+  const resolvedEmptyMessage = emptyMessage ?? t(locale, "components.noInvoices");
+  const resolvedLoadingMessage = loadingMessage ?? t(locale, "components.loadingHistory");
   const resolvedTitle = title ?? t(locale, "components.billingHistory");
 
   const renderProps: BillingHistoryRenderProps = {
@@ -248,13 +221,7 @@ export function BillingHistory({
             return renderItem(formatted, index);
           }
 
-          return (
-            <InvoiceItem
-              formatted={formatted}
-              key={invoice.id}
-              locale={locale}
-            />
-          );
+          return <InvoiceItem formatted={formatted} key={invoice.id} locale={locale} />;
         })}
       </div>
     );

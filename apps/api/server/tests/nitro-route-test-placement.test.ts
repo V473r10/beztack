@@ -23,12 +23,9 @@ function collectRouteTestFiles(directory: string): string[] {
 
 describe("Nitro route test placement", () => {
   it("keeps test files outside server/routes", () => {
-    const routesDirectory = join(
-      dirname(fileURLToPath(import.meta.url)),
-      "../routes"
-    );
+    const routesDirectory = join(dirname(fileURLToPath(import.meta.url)), "../routes");
     const routeTestFiles = collectRouteTestFiles(routesDirectory).map((file) =>
-      relative(routesDirectory, file)
+      relative(routesDirectory, file),
     );
 
     expect(routeTestFiles).toEqual([]);

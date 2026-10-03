@@ -20,12 +20,8 @@ export function LanguageToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => i18n.changeLanguage("en")}>
-          English
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => i18n.changeLanguage("es")}>
-          Español
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => i18n.changeLanguage("en")}>English</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => i18n.changeLanguage("es")}>Español</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

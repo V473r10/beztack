@@ -288,8 +288,6 @@ export async function loadThemeInfo(themeName: string): Promise<ThemeInfo> {
 // Get all theme information
 export async function getAllThemes(): Promise<ThemeInfo[]> {
   const themeNames = getAvailableThemes();
-  const themes = await Promise.all(
-    themeNames.map((name) => loadThemeInfo(name))
-  );
+  const themes = await Promise.all(themeNames.map((name) => loadThemeInfo(name)));
   return themes;
 }

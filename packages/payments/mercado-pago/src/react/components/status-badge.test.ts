@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  getPaymentStatusConfig,
-  getSubscriptionStatusConfig,
-} from "./status-badge.js";
+import { getPaymentStatusConfig, getSubscriptionStatusConfig } from "./status-badge.js";
 
 describe("react/components/status-badge", () => {
   describe("getPaymentStatusConfig", () => {

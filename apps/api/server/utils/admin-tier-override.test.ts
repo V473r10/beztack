@@ -20,13 +20,9 @@ vi.mock("drizzle-orm", () => ({
   eq: vi.fn(),
 }));
 
-type StoredOverrideInput = Parameters<
-  AdminTierOverrideStore["saveOverride"]
->[0];
+type StoredOverrideInput = Parameters<AdminTierOverrideStore["saveOverride"]>[0];
 
-function catalogPlan(
-  overrides: Partial<OverrideCatalogPlan> = {}
-): OverrideCatalogPlan {
+function catalogPlan(overrides: Partial<OverrideCatalogPlan> = {}): OverrideCatalogPlan {
   return {
     id: "polar_pro_month",
     provider: "polar",
@@ -48,9 +44,7 @@ function createStore(options?: {
 }) {
   const overrides = new Map<string, AdminTierOverrideRecord>();
   const audits: OverrideAuditEntry[] = [];
-  const organizationMemberships = new Set(
-    options?.organizationMemberships ?? []
-  );
+  const organizationMemberships = new Set(options?.organizationMemberships ?? []);
 
   for (const override of options?.existingOverrides ?? []) {
     overrides.set(`${override.targetType}:${override.targetId}`, override);
@@ -60,17 +54,12 @@ function createStore(options?: {
     listActiveVisibleCatalogPlans(provider) {
       return Promise.resolve(
         (options?.plans ?? [catalogPlan()]).filter(
-          (plan) =>
-            plan.provider === provider &&
-            plan.visible &&
-            plan.status === "active"
-        )
+          (plan) => plan.provider === provider && plan.visible && plan.status === "active",
+        ),
       );
     },
     findOverride(target) {
-      return Promise.resolve(
-        overrides.get(`${target.type}:${target.id}`) ?? null
-      );
+      return Promise.resolve(overrides.get(`${target.type}:${target.id}`) ?? null);
     },
     saveOverride(input: StoredOverrideInput) {
       const existing = overrides.get(`${input.target.type}:${input.target.id}`);
@@ -96,9 +85,7 @@ function createStore(options?: {
       return Promise.resolve();
     },
     isOrganizationMember(userId, organizationId) {
-      return Promise.resolve(
-        organizationMemberships.has(`${userId}:${organizationId}`)
-      );
+      return Promise.resolve(organizationMemberships.has(`${userId}:${organizationId}`));
     },
   };
 

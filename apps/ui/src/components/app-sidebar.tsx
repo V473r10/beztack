@@ -120,10 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="space-y-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
+            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <Link to="/">
                 <IconInnerShadowTop className="!size-5" />
                 <span className="font-semibold text-base">beztack</span>
@@ -142,12 +139,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {isAdmin && (
-          <NavSecondary items={data.navAdmin} title="Organization" />
-        )}
-        {isAppAdmin && (
-          <NavSecondary items={data.navSudo} title="Platform" />
-        )}
+        {isAdmin && <NavSecondary items={data.navAdmin} title="Organization" />}
+        {isAppAdmin && <NavSecondary items={data.navSudo} title="Platform" />}
         <NavSecondary className="mt-auto" items={data.navSecondary} />
       </SidebarContent>
       <SidebarFooter>

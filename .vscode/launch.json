@@ -8,10 +8,7 @@
       "command": "pnpm dev",
       "cwd": "${workspaceFolder}/apps/api",
       "skipFiles": ["<node_internals>/**"],
-      "resolveSourceMapLocations": [
-        "${workspaceFolder}/**",
-        "!**/node_modules/**"
-      ]
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"]
     },
     {
       "name": "Debug UI (Vite + Chrome)",

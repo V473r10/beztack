@@ -31,11 +31,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const data = updateSchema.parse(body);
 
-  const [existing] = await db
-    .select()
-    .from(plan)
-    .where(eq(plan.id, planId))
-    .limit(1);
+  const [existing] = await db.select().from(plan).where(eq(plan.id, planId)).limit(1);
 
   if (!existing) {
     throw createError({ statusCode: 404, message: "Plan not found" });
@@ -51,18 +47,13 @@ export default defineEventHandler(async (event) => {
       if (view && view.syncStatus === "out-of-sync") {
         throw createError({
           statusCode: 409,
-          message:
-            "Plan is out-of-sync with provider. Resolve sync conflict before editing.",
+          message: "Plan is out-of-sync with provider. Resolve sync conflict before editing.",
         });
       }
     }
   }
 
-  const [updated] = await db
-    .update(plan)
-    .set(data)
-    .where(eq(plan.id, planId))
-    .returning();
+  const [updated] = await db.update(plan).set(data).where(eq(plan.id, planId)).returning();
 
   return { plan: updated };
 });

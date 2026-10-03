@@ -66,25 +66,17 @@ export type TeamMember = {
 
 // Validation schemas
 export const createOrganizationSchema = z.object({
-  name: z
-    .string()
-    .min(MIN_LENGTH, "Organization name must be at least 2 characters"),
+  name: z.string().min(MIN_LENGTH, "Organization name must be at least 2 characters"),
   slug: z
     .string()
     .min(MIN_LENGTH, "Slug must be at least 2 characters")
     .max(MAX_SLUG_LENGTH, "Slug must be less than 50 characters")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Slug can only contain lowercase letters, numbers, and hyphens"
-    ),
+    .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
   logo: z.string().url().optional().or(z.literal("")),
 });
 
 export const updateOrganizationSchema = z.object({
-  name: z
-    .string()
-    .min(MIN_LENGTH, "Organization name must be at least 2 characters")
-    .optional(),
+  name: z.string().min(MIN_LENGTH, "Organization name must be at least 2 characters").optional(),
   logo: z.string().url().optional().or(z.literal("")),
 });
 

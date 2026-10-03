@@ -43,7 +43,7 @@ let cachedProviderName: PaymentProviderName | null = null;
  */
 export async function createPaymentProvider(
   provider: PaymentProviderName,
-  config: Record<string, string>
+  config: Record<string, string>,
 ): Promise<PaymentProviderAdapter> {
   if (cachedAdapter && cachedProviderName === provider) {
     return cachedAdapter;
@@ -52,7 +52,7 @@ export async function createPaymentProvider(
   const factory = registry.get(provider);
   if (!factory) {
     throw new Error(
-      `Unknown payment provider: "${provider}". Available: ${[...registry.keys()].join(", ")}`
+      `Unknown payment provider: "${provider}". Available: ${[...registry.keys()].join(", ")}`,
     );
   }
 
@@ -69,9 +69,7 @@ export async function createPaymentProvider(
  */
 export function getPaymentProvider(): PaymentProviderAdapter {
   if (!cachedAdapter) {
-    throw new Error(
-      "Payment provider not initialized. Call createPaymentProvider() first."
-    );
+    throw new Error("Payment provider not initialized. Call createPaymentProvider() first.");
   }
   return cachedAdapter;
 }

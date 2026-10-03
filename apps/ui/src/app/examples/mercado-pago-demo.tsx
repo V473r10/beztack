@@ -27,13 +27,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -55,11 +49,8 @@ type SubscriptionResult = {
 const DEMO_AMOUNT = 100;
 
 export default function MercadoPagoDemo() {
-  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(
-    null
-  );
-  const [subscriptionResult, setSubscriptionResult] =
-    useState<SubscriptionResult | null>(null);
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+  const [subscriptionResult, setSubscriptionResult] = useState<SubscriptionResult | null>(null);
   const [customAmount, setCustomAmount] = useState(DEMO_AMOUNT);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
@@ -72,10 +63,7 @@ export default function MercadoPagoDemo() {
     console.error("Payment error:", error);
   };
 
-  const handleSubscriptionSuccess = (
-    subscriptionId: string,
-    initPoint: string
-  ) => {
+  const handleSubscriptionSuccess = (subscriptionId: string, initPoint: string) => {
     setSubscriptionResult({
       id: subscriptionId,
       initPoint,
@@ -91,11 +79,10 @@ export default function MercadoPagoDemo() {
           <h1 className="font-bold text-4xl">Integration Demo</h1>
         </div>
         <p className="max-w-3xl text-muted-foreground">
-          Esta demo interactiva muestra los tres tipos de integración de Mercado
-          Pago disponibles en Beztack: <strong>Checkout Pro</strong>,{" "}
-          <strong>Payment Bricks</strong> y <strong>Checkout API</strong>. Cada
-          uno tiene diferentes casos de uso, niveles de personalización y
-          requisitos de implementación.
+          Esta demo interactiva muestra los tres tipos de integración de Mercado Pago disponibles en
+          Beztack: <strong>Checkout Pro</strong>, <strong>Payment Bricks</strong> y{" "}
+          <strong>Checkout API</strong>. Cada uno tiene diferentes casos de uso, niveles de
+          personalización y requisitos de implementación.
         </p>
       </div>
 
@@ -110,8 +97,7 @@ export default function MercadoPagoDemo() {
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-muted-foreground text-sm">
-              Redirige al usuario a Mercado Pago. Mínimo código, máxima
-              conversión.
+              Redirige al usuario a Mercado Pago. Mínimo código, máxima conversión.
             </p>
             <div className="flex flex-wrap gap-1">
               <Badge variant="secondary">Baja complejidad</Badge>
@@ -129,8 +115,7 @@ export default function MercadoPagoDemo() {
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-muted-foreground text-sm">
-              Componentes embebidos con UI pre-construida. Balance entre control
-              y facilidad.
+              Componentes embebidos con UI pre-construida. Balance entre control y facilidad.
             </p>
             <div className="flex flex-wrap gap-1">
               <Badge variant="secondary">Media complejidad</Badge>
@@ -199,9 +184,7 @@ export default function MercadoPagoDemo() {
                     <Input
                       id="amount"
                       min={1}
-                      onChange={(e) =>
-                        setCustomAmount(Number.parseInt(e.target.value, 10))
-                      }
+                      onChange={(e) => setCustomAmount(Number.parseInt(e.target.value, 10))}
                       type="number"
                       value={customAmount}
                     />
@@ -230,8 +213,7 @@ export default function MercadoPagoDemo() {
                         Checkout Pro
                       </CardTitle>
                       <CardDescription>
-                        El usuario es redirigido a Mercado Pago para completar
-                        el pago
+                        El usuario es redirigido a Mercado Pago para completar el pago
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -293,13 +275,7 @@ export default function MercadoPagoDemo() {
 
               {/* Payment Result */}
               {paymentResult && (
-                <Alert
-                  variant={
-                    paymentResult.status === "approved"
-                      ? "default"
-                      : "destructive"
-                  }
-                >
+                <Alert variant={paymentResult.status === "approved" ? "default" : "destructive"}>
                   {paymentResult.status === "approved" ? (
                     <CheckCircle2 className="h-4 w-4" />
                   ) : (
@@ -330,9 +306,7 @@ export default function MercadoPagoDemo() {
                       <span>Frontend envía datos al backend</span>
                     </div>
                     <div className="rounded-lg bg-muted p-3">
-                      <p className="mb-2 font-medium text-sm">
-                        Request (Bricks/API):
-                      </p>
+                      <p className="mb-2 font-medium text-sm">Request (Bricks/API):</p>
                       <ScrollArea className="h-32">
                         <pre className="font-mono text-xs">
                           {JSON.stringify(
@@ -352,7 +326,7 @@ export default function MercadoPagoDemo() {
                               },
                             },
                             null,
-                            2
+                            2,
                           )}
                         </pre>
                       </ScrollArea>
@@ -363,9 +337,7 @@ export default function MercadoPagoDemo() {
                       <span>Backend procesa con SDK de MP</span>
                     </div>
                     <div className="rounded-lg bg-muted p-3">
-                      <p className="mb-2 font-medium text-sm">
-                        Response de Mercado Pago:
-                      </p>
+                      <p className="mb-2 font-medium text-sm">Response de Mercado Pago:</p>
                       <ScrollArea className="h-40">
                         <pre className="font-mono text-xs">
                           {JSON.stringify(
@@ -384,7 +356,7 @@ export default function MercadoPagoDemo() {
                               },
                             },
                             null,
-                            2
+                            2,
                           )}
                         </pre>
                       </ScrollArea>
@@ -460,15 +432,10 @@ import {
                     <RefreshCcw className="h-5 w-5" />
                     Paso 1: Seleccionar Plan
                   </CardTitle>
-                  <CardDescription>
-                    Selecciona un plan existente o crea uno nuevo
-                  </CardDescription>
+                  <CardDescription>Selecciona un plan existente o crea uno nuevo</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PlanList
-                    onSelect={setSelectedPlan}
-                    selectedPlanId={selectedPlan?.id}
-                  />
+                  <PlanList onSelect={setSelectedPlan} selectedPlanId={selectedPlan?.id} />
                 </CardContent>
               </Card>
 
@@ -481,14 +448,8 @@ import {
                       Plan seleccionado:{" "}
                       <strong>
                         {selectedPlan.reason} -{" "}
-                        {formatPlanPrice(
-                          selectedPlan.transactionAmount,
-                          selectedPlan.currencyId
-                        )}{" "}
-                        {formatFrequency(
-                          selectedPlan.frequency,
-                          selectedPlan.frequencyType
-                        )}
+                        {formatPlanPrice(selectedPlan.transactionAmount, selectedPlan.currencyId)}{" "}
+                        {formatFrequency(selectedPlan.frequency, selectedPlan.frequencyType)}
                       </strong>
                     </CardDescription>
                   </CardHeader>
@@ -506,8 +467,7 @@ import {
                       <TabsContent className="pt-4" value="checkout">
                         <div className="space-y-4">
                           <p className="text-muted-foreground text-sm">
-                            El usuario será redirigido a Mercado Pago para
-                            completar la suscripción.
+                            El usuario será redirigido a Mercado Pago para completar la suscripción.
                           </p>
                           <Button
                             className="w-full"
@@ -542,9 +502,7 @@ import {
                   <AlertDescription>
                     <div className="mt-2 space-y-1 font-mono text-sm">
                       <p>ID: {subscriptionResult.id}</p>
-                      <p className="truncate">
-                        Init Point: {subscriptionResult.initPoint}
-                      </p>
+                      <p className="truncate">Init Point: {subscriptionResult.initPoint}</p>
                     </div>
                   </AlertDescription>
                 </Alert>
@@ -586,16 +544,11 @@ import {
                         color: "bg-red-500",
                       },
                     ].map((item) => (
-                      <div
-                        className="flex items-center gap-3"
-                        key={item.status}
-                      >
+                      <div className="flex items-center gap-3" key={item.status}>
                         <div className={`h-3 w-3 rounded-full ${item.color}`} />
                         <div>
                           <p className="font-medium text-sm">{item.status}</p>
-                          <p className="text-muted-foreground text-xs">
-                            {item.desc}
-                          </p>
+                          <p className="text-muted-foreground text-xs">{item.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -649,9 +602,7 @@ import {
                       <div className="rounded-lg border p-3">
                         <div className="flex items-center gap-2">
                           <Badge className="bg-green-600">POST</Badge>
-                          <code className="text-sm">
-                            /api/payments/mercado-pago/subscriptions
-                          </code>
+                          <code className="text-sm">/api/payments/mercado-pago/subscriptions</code>
                         </div>
                         <p className="mt-1 text-muted-foreground text-sm">
                           Crear nueva suscripción
@@ -705,8 +656,8 @@ import {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-muted-foreground text-sm">
-                    Los webhooks son notificaciones HTTP que Mercado Pago envía
-                    a tu servidor cuando ocurren eventos importantes, como:
+                    Los webhooks son notificaciones HTTP que Mercado Pago envía a tu servidor cuando
+                    ocurren eventos importantes, como:
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
@@ -744,8 +695,8 @@ import {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Importante</AlertTitle>
                     <AlertDescription>
-                      Debes configurar esta URL en el panel de Mercado Pago
-                      Developers bajo "Webhooks" → "Notificaciones".
+                      Debes configurar esta URL en el panel de Mercado Pago Developers bajo
+                      "Webhooks" → "Notificaciones".
                     </AlertDescription>
                   </Alert>
                 </CardContent>
@@ -774,7 +725,7 @@ import {
                           },
                         },
                         null,
-                        2
+                        2,
                       )}
                     </pre>
                   </ScrollArea>
@@ -841,12 +792,10 @@ export default defineEventHandler(async (event) => {
                 <ScrollArea className="h-80">
                   <div className="space-y-4">
                     <div className="rounded-lg border p-3">
-                      <code className="font-bold text-sm">
-                        MERCADO_PAGO_ACCESS_TOKEN
-                      </code>
+                      <code className="font-bold text-sm">MERCADO_PAGO_ACCESS_TOKEN</code>
                       <p className="mt-1 text-muted-foreground text-sm">
-                        Token de acceso del backend (privado). Obtenido en el
-                        panel de desarrolladores.
+                        Token de acceso del backend (privado). Obtenido en el panel de
+                        desarrolladores.
                       </p>
                       <Badge className="mt-2" variant="outline">
                         Backend
@@ -854,9 +803,7 @@ export default defineEventHandler(async (event) => {
                     </div>
 
                     <div className="rounded-lg border p-3">
-                      <code className="font-bold text-sm">
-                        VITE_MERCADO_PAGO_PUBLIC_KEY
-                      </code>
+                      <code className="font-bold text-sm">VITE_MERCADO_PAGO_PUBLIC_KEY</code>
                       <p className="mt-1 text-muted-foreground text-sm">
                         Public Key para inicializar el SDK en el frontend.
                       </p>
@@ -879,9 +826,7 @@ export default defineEventHandler(async (event) => {
                     <div className="rounded-lg border p-3">
                       <div className="flex items-center gap-2">
                         <Badge className="bg-green-600">POST</Badge>
-                        <code className="text-sm">
-                          /api/payments/mercado-pago/preference
-                        </code>
+                        <code className="text-sm">/api/payments/mercado-pago/preference</code>
                       </div>
                       <p className="mt-1 text-muted-foreground text-sm">
                         Crea una preferencia para Checkout Pro
@@ -891,9 +836,7 @@ export default defineEventHandler(async (event) => {
                     <div className="rounded-lg border p-3">
                       <div className="flex items-center gap-2">
                         <Badge className="bg-green-600">POST</Badge>
-                        <code className="text-sm">
-                          /api/payments/mercado-pago/process-payment
-                        </code>
+                        <code className="text-sm">/api/payments/mercado-pago/process-payment</code>
                       </div>
                       <p className="mt-1 text-muted-foreground text-sm">
                         Procesa un pago con token (Bricks/API)
@@ -903,9 +846,7 @@ export default defineEventHandler(async (event) => {
                     <div className="rounded-lg border p-3">
                       <div className="flex items-center gap-2">
                         <Badge className="bg-green-600">POST</Badge>
-                        <code className="text-sm">
-                          /api/payments/mercado-pago/webhook
-                        </code>
+                        <code className="text-sm">/api/payments/mercado-pago/webhook</code>
                       </div>
                       <p className="mt-1 text-muted-foreground text-sm">
                         Endpoint para recibir notificaciones de MP
@@ -920,26 +861,19 @@ export default defineEventHandler(async (event) => {
               <CardHeader>
                 <CardTitle>Tarjetas de Prueba</CardTitle>
                 <CardDescription>
-                  Usa estas tarjetas en el ambiente de sandbox para probar
-                  diferentes escenarios
+                  Usa estas tarjetas en el ambiente de sandbox para probar diferentes escenarios
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="rounded-lg border border-green-500/50 bg-green-500/5 p-4">
-                    <p className="mb-2 font-medium text-green-600">
-                      Pago Aprobado
-                    </p>
+                    <p className="mb-2 font-medium text-green-600">Pago Aprobado</p>
                     <p className="font-mono text-sm">5031 7557 3453 0604</p>
-                    <p className="text-muted-foreground text-xs">
-                      CVV: 123 | Exp: 11/25
-                    </p>
+                    <p className="text-muted-foreground text-xs">CVV: 123 | Exp: 11/25</p>
                   </div>
 
                   <div className="rounded-lg border border-red-500/50 bg-red-500/5 p-4">
-                    <p className="mb-2 font-medium text-red-600">
-                      Pago Rechazado
-                    </p>
+                    <p className="mb-2 font-medium text-red-600">Pago Rechazado</p>
                     <p className="font-mono text-sm">5031 7557 3453 0604</p>
                     <p className="text-muted-foreground text-xs">
                       CVV: 123 | Exp: 11/25 | Nombre: APRO
@@ -947,9 +881,7 @@ export default defineEventHandler(async (event) => {
                   </div>
 
                   <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/5 p-4">
-                    <p className="mb-2 font-medium text-yellow-600">
-                      Pago Pendiente
-                    </p>
+                    <p className="mb-2 font-medium text-yellow-600">Pago Pendiente</p>
                     <p className="font-mono text-sm">5031 7557 3453 0604</p>
                     <p className="text-muted-foreground text-xs">
                       CVV: 123 | Exp: 11/25 | Nombre: CONT

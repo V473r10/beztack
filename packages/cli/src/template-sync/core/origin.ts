@@ -22,9 +22,7 @@ export function hashContent(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex");
 }
 
-export async function readOrigin(
-  workspaceRoot: string
-): Promise<Origin | null> {
+export async function readOrigin(workspaceRoot: string): Promise<Origin | null> {
   try {
     const raw = await readFile(join(workspaceRoot, ORIGIN_FILE), "utf-8");
     const parsed = JSON.parse(raw) as Partial<Origin>;
@@ -41,10 +39,7 @@ export async function readOrigin(
   }
 }
 
-export async function writeOrigin(
-  workspaceRoot: string,
-  origin: Origin
-): Promise<void> {
+export async function writeOrigin(workspaceRoot: string, origin: Origin): Promise<void> {
   const filePath = join(workspaceRoot, ORIGIN_FILE);
   await mkdir(dirname(filePath), { recursive: true });
   await writeFile(filePath, `${JSON.stringify(origin, null, 2)}\n`, "utf-8");

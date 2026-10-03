@@ -98,10 +98,7 @@ function App() {
                       >
                         <Route element={<Home />} index />
                         <Route element={<Settings />} path="settings" />
-                        <Route
-                          element={<OrganizationsPage />}
-                          path="organizations"
-                        />
+                        <Route element={<OrganizationsPage />} path="organizations" />
                         <Route element={<Billing />} path="billing" />
                       </Route>
 
@@ -130,14 +127,8 @@ function App() {
                       </Route>
 
                       <Route element={<Pricing />} path="pricing" />
-                      <Route
-                        element={<CheckoutSuccess />}
-                        path="checkout-success"
-                      />
-                      <Route
-                        element={<SubscriptionWelcome />}
-                        path="subscription-welcome"
-                      />
+                      <Route element={<CheckoutSuccess />} path="checkout-success" />
+                      <Route element={<SubscriptionWelcome />} path="subscription-welcome" />
                       <Route element={<AI />} path="ai" />
                       <Route element={<OCR />} path="ocr" />
                       <Route element={<NuqsDemo />} path="nuqs-demo" />

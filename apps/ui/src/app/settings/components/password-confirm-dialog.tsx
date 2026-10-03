@@ -9,11 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { TOTP_CODE_LENGTH } from "../lib/constants";
 
@@ -62,9 +58,7 @@ export function PasswordConfirmDialog({
     >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {t("account.settings.twoFactor.passwordDialog.title")}
-          </DialogTitle>
+          <DialogTitle>{t("account.settings.twoFactor.passwordDialog.title")}</DialogTitle>
           <DialogDescription>
             {t("account.settings.twoFactor.passwordDialog.description", {
               action,

@@ -28,15 +28,9 @@ export function PlanSyncScreen() {
   const provider = data?.provider ?? "unknown";
 
   const syncedCount = plans.filter((p) => p.syncStatus === "synced").length;
-  const outOfSyncCount = plans.filter(
-    (p) => p.syncStatus === "out-of-sync"
-  ).length;
-  const localOnlyCount = plans.filter(
-    (p) => p.syncStatus === "local-only"
-  ).length;
-  const remoteOnlyCount = plans.filter(
-    (p) => p.syncStatus === "remote-only"
-  ).length;
+  const outOfSyncCount = plans.filter((p) => p.syncStatus === "out-of-sync").length;
+  const localOnlyCount = plans.filter((p) => p.syncStatus === "local-only").length;
+  const remoteOnlyCount = plans.filter((p) => p.syncStatus === "remote-only").length;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-6">
@@ -109,10 +103,7 @@ export function PlanSyncScreen() {
       {renderContent()}
 
       {/* Create Plan Sheet */}
-      <CreatePlanSheet
-        onOpenChange={setCreateSheetOpen}
-        open={createSheetOpen}
-      />
+      <CreatePlanSheet onOpenChange={setCreateSheetOpen} open={createSheetOpen} />
     </div>
   );
 
@@ -130,12 +121,10 @@ export function PlanSyncScreen() {
               <ServerCrash className="h-8 w-8 text-destructive" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-semibold text-destructive text-lg">
-                Failed to load sync status
-              </h3>
+              <h3 className="font-semibold text-destructive text-lg">Failed to load sync status</h3>
               <p className="mx-auto max-w-md text-muted-foreground text-sm">
-                There was a problem communicating with the server. Please check
-                your connection and try again.
+                There was a problem communicating with the server. Please check your connection and
+                try again.
               </p>
             </div>
             <Button
@@ -162,15 +151,11 @@ export function PlanSyncScreen() {
             <div className="max-w-sm space-y-1">
               <h3 className="font-semibold text-xl">No plans found</h3>
               <p className="text-muted-foreground text-sm">
-                No subscription plans found locally or remotely. Create a new
-                plan or check your payment provider configuration.
+                No subscription plans found locally or remotely. Create a new plan or check your
+                payment provider configuration.
               </p>
             </div>
-            <Button
-              className="mt-2 gap-2"
-              onClick={() => setCreateSheetOpen(true)}
-              type="button"
-            >
+            <Button className="mt-2 gap-2" onClick={() => setCreateSheetOpen(true)} type="button">
               <Plus className="h-4 w-4" />
               Create Plan
             </Button>

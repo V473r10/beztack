@@ -1,7 +1,7 @@
 // Simple HTML email templates
 export const welcomeEmailTemplate = (
   username = "Usuario",
-  loginUrl = "https://beztack.app/login"
+  loginUrl = "https://beztack.app/login",
 ) => `
 <!DOCTYPE html>
 <html>

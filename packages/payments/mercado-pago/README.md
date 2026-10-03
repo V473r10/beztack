@@ -32,14 +32,14 @@ pnpm add react @tanstack/react-query
 ### Server Client
 
 ```typescript
-import { createMercadoPagoClient } from "@beztack/mercadopago/server"
+import { createMercadoPagoClient } from "@beztack/mercadopago/server";
 
 const mp = createMercadoPagoClient({
   accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN,
   webhookSecret: process.env.MERCADO_PAGO_WEBHOOK_SECRET,
-  timeout: 30000,      // opcional, default 30s
-  maxRetries: 3,       // opcional, default 3
-})
+  timeout: 30000, // opcional, default 30s
+  maxRetries: 3, // opcional, default 3
+});
 
 // Crear preferencia de checkout
 const preference = await mp.checkout.createPreference({
@@ -48,28 +48,28 @@ const preference = await mp.checkout.createPreference({
     success: "https://tu-sitio.com/success",
     failure: "https://tu-sitio.com/failure",
   },
-})
+});
 
 // Obtener pago
-const payment = await mp.payments.get("123456789")
+const payment = await mp.payments.get("123456789");
 
 // Buscar pagos
 const payments = await mp.payments.search({
   status: "approved",
   begin_date: "2024-01-01T00:00:00Z",
-})
+});
 
 // Reembolso completo
-await mp.payments.refund("123456789")
+await mp.payments.refund("123456789");
 
 // Reembolso parcial
-await mp.payments.refund("123456789", 50.00)
+await mp.payments.refund("123456789", 50.0);
 ```
 
 ### React Provider
 
 ```tsx
-import { MercadoPagoProvider } from "@beztack/mercadopago/react"
+import { MercadoPagoProvider } from "@beztack/mercadopago/react";
 
 function App() {
   return (
@@ -83,7 +83,7 @@ function App() {
     >
       <YourApp />
     </MercadoPagoProvider>
-  )
+  );
 }
 ```
 
@@ -97,26 +97,24 @@ import {
   usePauseSubscription,
   useResumeSubscription,
   useCancelSubscription,
-} from "@beztack/mercadopago/react"
+} from "@beztack/mercadopago/react";
 
 function SubscriptionsList() {
-  const { data, isLoading } = useSubscriptions({ status: "active" })
-  const pauseMutation = usePauseSubscription()
+  const { data, isLoading } = useSubscriptions({ status: "active" });
+  const pauseMutation = usePauseSubscription();
 
-  if (isLoading) return <div>Cargando...</div>
+  if (isLoading) return <div>Cargando...</div>;
 
   return (
     <ul>
       {data?.subscriptions.map((sub) => (
         <li key={sub.id}>
           {sub.reason}
-          <button onClick={() => pauseMutation.mutate(sub.id)}>
-            Pausar
-          </button>
+          <button onClick={() => pauseMutation.mutate(sub.id)}>Pausar</button>
         </li>
       ))}
     </ul>
-  )
+  );
 }
 ```
 
@@ -182,42 +180,42 @@ Crea una instancia del cliente de Mercado Pago.
 
 ```typescript
 type MercadoPagoConfig = {
-  accessToken: string       // Token de acceso de MP
-  webhookSecret?: string    // Secreto para validar webhooks
-  baseUrl?: string          // URL base (default: api.mercadopago.com)
-  timeout?: number          // Timeout en ms (default: 30000)
-  maxRetries?: number       // Reintentos máximos (default: 3)
-  initialRetryDelay?: number // Delay inicial para retry (default: 1000)
-}
+  accessToken: string; // Token de acceso de MP
+  webhookSecret?: string; // Secreto para validar webhooks
+  baseUrl?: string; // URL base (default: api.mercadopago.com)
+  timeout?: number; // Timeout en ms (default: 30000)
+  maxRetries?: number; // Reintentos máximos (default: 3)
+  initialRetryDelay?: number; // Delay inicial para retry (default: 1000)
+};
 ```
 
 #### Módulos del Cliente
 
-| Módulo | Métodos |
-|--------|---------|
-| `payments` | `get`, `create`, `search`, `refund`, `getRefunds` |
-| `plans` | `list`, `get`, `create`, `update`, `deactivate` |
-| `subscriptions` | `create`, `get`, `update`, `cancel`, `pause`, `resume`, `search`, `listInvoices` |
-| `checkout` | `createPreference`, `getPreference` |
-| `customers` | `create`, `get`, `searchByEmail` |
-| `invoices` | `get`, `search` |
-| `merchantOrders` | `get` |
-| `chargebacks` | `get` |
-| `webhooks` | `validate`, `parse` |
+| Módulo           | Métodos                                                                          |
+| ---------------- | -------------------------------------------------------------------------------- |
+| `payments`       | `get`, `create`, `search`, `refund`, `getRefunds`                                |
+| `plans`          | `list`, `get`, `create`, `update`, `deactivate`                                  |
+| `subscriptions`  | `create`, `get`, `update`, `cancel`, `pause`, `resume`, `search`, `listInvoices` |
+| `checkout`       | `createPreference`, `getPreference`                                              |
+| `customers`      | `create`, `get`, `searchByEmail`                                                 |
+| `invoices`       | `get`, `search`                                                                  |
+| `merchantOrders` | `get`                                                                            |
+| `chargebacks`    | `get`                                                                            |
+| `webhooks`       | `validate`, `parse`                                                              |
 
 ### Manejo de Errores
 
 ```typescript
-import { MercadoPagoError } from "@beztack/mercadopago/server"
+import { MercadoPagoError } from "@beztack/mercadopago/server";
 
 try {
-  await mp.payments.get("invalid-id")
+  await mp.payments.get("invalid-id");
 } catch (error) {
   if (error instanceof MercadoPagoError) {
-    console.log(error.statusCode)  // 404
-    console.log(error.message)     // "Payment not found"
-    console.log(error.retryable)   // false
-    console.log(error.errorCause)  // Detalles adicionales
+    console.log(error.statusCode); // 404
+    console.log(error.message); // "Payment not found"
+    console.log(error.retryable); // false
+    console.log(error.errorCause); // Detalles adicionales
   }
 }
 ```
@@ -226,41 +224,41 @@ try {
 
 ```typescript
 // En tu endpoint de webhook (ej: Nitro/h3)
-import { createMercadoPagoClient } from "@beztack/mercadopago/server"
+import { createMercadoPagoClient } from "@beztack/mercadopago/server";
 
 export default defineEventHandler(async (event) => {
   const mp = createMercadoPagoClient({
     accessToken: process.env.MP_ACCESS_TOKEN,
     webhookSecret: process.env.MP_WEBHOOK_SECRET,
-  })
+  });
 
-  const xSignature = getHeader(event, "x-signature")
-  const xRequestId = getHeader(event, "x-request-id")
-  const body = await readBody(event)
+  const xSignature = getHeader(event, "x-signature");
+  const xRequestId = getHeader(event, "x-request-id");
+  const body = await readBody(event);
 
   // Validar firma
-  const isValid = mp.webhooks.validate(xSignature, xRequestId, body.data.id)
+  const isValid = mp.webhooks.validate(xSignature, xRequestId, body.data.id);
   if (!isValid) {
-    throw createError({ statusCode: 401, message: "Invalid signature" })
+    throw createError({ statusCode: 401, message: "Invalid signature" });
   }
 
   // Parsear payload
-  const payload = mp.webhooks.parse(JSON.stringify(body))
+  const payload = mp.webhooks.parse(JSON.stringify(body));
 
   // Procesar según tipo
   switch (payload.type) {
     case "payment":
-      const payment = await mp.payments.get(payload.data.id)
+      const payment = await mp.payments.get(payload.data.id);
       // Procesar pago...
-      break
+      break;
     case "subscription_preapproval":
-      const subscription = await mp.subscriptions.get(payload.data.id)
+      const subscription = await mp.subscriptions.get(payload.data.id);
       // Procesar suscripción...
-      break
+      break;
   }
 
-  return { success: true }
-})
+  return { success: true };
+});
 ```
 
 ## Internacionalización (i18n)
@@ -282,23 +280,23 @@ import {
   getSubscriptionStatusLabel,
   formatFrequencyLocalized,
   formatPriceLocalized,
-} from "@beztack/mercadopago"
+} from "@beztack/mercadopago";
 
 // Obtener traducción por path
-t("es", "components.billingHistory") // "Historial de Facturación"
-t("en", "components.billingHistory") // "Billing History"
+t("es", "components.billingHistory"); // "Historial de Facturación"
+t("en", "components.billingHistory"); // "Billing History"
 
 // Labels de estado
-getPaymentStatusLabel("approved", "es")     // "Aprobado"
-getSubscriptionStatusLabel("active", "en")  // "Active"
+getPaymentStatusLabel("approved", "es"); // "Aprobado"
+getSubscriptionStatusLabel("active", "en"); // "Active"
 
 // Formateo de frecuencia
-formatFrequencyLocalized(1, "months", "es") // "cada mes"
-formatFrequencyLocalized(3, "months", "en") // "every 3 months"
+formatFrequencyLocalized(1, "months", "es"); // "cada mes"
+formatFrequencyLocalized(3, "months", "en"); // "every 3 months"
 
 // Formateo de precio
-formatPriceLocalized(1500, "UYU", "es-UY")  // "$ 1.500"
-formatPriceLocalized(99.99, "USD", "en-US") // "$99.99"
+formatPriceLocalized(1500, "UYU", "es-UY"); // "$ 1.500"
+formatPriceLocalized(99.99, "USD", "en-US"); // "$99.99"
 ```
 
 ### Componentes con i18n
@@ -320,7 +318,7 @@ import {
   frequencyTypeSchema,
   planStatusSchema,
   subscriptionStatusSchema,
-} from "@beztack/mercadopago"
+} from "@beztack/mercadopago";
 
 // Validar datos de plan
 const planData = createPlanSchema.parse({
@@ -331,13 +329,13 @@ const planData = createPlanSchema.parse({
     transaction_amount: 1500,
     currency_id: "UYU",
   },
-})
+});
 
 // Validar datos de suscripción
 const subData = createSubscriptionSchema.parse({
   preapproval_plan_id: "plan_123",
   payer_email: "user@example.com",
-})
+});
 ```
 
 ## Tipos TypeScript
@@ -349,30 +347,30 @@ import type {
   MPPaymentResponse,
   MPPaymentSearchParams,
   ProcessPaymentData,
-  
+
   // Planes
   Plan,
   PlanStatus,
   CreatePlanData,
   PlansResponse,
-  
+
   // Suscripciones
   Subscription,
   SubscriptionStatus,
   CreateSubscriptionData,
-  
+
   // Checkout
   PreferenceItem,
   PreferenceResponse,
   CreatePreferenceData,
-  
+
   // Webhooks
   WebhookPayload,
-  
+
   // i18n
   SupportedLocale,
   TranslationKeys,
-} from "@beztack/mercadopago"
+} from "@beztack/mercadopago";
 ```
 
 ## Testing

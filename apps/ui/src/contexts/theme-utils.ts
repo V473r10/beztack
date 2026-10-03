@@ -1,9 +1,5 @@
 import { extractFonts } from "@/lib/css-parser";
-import {
-  type ColorTheme,
-  CSS_VARIABLE_REGEX,
-  ROOT_CSS_REGEX,
-} from "./theme-types";
+import { type ColorTheme, CSS_VARIABLE_REGEX, ROOT_CSS_REGEX } from "./theme-types";
 
 // Helper functions for theme management
 export function createThemeLink(colorTheme: ColorTheme): HTMLLinkElement {
@@ -14,9 +10,7 @@ export function createThemeLink(colorTheme: ColorTheme): HTMLLinkElement {
   return link;
 }
 
-export function parseVariablesFromCSS(
-  cssContent: string
-): Record<string, string> {
+export function parseVariablesFromCSS(cssContent: string): Record<string, string> {
   const variables: Record<string, string> = {};
   const rootMatch = cssContent.match(ROOT_CSS_REGEX);
 
@@ -35,10 +29,7 @@ export function parseVariablesFromCSS(
   return variables;
 }
 
-export function createFontLink(
-  colorTheme: ColorTheme,
-  googleFontsUrl: string
-): HTMLLinkElement {
+export function createFontLink(colorTheme: ColorTheme, googleFontsUrl: string): HTMLLinkElement {
   const fontLink = document.createElement("link");
   fontLink.rel = "stylesheet";
   fontLink.href = googleFontsUrl;

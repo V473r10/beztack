@@ -2,13 +2,7 @@ import { IconCheck } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ColorTheme } from "@/contexts/theme-types";
 import { useTheme } from "@/hooks/use-theme";
 import { getAllThemes, type ThemeInfo } from "@/lib/theme-loader";
@@ -25,9 +19,7 @@ export function ThemeSelector() {
   const THEMES_CALCULATION_OFFSET = 6;
 
   // Show 6 themes initially (2 rows × 3 cols on desktop)
-  const themesToShow = showAll
-    ? themes
-    : themes.slice(0, INITIAL_THEMES_TO_SHOW);
+  const themesToShow = showAll ? themes : themes.slice(0, INITIAL_THEMES_TO_SHOW);
   const hasMoreThemes = themes.length > INITIAL_THEMES_TO_SHOW;
 
   useEffect(() => {
@@ -53,7 +45,7 @@ export function ThemeSelector() {
         <CardDescription>
           {t(
             "settings.theme.colorThemeDescription",
-            "Choose your preferred color scheme and visual style"
+            "Choose your preferred color scheme and visual style",
           )}
         </CardDescription>
       </CardHeader>
@@ -72,9 +64,7 @@ export function ThemeSelector() {
                 <div className="relative" key={theme.name}>
                   <Button
                     className={`flex h-auto w-full flex-col items-start space-y-3 p-4 text-left transition-all hover:scale-105 ${
-                      colorTheme === theme.name
-                        ? "border-primary ring-2 ring-primary"
-                        : ""
+                      colorTheme === theme.name ? "border-primary ring-2 ring-primary" : ""
                     }`}
                     onClick={() => setColorTheme(theme.name as ColorTheme)}
                     variant="outline"
@@ -124,10 +114,7 @@ export function ThemeSelector() {
                         )}
                       </div>
                       <p className="mt-1 text-muted-foreground text-sm">
-                        {t(
-                          `themes.${theme.name}.description`,
-                          theme.description
-                        )}
+                        {t(`themes.${theme.name}.description`, theme.description)}
                       </p>
                     </div>
                   </Button>
@@ -148,7 +135,7 @@ export function ThemeSelector() {
                     ? t("settings.theme.showLess", "Ver menos")
                     : t(
                         "settings.theme.showMore",
-                        `Ver más (${themes.length - THEMES_CALCULATION_OFFSET})`
+                        `Ver más (${themes.length - THEMES_CALCULATION_OFFSET})`,
                       )}
                 </Button>
               </div>

@@ -81,10 +81,7 @@ export const modules: ModuleDefinition[] = [
     nxProjects: ["api"],
     hasApiModule: true,
     hasUiFeature: false,
-    fileGlobs: [
-      "apps/api/server/modules/email/**/*",
-      "apps/api/server/routes/api/email/**/*",
-    ],
+    fileGlobs: ["apps/api/server/modules/email/**/*", "apps/api/server/routes/api/email/**/*"],
     codemods: ["remove-email-imports"],
   },
   {
@@ -131,10 +128,7 @@ export const modules: ModuleDefinition[] = [
     nxProjects: ["ui", "docs"],
     hasApiModule: false,
     hasUiFeature: true,
-    fileGlobs: [
-      "apps/ui/src/features/state/**/*",
-      "apps/ui/src/app/examples/nuqs-demo.tsx",
-    ],
+    fileGlobs: ["apps/ui/src/features/state/**/*", "apps/ui/src/app/examples/nuqs-demo.tsx"],
     codemods: ["remove-state-imports"],
   },
 ];

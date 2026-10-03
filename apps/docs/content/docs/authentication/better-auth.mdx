@@ -47,20 +47,20 @@ import { db } from "@/db/db";
 import { schema } from "@/db/schema";
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, { 
-    provider: "pg", 
-    schema 
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema,
   }),
-  
+
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
   },
-  
+
   socialProviders: {
     // Configure social providers here
   },
-  
+
   plugins: [
     twoFactor({
       issuer: process.env.APP_NAME || "beztack",
@@ -79,11 +79,7 @@ Client configuration is in `apps/ui/src/lib/auth-client.ts`:
 
 ```typescript
 import { createAuthClient } from "better-auth/react";
-import {
-  adminClient,
-  organizationClient,
-  twoFactorClient,
-} from "better-auth/client/plugins";
+import { adminClient, organizationClient, twoFactorClient } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
@@ -142,10 +138,10 @@ import { useSession } from "@/lib/auth-client";
 
 function MyComponent() {
   const { data: session, isPending } = useSession();
-  
+
   if (isPending) return <div>Loading...</div>;
   if (!session) return <div>Not authenticated</div>;
-  
+
   return <div>Welcome, {session.user.name}!</div>;
 }
 ```
@@ -265,11 +261,11 @@ import { useActiveOrganization } from "@/lib/auth-client";
 
 function AdminPanel() {
   const { data: org } = useActiveOrganization();
-  
+
   if (!org || org.role !== "admin") {
     return <div>You don't have permission</div>;
   }
-  
+
   return <div>Admin panel</div>;
 }
 ```
@@ -280,17 +276,17 @@ function AdminPanel() {
 import { auth } from "~/utils/auth";
 
 export default defineEventHandler(async (event) => {
-  const session = await auth.api.getSession({ 
-    headers: event.headers 
+  const session = await auth.api.getSession({
+    headers: event.headers,
   });
-  
+
   if (!session) {
     throw createError({
       statusCode: 401,
       message: "Not authenticated",
     });
   }
-  
+
   // Check role in active organization
   const member = await db
     .select()
@@ -298,17 +294,17 @@ export default defineEventHandler(async (event) => {
     .where(
       and(
         eq(member.userId, session.user.id),
-        eq(member.organizationId, session.activeOrganizationId)
-      )
+        eq(member.organizationId, session.activeOrganizationId),
+      ),
     );
-  
+
   if (member[0]?.role !== "admin") {
     throw createError({
       statusCode: 403,
       message: "Not authorized",
     });
   }
-  
+
   // Continue with logic
 });
 ```
@@ -384,17 +380,17 @@ export const auth = betterAuth({
 import { auth } from "~/utils/auth";
 
 export default defineEventHandler(async (event) => {
-  const session = await auth.api.getSession({ 
-    headers: event.headers 
+  const session = await auth.api.getSession({
+    headers: event.headers,
   });
-  
+
   if (!session) {
     throw createError({
       statusCode: 401,
       message: "Not authenticated",
     });
   }
-  
+
   return { user: session.user };
 });
 ```
@@ -427,7 +423,7 @@ export const auth = betterAuth({
         attributes: {
           secure: process.env.NODE_ENV === "production",
           sameSite: "none", // Allow cross-site cookies
-          httpOnly: true,   // Prevent XSS
+          httpOnly: true, // Prevent XSS
         },
       },
     },
@@ -444,11 +440,11 @@ Never trust client-side validation alone:
 ```typescript
 export default defineEventHandler(async (event) => {
   const session = await auth.api.getSession({ headers: event.headers });
-  
+
   if (!session) {
     throw createError({ statusCode: 401, message: "Not authenticated" });
   }
-  
+
   // Your logic here
 });
 ```

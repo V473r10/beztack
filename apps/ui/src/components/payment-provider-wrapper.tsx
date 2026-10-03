@@ -11,7 +11,7 @@ import { env } from "@/env";
 const MercadoPagoProvider = lazy(() =>
   import("@beztack/mercadopago/react").then((m) => ({
     default: m.MercadoPagoProvider,
-  }))
+  })),
 );
 // --- End provider lazy imports ---
 
@@ -19,9 +19,7 @@ type PaymentProviderWrapperProps = {
   children: ReactNode;
 };
 
-export function PaymentProviderWrapper({
-  children,
-}: PaymentProviderWrapperProps) {
+export function PaymentProviderWrapper({ children }: PaymentProviderWrapperProps) {
   const provider = env.VITE_PAYMENT_PROVIDER;
 
   if (provider === "mercadopago") {
@@ -32,10 +30,7 @@ export function PaymentProviderWrapper({
 
     return (
       <Suspense fallback={children}>
-        <MercadoPagoProvider
-          apiBaseUrl={env.VITE_API_URL}
-          publicKey={publicKey}
-        >
+        <MercadoPagoProvider apiBaseUrl={env.VITE_API_URL} publicKey={publicKey}>
           {children}
         </MercadoPagoProvider>
       </Suspense>

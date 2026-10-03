@@ -13,7 +13,7 @@ const SHA256_PREFIX_LENGTH = 7;
 export function verifyWebhookSignature(
   payload: string,
   signature: string,
-  secret: string
+  secret: string,
 ): boolean {
   try {
     const expectedSignature = crypto
@@ -27,7 +27,7 @@ export function verifyWebhookSignature(
 
     return crypto.timingSafeEqual(
       Buffer.from(expectedSignature, "hex"),
-      Buffer.from(normalizedSignature, "hex")
+      Buffer.from(normalizedSignature, "hex"),
     );
   } catch {
     return false;
@@ -39,7 +39,7 @@ export function verifyWebhookSignature(
  * Pass custom handler callbacks to override the defaults.
  */
 export function createDefaultWebhookHandlers(
-  customHandlers: Record<string, WebhookPayloadHandler> = {}
+  customHandlers: Record<string, WebhookPayloadHandler> = {},
 ): Record<string, WebhookPayloadHandler> {
   const noop = async (_payload: WebhookPayloadData): Promise<void> => {
     // Default no-op handler
@@ -54,14 +54,8 @@ export function createDefaultWebhookHandlers(
     "customer.updated": customHandlers.onCustomerStateChanged ?? noop,
     "benefit.grant.created": customHandlers.onBenefitGrantCreated ?? noop,
     "benefit.grant.revoked": customHandlers.onBenefitGrantRevoked ?? noop,
-    ...Object.fromEntries(
-      Object.entries(customHandlers).filter(([key]) => !key.startsWith("on"))
-    ),
+    ...Object.fromEntries(Object.entries(customHandlers).filter(([key]) => !key.startsWith("on"))),
   };
 }
 
-export type {
-  MembershipUpdate,
-  WebhookPayloadData,
-  WebhookPayloadHandler,
-} from "./types.js";
+export type { MembershipUpdate, WebhookPayloadData, WebhookPayloadHandler } from "./types.js";

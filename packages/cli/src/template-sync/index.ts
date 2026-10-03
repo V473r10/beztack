@@ -32,17 +32,13 @@ interface ParsedTemplateCommandOptions {
  * The command can be specified with the --template-root flag to specify the template root.
  * The command can also be specified with the --to flag to specify the target version for the plan and apply commands.
  */
-export async function runTemplateCommand(
-  options: TemplateCommandOptions
-): Promise<void> {
+export async function runTemplateCommand(options: TemplateCommandOptions): Promise<void> {
   const parsed = parseArgs(options.args);
   const command = parsed.positional[0] ?? "status";
   const refresh = parsed.flags.refresh === true;
   const offline = parsed.flags.offline === true;
   const templateRoot =
-    typeof parsed.flags["template-root"] === "string"
-      ? parsed.flags["template-root"]
-      : undefined;
+    typeof parsed.flags["template-root"] === "string" ? parsed.flags["template-root"] : undefined;
 
   const commandOptions: ParsedTemplateCommandOptions = {
     workspaceRoot: options.workspaceRoot,
@@ -64,8 +60,7 @@ export async function runTemplateCommand(
       await runPlan({
         workspaceRoot: commandOptions.workspaceRoot,
         templateRoot,
-        toVersion:
-          typeof parsed.flags.to === "string" ? parsed.flags.to : undefined,
+        toVersion: typeof parsed.flags.to === "string" ? parsed.flags.to : undefined,
         refresh: commandOptions.refresh,
         offline: commandOptions.offline,
       });
@@ -90,17 +85,13 @@ export async function runTemplateCommand(
         templateRoot,
         refresh: commandOptions.refresh,
         offline: commandOptions.offline,
-        host:
-          typeof parsed.flags.host === "string" ? parsed.flags.host : undefined,
-        port:
-          typeof parsed.flags.port === "string"
-            ? Number(parsed.flags.port)
-            : undefined,
+        host: typeof parsed.flags.host === "string" ? parsed.flags.host : undefined,
+        port: typeof parsed.flags.port === "string" ? Number(parsed.flags.port) : undefined,
       });
       return;
     default:
       throw new Error(
-        `Unknown template command: ${command}. Use status|plan|apply|rollback|inspect.`
+        `Unknown template command: ${command}. Use status|plan|apply|rollback|inspect.`,
       );
   }
 }

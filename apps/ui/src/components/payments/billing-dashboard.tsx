@@ -15,20 +15,10 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type {
-  CustomerMeter,
-  Order,
-  Subscription,
-} from "@/contexts/membership-context";
+import type { CustomerMeter, Order, Subscription } from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 import { MembershipBadge, MembershipStatus } from "./membership-badge";
@@ -54,11 +44,7 @@ type SubscriptionCardProps = {
   onUpgrade?: () => void;
 };
 
-function SubscriptionCard({
-  subscription,
-  onManage,
-  onUpgrade,
-}: SubscriptionCardProps) {
+function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCardProps) {
   const isActive = subscription.status === "active";
   const isCanceled = subscription.status === "canceled";
   const inGracePeriod =
@@ -107,15 +93,7 @@ function SubscriptionCard({
                 : "Unknown subscription"}
             </CardDescription>
           </div>
-          <Badge
-            variant={
-              getStatusColor() as
-                | "default"
-                | "secondary"
-                | "destructive"
-                | "outline"
-            }
-          >
+          <Badge variant={getStatusColor() as "default" | "secondary" | "destructive" | "outline"}>
             {getStatusText()}
           </Badge>
         </div>
@@ -147,9 +125,7 @@ function SubscriptionCard({
           <div className="space-y-1">
             <div className="text-muted-foreground text-sm">Started</div>
             <div className="font-medium">
-              {subscription.createdAt
-                ? new Date(subscription.createdAt).toLocaleDateString()
-                : "—"}
+              {subscription.createdAt ? new Date(subscription.createdAt).toLocaleDateString() : "—"}
             </div>
           </div>
         </div>
@@ -158,12 +134,7 @@ function SubscriptionCard({
 
         <div className="flex gap-2">
           {onManage && (
-            <Button
-              className="flex-1"
-              onClick={onManage}
-              size="sm"
-              variant="outline"
-            >
+            <Button className="flex-1" onClick={onManage} size="sm" variant="outline">
               <Settings className="mr-1 h-3 w-3" />
               Manage
             </Button>
@@ -243,9 +214,7 @@ function OrderHistory({ orders }: OrderHistoryProps) {
         <Card key={order.id}>
           <CardContent className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
-              <div className={getStatusClasses(order.status)}>
-                {getStatusIcon(order.status)}
-              </div>
+              <div className={getStatusClasses(order.status)}>{getStatusIcon(order.status)}</div>
 
               <div className="space-y-1">
                 <div className="font-medium">
@@ -254,10 +223,8 @@ function OrderHistory({ orders }: OrderHistoryProps) {
                     : "Order"}
                 </div>
                 <div className="text-muted-foreground text-sm">
-                  {order.createdAt
-                    ? new Date(order.createdAt).toLocaleDateString()
-                    : "N/A"}{" "}
-                  • {formatCurrency(order.totalAmount)}
+                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"} •{" "}
+                  {formatCurrency(order.totalAmount)}
                 </div>
               </div>
             </div>
@@ -306,10 +273,7 @@ export function BillingDashboard({
     return validSubs.at(0);
   })();
 
-  const handleUpgrade = (
-    tierId: string,
-    billingPeriod: "monthly" | "yearly"
-  ) => {
+  const handleUpgrade = (tierId: string, billingPeriod: "monthly" | "yearly") => {
     onUpgrade?.(tierId, billingPeriod);
     setShowUpgradeDialog(false);
   };
@@ -331,9 +295,7 @@ export function BillingDashboard({
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <CardTitle>Current Plan</CardTitle>
-                <CardDescription>
-                  Manage your subscription and billing preferences
-                </CardDescription>
+                <CardDescription>Manage your subscription and billing preferences</CardDescription>
               </div>
               <MembershipBadge size="lg" tier={currentTier} />
             </div>
@@ -351,25 +313,16 @@ export function BillingDashboard({
                 tier={currentTier}
               />
             ) : (
-              <div className="text-muted-foreground text-sm">
-                No active subscription
-              </div>
+              <div className="text-muted-foreground text-sm">No active subscription</div>
             )}
 
             <div className="flex gap-2">
-              <Button
-                disabled={isLoading}
-                onClick={handleManageBilling}
-                variant="outline"
-              >
+              <Button disabled={isLoading} onClick={handleManageBilling} variant="outline">
                 <CreditCard className="mr-2 h-4 w-4" />
                 Manage Billing
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
-              <Button
-                disabled={isLoading}
-                onClick={() => setShowUpgradeDialog(true)}
-              >
+              <Button disabled={isLoading} onClick={() => setShowUpgradeDialog(true)}>
                 <ArrowUpRight className="mr-2 h-4 w-4" />
                 Change Plan
               </Button>
@@ -407,12 +360,8 @@ export function BillingDashboard({
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8">
                   <CreditCard className="mb-2 h-8 w-8 text-muted-foreground" />
-                  <p className="mb-4 text-muted-foreground text-sm">
-                    No active subscriptions
-                  </p>
-                  <Button onClick={() => setShowUpgradeDialog(true)}>
-                    Choose a Plan
-                  </Button>
+                  <p className="mb-4 text-muted-foreground text-sm">No active subscriptions</p>
+                  <Button onClick={() => setShowUpgradeDialog(true)}>Choose a Plan</Button>
                 </CardContent>
               </Card>
             )}

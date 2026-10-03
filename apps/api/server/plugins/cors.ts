@@ -39,11 +39,11 @@ export default defineNitroPlugin((nitroApp) => {
         event.node.res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
         event.node.res.setHeader(
           "Access-Control-Allow-Methods",
-          "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+          "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         );
         event.node.res.setHeader(
           "Access-Control-Allow-Headers",
-          "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+          "Content-Type, Authorization, Accept, Origin, X-Requested-With",
         );
         event.node.res.setHeader("Access-Control-Allow-Credentials", "true");
         event.node.res.setHeader("Access-Control-Max-Age", "86400");
@@ -54,13 +54,10 @@ export default defineNitroPlugin((nitroApp) => {
 
       // Add CORS headers to all responses
       event.node.res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
-      event.node.res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS"
-      );
+      event.node.res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
       event.node.res.setHeader(
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+        "Content-Type, Authorization, Accept, Origin, X-Requested-With",
       );
       event.node.res.setHeader("Access-Control-Allow-Credentials", "true");
     }

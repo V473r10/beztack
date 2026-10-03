@@ -117,8 +117,7 @@ export function PricingCard({
       return;
     }
 
-    const productId =
-      billingPeriod === "yearly" ? tier.yearly?.id : tier.monthly?.id;
+    const productId = billingPeriod === "yearly" ? tier.yearly?.id : tier.monthly?.id;
 
     if (!productId) {
       return;
@@ -185,7 +184,7 @@ export function PricingCard({
           isPopular
             ? "border-primary/50 shadow-md shadow-primary/5"
             : "border-border hover:border-primary/20",
-          isCurrentTier && "border-muted bg-muted/10 opacity-75 grayscale-[0.5]"
+          isCurrentTier && "border-muted bg-muted/10 opacity-75 grayscale-[0.5]",
         )}
       >
         {isPopular && (
@@ -202,12 +201,8 @@ export function PricingCard({
               <Icon className="h-6 w-6" />
             </div>
             <div>
-              <CardTitle className="font-bold text-xl tracking-tight">
-                {tier.name}
-              </CardTitle>
-              <CardDescription className="line-clamp-1 text-sm">
-                {tier.description}
-              </CardDescription>
+              <CardTitle className="font-bold text-xl tracking-tight">{tier.name}</CardTitle>
+              <CardDescription className="line-clamp-1 text-sm">{tier.description}</CardDescription>
             </div>
           </div>
 
@@ -245,9 +240,7 @@ export function PricingCard({
           <Separator className="bg-border/50" />
 
           <div className="space-y-4">
-            <div className="font-semibold text-foreground/80 text-sm">
-              Includes:
-            </div>
+            <div className="font-semibold text-foreground/80 text-sm">Includes:</div>
             <ul className="space-y-3">
               {(tier.features || []).map((feature: string) => (
                 <li
@@ -257,9 +250,7 @@ export function PricingCard({
                   <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
                     <Check className="h-2.5 w-2.5 text-primary" />
                   </div>
-                  <span className="leading-tight">
-                    {t(`pricing.features.${feature}`, feature)}
-                  </span>
+                  <span className="leading-tight">{t(`pricing.features.${feature}`, feature)}</span>
                 </li>
               ))}
             </ul>
@@ -267,43 +258,38 @@ export function PricingCard({
 
           {tier.limits && Object.keys(tier.limits).length > 0 && (
             <div className="space-y-4 pt-2">
-              <div className="font-semibold text-foreground/80 text-sm">
-                Limits:
-              </div>
+              <div className="font-semibold text-foreground/80 text-sm">Limits:</div>
               <div className="grid grid-cols-1 gap-2">
-                {Object.entries(tier.limits).map(
-                  ([key, value]: [string, number]) => {
-                    const IconComponent =
-                      limitIcons[key as keyof typeof limitIcons] || FileText;
-                    const isUnlimited = value === -1;
+                {Object.entries(tier.limits).map(([key, value]: [string, number]) => {
+                  const IconComponent = limitIcons[key as keyof typeof limitIcons] || FileText;
+                  const isUnlimited = value === -1;
 
-                    return (
-                      <div
-                        className="flex items-center justify-between rounded-md border border-border/50 bg-muted/20 px-3 py-2 transition-colors hover:bg-muted/40"
-                        key={key}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <IconComponent className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-muted-foreground text-xs capitalize">
-                            {key.replace(/([A-Z])/g, " $1").toLowerCase()}
-                          </span>
-                        </div>
-                        <div className="font-medium text-xs">
-                          {isUnlimited ? (
-                            <span className="flex items-center gap-1 text-primary">
-                              <InfinityIcon className="h-3 w-3" />
-                            </span>
-                          ) : (
-                            <span>
-                              {value.toLocaleString()}
-                              {key === "storage" && "GB"}
-                            </span>
-                          )}
-                        </div>
+                  return (
+                    <div
+                      className="flex items-center justify-between rounded-md border border-border/50 bg-muted/20 px-3 py-2 transition-colors hover:bg-muted/40"
+                      key={key}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <IconComponent className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground text-xs capitalize">
+                          {key.replace(/([A-Z])/g, " $1").toLowerCase()}
+                        </span>
                       </div>
-                    );
-                  }
-                )}
+                      <div className="font-medium text-xs">
+                        {isUnlimited ? (
+                          <span className="flex items-center gap-1 text-primary">
+                            <InfinityIcon className="h-3 w-3" />
+                          </span>
+                        ) : (
+                          <span>
+                            {value.toLocaleString()}
+                            {key === "storage" && "GB"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -319,7 +305,7 @@ export function PricingCard({
                 "bg-green-600 hover:bg-green-700",
               changeType === "downgrade" &&
                 hasActiveSubscription &&
-                "bg-amber-600 text-white hover:bg-amber-700"
+                "bg-amber-600 text-white hover:bg-amber-700",
             )}
             disabled={disabled || isLoading || isCurrentTier}
             onClick={handleSelect}
@@ -364,8 +350,7 @@ const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
     return null;
   }
 
-  const savingsPercentage =
-    (savingsAmount / monthlyYearlyTotal) * PERCENTAGE_MULTIPLIER;
+  const savingsPercentage = (savingsAmount / monthlyYearlyTotal) * PERCENTAGE_MULTIPLIER;
 
   return {
     formattedPercentage: `${savingsPercentage.toFixed(1)}%`,

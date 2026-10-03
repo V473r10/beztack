@@ -80,7 +80,7 @@ function processFeatures(
   tierMap: Record<string, PricingTier>,
   allFeatures: Set<string>,
   featureId: { current: number },
-  t: (key: string, fallback?: string) => string
+  t: (key: string, fallback?: string) => string,
 ): FeatureRow[] {
   const rows: FeatureRow[] = [];
 
@@ -102,7 +102,7 @@ function processLimits(
   tierMap: Record<string, PricingTier>,
   allLimits: Set<string>,
   featureId: { current: number },
-  t: (key: string, fallback?: string) => string
+  t: (key: string, fallback?: string) => string,
 ): FeatureRow[] {
   const rows: FeatureRow[] = [];
 
@@ -122,10 +122,7 @@ function processLimits(
 
     const row: FeatureRow = {
       id: featureId.current++,
-      name: t(
-        `pricing.limits.${limit}`,
-        limit.replace(/([A-Z])/g, " $1").trim()
-      ),
+      name: t(`pricing.limits.${limit}`, limit.replace(/([A-Z])/g, " $1").trim()),
       basic: formatLimit(tierMap.basic?.limits?.[limit]),
       pro: formatLimit(tierMap.pro?.limits?.[limit]),
       ultimate: formatLimit(tierMap.ultimate?.limits?.[limit]),
@@ -140,17 +137,14 @@ function processPermissions(
   tierMap: Record<string, PricingTier>,
   allPermissions: Set<string>,
   featureId: { current: number },
-  t: (key: string, fallback?: string) => string
+  t: (key: string, fallback?: string) => string,
 ): FeatureRow[] {
   const rows: FeatureRow[] = [];
 
   for (const permission of allPermissions) {
     const row: FeatureRow = {
       id: featureId.current++,
-      name: t(
-        `pricing.permissions.${permission}`,
-        permission.replace(/([A-Z])/g, " $1").trim()
-      ),
+      name: t(`pricing.permissions.${permission}`, permission.replace(/([A-Z])/g, " $1").trim()),
       basic: tierMap.basic?.permissions?.[permission] ?? false,
       pro: tierMap.pro?.permissions?.[permission] ?? false,
       ultimate: tierMap.ultimate?.permissions?.[permission] ?? false,
@@ -181,23 +175,13 @@ function processAllCategories({
   const grouped: GroupedFeatures = {};
 
   if (allFeatures.size > 0) {
-    grouped["Core Features"] = processFeatures(
-      tierMap,
-      allFeatures,
-      featureId,
-      t
-    );
+    grouped["Core Features"] = processFeatures(tierMap, allFeatures, featureId, t);
   }
   if (allLimits.size > 0) {
     grouped["Usage Limits"] = processLimits(tierMap, allLimits, featureId, t);
   }
   if (allPermissions.size > 0) {
-    grouped.Permissions = processPermissions(
-      tierMap,
-      allPermissions,
-      featureId,
-      t
-    );
+    grouped.Permissions = processPermissions(tierMap, allPermissions, featureId, t);
   }
 
   return grouped;
@@ -228,9 +212,7 @@ function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
       );
     }
     if (value === "Unlimited") {
-      return (
-        <span className="font-medium text-primary text-sm">Unlimited</span>
-      );
+      return <span className="font-medium text-primary text-sm">Unlimited</span>;
     }
     return <span className="font-medium text-foreground text-sm">{value}</span>;
   };
@@ -239,18 +221,10 @@ function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
     <Table>
       <TableHeader>
         <TableRow className="border-border/50 border-b hover:bg-transparent">
-          <TableHead className="w-[40%] font-semibold text-foreground">
-            Feature
-          </TableHead>
-          <TableHead className="text-center font-semibold text-foreground">
-            Basic
-          </TableHead>
-          <TableHead className="text-center font-semibold text-foreground">
-            Pro
-          </TableHead>
-          <TableHead className="text-center font-semibold text-foreground">
-            Ultimate
-          </TableHead>
+          <TableHead className="w-[40%] font-semibold text-foreground">Feature</TableHead>
+          <TableHead className="text-center font-semibold text-foreground">Basic</TableHead>
+          <TableHead className="text-center font-semibold text-foreground">Pro</TableHead>
+          <TableHead className="text-center font-semibold text-foreground">Ultimate</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -258,22 +232,16 @@ function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
           <TableRow
             className={cn(
               "border-border/30 border-b transition-colors hover:bg-muted/30",
-              idx % 2 === 0 ? "bg-transparent" : "bg-muted/10"
+              idx % 2 === 0 ? "bg-transparent" : "bg-muted/10",
             )}
             key={feature.id}
           >
             <TableCell className="py-4 font-medium text-muted-foreground text-sm">
               {feature.name}
             </TableCell>
-            <TableCell className="py-4 text-center">
-              {renderValue(feature.basic)}
-            </TableCell>
-            <TableCell className="py-4 text-center">
-              {renderValue(feature.pro)}
-            </TableCell>
-            <TableCell className="py-4 text-center">
-              {renderValue(feature.ultimate)}
-            </TableCell>
+            <TableCell className="py-4 text-center">{renderValue(feature.basic)}</TableCell>
+            <TableCell className="py-4 text-center">{renderValue(feature.pro)}</TableCell>
+            <TableCell className="py-4 text-center">{renderValue(feature.ultimate)}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -282,9 +250,7 @@ function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
 }
 
 export default function Pricing() {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
-    "monthly"
-  );
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const [showPlanChangeDialog, setShowPlanChangeDialog] = useState(false);
   const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
   const {
@@ -299,17 +265,13 @@ export default function Pricing() {
 
   const hasActiveSubscription = Boolean(activeSubscription);
 
-  const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<
-    PricingTier[]
-  >({
+  const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<PricingTier[]>({
     queryKey: ["subscriptions", "products", "tiers"],
     queryFn: usePricingTiers,
   });
 
   const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
-  const savingsPercent = Math.max(
-    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0)
-  );
+  const savingsPercent = Math.max(...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0));
 
   const groupedFeatures = useMemo(() => {
     if (!allTiers.length) {
@@ -317,8 +279,7 @@ export default function Pricing() {
     }
 
     const featureId = { current: 1 };
-    const { tierMap, allFeatures, allLimits, allPermissions } =
-      buildTierData(allTiers);
+    const { tierMap, allFeatures, allLimits, allPermissions } = buildTierData(allTiers);
 
     return processAllCategories({
       tierMap,
@@ -352,14 +313,14 @@ export default function Pricing() {
       setShowPlanChangeDialog(false);
       setSelectedTier(null);
     },
-    [billingPeriod, changePlan]
+    [billingPeriod, changePlan],
   );
 
   const getChangeTypeForTier = useCallback(
     (tierId: string): PlanChangeType => {
       return getPlanChangeType(tierId);
     },
-    [getPlanChangeType]
+    [getPlanChangeType],
   );
 
   const faqItems = [
@@ -416,10 +377,7 @@ export default function Pricing() {
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.5 }}
         >
-          <Badge
-            className="mb-4 border-primary/20 bg-primary/10 text-primary"
-            variant="outline"
-          >
+          <Badge className="mb-4 border-primary/20 bg-primary/10 text-primary" variant="outline">
             <Sparkles className="mr-1.5 h-3 w-3" />
             Simple Pricing
           </Badge>
@@ -445,9 +403,7 @@ export default function Pricing() {
               <div className="rounded-full border border-border/50 bg-muted/30 p-1 backdrop-blur-sm">
                 <Tabs
                   className="w-fit"
-                  onValueChange={(value) =>
-                    setBillingPeriod(value as "monthly" | "yearly")
-                  }
+                  onValueChange={(value) => setBillingPeriod(value as "monthly" | "yearly")}
                   value={billingPeriod}
                 >
                   <TabsList className="grid w-full grid-cols-2 bg-transparent">
@@ -537,12 +493,8 @@ export default function Pricing() {
           whileInView={{ opacity: 1 }}
         >
           <div className="mb-10 text-center">
-            <h2 className="mb-3 font-bold text-3xl tracking-tight">
-              Compare all features
-            </h2>
-            <p className="text-muted-foreground">
-              See exactly what's included in each plan
-            </p>
+            <h2 className="mb-3 font-bold text-3xl tracking-tight">Compare all features</h2>
+            <p className="text-muted-foreground">See exactly what's included in each plan</p>
           </div>
 
           <div className="mx-auto max-w-5xl space-y-6">
@@ -550,15 +502,9 @@ export default function Pricing() {
               <Card className="overflow-hidden border-border/50" key={category}>
                 <div className="border-border/50 border-b bg-muted/30 px-6 py-4">
                   <h3 className="flex items-center gap-2 font-semibold text-lg">
-                    {category === "Core Features" && (
-                      <Sparkles className="h-4 w-4 text-primary" />
-                    )}
-                    {category === "Usage Limits" && (
-                      <Zap className="h-4 w-4 text-blue-500" />
-                    )}
-                    {category === "Permissions" && (
-                      <Shield className="h-4 w-4 text-orange-500" />
-                    )}
+                    {category === "Core Features" && <Sparkles className="h-4 w-4 text-primary" />}
+                    {category === "Usage Limits" && <Zap className="h-4 w-4 text-blue-500" />}
+                    {category === "Permissions" && <Shield className="h-4 w-4 text-orange-500" />}
                     {category}
                   </h3>
                 </div>
@@ -579,12 +525,8 @@ export default function Pricing() {
             <div className="mb-4 inline-flex items-center justify-center rounded-full bg-muted/50 p-3">
               <HelpCircle className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="mb-3 font-bold text-3xl tracking-tight">
-              Frequently asked questions
-            </h2>
-            <p className="text-muted-foreground">
-              Everything you need to know about our pricing
-            </p>
+            <h2 className="mb-3 font-bold text-3xl tracking-tight">Frequently asked questions</h2>
+            <p className="text-muted-foreground">Everything you need to know about our pricing</p>
           </div>
 
           <div className="mx-auto max-w-3xl">
@@ -625,8 +567,8 @@ export default function Pricing() {
               </h2>
 
               <p className="mx-auto mb-8 max-w-xl text-muted-foreground">
-                Join thousands of teams already using Beztack to secure and
-                scale their applications.
+                Join thousands of teams already using Beztack to secure and scale their
+                applications.
               </p>
 
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
@@ -656,9 +598,7 @@ export default function Pricing() {
       {/* Plan Change Dialog */}
       <PlanChangeDialog
         billingPeriod={billingPeriod}
-        changeType={
-          selectedTier ? getChangeTypeForTier(selectedTier.id) : "same"
-        }
+        changeType={selectedTier ? getChangeTypeForTier(selectedTier.id) : "same"}
         currentTier={currentTier}
         isLoading={isLoading}
         onBillingPeriodChange={setBillingPeriod}

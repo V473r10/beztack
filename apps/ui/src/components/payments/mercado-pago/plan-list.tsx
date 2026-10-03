@@ -2,11 +2,7 @@ import { type Plan, usePlans, useSyncPlans } from "@beztack/mercadopago/react";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CreatePlanForm } from "./create-plan-form";
 import { PlanCard } from "./plan-card";
 
@@ -33,15 +29,8 @@ export function PlanList({ selectedPlanId, onSelect }: PlanListProps) {
   if (error) {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
-        <p className="text-destructive text-sm">
-          Error al cargar planes: {error.message}
-        </p>
-        <Button
-          className="mt-2"
-          onClick={() => syncPlans.mutate()}
-          size="sm"
-          variant="outline"
-        >
+        <p className="text-destructive text-sm">Error al cargar planes: {error.message}</p>
+        <Button className="mt-2" onClick={() => syncPlans.mutate()} size="sm" variant="outline">
           Reintentar
         </Button>
       </div>
@@ -85,9 +74,7 @@ export function PlanList({ selectedPlanId, onSelect }: PlanListProps) {
         </div>
       ) : (
         <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground text-sm">
-            No hay planes creados aún
-          </p>
+          <p className="text-muted-foreground text-sm">No hay planes creados aún</p>
         </div>
       )}
 

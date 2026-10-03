@@ -124,15 +124,7 @@ Create a new file in `packages/email/emails/`:
 
 ```tsx
 // packages/email/emails/verification.tsx
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Html,
-  Preview,
-  Text,
-} from "@react-email/components";
+import { Body, Button, Container, Head, Html, Preview, Text } from "@react-email/components";
 
 type VerificationEmailProps = {
   username?: string;
@@ -150,15 +142,12 @@ export const VerificationEmail = ({
       <Container style={container}>
         <Text style={title}>Hello, {username}!</Text>
         <Text style={paragraph}>
-          Please verify your email address by clicking the button
-          below:
+          Please verify your email address by clicking the button below:
         </Text>
         <Button href={verificationUrl} style={button}>
           Verify Email
         </Button>
-        <Text style={paragraph}>
-          If you didn't create this account, you can ignore this email.
-        </Text>
+        <Text style={paragraph}>If you didn't create this account, you can ignore this email.</Text>
       </Container>
     </Body>
   </Html>
@@ -232,10 +221,7 @@ type VerificationEmailData = {
 };
 
 // Add the case in getEmailTemplate
-export function getEmailTemplate(
-  type: EmailType,
-  data: EmailDataMap[EmailType]
-): ReactElement {
+export function getEmailTemplate(type: EmailType, data: EmailDataMap[EmailType]): ReactElement {
   switch (type) {
     // ... other cases
     case "verification":
@@ -332,20 +318,20 @@ React Email provides components to build emails:
 
 ```tsx
 import {
-  Html,        // Main wrapper
-  Head,        // Email <head>
-  Body,        // Email <body>
-  Container,   // Centered container
-  Preview,     // Preview text
-  Text,        // Text paragraph
-  Heading,     // Title
-  Button,      // Clickable button
-  Link,        // Link
-  Hr,          // Horizontal line
-  Img,         // Image
-  Section,     // Section
-  Column,      // Column (for layouts)
-  Row,         // Row (for layouts)
+  Html, // Main wrapper
+  Head, // Email <head>
+  Body, // Email <body>
+  Container, // Centered container
+  Preview, // Preview text
+  Text, // Text paragraph
+  Heading, // Title
+  Button, // Clickable button
+  Link, // Link
+  Hr, // Horizontal line
+  Img, // Image
+  Section, // Section
+  Column, // Column (for layouts)
+  Row, // Row (for layouts)
 } from "@react-email/components";
 ```
 
@@ -368,7 +354,7 @@ import {
   Text,
 } from "@react-email/components";
 
-export const ProductUpdateEmail = ({ 
+export const ProductUpdateEmail = ({
   username = "User",
   productName = "Product",
   updateDescription = "We've made some improvements",
@@ -381,25 +367,19 @@ export const ProductUpdateEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>New Update Available</Heading>
-        
+
         <Text style={text}>Hello {username},</Text>
-        
-        <Img
-          src={imageUrl}
-          width="600"
-          height="300"
-          alt={productName}
-          style={image}
-        />
-        
+
+        <Img src={imageUrl} width="600" height="300" alt={productName} style={image} />
+
         <Text style={text}>{updateDescription}</Text>
-        
+
         <Section style={buttonContainer}>
           <Button href={ctaUrl} style={button}>
             View Update
           </Button>
         </Section>
-        
+
         <Section style={footer}>
           <Row>
             <Column>
@@ -442,9 +422,7 @@ const link = { color: "#000", textDecoration: "underline" };
 Email clients require inline styles. React Email does this automatically:
 
 ```tsx
-<Text style={{ fontSize: "16px", color: "#333" }}>
-  Email content
-</Text>
+<Text style={{ fontSize: "16px", color: "#333" }}>Email content</Text>
 ```
 
 ### 2. Responsive Design
@@ -464,17 +442,13 @@ const container = {
 Always use absolute URLs for images:
 
 ```tsx
-<Img
-  src="https://cdn.example.com/logo.png"
-  width="200"
-  height="50"
-  alt="Logo"
-/>
+<Img src="https://cdn.example.com/logo.png" width="200" height="50" alt="Logo" />
 ```
 
 ### 4. Testing
 
 Test your emails in different clients:
+
 - Gmail
 - Outlook
 - Apple Mail
@@ -492,9 +466,7 @@ Test your emails in different clients:
 Always use complete URLs:
 
 ```tsx
-<Button href="https://example.com/action">
-  Click here
-</Button>
+<Button href="https://example.com/action">Click here</Button>
 ```
 
 ### 7. Email Size

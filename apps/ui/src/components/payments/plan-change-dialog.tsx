@@ -1,13 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
-import {
-  AlertTriangle,
-  ArrowDown,
-  ArrowUp,
-  Check,
-  Loader2,
-  RefreshCw,
-} from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Check, Loader2, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -61,7 +54,7 @@ type ChangeTypeConfig = {
 
 function getChangeTypeConfig(
   changeType: PlanChangeType,
-  t: (key: string, fallback: string) => string
+  t: (key: string, fallback: string) => string,
 ): ChangeTypeConfig {
   const configs: Record<PlanChangeType, ChangeTypeConfig> = {
     upgrade: {
@@ -70,10 +63,9 @@ function getChangeTypeConfig(
       title: t("billing.planChange.upgradeTitle", "Upgrade Your Plan"),
       description: t(
         "billing.planChange.upgradeDescription",
-        "Unlock more features and higher limits with this upgrade."
+        "Unlock more features and higher limits with this upgrade.",
       ),
-      cardClass:
-        "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20",
+      cardClass: "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20",
       buttonClass: "bg-green-600 hover:bg-green-700",
       confirmText: t("billing.planChange.confirmUpgrade", "Confirm Upgrade"),
     },
@@ -83,10 +75,9 @@ function getChangeTypeConfig(
       title: t("billing.planChange.downgradeTitle", "Change Your Plan"),
       description: t(
         "billing.planChange.downgradeDescription",
-        "Review the changes before switching to a lower plan."
+        "Review the changes before switching to a lower plan.",
       ),
-      cardClass:
-        "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20",
+      cardClass: "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20",
       buttonClass: "bg-amber-600 hover:bg-amber-700",
       confirmText: t("billing.planChange.confirmDowngrade", "Continue"),
     },
@@ -96,10 +87,9 @@ function getChangeTypeConfig(
       title: t("billing.planChange.switchTitle", "Switch Billing Period"),
       description: t(
         "billing.planChange.switchDescription",
-        "Change your billing period for this plan."
+        "Change your billing period for this plan.",
       ),
-      cardClass:
-        "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20",
+      cardClass: "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20",
       buttonClass: "",
       confirmText: t("billing.planChange.confirmSwitch", "Switch Plan"),
     },
@@ -109,10 +99,9 @@ function getChangeTypeConfig(
       title: t("billing.planChange.switchTitle", "Switch Billing Period"),
       description: t(
         "billing.planChange.switchDescription",
-        "Change your billing period for this plan."
+        "Change your billing period for this plan.",
       ),
-      cardClass:
-        "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20",
+      cardClass: "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20",
       buttonClass: "",
       confirmText: t("billing.planChange.confirmSwitch", "Switch Plan"),
     },
@@ -164,10 +153,7 @@ export function PlanChangeDialog({
   });
 
   const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
-  const savingsPercent = Math.max(
-    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0),
-    0
-  );
+  const savingsPercent = Math.max(...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0), 0);
 
   const currentTierData = allTiers.find((tier) => tier.id === currentTier);
 
@@ -179,8 +165,7 @@ export function PlanChangeDialog({
   const currentPrice = currentTierData?.price[billingPeriod] ?? 0;
   const priceDiff = targetPrice - currentPrice;
 
-  const productId =
-    billingPeriod === "yearly" ? targetTier.yearly?.id : targetTier.monthly?.id;
+  const productId = billingPeriod === "yearly" ? targetTier.yearly?.id : targetTier.monthly?.id;
 
   const handleConfirm = async () => {
     if (!productId) {
@@ -220,7 +205,7 @@ export function PlanChangeDialog({
             <AlertDialogDescription className="text-center">
               {t(
                 "billing.downgradeWarning.description",
-                "You're about to downgrade your plan. Some features may become unavailable."
+                "You're about to downgrade your plan. Some features may become unavailable.",
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -228,25 +213,18 @@ export function PlanChangeDialog({
           <div className="space-y-4 py-4">
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
               <h4 className="mb-2 font-medium text-amber-800 text-sm dark:text-amber-200">
-                {t(
-                  "billing.downgradeWarning.lossTitle",
-                  "You may lose access to:"
-                )}
+                {t("billing.downgradeWarning.lossTitle", "You may lose access to:")}
               </h4>
               <ul className="space-y-1 text-amber-700 text-sm dark:text-amber-300">
                 <li>
                   •{" "}
                   {t(
                     "billing.downgradeWarning.loss1",
-                    "Premium features exclusive to your current plan"
+                    "Premium features exclusive to your current plan",
                   )}
                 </li>
-                <li>
-                  • {t("billing.downgradeWarning.loss2", "Higher usage limits")}
-                </li>
-                <li>
-                  • {t("billing.downgradeWarning.loss3", "Priority support")}
-                </li>
+                <li>• {t("billing.downgradeWarning.loss2", "Higher usage limits")}</li>
+                <li>• {t("billing.downgradeWarning.loss3", "Priority support")}</li>
               </ul>
             </div>
 
@@ -254,9 +232,7 @@ export function PlanChangeDialog({
               <Checkbox
                 checked={confirmDowngrade}
                 id="confirm-downgrade"
-                onCheckedChange={(checked) =>
-                  setConfirmDowngrade(checked === true)
-                }
+                onCheckedChange={(checked) => setConfirmDowngrade(checked === true)}
               />
               <Label
                 className="cursor-pointer text-muted-foreground text-sm leading-relaxed"
@@ -264,7 +240,7 @@ export function PlanChangeDialog({
               >
                 {t(
                   "billing.downgradeWarning.confirmText",
-                  "I understand that I may lose access to certain features and my usage limits will be reduced."
+                  "I understand that I may lose access to certain features and my usage limits will be reduced.",
                 )}
               </Label>
             </div>
@@ -324,25 +300,20 @@ export function PlanChangeDialog({
               </div>
               <div className="font-semibold capitalize">{currentTier}</div>
               <div className="mt-1 text-muted-foreground text-sm">
-                {formatCurrency(currentPrice)}/
-                {billingPeriod === "yearly" ? "year" : "month"}
+                {formatCurrency(currentPrice)}/{billingPeriod === "yearly" ? "year" : "month"}
               </div>
             </div>
 
             {/* Target Plan */}
             <div
-              className={cn(
-                "rounded-lg border p-4",
-                getChangeTypeConfig(changeType, t).cardClass
-              )}
+              className={cn("rounded-lg border p-4", getChangeTypeConfig(changeType, t).cardClass)}
             >
               <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
                 {t("billing.planChange.newPlan", "New Plan")}
               </div>
               <div className="font-semibold">{targetTier.name}</div>
               <div className="mt-1 text-sm">
-                {formatCurrency(targetPrice)}/
-                {billingPeriod === "yearly" ? "year" : "month"}
+                {formatCurrency(targetPrice)}/{billingPeriod === "yearly" ? "year" : "month"}
               </div>
             </div>
           </div>
@@ -352,22 +323,16 @@ export function PlanChangeDialog({
           {/* Billing Period Selection */}
           {hasYearlyPlans && (
             <div className="space-y-2">
-              <Label>
-                {t("billing.planChange.billingPeriod", "Billing Period")}
-              </Label>
+              <Label>{t("billing.planChange.billingPeriod", "Billing Period")}</Label>
               <Select
-                onValueChange={(value) =>
-                  onBillingPeriodChange(value as "monthly" | "yearly")
-                }
+                onValueChange={(value) => onBillingPeriodChange(value as "monthly" | "yearly")}
                 value={billingPeriod}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">
-                    {t("billing.monthly", "Monthly")}
-                  </SelectItem>
+                  <SelectItem value="monthly">{t("billing.monthly", "Monthly")}</SelectItem>
                   <SelectItem value="yearly">
                     {t("billing.yearly", "Yearly")}
                     {savingsPercent > 0 && (
@@ -390,18 +355,15 @@ export function PlanChangeDialog({
               <span className="text-muted-foreground text-sm">
                 {t("billing.planChange.priceChange", "Price Change")}
               </span>
-              <span
-                className={cn("font-semibold", getPriceDiffClass(priceDiff))}
-              >
+              <span className={cn("font-semibold", getPriceDiffClass(priceDiff))}>
                 {priceDiff > 0 ? "+" : ""}
-                {formatCurrency(priceDiff)}/
-                {billingPeriod === "yearly" ? "year" : "month"}
+                {formatCurrency(priceDiff)}/{billingPeriod === "yearly" ? "year" : "month"}
               </span>
             </div>
             <p className="mt-2 text-muted-foreground text-xs">
               {t(
                 "billing.planChange.prorationNote",
-                "Changes will be prorated and applied to your next billing cycle."
+                "Changes will be prorated and applied to your next billing cycle.",
               )}
             </p>
           </div>
@@ -413,17 +375,12 @@ export function PlanChangeDialog({
                 {t("billing.planChange.newFeatures", "New Features You'll Get")}
               </Label>
               <ul className="space-y-2">
-                {targetTier.features
-                  .slice(0, MAX_FEATURES_TO_SHOW)
-                  .map((feature) => (
-                    <li
-                      className="flex items-center gap-2 text-sm"
-                      key={feature}
-                    >
-                      <Check className="h-4 w-4 text-green-500" />
-                      {t(`pricing.features.${feature}`, feature)}
-                    </li>
-                  ))}
+                {targetTier.features.slice(0, MAX_FEATURES_TO_SHOW).map((feature) => (
+                  <li className="flex items-center gap-2 text-sm" key={feature}>
+                    <Check className="h-4 w-4 text-green-500" />
+                    {t(`pricing.features.${feature}`, feature)}
+                  </li>
+                ))}
               </ul>
             </div>
           )}

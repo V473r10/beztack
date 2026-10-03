@@ -26,13 +26,13 @@ This package is internal to the monorepo. Add it to your app's dependencies:
 
 ```tsx
 // main.tsx
-import { NuqsAdapter } from '@beztack/state/adapters/react';
-import { createRoot } from 'react-dom/client';
+import { NuqsAdapter } from "@beztack/state/adapters/react";
+import { createRoot } from "react-dom/client";
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <NuqsAdapter>
     <App />
-  </NuqsAdapter>
+  </NuqsAdapter>,
 );
 ```
 
@@ -40,7 +40,7 @@ createRoot(document.getElementById('root')!).render(
 
 ```tsx
 // app/layout.tsx
-import { NuqsAdapter } from '@beztack/state/adapters/next/app';
+import { NuqsAdapter } from "@beztack/state/adapters/next/app";
 
 export default function RootLayout({ children }) {
   return (
@@ -57,7 +57,7 @@ export default function RootLayout({ children }) {
 
 ```tsx
 // pages/_app.tsx
-import { NuqsAdapter } from '@beztack/state/adapters/next/pages';
+import { NuqsAdapter } from "@beztack/state/adapters/next/pages";
 
 export default function MyApp({ Component, pageProps }) {
   return (
@@ -71,23 +71,23 @@ export default function MyApp({ Component, pageProps }) {
 ### Using Query State
 
 ```tsx
-import { useQueryState, parseAsInteger } from '@beztack/state';
+import { useQueryState, parseAsInteger } from "@beztack/state";
 
 function SearchComponent() {
   // String value
-  const [search, setSearch] = useQueryState('q', { defaultValue: '' });
-  
+  const [search, setSearch] = useQueryState("q", { defaultValue: "" });
+
   // Number value with parser
-  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
-  
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+
   // Boolean value
-  const [enabled, setEnabled] = useQueryState('enabled', parseAsBoolean);
+  const [enabled, setEnabled] = useQueryState("enabled", parseAsBoolean);
 
   return (
     <div>
-      <input value={search} onChange={e => setSearch(e.target.value)} />
-      <button onClick={() => setPage(p => p + 1)}>Next Page</button>
-      <button onClick={() => setEnabled(e => !e)}>Toggle</button>
+      <input value={search} onChange={(e) => setSearch(e.target.value)} />
+      <button onClick={() => setPage((p) => p + 1)}>Next Page</button>
+      <button onClick={() => setEnabled((e) => !e)}>Toggle</button>
     </div>
   );
 }
@@ -103,26 +103,20 @@ import {
   parseAsBoolean,
   parseAsStringEnum,
   parseAsArrayOf,
-  parseAsJson
-} from '@beztack/state';
+  parseAsJson,
+} from "@beztack/state";
 
 // String enum
 const [sort, setSort] = useQueryState(
-  'sort',
-  parseAsStringEnum(['asc', 'desc']).withDefault('asc')
+  "sort",
+  parseAsStringEnum(["asc", "desc"]).withDefault("asc"),
 );
 
 // Array of strings
-const [tags, setTags] = useQueryState(
-  'tags',
-  parseAsArrayOf(parseAsString).withDefault([])
-);
+const [tags, setTags] = useQueryState("tags", parseAsArrayOf(parseAsString).withDefault([]));
 
 // JSON object
-const [filters, setFilters] = useQueryState(
-  'filters',
-  parseAsJson<FilterType>().withDefault({})
-);
+const [filters, setFilters] = useQueryState("filters", parseAsJson<FilterType>().withDefault({}));
 ```
 
 ### Batching Updates
@@ -130,16 +124,16 @@ const [filters, setFilters] = useQueryState(
 Use `useQueryStates` for multiple query params:
 
 ```tsx
-import { useQueryStates, parseAsInteger } from '@beztack/state';
+import { useQueryStates, parseAsInteger } from "@beztack/state";
 
 const [params, setParams] = useQueryStates({
   page: parseAsInteger.withDefault(1),
   limit: parseAsInteger.withDefault(10),
-  search: { defaultValue: '' }
+  search: { defaultValue: "" },
 });
 
 // Update multiple params at once
-setParams({ page: 1, search: 'new search' });
+setParams({ page: 1, search: "new search" });
 ```
 
 ## Documentation

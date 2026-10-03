@@ -29,7 +29,7 @@ const NETWORK_LATENCY_BASE = 20;
 function getStatusByThreshold(
   value: number,
   criticalThreshold: number,
-  warningThreshold: number
+  warningThreshold: number,
 ): "critical" | "warning" | "good" {
   if (value > criticalThreshold) {
     return "critical";
@@ -48,8 +48,7 @@ export default eventHandler(async (event) => {
     // Get system metrics
     const totalMemory = os.totalmem();
     const freeMemory = os.freemem();
-    const memoryUsage =
-      ((totalMemory - freeMemory) / totalMemory) * PERCENTAGE_MULTIPLIER;
+    const memoryUsage = ((totalMemory - freeMemory) / totalMemory) * PERCENTAGE_MULTIPLIER;
 
     const loadAverage = os.loadavg();
     const cpuUsage = loadAverage[0] * CPU_LOAD_MULTIPLIER; // Approximate CPU usage
@@ -60,14 +59,11 @@ export default eventHandler(async (event) => {
 
     // Get Node.js process metrics
     const processMemory = process.memoryUsage();
-    const processMemoryMB = Math.round(
-      processMemory.heapUsed / BYTES_TO_KB / KB_TO_MB
-    );
+    const processMemoryMB = Math.round(processMemory.heapUsed / BYTES_TO_KB / KB_TO_MB);
 
     // Simulate some additional metrics
     const diskUsage = Math.random() * DISK_USAGE_VARIATION + DISK_USAGE_BASE; // 40-70%
-    const networkLatency =
-      Math.random() * NETWORK_LATENCY_VARIATION + NETWORK_LATENCY_BASE; // 20-70ms
+    const networkLatency = Math.random() * NETWORK_LATENCY_VARIATION + NETWORK_LATENCY_BASE; // 20-70ms
 
     return {
       metrics: [
@@ -78,7 +74,7 @@ export default eventHandler(async (event) => {
           status: getStatusByThreshold(
             memoryUsage,
             MEMORY_CRITICAL_THRESHOLD,
-            MEMORY_WARNING_THRESHOLD
+            MEMORY_WARNING_THRESHOLD,
           ),
         },
         {
@@ -88,7 +84,7 @@ export default eventHandler(async (event) => {
           status: getStatusByThreshold(
             cpuUsage,
             MEMORY_CRITICAL_THRESHOLD,
-            MEMORY_WARNING_THRESHOLD
+            MEMORY_WARNING_THRESHOLD,
           ),
         },
         {
@@ -98,7 +94,7 @@ export default eventHandler(async (event) => {
           status: getStatusByThreshold(
             diskUsage,
             MEMORY_CRITICAL_THRESHOLD,
-            MEMORY_WARNING_THRESHOLD
+            MEMORY_WARNING_THRESHOLD,
           ),
         },
         {
@@ -108,7 +104,7 @@ export default eventHandler(async (event) => {
           status: getStatusByThreshold(
             networkLatency,
             NETWORK_CRITICAL_THRESHOLD,
-            NETWORK_WARNING_THRESHOLD
+            NETWORK_WARNING_THRESHOLD,
           ),
         },
       ],

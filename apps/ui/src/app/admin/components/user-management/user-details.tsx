@@ -10,21 +10,10 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { AdminUser } from "@/lib/admin-types";
-import {
-  formatDate,
-  formatRelativeTime,
-  getUserRoles,
-  getUserStatus,
-} from "@/lib/admin-utils";
+import { formatDate, formatRelativeTime, getUserRoles, getUserStatus } from "@/lib/admin-utils";
 import { authClient } from "@/lib/auth-client";
 
 // Constants
@@ -104,9 +93,7 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
                 <IconUser className="h-5 w-5" />
                 User Information
               </CardTitle>
-              <CardDescription>
-                Basic user account details and status
-              </CardDescription>
+              <CardDescription>Basic user account details and status</CardDescription>
             </div>
             <Button onClick={onEdit} variant="outline">
               <IconUserCog className="mr-2 h-4 w-4" />
@@ -117,30 +104,22 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <div className="font-medium text-muted-foreground text-sm">
-                Email
-              </div>
+              <div className="font-medium text-muted-foreground text-sm">Email</div>
               <div className="flex items-center gap-2">
                 <IconMail className="h-4 w-4" />
                 {user.email}
               </div>
             </div>
             <div className="space-y-2">
-              <div className="font-medium text-muted-foreground text-sm">
-                Name
-              </div>
+              <div className="font-medium text-muted-foreground text-sm">Name</div>
               <div>{user.name || "Not provided"}</div>
             </div>
             <div className="space-y-2">
-              <div className="font-medium text-muted-foreground text-sm">
-                Status
-              </div>
+              <div className="font-medium text-muted-foreground text-sm">Status</div>
               <Badge variant={status.variant}>{status.label}</Badge>
             </div>
             <div className="space-y-2">
-              <div className="font-medium text-muted-foreground text-sm">
-                Roles
-              </div>
+              <div className="font-medium text-muted-foreground text-sm">Roles</div>
               <div className="flex gap-1">
                 {roles.map((role) => (
                   <Badge key={role} variant="outline">
@@ -150,17 +129,13 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <div className="font-medium text-muted-foreground text-sm">
-                Email Verified
-              </div>
+              <div className="font-medium text-muted-foreground text-sm">Email Verified</div>
               <Badge variant={user.emailVerified ? "default" : "secondary"}>
                 {user.emailVerified ? "Verified" : "Not Verified"}
               </Badge>
             </div>
             <div className="space-y-2">
-              <div className="font-medium text-muted-foreground text-sm">
-                Account Created
-              </div>
+              <div className="font-medium text-muted-foreground text-sm">Account Created</div>
               <div className="flex items-center gap-2">
                 <IconCalendar className="h-4 w-4" />
                 <div>
@@ -177,20 +152,16 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
             <>
               <Separator />
               <div className="space-y-2">
-                <div className="font-medium text-muted-foreground text-sm">
-                  Ban Information
-                </div>
+                <div className="font-medium text-muted-foreground text-sm">Ban Information</div>
                 <div className="space-y-1">
                   {user.banReason && (
                     <div className="text-sm">
-                      <span className="font-medium">Reason:</span>{" "}
-                      {user.banReason}
+                      <span className="font-medium">Reason:</span> {user.banReason}
                     </div>
                   )}
                   {user.banExpires && (
                     <div className="text-sm">
-                      <span className="font-medium">Expires:</span>{" "}
-                      {formatDate(user.banExpires)}
+                      <span className="font-medium">Expires:</span> {formatDate(user.banExpires)}
                     </div>
                   )}
                 </div>
@@ -209,15 +180,10 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
                 <IconDevices className="h-5 w-5" />
                 Active Sessions
               </CardTitle>
-              <CardDescription>
-                Manage user sessions and device access
-              </CardDescription>
+              <CardDescription>Manage user sessions and device access</CardDescription>
             </div>
             <Button
-              disabled={
-                !sessions?.sessions?.length ||
-                revokeAllSessionsMutation.isPending
-              }
+              disabled={!sessions?.sessions?.length || revokeAllSessionsMutation.isPending}
               onClick={() => revokeAllSessionsMutation.mutate()}
               size="sm"
               variant="destructive"
@@ -243,9 +209,7 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
                       <div>Created: {formatDate(session.createdAt)}</div>
                       <div>Expires: {formatDate(session.expiresAt)}</div>
                       {session.ipAddress && <div>IP: {session.ipAddress}</div>}
-                      {session.userAgent && (
-                        <div>User Agent: {session.userAgent}</div>
-                      )}
+                      {session.userAgent && <div>User Agent: {session.userAgent}</div>}
                       {session.impersonatedBy && (
                         <div className="text-orange-600">
                           Impersonated by: {session.impersonatedBy}
@@ -265,9 +229,7 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
               ))}
             </div>
           ) : (
-            <div className="py-6 text-center text-muted-foreground">
-              No active sessions found
-            </div>
+            <div className="py-6 text-center text-muted-foreground">No active sessions found</div>
           )}
         </CardContent>
       </Card>

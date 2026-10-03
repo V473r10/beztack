@@ -10,13 +10,7 @@ import {
   UserInvitations,
 } from "@/components/organizations";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useActiveOrganization,
@@ -35,15 +29,11 @@ export default function OrganizationsPage() {
   const { data: members = [] } = useOrganizationMembers(activeOrganization?.id);
 
   // Get current user's role in the active organization
-  const currentUserMember = members.find(
-    (member) => member.userId === session?.user?.id
-  );
+  const currentUserMember = members.find((member) => member.userId === session?.user?.id);
   const currentUserRole = currentUserMember?.role || "member";
 
-  const canManageMembers =
-    currentUserRole === "owner" || currentUserRole === "admin";
-  const canEditOrganization =
-    currentUserRole === "owner" || currentUserRole === "admin";
+  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
+  const canEditOrganization = currentUserRole === "owner" || currentUserRole === "admin";
   const canDeleteOrganization = currentUserRole === "owner";
 
   const handleCreateOrganization = () => {
@@ -60,9 +50,7 @@ export default function OrganizationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-bold text-3xl">Organizations</h1>
-          <p className="text-muted-foreground">
-            Manage your organizations and team members.
-          </p>
+          <p className="text-muted-foreground">Manage your organizations and team members.</p>
         </div>
         <Button onClick={handleCreateOrganization}>
           <Plus className="mr-2 h-4 w-4" />
@@ -76,11 +64,7 @@ export default function OrganizationsPage() {
       {(() => {
         if (activeOrganization) {
           return (
-            <Tabs
-              className="space-y-6"
-              onValueChange={setActiveTab}
-              value={activeTab}
-            >
+            <Tabs className="space-y-6" onValueChange={setActiveTab} value={activeTab}>
               <div className="flex items-center justify-between">
                 <TabsList className="grid w-full max-w-md grid-cols-4">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -118,12 +102,8 @@ export default function OrganizationsPage() {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <h3 className="font-semibold text-xl">
-                          {activeOrganization.name}
-                        </h3>
-                        <p className="text-muted-foreground">
-                          @{activeOrganization.slug}
-                        </p>
+                        <h3 className="font-semibold text-xl">{activeOrganization.name}</h3>
+                        <p className="text-muted-foreground">@{activeOrganization.slug}</p>
                         <div className="flex items-center space-x-4 text-muted-foreground text-sm">
                           <div className="flex items-center space-x-1">
                             <Users className="h-4 w-4" />
@@ -152,9 +132,7 @@ export default function OrganizationsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <OrganizationList
-                      onManageOrganization={() => setActiveTab("settings")}
-                    />
+                    <OrganizationList onManageOrganization={() => setActiveTab("settings")} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -163,9 +141,7 @@ export default function OrganizationsPage() {
                 <MemberList
                   currentUserId={session?.user?.id}
                   currentUserRole={currentUserRole}
-                  onInviteMembers={
-                    canManageMembers ? handleInviteMembers : undefined
-                  }
+                  onInviteMembers={canManageMembers ? handleInviteMembers : undefined}
                   organizationId={activeOrganization.id}
                 />
               </TabsContent>
@@ -211,13 +187,10 @@ export default function OrganizationsPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Building2 className="mb-4 h-16 w-16 text-muted-foreground" />
-              <CardTitle className="mb-2 text-xl">
-                Get Started with Organizations
-              </CardTitle>
+              <CardTitle className="mb-2 text-xl">Get Started with Organizations</CardTitle>
               <CardDescription className="mb-6 max-w-md text-center">
-                Organizations help you collaborate with your team. Create your
-                first organization or wait to be invited to join an existing
-                one.
+                Organizations help you collaborate with your team. Create your first organization or
+                wait to be invited to join an existing one.
               </CardDescription>
               <Button onClick={handleCreateOrganization}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -229,10 +202,7 @@ export default function OrganizationsPage() {
       })()}
 
       {/* Dialogs */}
-      <CreateOrganizationDialog
-        onOpenChange={setShowCreateDialog}
-        open={showCreateDialog}
-      />
+      <CreateOrganizationDialog onOpenChange={setShowCreateDialog} open={showCreateDialog} />
 
       {activeOrganization && (
         <InviteMemberDialog

@@ -20,6 +20,7 @@ Your core responsibilities include:
 **Performance Optimization**: Write efficient code with proper caching strategies, database indexing, and query optimization. Consider connection pooling, request batching, and appropriate use of async/await patterns.
 
 **Code Quality Standards**:
+
 - Use TypeScript strict mode with comprehensive type definitions
 - Follow the project's ESLint and Prettier configurations
 - Write self-documenting code with clear variable and function names
@@ -31,6 +32,7 @@ Your core responsibilities include:
 **Development Workflow**: Use the established commands (`nx dev api`, `pnpm migrate`) and follow the monorepo structure. Prefer editing existing files over creating new ones unless absolutely necessary.
 
 When implementing solutions:
+
 1. Analyze the requirements and identify the appropriate Nitro patterns
 2. Consider database schema implications and migration needs
 3. Implement with proper TypeScript typing and error handling

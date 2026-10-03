@@ -27,10 +27,7 @@ function apiModuleExists(modName: string): boolean {
     return false;
   }
   const workspaceRoot = getWorkspaceRoot();
-  const modulePath = join(
-    workspaceRoot,
-    `apps/api/server/modules/${modName}/index.ts`
-  );
+  const modulePath = join(workspaceRoot, `apps/api/server/modules/${modName}/index.ts`);
   return existsSync(modulePath);
 }
 
@@ -45,14 +42,8 @@ function uiRoutesExist(modName: string): boolean {
   }
   const workspaceRoot = getWorkspaceRoot();
   // Check for both .ts and .tsx extensions
-  const tsPath = join(
-    workspaceRoot,
-    `apps/ui/src/features/${modName}/routes.ts`
-  );
-  const tsxPath = join(
-    workspaceRoot,
-    `apps/ui/src/features/${modName}/routes.tsx`
-  );
+  const tsPath = join(workspaceRoot, `apps/ui/src/features/${modName}/routes.ts`);
+  const tsxPath = join(workspaceRoot, `apps/ui/src/features/${modName}/routes.tsx`);
   return existsSync(tsPath) || existsSync(tsxPath);
 }
 
@@ -68,9 +59,7 @@ function toPascal(name: string): string {
 async function generateApiModulesIndex() {
   const workspaceRoot = getWorkspaceRoot();
   // Only include modules that have both: package exists AND API implementation exists
-  const active = modules.filter(
-    (m) => packageExists(m.name) && apiModuleExists(m.name)
-  );
+  const active = modules.filter((m) => packageExists(m.name) && apiModuleExists(m.name));
 
   const imports: string[] = [];
   const entries: string[] = [];
@@ -98,9 +87,7 @@ ${entries.join("\n")}
 async function generateUIRoutes() {
   const workspaceRoot = getWorkspaceRoot();
   // Only include modules that have both: package exists AND UI routes exist
-  const active = modules.filter(
-    (m) => packageExists(m.name) && uiRoutesExist(m.name)
-  );
+  const active = modules.filter((m) => packageExists(m.name) && uiRoutesExist(m.name));
 
   const imports: string[] = [];
   const entries: string[] = [];
@@ -108,9 +95,7 @@ async function generateUIRoutes() {
   for (const mod of active) {
     const baseName = toPascal(mod.name);
     const varName = `${baseName}Routes`;
-    imports.push(
-      `import { ${varName} } from "./features/${mod.name}/routes.js";`
-    );
+    imports.push(`import { ${varName} } from "./features/${mod.name}/routes.js";`);
     entries.push(`\t...${varName},`);
   }
 

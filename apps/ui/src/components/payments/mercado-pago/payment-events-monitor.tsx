@@ -50,11 +50,9 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
   "payment.rejected": "bg-red-500/20 text-red-700 border-red-500/50",
   "payment.pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/50",
   "payment.refunded": "bg-blue-500/20 text-blue-700 border-blue-500/50",
-  "subscription.authorized":
-    "bg-green-500/20 text-green-700 border-green-500/50",
+  "subscription.authorized": "bg-green-500/20 text-green-700 border-green-500/50",
   "subscription.active": "bg-green-500/20 text-green-700 border-green-500/50",
-  "subscription.paused":
-    "bg-orange-500/20 text-orange-700 border-orange-500/50",
+  "subscription.paused": "bg-orange-500/20 text-orange-700 border-orange-500/50",
   "subscription.cancelled": "bg-red-500/20 text-red-700 border-red-500/50",
   "invoice.processed": "bg-green-500/20 text-green-700 border-green-500/50",
   "invoice.failed": "bg-red-500/20 text-red-700 border-red-500/50",
@@ -71,7 +69,7 @@ function formatEventTime(timestamp: string): string {
 
 function formatAmount(
   amount: string | null | undefined,
-  currency: string | null | undefined
+  currency: string | null | undefined,
 ): string {
   if (!amount) {
     return "";
@@ -154,22 +152,15 @@ export function PaymentEventsMonitor({
                         </span>
                       </div>
                       <p className="mt-1 text-xs opacity-80">
-                        {event.data.description ||
-                          event.data.reason ||
-                          event.data.id}
+                        {event.data.description || event.data.reason || event.data.id}
                         {event.data.amount && (
                           <span className="ml-2 font-medium">
-                            {formatAmount(
-                              event.data.amount,
-                              event.data.currency
-                            )}
+                            {formatAmount(event.data.amount, event.data.currency)}
                           </span>
                         )}
                       </p>
                     </div>
-                    <span className="text-xs opacity-60">
-                      {formatEventTime(event.timestamp)}
-                    </span>
+                    <span className="text-xs opacity-60">{formatEventTime(event.timestamp)}</span>
                   </div>
                 </div>
               ))}

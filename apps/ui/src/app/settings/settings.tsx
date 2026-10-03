@@ -13,10 +13,7 @@ import {
   useTwoFactorMutation,
 } from "./hooks/use-two-factor";
 import { useUserSession } from "./hooks/use-user-session";
-import {
-  copyBackupCodesToClipboard,
-  downloadBackupCodes,
-} from "./lib/backup-codes";
+import { copyBackupCodesToClipboard, downloadBackupCodes } from "./lib/backup-codes";
 import { INITIAL_SETTINGS_STATE, TOTP_CODE_LENGTH } from "./lib/constants";
 import { settingsReducer } from "./lib/settings-reducer";
 
@@ -32,7 +29,7 @@ export function Settings() {
   const twoFactorMutation = useTwoFactorMutation(
     dispatch,
     state.twoFactor.action === "regenerate" ? null : state.twoFactor.action,
-    t
+    t,
   );
   const totpVerificationMutation = useTotpVerification(dispatch, t);
   const backupCodesRegenerateMutation = useBackupCodesRegenerate(dispatch, t);
@@ -155,9 +152,7 @@ export function Settings() {
       <ProfileCard
         email={state.profile.email}
         isPending={profileMutation.isPending}
-        onEmailChange={(value) =>
-          dispatch({ type: "SET_PROFILE_FIELD", field: "email", value })
-        }
+        onEmailChange={(value) => dispatch({ type: "SET_PROFILE_FIELD", field: "email", value })}
         onSave={handleProfileSave}
         onUsernameChange={(value) =>
           dispatch({ type: "SET_PROFILE_FIELD", field: "username", value })
@@ -196,9 +191,7 @@ export function Settings() {
         onCancel={() => dispatch({ type: "CLOSE_PASSWORD_DIALOG" })}
         onConfirm={handlePasswordConfirm}
         onPasswordChange={(value) => dispatch({ type: "SET_PASSWORD", value })}
-        onTotpCodeChange={(value) =>
-          dispatch({ type: "SET_DIALOG_TOTP_CODE", value })
-        }
+        onTotpCodeChange={(value) => dispatch({ type: "SET_DIALOG_TOTP_CODE", value })}
         open={state.twoFactor.isPasswordDialogOpen}
         password={state.twoFactor.passwordInput}
         totpCode={state.twoFactor.dialogTotpCode}

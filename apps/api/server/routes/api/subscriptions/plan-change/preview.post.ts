@@ -70,13 +70,9 @@ function isAppAdmin(auth: AuthenticatedUser): boolean {
   return getAppAdminEmails().includes(auth.user.email.trim().toLowerCase());
 }
 
-function resolveMembershipTarget(
-  auth: AuthenticatedUser,
-  body: PlanChangePreviewRequest
-) {
+function resolveMembershipTarget(auth: AuthenticatedUser, body: PlanChangePreviewRequest) {
   if (env.SUBSCRIPTION_MODE === "organization") {
-    const organizationId =
-      body.organizationId ?? auth.session.activeOrganizationId ?? undefined;
+    const organizationId = body.organizationId ?? auth.session.activeOrganizationId ?? undefined;
     if (!organizationId) {
       throw createError({
         statusCode: 400,
@@ -97,26 +93,20 @@ function isCurrentSubscription(subscription: Subscription): boolean {
 
   return Boolean(
     subscription.status === "canceled" &&
-      subscription.currentPeriodEnd &&
-      subscription.currentPeriodEnd > new Date()
+    subscription.currentPeriodEnd &&
+    subscription.currentPeriodEnd > new Date(),
   );
 }
 
-function readString(
-  source: Record<string, unknown> | undefined,
-  key: string
-): string | undefined {
+function readString(source: Record<string, unknown> | undefined, key: string): string | undefined {
   const value = source?.[key];
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function readBillingCadence(
-  subscription: Subscription
-): PlanChangeBillingCadence | undefined {
+function readBillingCadence(subscription: Subscription): PlanChangeBillingCadence | undefined {
   const interval = readString(subscription.metadata, "billingInterval");
   const frequency = subscription.metadata?.billingFrequency;
-  const intervalCount =
-    typeof frequency === "number" ? frequency : SINGLE_INTERVAL_COUNT;
+  const intervalCount = typeof frequency === "number" ? frequency : SINGLE_INTERVAL_COUNT;
 
   if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
     return "monthly";
@@ -134,7 +124,7 @@ function readBillingCadence(
 
 function readMembershipTargetId(
   subscription: Subscription,
-  targetType: "user" | "organization"
+  targetType: "user" | "organization",
 ): string | undefined {
   if (targetType === "organization") {
     return (
@@ -155,7 +145,7 @@ function readMembershipTargetId(
 
 function subscriptionMatchesMembershipTarget(
   subscription: Subscription,
-  target: ReturnType<typeof resolveMembershipTarget>
+  target: ReturnType<typeof resolveMembershipTarget>,
 ): boolean {
   return readMembershipTargetId(subscription, target.type) === target.id;
 }
@@ -208,19 +198,13 @@ function createPlanChangeStore(options: {
       });
 
       if (subscriptions.length === 0) {
-        subscriptions = await discoverSubscriptionsFromDb(
-          options.auth.user.id,
-          options.provider
-        );
+        subscriptions = await discoverSubscriptionsFromDb(options.auth.user.id, options.provider);
       }
 
       const currentSubscription = subscriptions
         .filter(isCurrentSubscription)
         .find((subscription) =>
-          subscriptionMatchesMembershipTarget(
-            subscription,
-            input.membershipTarget
-          )
+          subscriptionMatchesMembershipTarget(subscription, input.membershipTarget),
         );
 
       if (!currentSubscription) {
@@ -230,23 +214,14 @@ function createPlanChangeStore(options: {
       return {
         id: currentSubscription.id,
         paymentProvider: options.provider.provider,
-        paymentIntegrationId: readString(
-          currentSubscription.metadata,
-          "providerIntegrationId"
-        ),
+        paymentIntegrationId: readString(currentSubscription.metadata, "providerIntegrationId"),
         providerPlanId: currentSubscription.productId,
         canonicalTierId:
           readString(currentSubscription.metadata, "tier") ??
           readString(currentSubscription.metadata, "planId"),
         billingCadence: readBillingCadence(currentSubscription),
-        organizationId: readMembershipTargetId(
-          currentSubscription,
-          "organization"
-        ),
-        subscriptionOwnerUserId: readMembershipTargetId(
-          currentSubscription,
-          "user"
-        ),
+        organizationId: readMembershipTargetId(currentSubscription, "organization"),
+        subscriptionOwnerUserId: readMembershipTargetId(currentSubscription, "user"),
         currentPeriodStart: currentSubscription.currentPeriodStart,
         currentPeriodEnd: currentSubscription.currentPeriodEnd,
       };
@@ -261,15 +236,12 @@ function createPlanChangeStore(options: {
           memberRole: memberTable.role,
         })
         .from(memberTable)
-        .innerJoin(
-          organizationTable,
-          eq(memberTable.organizationId, organizationTable.id)
-        )
+        .innerJoin(organizationTable, eq(memberTable.organizationId, organizationTable.id))
         .where(
           and(
             eq(memberTable.userId, input.actorUserId),
-            eq(memberTable.organizationId, input.organizationId)
-          )
+            eq(memberTable.organizationId, input.organizationId),
+          ),
         )
         .limit(1);
 
@@ -277,8 +249,7 @@ function createPlanChangeStore(options: {
         return false;
       }
 
-      const billingManagerRole =
-        membership.billingManagedByRole ?? DEFAULT_BILLING_MANAGER_ROLE;
+      const billingManagerRole = membership.billingManagedByRole ?? DEFAULT_BILLING_MANAGER_ROLE;
       return roleListIncludes(membership.memberRole, billingManagerRole);
     },
     async listActiveVisiblePricingCatalogPlans(paymentProvider) {
@@ -299,8 +270,8 @@ function createPlanChangeStore(options: {
           and(
             eq(planTable.provider, paymentProvider),
             eq(planTable.visible, true),
-            eq(planTable.status, "active")
-          )
+            eq(planTable.status, "active"),
+          ),
         );
 
       return rows.flatMap((row) => {
@@ -364,10 +335,7 @@ function rethrowPlanChangePreviewError(error: unknown): never {
 
   throw createError({
     statusCode: 500,
-    message:
-      error instanceof Error
-        ? error.message
-        : "Failed to create Plan change preview",
+    message: error instanceof Error ? error.message : "Failed to create Plan change preview",
   });
 }
 

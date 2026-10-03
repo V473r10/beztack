@@ -1,9 +1,5 @@
 import { createError, defineEventHandler, getQuery } from "h3";
-import {
-  getMembershipInfo,
-  hasAccessToTier,
-  requireAuth,
-} from "@/server/utils/membership";
+import { getMembershipInfo, hasAccessToTier, requireAuth } from "@/server/utils/membership";
 
 export default defineEventHandler(async (event) => {
   // Require authentication
@@ -11,8 +7,7 @@ export default defineEventHandler(async (event) => {
 
   // Get organization ID from query params
   const query = getQuery(event);
-  const organizationId =
-    (query.organizationId as string) || user.session.activeOrganizationId;
+  const organizationId = (query.organizationId as string) || user.session.activeOrganizationId;
 
   if (!organizationId) {
     throw createError({
@@ -51,8 +46,7 @@ export default defineEventHandler(async (event) => {
     };
 
     // Get available features based on membership tier
-    const availableFeatures: string[] =
-      features[membership.tier] || features.free;
+    const availableFeatures: string[] = features[membership.tier] || features.free;
 
     // Feature limits based on tier
     const limits = {
