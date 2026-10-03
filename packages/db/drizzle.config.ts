@@ -19,7 +19,7 @@ if (!databaseUrl) {
       "DATABASE_URL is required for drizzle-kit commands.",
       `Checked: ${apiEnvPath}`,
       `Checked: ${localEnvPath}`,
-    ].join("\n")
+    ].join("\n"),
   );
 }
 

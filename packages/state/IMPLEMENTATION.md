@@ -7,6 +7,7 @@ This package centralizes state management utilities for the Beztack monorepo, st
 ## Architecture
 
 ### Package Structure
+
 ```
 packages/state/
 ├── src/
@@ -55,27 +56,31 @@ Re-exports all nuqs functionality with proper TypeScript types:
 Each adapter wraps the appropriate nuqs adapter for its framework:
 
 #### React SPA (Vite, CRA)
+
 ```tsx
-import { NuqsAdapter } from 'nuqs/adapters/react'
-export { NuqsAdapter }
+import { NuqsAdapter } from "nuqs/adapters/react";
+export { NuqsAdapter };
 ```
 
 #### Next.js App Router
+
 ```tsx
-import { NuqsAdapter } from 'nuqs/adapters/next/app'
-export { NuqsAdapter }
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+export { NuqsAdapter };
 ```
 
 #### Next.js Pages Router
+
 ```tsx
-import { NuqsAdapter } from 'nuqs/adapters/next/pages'
-export { NuqsAdapter }
+import { NuqsAdapter } from "nuqs/adapters/next/pages";
+export { NuqsAdapter };
 ```
 
 #### Next.js Unified (both routers)
+
 ```tsx
-import { NuqsAdapter } from 'nuqs/adapters/next'
-export { NuqsAdapter }
+import { NuqsAdapter } from "nuqs/adapters/next";
+export { NuqsAdapter };
 ```
 
 ## Integration with apps/ui
@@ -83,6 +88,7 @@ export { NuqsAdapter }
 ### Setup Steps
 
 1. **Add dependency** in `apps/ui/package.json`:
+
    ```json
    {
      "dependencies": {
@@ -92,33 +98,27 @@ export { NuqsAdapter }
    ```
 
 2. **Wrap app** in `apps/ui/src/main.tsx`:
+
    ```tsx
-   import { NuqsAdapter } from '@beztack/state/adapters/react'
-   
+   import { NuqsAdapter } from "@beztack/state/adapters/react";
+
    createRoot(root).render(
      <StrictMode>
        <NuqsAdapter>
          <App />
        </NuqsAdapter>
-     </StrictMode>
-   )
+     </StrictMode>,
+   );
    ```
 
 3. **Use in components**:
    ```tsx
-   import { useQueryState, parseAsInteger } from '@beztack/state'
-   
+   import { useQueryState, parseAsInteger } from "@beztack/state";
+
    function Component() {
-     const [page, setPage] = useQueryState(
-       'page',
-       parseAsInteger.withDefault(1)
-     )
-     
-     return (
-       <button onClick={() => setPage(p => p + 1)}>
-         Page {page}
-       </button>
-     )
+     const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+
+     return <button onClick={() => setPage((p) => p + 1)}>Page {page}</button>;
    }
    ```
 
@@ -127,27 +127,33 @@ export { NuqsAdapter }
 A comprehensive demo is available at `/nuqs-demo` showcasing:
 
 ### 1. Basic String State
+
 - Simple text input synced with URL
 - Clear and set operations
 
 ### 2. Number Parser
+
 - Pagination with increment/decrement
 - Type-safe integer parsing
 - Default values
 
 ### 3. Boolean Parser
+
 - Toggle switches
 - Checkbox states
 
 ### 4. Enum Parser
+
 - Select from predefined options
 - Type-safe enum values
 
 ### 5. Array Parser
+
 - Multiple tag selection
 - Add/remove operations
 
 ### 6. Batched Updates
+
 - Multiple params updated atomically
 - Range sliders with min/max
 - Category filter
@@ -158,25 +164,22 @@ A comprehensive demo is available at `/nuqs-demo` showcasing:
 
 ```tsx
 // ✅ Good - Type-safe with parser
-const [count, setCount] = useQueryState(
-  'count',
-  parseAsInteger.withDefault(0)
-)
+const [count, setCount] = useQueryState("count", parseAsInteger.withDefault(0));
 
 // ❌ Bad - Returns string | null
-const [count, setCount] = useQueryState('count')
+const [count, setCount] = useQueryState("count");
 ```
 
 ### 2. Provide Default Values
 
 ```tsx
 // ✅ Good - Never null
-const [search, setSearch] = useQueryState('search', {
-  defaultValue: ''
-})
+const [search, setSearch] = useQueryState("search", {
+  defaultValue: "",
+});
 
 // ❌ Bad - Can be null
-const [search, setSearch] = useQueryState('search')
+const [search, setSearch] = useQueryState("search");
 ```
 
 ### 3. Use Batched Updates for Multiple Params
@@ -186,33 +189,33 @@ const [search, setSearch] = useQueryState('search')
 const [filters, setFilters] = useQueryStates({
   min: parseAsInteger.withDefault(0),
   max: parseAsInteger.withDefault(100),
-  category: parseAsString.withDefault('')
-})
+  category: parseAsString.withDefault(""),
+});
 
-setFilters({ min: 10, max: 90, category: 'tech' })
+setFilters({ min: 10, max: 90, category: "tech" });
 
 // ❌ Bad - Multiple URL updates
-const [min, setMin] = useQueryState('min', parseAsInteger.withDefault(0))
-const [max, setMax] = useQueryState('max', parseAsInteger.withDefault(100))
-const [cat, setCat] = useQueryState('category', parseAsString.withDefault(''))
+const [min, setMin] = useQueryState("min", parseAsInteger.withDefault(0));
+const [max, setMax] = useQueryState("max", parseAsInteger.withDefault(100));
+const [cat, setCat] = useQueryState("category", parseAsString.withDefault(""));
 
-setMin(10)
-setMax(90)
-setCat('tech')
+setMin(10);
+setMax(90);
+setCat("tech");
 ```
 
 ### 4. Use Enums for Fixed Options
 
 ```tsx
 // ✅ Good - Type-safe options
-const sortOptions = ['asc', 'desc', 'newest'] as const
+const sortOptions = ["asc", "desc", "newest"] as const;
 const [sort, setSort] = useQueryState(
-  'sort',
-  parseAsStringEnum([...sortOptions]).withDefault('asc')
-)
+  "sort",
+  parseAsStringEnum([...sortOptions]).withDefault("asc"),
+);
 
 // ❌ Bad - Any string allowed
-const [sort, setSort] = useQueryState('sort', { defaultValue: 'asc' })
+const [sort, setSort] = useQueryState("sort", { defaultValue: "asc" });
 ```
 
 ## Testing
@@ -220,14 +223,10 @@ const [sort, setSort] = useQueryState('sort', { defaultValue: 'asc' })
 When testing components that use nuqs:
 
 ```tsx
-import { NuqsAdapter } from '@beztack/state/adapters/testing'
+import { NuqsAdapter } from "@beztack/state/adapters/testing";
 
 function renderWithNuqs(component) {
-  return render(
-    <NuqsAdapter>
-      {component}
-    </NuqsAdapter>
-  )
+  return render(<NuqsAdapter>{component}</NuqsAdapter>);
 }
 ```
 
@@ -253,12 +252,12 @@ If you were using nuqs directly:
 
 ```tsx
 // Before
-import { useQueryState } from 'nuqs'
-import { NuqsAdapter } from 'nuqs/adapters/react'
+import { useQueryState } from "nuqs";
+import { NuqsAdapter } from "nuqs/adapters/react";
 
 // After
-import { useQueryState } from '@beztack/state'
-import { NuqsAdapter } from '@beztack/state/adapters/react'
+import { useQueryState } from "@beztack/state";
+import { NuqsAdapter } from "@beztack/state/adapters/react";
 ```
 
 All functionality remains identical, just the import path changes.

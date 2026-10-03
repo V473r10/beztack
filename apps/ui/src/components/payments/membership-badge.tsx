@@ -20,8 +20,7 @@ const tierIcons = {
 
 const tierColors = {
   free: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 border-blue-200",
-  basic:
-    "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200",
+  basic: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200",
   pro: "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 border-purple-200",
   ultimate:
     "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
@@ -68,7 +67,7 @@ export function MembershipBadge({
         sizeClasses[size],
         customStyle,
         "inline-flex items-center gap-1.5 font-medium",
-        className
+        className,
       )}
       variant={variant}
     >
@@ -85,12 +84,7 @@ export type MembershipStatusProps = {
   className?: string;
 };
 
-export function MembershipStatus({
-  tier,
-  isActive,
-  expiresAt,
-  className,
-}: MembershipStatusProps) {
+export function MembershipStatus({ tier, isActive, expiresAt, className }: MembershipStatusProps) {
   const tierName = tierNames[tier];
 
   if (!tierName) {
@@ -125,13 +119,7 @@ export function MembershipStatus({
       <MembershipBadge tier={tier} />
       <Badge
         className="h-5 px-2 text-xs"
-        variant={
-          getStatusColor() as
-            | "default"
-            | "destructive"
-            | "outline"
-            | "secondary"
-        }
+        variant={getStatusColor() as "default" | "destructive" | "outline" | "secondary"}
       >
         {getStatusText()}
       </Badge>

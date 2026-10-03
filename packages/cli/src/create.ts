@@ -1,12 +1,5 @@
 import { exec } from "node:child_process";
-import {
-  mkdir,
-  mkdtemp,
-  readdir,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -48,7 +41,7 @@ interface ExecOptions {
 
 async function execAsync(
   command: string,
-  options?: ExecOptions
+  options?: ExecOptions,
 ): Promise<{ stdout: string; stderr: string }> {
   debugLog(`Executing: ${command}`);
   const result = await execAsyncBase(command, {
@@ -120,9 +113,7 @@ export async function createProject(options: CreateProjectOptions = {}) {
   process.stdout.write("  pnpm run dev\n\n");
 }
 
-async function getProjectConfig(
-  options: CreateProjectOptions
-): Promise<ProjectConfig> {
+async function getProjectConfig(options: CreateProjectOptions): Promise<ProjectConfig> {
   if (options.nonInteractive === true) {
     const name = options.name ?? "my-beztack-app";
     const validationError = validateProjectName(name);
@@ -137,8 +128,7 @@ async function getProjectConfig(
       installDependencies: options.installDependencies ?? true,
       initializeModules: options.initializeModules ?? true,
       nonInteractive: true,
-      templateSource:
-        options.templateSource ?? "https://github.com/V473r10/beztack.git",
+      templateSource: options.templateSource ?? "https://github.com/V473r10/beztack.git",
       selectedModules: options.selectedModules,
       paymentProvider: options.paymentProvider,
     };
@@ -178,7 +168,7 @@ async function getProjectConfig(
         cancel("Operation cancelled");
         process.exit(0);
       },
-    }
+    },
   );
 
   return {
@@ -204,7 +194,7 @@ async function configureModules(
     nonInteractive: boolean;
     selectedModules?: string[];
     paymentProvider?: PaymentProvider;
-  }
+  },
 ) {
   process.chdir(projectDir);
 
@@ -213,15 +203,10 @@ async function configureModules(
     .map((moduleDefinition) => moduleDefinition.name);
 
   if (options.nonInteractive) {
-    const enabledModuleNames = [
-      ...requiredModuleNames,
-      ...(options.selectedModules ?? []),
-    ];
+    const enabledModuleNames = [...requiredModuleNames, ...(options.selectedModules ?? [])];
 
     if (enabledModuleNames.includes("payments") && !options.paymentProvider) {
-      throw new Error(
-        "Payments module requires --payment-provider (polar or mercadopago)"
-      );
+      throw new Error("Payments module requires --payment-provider (polar or mercadopago)");
     }
 
     const spin = spinner();
@@ -239,9 +224,7 @@ async function configureModules(
     return;
   }
 
-  const optionalModules = modules.filter(
-    (moduleDefinition) => !moduleDefinition.required
-  );
+  const optionalModules = modules.filter((moduleDefinition) => !moduleDefinition.required);
 
   if (optionalModules.length === 0) {
     return;
@@ -262,10 +245,7 @@ async function configureModules(
     process.exit(0);
   }
 
-  const enabledModuleNames = [
-    ...requiredModuleNames,
-    ...(selected as string[]),
-  ];
+  const enabledModuleNames = [...requiredModuleNames, ...(selected as string[])];
 
   let paymentProvider: PaymentProvider | undefined;
   if (enabledModuleNames.includes("payments")) {
@@ -310,7 +290,7 @@ async function configureModules(
 
 async function createProjectStructure(
   projectDir: string,
-  config: ProjectConfig
+  config: ProjectConfig,
 ): Promise<Map<string, string>> {
   const templateRepoUrl = config.templateSource;
   let tempDir: string | undefined;
@@ -340,11 +320,7 @@ async function createProjectStructure(
     packageJson.name = config.name;
     packageJson.description = config.description || "";
 
-    await writeFile(
-      packageJsonPath,
-      `${JSON.stringify(packageJson, null, 2)}\n`,
-      "utf-8"
-    );
+    await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf-8");
 
     spin.stop("Project structure created");
     return templateHashes;
@@ -411,10 +387,7 @@ async function copyDir(options: CopyDirOptions) {
       }
 
       if (entry.name === ".env.example") {
-        content = content.replace(
-          /APP_NAME=beztack/g,
-          `APP_NAME=${config.name}`
-        );
+        content = content.replace(/APP_NAME=beztack/g, `APP_NAME=${config.name}`);
       }
 
       await writeFile(destPath, content, "utf-8");
@@ -442,18 +415,14 @@ async function installDependencies(projectDir: string) {
 
     if (packageJson.workspaces) {
       packageJson.workspaces = packageJson.workspaces.filter(
-        (ws: string) => ws !== "scripts/create-beztack"
+        (ws: string) => ws !== "scripts/create-beztack",
       );
 
       if (packageJson.workspaces.length === 0) {
         packageJson.workspaces = undefined;
       }
 
-      await writeFile(
-        packageJsonPath,
-        `${JSON.stringify(packageJson, null, 2)}\n`,
-        "utf-8"
-      );
+      await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf-8");
     }
 
     await execAsync("pnpm install", { cwd: projectDir });
@@ -478,7 +447,7 @@ const ORIGIN_EXCLUDED_SEGMENTS = new Set([
 
 async function generateOrigin(
   projectDir: string,
-  templateHashes: Map<string, string>
+  templateHashes: Map<string, string>,
 ): Promise<void> {
   const files: Record<string, OriginFileEntry> = {};
   const pending = [projectDir];
@@ -493,10 +462,7 @@ async function generateOrigin(
       const relPath = relative(projectDir, absPath).replaceAll("\\", "/");
       const firstSegment = relPath.split("/")[0] ?? relPath;
 
-      if (
-        ORIGIN_EXCLUDED_SEGMENTS.has(firstSegment) ||
-        ORIGIN_EXCLUDED_SEGMENTS.has(entry.name)
-      ) {
+      if (ORIGIN_EXCLUDED_SEGMENTS.has(firstSegment) || ORIGIN_EXCLUDED_SEGMENTS.has(entry.name)) {
         continue;
       }
 

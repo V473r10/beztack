@@ -1,12 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
@@ -66,15 +60,10 @@ export function TwoFactorCard({
       <Card id={TOUR_STEP_IDS.Settings.TwoFactor.CARD}>
         <CardHeader>
           <CardTitle>{t("account.settings.twoFactor.title")}</CardTitle>
-          <CardDescription>
-            {t("account.settings.twoFactor.description")}
-          </CardDescription>
+          <CardDescription>{t("account.settings.twoFactor.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div
-            className="flex items-center space-x-2"
-            id={TOUR_STEP_IDS.Settings.TwoFactor.SWITCH}
-          >
+          <div className="flex items-center space-x-2" id={TOUR_STEP_IDS.Settings.TwoFactor.SWITCH}>
             <Label htmlFor="two-factor-switch">
               <span>{t("account.settings.twoFactor.enable")}</span>
             </Label>

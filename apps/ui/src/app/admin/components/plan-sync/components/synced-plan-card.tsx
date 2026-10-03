@@ -10,11 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatPrice, getPlanDisplayName } from "../helpers";
-import {
-  useDeletePlanMutation,
-  useImportMutation,
-  useSyncMutation,
-} from "../hooks";
+import { useDeletePlanMutation, useImportMutation, useSyncMutation } from "../hooks";
 import type { SyncedPlanView } from "../types";
 import { DiffTable } from "./diff-table";
 import { PlanEditCard } from "./plan-edit-card";
@@ -111,9 +107,7 @@ export function SyncedPlanCard({
           <CardHeader className="pb-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-1.5">
-                <CardTitle className="font-semibold text-xl leading-none">
-                  {product.name}
-                </CardTitle>
+                <CardTitle className="font-semibold text-xl leading-none">{product.name}</CardTitle>
                 {product.description && (
                   <CardDescription className="line-clamp-2 text-sm">
                     {product.description}
@@ -133,17 +127,12 @@ export function SyncedPlanCard({
           <CardContent className="flex-1 pb-4">
             <div className="flex items-center gap-4 rounded-md bg-muted/40 p-2 text-xs">
               <div className="text-muted-foreground">
-                Type:{" "}
-                <span className="font-medium text-foreground">
-                  {product.type}
-                </span>
+                Type: <span className="font-medium text-foreground">{product.type}</span>
               </div>
               <div className="h-3 w-px bg-border" />
               <div className="text-muted-foreground">
                 Provider ID:{" "}
-                <span className="font-medium font-mono text-foreground">
-                  {product.id}
-                </span>
+                <span className="font-medium font-mono text-foreground">{product.id}</span>
               </div>
             </div>
           </CardContent>
@@ -151,9 +140,7 @@ export function SyncedPlanCard({
             <Button
               className="gap-1.5"
               disabled={importMutation.isPending}
-              onClick={() =>
-                importMutation.mutate({ remoteProductId: product.id })
-              }
+              onClick={() => importMutation.mutate({ remoteProductId: product.id })}
               size="sm"
               type="button"
             >
@@ -200,12 +187,9 @@ export function SyncedPlanCard({
                 )}
               </div>
               <div className="shrink-0 text-right">
-                <div className="font-bold text-2xl tracking-tight">
-                  ${view.localPlan.price}
-                </div>
+                <div className="font-bold text-2xl tracking-tight">${view.localPlan.price}</div>
                 <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  {view.localPlan.currency} /{" "}
-                  {view.localPlan.interval ?? "month"}
+                  {view.localPlan.currency} / {view.localPlan.interval ?? "month"}
                 </div>
               </div>
             </div>

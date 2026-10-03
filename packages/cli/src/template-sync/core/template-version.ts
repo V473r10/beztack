@@ -3,9 +3,7 @@ import { join } from "node:path";
 
 const VERSION_FILE = "template.version";
 
-export async function readTemplateVersion(
-  templateRoot: string
-): Promise<string> {
+export async function readTemplateVersion(templateRoot: string): Promise<string> {
   try {
     const raw = await readFile(join(templateRoot, VERSION_FILE), "utf-8");
     const value = raw.trim();

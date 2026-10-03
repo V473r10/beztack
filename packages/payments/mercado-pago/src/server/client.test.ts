@@ -1,10 +1,6 @@
 import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createMercadoPagoClient,
-  type MercadoPagoConfig,
-  MercadoPagoError,
-} from "./client.js";
+import { createMercadoPagoClient, type MercadoPagoConfig, MercadoPagoError } from "./client.js";
 
 // Test constants
 const ACCESS_TOKEN = "TEST-ACCESS-TOKEN-123";
@@ -59,12 +55,7 @@ describe("server/client", () => {
 
   describe("MercadoPagoError", () => {
     it("creates error with all properties", () => {
-      const error = new MercadoPagoError(
-        "Test error",
-        STATUS_BAD_REQUEST,
-        { foo: "bar" },
-        true
-      );
+      const error = new MercadoPagoError("Test error", STATUS_BAD_REQUEST, { foo: "bar" }, true);
 
       expect(error.message).toBe("Test error");
       expect(error.statusCode).toBe(STATUS_BAD_REQUEST);
@@ -115,11 +106,7 @@ describe("server/client", () => {
           webhookSecret: WEBHOOK_SECRET,
         });
 
-        const result = client.webhooks.validate(
-          "invalid-signature",
-          REQUEST_ID,
-          DATA_ID
-        );
+        const result = client.webhooks.validate("invalid-signature", REQUEST_ID, DATA_ID);
         expect(result).toBe(false);
       });
 
@@ -129,11 +116,7 @@ describe("server/client", () => {
           webhookSecret: WEBHOOK_SECRET,
         });
 
-        const result = client.webhooks.validate(
-          "v1=abc123",
-          REQUEST_ID,
-          DATA_ID
-        );
+        const result = client.webhooks.validate("v1=abc123", REQUEST_ID, DATA_ID);
         expect(result).toBe(false);
       });
 
@@ -160,11 +143,7 @@ describe("server/client", () => {
         const validSignature = hmac.digest("hex");
 
         const xSignature = `ts=${TIMESTAMP},v1=${validSignature}`;
-        const result = client.webhooks.validate(
-          xSignature,
-          REQUEST_ID,
-          DATA_ID
-        );
+        const result = client.webhooks.validate(xSignature, REQUEST_ID, DATA_ID);
 
         expect(result).toBe(true);
       });
@@ -176,11 +155,7 @@ describe("server/client", () => {
         });
 
         const xSignature = `ts=${TIMESTAMP},v1=invalid-signature-value`;
-        const result = client.webhooks.validate(
-          xSignature,
-          REQUEST_ID,
-          DATA_ID
-        );
+        const result = client.webhooks.validate(xSignature, REQUEST_ID, DATA_ID);
 
         expect(result).toBe(false);
       });
@@ -392,7 +367,7 @@ describe("server/client", () => {
         expect.objectContaining({
           Authorization: `Bearer ${ACCESS_TOKEN}`,
           "Content-Type": "application/json",
-        })
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -430,9 +405,7 @@ describe("server/client", () => {
         maxRetries: 0,
       });
 
-      await expect(client.payments.get("nonexistent")).rejects.toThrow(
-        MercadoPagoError
-      );
+      await expect(client.payments.get("nonexistent")).rejects.toThrow(MercadoPagoError);
     });
 
     it("retries on 429 status", async () => {

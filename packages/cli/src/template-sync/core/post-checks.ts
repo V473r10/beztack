@@ -35,9 +35,7 @@ interface ResolveTemplateRootInput {
  * @param {ResolveTemplateRootInput} input - The input for resolving the template root.
  * @returns {Promise<string>} - The resolved template root.
  */
-export async function resolveTemplateRoot(
-  input: ResolveTemplateRootInput
-): Promise<string> {
+export async function resolveTemplateRoot(input: ResolveTemplateRootInput): Promise<string> {
   if (typeof input.templateRoot === "string") {
     return input.templateRoot;
   }
@@ -71,7 +69,7 @@ interface TemplateCacheMetadata {
 
 async function syncRemoteTemplate(
   templateRoot: string,
-  options: SyncRemoteTemplateOptions
+  options: SyncRemoteTemplateOptions,
 ): Promise<void> {
   if (options.refresh && options.offline) {
     throw new Error("Cannot use --refresh together with --offline");
@@ -89,29 +87,21 @@ async function syncRemoteTemplate(
     }
 
     try {
-      await runGitCommand(
-        ["fetch", "origin", TEMPLATE_BRANCH, "--depth", "1"],
-        templateRoot
-      );
-      await runGitCommand(
-        ["reset", "--hard", `origin/${TEMPLATE_BRANCH}`],
-        templateRoot
-      );
+      await runGitCommand(["fetch", "origin", TEMPLATE_BRANCH, "--depth", "1"], templateRoot);
+      await runGitCommand(["reset", "--hard", `origin/${TEMPLATE_BRANCH}`], templateRoot);
       await updateCacheMetadata(templateRoot);
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       process.stderr.write(
-        `Warning: failed to refresh template cache, using local cache: ${message}\n`
+        `Warning: failed to refresh template cache, using local cache: ${message}\n`,
       );
       return;
     }
   }
 
   if (options.offline) {
-    throw new Error(
-      "Template cache is missing. Run once without --offline to initialize it."
-    );
+    throw new Error("Template cache is missing. Run once without --offline to initialize it.");
   }
 
   if (hasTemplateRoot && !hasGitDir) {
@@ -138,8 +128,7 @@ async function runGitCommand(args: string[], cwd?: string): Promise<string> {
       : await execFileAsync("git", args);
     return result.stdout.trim();
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown git error";
+    const message = error instanceof Error ? error.message : "Unknown git error";
     throw new Error(`Failed to sync Beztack template from main: ${message}`);
   }
 }
@@ -171,9 +160,7 @@ function getCacheMetadataPath(templateRoot: string): string {
   return join(templateRoot, "..", CACHE_META_FILE);
 }
 
-async function readCacheMetadata(
-  templateRoot: string
-): Promise<TemplateCacheMetadata | null> {
+async function readCacheMetadata(templateRoot: string): Promise<TemplateCacheMetadata | null> {
   const metadataPath = getCacheMetadataPath(templateRoot);
   try {
     const raw = await readFile(metadataPath, "utf-8");
@@ -206,9 +193,5 @@ async function updateCacheMetadata(templateRoot: string): Promise<void> {
     branch: TEMPLATE_BRANCH,
     repository: TEMPLATE_REPOSITORY,
   };
-  await writeFile(
-    metadataPath,
-    `${JSON.stringify(metadata, null, 2)}\n`,
-    "utf-8"
-  );
+  await writeFile(metadataPath, `${JSON.stringify(metadata, null, 2)}\n`, "utf-8");
 }

@@ -4,10 +4,7 @@ import { extname, join, resolve } from "node:path";
 import pc from "picocolors";
 import { readManifest } from "../core/manifest.js";
 import { buildUpdatePlan } from "../core/planner.js";
-import {
-  ensureTemplateRoot,
-  resolveTemplateRoot,
-} from "../core/post-checks.js";
+import { ensureTemplateRoot, resolveTemplateRoot } from "../core/post-checks.js";
 import { writePlanReport } from "../core/report.js";
 import { readTemplateVersion } from "../core/template-version.js";
 
@@ -48,13 +45,9 @@ const DEFAULT_PORT = 3434;
 export async function runInspect(options: InspectOptions): Promise<void> {
   if (
     typeof options.port === "number" &&
-    (!Number.isInteger(options.port) ||
-      options.port < 0 ||
-      options.port > 65_535)
+    (!Number.isInteger(options.port) || options.port < 0 || options.port > 65_535)
   ) {
-    throw new Error(
-      "Invalid --port value. Use an integer between 0 and 65535."
-    );
+    throw new Error("Invalid --port value. Use an integer between 0 and 65535.");
   }
 
   const templateRoot = await resolveTemplateRoot({
@@ -92,21 +85,13 @@ export async function runInspect(options: InspectOptions): Promise<void> {
       isBinary: change.isBinary === true,
       conflictReason: change.conflictReason,
       currentContent:
-        change.isBinary === true
-          ? "[binary content omitted]"
-          : (change.currentContent ?? ""),
+        change.isBinary === true ? "[binary content omitted]" : (change.currentContent ?? ""),
       templateContent:
-        change.isBinary === true
-          ? "[binary content omitted]"
-          : (change.templateContent ?? ""),
+        change.isBinary === true ? "[binary content omitted]" : (change.templateContent ?? ""),
     })),
   };
 
-  await writeFile(
-    join(inspectRoot, "data.json"),
-    `${JSON.stringify(payload, null, 2)}\n`,
-    "utf-8"
-  );
+  await writeFile(join(inspectRoot, "data.json"), `${JSON.stringify(payload, null, 2)}\n`, "utf-8");
   await writeFile(join(inspectRoot, "index.html"), buildInspectHtml(), "utf-8");
 
   const host = options.host ?? DEFAULT_HOST;
@@ -125,7 +110,7 @@ export async function runInspect(options: InspectOptions): Promise<void> {
       `- Skipped unchanged template files: ${payload.skippedUnchangedTemplateFiles}\n` +
       `- Conflicts: ${payload.conflicts}\n` +
       `- Report: ${reportPath}\n` +
-      "- Press Ctrl+C to stop the viewer\n"
+      "- Press Ctrl+C to stop the viewer\n",
   );
 
   await new Promise<void>((resolvePromise) => {
@@ -146,7 +131,7 @@ async function serveInspectStatic(
   response: {
     writeHead: (statusCode: number, headers?: Record<string, string>) => void;
     end: (data?: string) => void;
-  }
+  },
 ): Promise<void> {
   try {
     const relativePath = sanitizeRequestPath(requestUrl);
@@ -198,18 +183,12 @@ function getContentType(path: string): string {
 async function listenOnAvailablePort(
   server: {
     listen: (port: number, host: string, callback: () => void) => void;
-    on: (
-      event: "error",
-      listener: (error: NodeJS.ErrnoException) => void
-    ) => void;
-    off: (
-      event: "error",
-      listener: (error: NodeJS.ErrnoException) => void
-    ) => void;
+    on: (event: "error", listener: (error: NodeJS.ErrnoException) => void) => void;
+    off: (event: "error", listener: (error: NodeJS.ErrnoException) => void) => void;
     address: () => string | { port: number } | null;
   },
   host: string,
-  preferredPort: number
+  preferredPort: number,
 ): Promise<number> {
   return await new Promise<number>((resolvePromise, rejectPromise) => {
     const onError = (error: NodeJS.ErrnoException) => {
@@ -221,11 +200,7 @@ async function listenOnAvailablePort(
       server.off("error", onError);
       server.listen(0, host, () => {
         const address = server.address();
-        if (
-          typeof address === "object" &&
-          address !== null &&
-          typeof address.port === "number"
-        ) {
+        if (typeof address === "object" && address !== null && typeof address.port === "number") {
           resolvePromise(address.port);
           return;
         }
@@ -237,11 +212,7 @@ async function listenOnAvailablePort(
     server.listen(preferredPort, host, () => {
       server.off("error", onError);
       const address = server.address();
-      if (
-        typeof address === "object" &&
-        address !== null &&
-        typeof address.port === "number"
-      ) {
+      if (typeof address === "object" && address !== null && typeof address.port === "number") {
         resolvePromise(address.port);
         return;
       }

@@ -12,20 +12,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import { useCreateOrganization } from "@/hooks/use-organizations";
-import {
-  type CreateOrganizationData,
-  createOrganizationSchema,
-} from "@/lib/organization-types";
+import { type CreateOrganizationData, createOrganizationSchema } from "@/lib/organization-types";
 
 type CreateOrganizationDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function CreateOrganizationDialog({
-  open,
-  onOpenChange,
-}: CreateOrganizationDialogProps) {
+export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizationDialogProps) {
   const createOrganization = useCreateOrganization();
 
   const form = useAppForm({
@@ -64,7 +58,7 @@ export function CreateOrganizationDialog({
       const slug = toKebabCase(name);
       form.setFieldValue("slug", slug);
     },
-    [form, toKebabCase]
+    [form, toKebabCase],
   );
 
   // Transform slug input to kebab-case
@@ -73,7 +67,7 @@ export function CreateOrganizationDialog({
       const kebabSlug = toKebabCase(slug);
       form.setFieldValue("slug", kebabSlug);
     },
-    [form, toKebabCase]
+    [form, toKebabCase],
   );
 
   const handleSubmit = useCallback(
@@ -82,7 +76,7 @@ export function CreateOrganizationDialog({
       e.stopPropagation();
       form.handleSubmit();
     },
-    [form]
+    [form],
   );
 
   // Reset form when dialog closes
@@ -135,8 +129,7 @@ export function CreateOrganizationDialog({
                     />
                   </field.FormControl>
                   <field.FormDescription>
-                    This will be used in URLs. Only lowercase letters, numbers,
-                    and hyphens allowed.
+                    This will be used in URLs. Only lowercase letters, numbers, and hyphens allowed.
                   </field.FormDescription>
                   <field.FormMessage />
                 </field.FormItem>
@@ -172,9 +165,7 @@ export function CreateOrganizationDialog({
                 Cancel
               </Button>
               <Button disabled={createOrganization.isPending} type="submit">
-                {createOrganization.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {createOrganization.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Organization
               </Button>
             </DialogFooter>

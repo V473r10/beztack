@@ -12,18 +12,12 @@ type ProductsResponse = {
 };
 
 function getTierId(product: Product): string {
-  const tierId =
-    typeof product.metadata?.tier === "string"
-      ? product.metadata.tier
-      : undefined;
+  const tierId = typeof product.metadata?.tier === "string" ? product.metadata.tier : undefined;
   if (tierId) {
     return tierId;
   }
 
-  const planId =
-    typeof product.metadata?.planId === "string"
-      ? product.metadata.planId
-      : undefined;
+  const planId = typeof product.metadata?.planId === "string" ? product.metadata.planId : undefined;
   if (planId) {
     return planId;
   }
@@ -48,13 +42,13 @@ function getDisplayOrder(product: Product): number {
 }
 
 function extractPermissions(
-  metadata: Record<string, unknown> | undefined
+  metadata: Record<string, unknown> | undefined,
 ): Record<string, boolean> {
   if (Array.isArray(metadata?.permissions)) {
     return Object.fromEntries(
       metadata.permissions
         .filter((value): value is string => typeof value === "string")
-        .map((permission) => [permission, true])
+        .map((permission) => [permission, true]),
     );
   }
   if (metadata?.permissions && typeof metadata.permissions === "object") {
@@ -63,10 +57,7 @@ function extractPermissions(
   return {};
 }
 
-function buildProviderProduct(
-  product: Product,
-  interval: string
-): ProviderProduct {
+function buildProviderProduct(product: Product, interval: string): ProviderProduct {
   return {
     id: product.id,
     name: product.name,
@@ -84,17 +75,11 @@ function buildProviderProduct(
   };
 }
 
-function buildBaseTier(
-  product: Product,
-  tierId: string,
-  displayOrder: number
-): PricingTier {
+function buildBaseTier(product: Product, tierId: string, displayOrder: number): PricingTier {
   const metadata = product.metadata;
   const baseName = product.name.split(" - ")[0] || product.name;
   const features = Array.isArray(metadata?.features)
-    ? metadata.features.filter(
-        (value): value is string => typeof value === "string"
-      )
+    ? metadata.features.filter((value): value is string => typeof value === "string")
     : [];
   const limits =
     metadata?.limits && typeof metadata.limits === "object"
@@ -125,11 +110,7 @@ function toDisplayAmount(amount: number, provider: string): number {
   return amount;
 }
 
-function applyIntervalToTier(
-  tier: PricingTier,
-  product: Product,
-  provider: string
-): PricingTier {
+function applyIntervalToTier(tier: PricingTier, product: Product, provider: string): PricingTier {
   const displayAmount = toDisplayAmount(product.price.amount, provider);
 
   if (product.interval === "month") {
@@ -155,9 +136,7 @@ function applyIntervalToTier(
  * Fetch products from the API and transform them into PricingTier objects.
  * This is a queryFn — use it with @tanstack/react-query's useQuery.
  */
-export async function fetchPricingTiers(
-  apiUrl: string
-): Promise<PricingTier[]> {
+export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> {
   const response = await fetch(`${apiUrl}/api/subscriptions/products`, {
     credentials: "include",
   });
@@ -181,8 +160,7 @@ export async function fetchPricingTiers(
   for (const [id, tier] of tiers) {
     if (tier.price.monthly > 0 && tier.price.yearly > 0) {
       const annualIfMonthly = tier.price.monthly * 12;
-      const pct =
-        ((annualIfMonthly - tier.price.yearly) / annualIfMonthly) * 100;
+      const pct = ((annualIfMonthly - tier.price.yearly) / annualIfMonthly) * 100;
       tiers.set(id, { ...tier, yearlySavingsPercent: Math.round(pct) });
     }
   }

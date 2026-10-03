@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.0.1] - 2024-11-21
 
 ### Added
+
 - Initial release of @beztack/state package
 - Integration with nuqs v2.8.1 for type-safe URL search params
 - Framework adapters:
@@ -22,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Full TypeScript support with type inference
 
 ### Features
+
 - Type-safe URL search params management
 - Automatic URL synchronization
 - Server-side rendering support

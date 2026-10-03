@@ -42,12 +42,6 @@ export default defineNitroConfig({
   // Additional build configuration for better dependency handling
   externals: {
     // Inline these dependencies to avoid ESM resolution issues
-    inline: [
-      "@polar-sh/sdk",
-      "@polar-sh/better-auth",
-      "better-auth",
-      "zod",
-      "zod-to-json-schema",
-    ],
+    inline: ["@polar-sh/sdk", "@polar-sh/better-auth", "better-auth", "zod", "zod-to-json-schema"],
   },
 });

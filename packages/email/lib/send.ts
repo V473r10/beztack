@@ -64,20 +64,18 @@ function isWelcomeEmailData(data: EmailTemplateData): data is WelcomeEmailData {
   return "loginUrl" in data;
 }
 
-function isPasswordResetEmailData(
-  data: EmailTemplateData
-): data is PasswordResetEmailData {
+function isPasswordResetEmailData(data: EmailTemplateData): data is PasswordResetEmailData {
   return "resetUrl" in data;
 }
 
 function isSubscriptionConfirmationEmailData(
-  data: EmailTemplateData
+  data: EmailTemplateData,
 ): data is SubscriptionConfirmationEmailData {
   return "planName" in data && "amount" in data;
 }
 
 function isOrganizationInvitationEmailData(
-  data: EmailTemplateData
+  data: EmailTemplateData,
 ): data is OrganizationInvitationEmailData {
   return "invitationUrl" in data && "organizationName" in data;
 }
@@ -98,9 +96,7 @@ function validateWelcomeData(data: Record<string, unknown>): WelcomeEmailData {
   };
 }
 
-function validatePasswordResetData(
-  data: Record<string, unknown>
-): PasswordResetEmailData {
+function validatePasswordResetData(data: Record<string, unknown>): PasswordResetEmailData {
   const username = data.username;
   const resetUrl = data.resetUrl;
   if (!username) {
@@ -116,7 +112,7 @@ function validatePasswordResetData(
 }
 
 function validateSubscriptionData(
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): SubscriptionConfirmationEmailData {
   const { username, planName, amount, billingPeriod, dashboardUrl } = data;
   if (!username) {
@@ -144,10 +140,9 @@ function validateSubscriptionData(
 }
 
 function validateOrganizationInvitationData(
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): OrganizationInvitationEmailData {
-  const { invitedByUsername, invitedByEmail, organizationName, invitationUrl } =
-    data;
+  const { invitedByUsername, invitedByEmail, organizationName, invitationUrl } = data;
   if (!invitedByUsername) {
     throw new Error("Organization invitation email requires invitedByUsername");
   }
@@ -169,10 +164,7 @@ function validateOrganizationInvitationData(
 }
 
 // Helper function to ensure required properties are present
-function validateEmailData(
-  type: EmailType,
-  data: Record<string, unknown>
-): EmailTemplateData {
+function validateEmailData(type: EmailType, data: Record<string, unknown>): EmailTemplateData {
   // biome-ignore lint/nursery/noUnnecessaryConditions: false positive
   switch (type) {
     case "welcome":
@@ -217,13 +209,10 @@ export const send = async (props: SendEmailProps): Promise<EmailResult> => {
 
     return {
       success: true,
-      data: data
-        ? { ...data, id: data.id, message: "Email sent successfully" }
-        : undefined,
+      data: data ? { ...data, id: data.id, message: "Email sent successfully" } : undefined,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return {
       success: false,
       error: errorMessage,
@@ -252,27 +241,20 @@ function validateEmailAddresses(to: string | string[]): void {
 }
 
 // Helper function to render React content to HTML
-async function renderReactToHtml(
-  reactElement: React.ReactElement
-): Promise<string> {
+async function renderReactToHtml(reactElement: React.ReactElement): Promise<string> {
   try {
     return await render(reactElement);
   } catch (reactEmailError: unknown) {
     try {
       return renderToStaticMarkup(reactElement);
     } catch (_reactDomError: unknown) {
-      const msg =
-        reactEmailError instanceof Error
-          ? reactEmailError.message
-          : "Unknown JSX error";
+      const msg = reactEmailError instanceof Error ? reactEmailError.message : "Unknown JSX error";
       throw new Error(`React rendering failed: ${msg}`);
     }
   }
 }
 
-export const sendWithReact = async (
-  props: SendEmailPropsWithReact
-): Promise<EmailResult> => {
+export const sendWithReact = async (props: SendEmailPropsWithReact): Promise<EmailResult> => {
   try {
     validateEnvironment();
     validateEmailAddresses(props.to);
@@ -300,13 +282,10 @@ export const sendWithReact = async (
 
     return {
       success: true,
-      data: data
-        ? { ...data, id: data.id, message: "Email sent successfully" }
-        : undefined,
+      data: data ? { ...data, id: data.id, message: "Email sent successfully" } : undefined,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return {
       success: false,
       error: errorMessage,
@@ -314,9 +293,7 @@ export const sendWithReact = async (
   }
 };
 
-export const sendEmail = async (
-  props: SendEmailUnifiedProps
-): Promise<EmailResult> => {
+export const sendEmail = async (props: SendEmailUnifiedProps): Promise<EmailResult> => {
   try {
     // Validate and normalize the email data
     const validatedData = validateEmailData(props.type, props.data);
@@ -380,13 +357,9 @@ async function getReactTemplate(type: EmailType, data: EmailTemplateData) {
     }
     case "subscription-confirmation": {
       if (!isSubscriptionConfirmationEmailData(data)) {
-        throw new Error(
-          "Invalid data for subscription confirmation email template"
-        );
+        throw new Error("Invalid data for subscription confirmation email template");
       }
-      const { SubscriptionConfirmationEmail } = await import(
-        "../emails/subscription-confirmation"
-      );
+      const { SubscriptionConfirmationEmail } = await import("../emails/subscription-confirmation");
       return React.createElement(SubscriptionConfirmationEmail, {
         username: data.username,
         planName: data.planName,
@@ -397,13 +370,9 @@ async function getReactTemplate(type: EmailType, data: EmailTemplateData) {
     }
     case "organization-invitation": {
       if (!isOrganizationInvitationEmailData(data)) {
-        throw new Error(
-          "Invalid data for organization invitation email template"
-        );
+        throw new Error("Invalid data for organization invitation email template");
       }
-      const { OrganizationInvitationEmail } = await import(
-        "../emails/organization-invitation"
-      );
+      const { OrganizationInvitationEmail } = await import("../emails/organization-invitation");
       return React.createElement(OrganizationInvitationEmail, {
         invitedByUsername: data.invitedByUsername,
         invitedByEmail: data.invitedByEmail,
@@ -416,10 +385,7 @@ async function getReactTemplate(type: EmailType, data: EmailTemplateData) {
   }
 }
 
-async function getHTMLTemplate(
-  type: EmailType,
-  data: EmailTemplateData
-): Promise<string> {
+async function getHTMLTemplate(type: EmailType, data: EmailTemplateData): Promise<string> {
   // biome-ignore lint/nursery/noUnnecessaryConditions: false positive
   switch (type) {
     case "welcome": {
@@ -438,21 +404,15 @@ async function getHTMLTemplate(
     }
     case "subscription-confirmation": {
       if (!isSubscriptionConfirmationEmailData(data)) {
-        throw new Error(
-          "Invalid data for subscription confirmation email template"
-        );
+        throw new Error("Invalid data for subscription confirmation email template");
       }
       // For now, use welcome template as placeholder
-      const { welcomeEmailTemplate: welcomeTemplate } = await import(
-        "../lib/templates"
-      );
+      const { welcomeEmailTemplate: welcomeTemplate } = await import("../lib/templates");
       return welcomeTemplate(data.username);
     }
     case "organization-invitation": {
       if (!isOrganizationInvitationEmailData(data)) {
-        throw new Error(
-          "Invalid data for organization invitation email template"
-        );
+        throw new Error("Invalid data for organization invitation email template");
       }
       // Simple HTML fallback for organization invitation
       return `

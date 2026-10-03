@@ -24,9 +24,7 @@ export type PolarAuthPluginConfig = {
  * Create the Polar Better Auth server plugin.
  * Returns null if config is missing or provider is not polar.
  */
-export function createPolarAuthPlugin(
-  config: PolarAuthPluginConfig
-): ReturnType<typeof polar> {
+export function createPolarAuthPlugin(config: PolarAuthPluginConfig): ReturnType<typeof polar> {
   const client = new Polar({
     accessToken: config.accessToken,
     server: config.server,

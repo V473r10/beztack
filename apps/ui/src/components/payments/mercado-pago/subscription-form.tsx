@@ -104,9 +104,7 @@ const SubscriptionForm = ({
         }
       }
     } catch (error) {
-      onError?.(
-        error instanceof Error ? error : new Error("Subscription failed")
-      );
+      onError?.(error instanceof Error ? error : new Error("Subscription failed"));
     } finally {
       setIsLoading(false);
     }
@@ -172,8 +170,7 @@ const SubscriptionForm = ({
               {currencyId} {amount.toLocaleString()}
               <span className="font-normal text-muted-foreground text-sm">
                 {" "}
-                / cada {frequency}{" "}
-                {frequencyType === "months" ? "mes(es)" : "día(s)"}
+                / cada {frequency} {frequencyType === "months" ? "mes(es)" : "día(s)"}
               </span>
             </p>
           </div>

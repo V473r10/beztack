@@ -6,13 +6,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ChartConfig } from "@/components/ui/chart";
 import { PingingDotChart } from "@/components/ui/pinging-dot-chart";
 import { authClient } from "@/lib/auth-client";
@@ -63,12 +57,10 @@ async function fetchUserGrowthData() {
       };
       return acc;
     },
-    {} as Record<string, { month: string; users: number }>
+    {} as Record<string, { month: string; users: number }>,
   );
 
-  return Object.values(usersByMonth).sort((a, b) =>
-    a.month.localeCompare(b.month)
-  );
+  return Object.values(usersByMonth).sort((a, b) => a.month.localeCompare(b.month));
 }
 
 // Real data fetchers
@@ -134,9 +126,7 @@ async function fetchUserStats() {
   const RECENT_SIGNUP_DAYS = 7;
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - RECENT_SIGNUP_DAYS);
-  const recentSignups = users.filter(
-    (user) => new Date(user.createdAt) > sevenDaysAgo
-  ).length;
+  const recentSignups = users.filter((user) => new Date(user.createdAt) > sevenDaysAgo).length;
 
   return { totalUsers, activeUsers, bannedUsers, recentSignups };
 }
@@ -277,9 +267,7 @@ export default function AdminAnalytics() {
 
                   return (
                     <div className="flex h-[250px] items-center justify-center">
-                      <p className="text-muted-foreground text-sm">
-                        No metrics available
-                      </p>
+                      <p className="text-muted-foreground text-sm">No metrics available</p>
                     </div>
                   );
                 })()}

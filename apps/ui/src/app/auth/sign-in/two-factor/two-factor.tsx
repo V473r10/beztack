@@ -26,10 +26,7 @@ type AuthError = {
 
 const extractAuthErrorMessage = (result: unknown): string => {
   if (typeof result === "object" && result !== null && "error" in result) {
-    return (
-      (result as AuthError).error.message ||
-      "An unknown authentication error occurred."
-    );
+    return (result as AuthError).error.message || "An unknown authentication error occurred.";
   }
   return "An unknown authentication error occurred.";
 };
@@ -39,9 +36,7 @@ const TwoFactor = () => {
   const [totpCode, setTotpCode] = useState("");
   const [backupCode, setBackupCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [verificationMethod, setVerificationMethod] = useState<
-    "totp" | "backup"
-  >("totp");
+  const [verificationMethod, setVerificationMethod] = useState<"totp" | "backup">("totp");
   const navigate = useNavigate();
 
   const totpContainerRef = useRef<HTMLDivElement>(null);
@@ -84,12 +79,10 @@ const TwoFactor = () => {
         onError(res) {
           setIsLoading(false);
           const errorDetail = extractAuthErrorMessage(res);
-          toast.error(
-            errorDetail || t("notifications.twoFactor.errors.invalidTotpCode")
-          );
+          toast.error(errorDetail || t("notifications.twoFactor.errors.invalidTotpCode"));
           clearAndFocusTotpInput();
         },
-      }
+      },
     );
   };
 
@@ -97,10 +90,7 @@ const TwoFactor = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (
-      backupCode.length !== BACKUP_CODE_LENGTH ||
-      !isValidBackupCode(backupCode)
-    ) {
+    if (backupCode.length !== BACKUP_CODE_LENGTH || !isValidBackupCode(backupCode)) {
       toast.error(t("notifications.twoFactor.errors.invalidBackupFormat"));
       clearAndFocusBackupInput();
       return;
@@ -135,14 +125,14 @@ const TwoFactor = () => {
                 toast.error(
                   t("notifications.twoFactor.errors.verificationFailed", {
                     message: errorDetail,
-                  })
+                  }),
                 );
                 clearAndFocusBackupInput();
               },
-            }
+            },
           );
         },
-      }
+      },
     );
   };
 
@@ -154,9 +144,7 @@ const TwoFactor = () => {
 
   const handleBackupCodeChange = (value: string) => {
     // Allow alphanumeric and dash, max 11 characters (preserve original case)
-    const formattedValue = value
-      .replace(/[^A-Za-z0-9-]/g, "")
-      .slice(0, BACKUP_CODE_LENGTH);
+    const formattedValue = value.replace(/[^A-Za-z0-9-]/g, "").slice(0, BACKUP_CODE_LENGTH);
     setBackupCode(formattedValue);
   };
 
@@ -166,16 +154,12 @@ const TwoFactor = () => {
         <h1 className="font-semibold text-2xl tracking-tight">
           {t("auth.signIn.twoFactor.title")}
         </h1>
-        <p className="text-muted-foreground text-sm">
-          {t("auth.signIn.twoFactor.description")}
-        </p>
+        <p className="text-muted-foreground text-sm">{t("auth.signIn.twoFactor.description")}</p>
       </div>
 
       <Tabs
         className="w-full max-w-md"
-        onValueChange={(value) =>
-          setVerificationMethod(value as "totp" | "backup")
-        }
+        onValueChange={(value) => setVerificationMethod(value as "totp" | "backup")}
         value={verificationMethod}
       >
         <TabsList className="grid w-full grid-cols-2">
@@ -197,8 +181,7 @@ const TwoFactor = () => {
           <div className="space-y-2 text-center">
             <p className="text-muted-foreground text-sm">
               {t("auth.signIn.twoFactor.totpDescription", {
-                defaultValue:
-                  "Enter the 6-digit code from your authenticator app",
+                defaultValue: "Enter the 6-digit code from your authenticator app",
               })}
             </p>
           </div>

@@ -3,13 +3,7 @@
 import { TramFront } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type React from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
@@ -82,7 +76,7 @@ function getElementPosition(id: string) {
 
 function calculateContentPosition(
   elementPos: { top: number; left: number; width: number; height: number },
-  position: "top" | "bottom" | "left" | "right" = "bottom"
+  position: "top" | "bottom" | "left" | "right" = "bottom",
 ) {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
@@ -109,14 +103,8 @@ function calculateContentPosition(
   }
 
   return {
-    top: Math.max(
-      PADDING,
-      Math.min(top, viewportHeight - CONTENT_HEIGHT - PADDING)
-    ),
-    left: Math.max(
-      PADDING,
-      Math.min(left, viewportWidth - CONTENT_WIDTH - PADDING)
-    ),
+    top: Math.max(PADDING, Math.min(top, viewportHeight - CONTENT_HEIGHT - PADDING)),
+    left: Math.max(PADDING, Math.min(left, viewportWidth - CONTENT_WIDTH - PADDING)),
     width: CONTENT_WIDTH,
     height: CONTENT_HEIGHT,
   };
@@ -193,30 +181,22 @@ export function TourProvider({
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
-      if (
-        currentStep >= 0 &&
-        elementPosition &&
-        steps[currentStep]?.onClickWithinArea
-      ) {
+      if (currentStep >= 0 && elementPosition && steps[currentStep]?.onClickWithinArea) {
         const clickX = e.clientX + window.scrollX;
         const clickY = e.clientY + window.scrollY;
 
         const isWithinBounds =
           clickX >= elementPosition.left &&
-          clickX <=
-            elementPosition.left +
-              (steps[currentStep]?.width || elementPosition.width) &&
+          clickX <= elementPosition.left + (steps[currentStep]?.width || elementPosition.width) &&
           clickY >= elementPosition.top &&
-          clickY <=
-            elementPosition.top +
-              (steps[currentStep]?.height || elementPosition.height);
+          clickY <= elementPosition.top + (steps[currentStep]?.height || elementPosition.height);
 
         if (isWithinBounds) {
           steps[currentStep].onClickWithinArea?.();
         }
       }
     },
-    [currentStep, elementPosition, steps]
+    [currentStep, elementPosition, steps],
   );
 
   useEffect(() => {
@@ -270,10 +250,7 @@ export function TourProvider({
             />
             <motion.div
               animate={{ opacity: 1, scale: 1 }}
-              className={cn(
-                "z-[100] border-2 border-muted-foreground",
-                className
-              )}
+              className={cn("z-[100] border-2 border-muted-foreground", className)}
               exit={{ opacity: 0, scale: 0.95 }}
               initial={{ opacity: 0, scale: 0.95 }}
               style={{
@@ -289,24 +266,16 @@ export function TourProvider({
               animate={{
                 opacity: 1,
                 y: 0,
-                top: calculateContentPosition(
-                  elementPosition,
-                  steps[currentStep]?.position
-                ).top,
-                left: calculateContentPosition(
-                  elementPosition,
-                  steps[currentStep]?.position
-                ).left,
+                top: calculateContentPosition(elementPosition, steps[currentStep]?.position).top,
+                left: calculateContentPosition(elementPosition, steps[currentStep]?.position).left,
               }}
               className="relative z-[100] rounded-lg border bg-background p-4 shadow-lg"
               exit={{ opacity: 0, y: 10 }}
               initial={{ opacity: 0, y: 10, top: 50, right: 50 }}
               style={{
                 position: "absolute",
-                width: calculateContentPosition(
-                  elementPosition,
-                  steps[currentStep]?.position
-                ).width,
+                width: calculateContentPosition(elementPosition, steps[currentStep]?.position)
+                  .width,
               }}
               transition={{
                 duration: ANIMATION_DURATION,

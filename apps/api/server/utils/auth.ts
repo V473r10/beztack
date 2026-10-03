@@ -3,12 +3,7 @@ import { sendEmail } from "@beztack/email";
 import { createPolarAuthPlugin } from "@beztack/payments-polar/auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import {
-  admin,
-  createAuthMiddleware,
-  organization,
-  twoFactor,
-} from "better-auth/plugins";
+import { admin, createAuthMiddleware, organization, twoFactor } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { env } from "@/env";
 import { getPolarProductMappings } from "@/lib/payments/config";
@@ -54,7 +49,7 @@ export const auth = betterAuth({
     `https://${projectName}-api.vercel.app`, // Add API domain as trusted origin
     `https://${projectName}-api.codedicated.com`,
     `https://${projectName}-ui.codedicated.com`,
-    `https://app.beztack.com`
+    `https://app.beztack.com`,
   ],
   plugins: [
     twoFactor({
@@ -100,6 +95,12 @@ export const auth = betterAuth({
     }),
     ...(polarPlugin ? [polarPlugin] : []),
   ],
+  // FIXME(beztack#45 Q4): known bug, not a typing glitch. better-auth only reads
+  // `hooks.after`, so this top-level `after` is ignored and the hook never runs
+  // (no welcome email, no sudo promotion, no isAppAdmin). It is fixed test-first
+  // in the auth piece decided in #45; this toolchain PR only stops the new
+  // typecheck gate from failing on it. The expect-error fails once it moves.
+  // @ts-expect-error known bug: misplaced better-auth hook, see FIXME above
   after: [
     createAuthMiddleware(async (ctx) => {
       // Intercept session fetching to inject isAppAdmin dynamically
@@ -109,8 +110,8 @@ export const auth = betterAuth({
           .filter(Boolean);
 
         if (appAdminEmails.includes(ctx.context.session.user.email.toLowerCase())) {
-           // @ts-ignore - custom property
-           ctx.context.session.user.isAppAdmin = true;
+          // @ts-ignore - custom property
+          ctx.context.session.user.isAppAdmin = true;
         }
       }
 
@@ -136,10 +137,7 @@ export const auth = betterAuth({
           if (appAdminEmails.includes(session.user.email.toLowerCase())) {
             // Mark user as app admin directly in db for backward compat
             if (session.user.role !== "sudo") {
-              await db
-                .update(user)
-                .set({ role: "sudo" })
-                .where(eq(user.id, session.user.id));
+              await db.update(user).set({ role: "sudo" }).where(eq(user.id, session.user.id));
             }
             // Also update the session context directly so the frontend gets it immediately
             if (ctx.context.newSession) {

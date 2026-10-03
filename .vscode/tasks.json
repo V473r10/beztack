@@ -88,12 +88,7 @@
       "label": "🧹 Clear Vite Cache & Restart Debug",
       "type": "shell",
       "command": "rm",
-      "args": [
-        "-rf",
-        "node_modules/.vite",
-        "node_modules/.tmp",
-        ".vscode/chrome-debug-profile"
-      ],
+      "args": ["-rf", "node_modules/.vite", "node_modules/.tmp", ".vscode/chrome-debug-profile"],
       "options": {
         "cwd": "${workspaceFolder}/apps/ui"
       },

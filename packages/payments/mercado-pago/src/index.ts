@@ -7,15 +7,9 @@
 
 export type { MercadoPagoAdapterConfig } from "./adapter.js";
 // Core adapter (implements @beztack/payments interface)
-export {
-  createAdapter,
-  createMercadoPagoAdapter,
-} from "./adapter.js";
+export { createAdapter, createMercadoPagoAdapter } from "./adapter.js";
 
-export {
-  decodeExternalReference,
-  encodeExternalReference,
-} from "./helpers/external-reference.js";
+export { decodeExternalReference, encodeExternalReference } from "./helpers/external-reference.js";
 
 export type { ProrationInput, ProrationResult } from "./helpers/proration.js";
 export { calculateProration } from "./helpers/proration.js";

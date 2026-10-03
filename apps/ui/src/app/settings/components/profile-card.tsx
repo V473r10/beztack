@@ -34,15 +34,11 @@ export function ProfileCard({
     <Card>
       <CardHeader>
         <CardTitle>{t("account.settings.profile.title")}</CardTitle>
-        <CardDescription>
-          {t("account.settings.profile.description")}
-        </CardDescription>
+        <CardDescription>{t("account.settings.profile.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="username">
-            {t("account.settings.profile.username")}
-          </Label>
+          <Label htmlFor="username">{t("account.settings.profile.username")}</Label>
           <Input
             id="username"
             onChange={(e) => onUsernameChange(e.target.value)}
@@ -61,9 +57,7 @@ export function ProfileCard({
       </CardContent>
       <CardFooter>
         <Button disabled={isPending} onClick={onSave}>
-          {isPending
-            ? t("account.settings.profile.saving")
-            : t("account.settings.profile.save")}
+          {isPending ? t("account.settings.profile.saving") : t("account.settings.profile.save")}
         </Button>
       </CardFooter>
     </Card>

@@ -1,9 +1,6 @@
 import { db, subscription as subscriptionTable } from "@beztack/db";
 import { and, eq, gt } from "drizzle-orm";
-import type {
-  PaymentProviderAdapter,
-  Subscription,
-} from "@/lib/payments/types";
+import type { PaymentProviderAdapter, Subscription } from "@/lib/payments/types";
 
 /**
  * DB-assisted subscription discovery with provider verification.
@@ -12,7 +9,7 @@ import type {
  */
 export async function discoverSubscriptionsFromDb(
   userId: string,
-  provider: PaymentProviderAdapter
+  provider: PaymentProviderAdapter,
 ): Promise<Subscription[]> {
   const dbSubs = await db
     .select({
@@ -25,8 +22,8 @@ export async function discoverSubscriptionsFromDb(
       and(
         eq(subscriptionTable.userId, userId),
         eq(subscriptionTable.provider, provider.provider),
-        gt(subscriptionTable.currentPeriodEnd, new Date())
-      )
+        gt(subscriptionTable.currentPeriodEnd, new Date()),
+      ),
     );
 
   const results: Subscription[] = [];

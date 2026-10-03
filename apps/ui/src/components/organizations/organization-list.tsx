@@ -1,13 +1,7 @@
 import { Building2, Crown, Settings, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useActiveOrganization,
@@ -75,8 +69,7 @@ export function OrganizationList({
           <Building2 className="mb-4 h-12 w-12 text-muted-foreground" />
           <CardTitle className="mb-2 text-lg">No Organizations Found</CardTitle>
           <CardDescription className="mb-4 text-center">
-            You're not a member of any organizations yet. Create one or ask to
-            be invited.
+            You're not a member of any organizations yet. Create one or ask to be invited.
           </CardDescription>
         </CardContent>
       </Card>
@@ -109,10 +102,7 @@ export function OrganizationList({
                 </div>
               </div>
               {activeOrganization?.id === organization.id && (
-                <Badge
-                  className="flex items-center space-x-1"
-                  variant="secondary"
-                >
+                <Badge className="flex items-center space-x-1" variant="secondary">
                   <Crown className="h-3 w-3" />
                   <span>Active</span>
                 </Badge>
@@ -136,9 +126,7 @@ export function OrganizationList({
                       size="sm"
                       variant="outline"
                     >
-                      {setActiveOrganization.isPending
-                        ? "Switching..."
-                        : "Switch To"}
+                      {setActiveOrganization.isPending ? "Switching..." : "Switch To"}
                     </Button>
                   )}
                   {onManageOrganization && (

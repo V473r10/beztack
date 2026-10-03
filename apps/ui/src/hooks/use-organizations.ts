@@ -1,9 +1,4 @@
-import {
-  type QueryClient,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import type {
@@ -66,8 +61,7 @@ export function useOrganizationMembers(organizationId?: string) {
       // Handle the actual API response structure
       const apiData = response.data as Record<string, unknown>;
       return (
-        (apiData.members as OrganizationMember[]) ||
-        (apiData as unknown as OrganizationMember[])
+        (apiData.members as OrganizationMember[]) || (apiData as unknown as OrganizationMember[])
       );
     },
     enabled: !!organizationId,
@@ -193,9 +187,7 @@ export function useCreateOrganization() {
       toast.success(`Organization "${data.name}" created successfully`);
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create organization"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to create organization");
     },
   });
 }
@@ -230,9 +222,7 @@ export function useUpdateOrganization() {
       toast.success("Organization updated successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update organization"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to update organization");
     },
   });
 }
@@ -253,9 +243,7 @@ export function useDeleteOrganization() {
       toast.success("Organization deleted successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete organization"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete organization");
     },
   });
 }
@@ -275,11 +263,7 @@ export function useSetActiveOrganization() {
       toast.success("Active organization changed");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to change active organization"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to change active organization");
     },
   });
 }
@@ -311,9 +295,7 @@ export function useInviteMember() {
       toast.success(`Invitation sent to ${variables.data.email}`);
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send invitation"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to send invitation");
     },
   });
 }
@@ -345,9 +327,7 @@ export function useUpdateMemberRole() {
       toast.success("Member role updated successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update member role"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to update member role");
     },
   });
 }
@@ -356,13 +336,7 @@ export function useRemoveMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      organizationId,
-      userId,
-    }: {
-      organizationId: string;
-      userId: string;
-    }) => {
+    mutationFn: async ({ organizationId, userId }: { organizationId: string; userId: string }) => {
       const response = await authClient.organization.removeMember({
         memberIdOrEmail: userId,
         organizationId,
@@ -376,9 +350,7 @@ export function useRemoveMember() {
       toast.success("Member removed successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to remove member"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to remove member");
     },
   });
 }
@@ -399,9 +371,7 @@ export function useLeaveOrganization() {
       toast.success("Left organization successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to leave organization"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to leave organization");
     },
   });
 }
@@ -423,9 +393,7 @@ export function useAcceptInvitation() {
       toast.success("Invitation accepted successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to accept invitation"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to accept invitation");
     },
   });
 }
@@ -445,9 +413,7 @@ export function useRejectInvitation() {
       toast.success("Invitation rejected");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to reject invitation"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to reject invitation");
     },
   });
 }
@@ -469,9 +435,7 @@ export function useCancelInvitation() {
       toast.success("Invitation cancelled");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to cancel invitation"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to cancel invitation");
     },
   });
 }
@@ -497,9 +461,7 @@ export function useCreateTeam() {
       toast.success(`Team "${data.name}" created successfully`);
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create team"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to create team");
     },
   });
 }
@@ -524,9 +486,7 @@ export function useDeleteTeam() {
       toast.success("Team deleted successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete team"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete team");
     },
   });
 }
@@ -535,13 +495,7 @@ export function useAddTeamMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      teamId,
-      userId,
-    }: {
-      teamId: string;
-      userId: string;
-    }) => {
+    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
       const response = await authClient.organization.addTeamMember({
         teamId,
         userId,
@@ -555,9 +509,7 @@ export function useAddTeamMember() {
       toast.success("Member added to team successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to add team member"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to add team member");
     },
   });
 }
@@ -566,13 +518,7 @@ export function useRemoveTeamMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      teamId,
-      userId,
-    }: {
-      teamId: string;
-      userId: string;
-    }) => {
+    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
       const response = await authClient.organization.removeTeamMember({
         teamId,
         userId,
@@ -586,9 +532,7 @@ export function useRemoveTeamMember() {
       toast.success("Member removed from team successfully");
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to remove team member"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to remove team member");
     },
   });
 }

@@ -56,12 +56,7 @@ type UserFormProps = {
   onSuccess: () => void;
 };
 
-export function UserForm({
-  open,
-  onOpenChange,
-  user,
-  onSuccess,
-}: UserFormProps) {
+export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps) {
   const isEditing = !!user;
 
   const form = useForm<UserFormData>({
@@ -186,20 +181,15 @@ export function UserForm({
     }
   };
 
-  const isLoading =
-    createUserMutation.isPending || updateUserMutation.isPending;
+  const isLoading = createUserMutation.isPending || updateUserMutation.isPending;
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit User" : "Create New User"}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? "Edit User" : "Create New User"}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Update user information and settings."
-              : "Add a new user to the system."}
+            {isEditing ? "Update user information and settings." : "Add a new user to the system."}
           </DialogDescription>
         </DialogHeader>
 
@@ -245,11 +235,7 @@ export function UserForm({
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Minimum 8 characters"
-                        type="password"
-                        {...field}
-                      />
+                      <Input placeholder="Minimum 8 characters" type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -263,10 +249,7 @@ export function UserForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select
-                    defaultValue={field.value}
-                    onValueChange={field.onChange}
-                  >
+                  <Select defaultValue={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
@@ -289,15 +272,10 @@ export function UserForm({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                   <div className="space-y-0.5">
                     <FormLabel>Email Verified</FormLabel>
-                    <FormDescription>
-                      Mark the user's email as verified
-                    </FormDescription>
+                    <FormDescription>Mark the user's email as verified</FormDescription>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}

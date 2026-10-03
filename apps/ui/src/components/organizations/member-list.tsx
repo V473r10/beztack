@@ -1,12 +1,4 @@
-import {
-  Crown,
-  Edit,
-  MoreHorizontal,
-  Plus,
-  Shield,
-  User,
-  UserMinus,
-} from "lucide-react";
+import { Crown, Edit, MoreHorizontal, Plus, Shield, User, UserMinus } from "lucide-react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -21,13 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,20 +66,17 @@ export function MemberList({
   onInviteMembers,
   onEditMember,
 }: MemberListProps) {
-  const [memberToRemove, setMemberToRemove] =
-    useState<OrganizationMember | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | null>(null);
   const [memberToUpdate, setMemberToUpdate] = useState<{
     member: OrganizationMember;
     newRole: string;
   } | null>(null);
 
-  const { data: members = [], isLoading } =
-    useOrganizationMembers(organizationId);
+  const { data: members = [], isLoading } = useOrganizationMembers(organizationId);
   const removeMember = useRemoveMember();
   const updateMemberRole = useUpdateMemberRole();
 
-  const canManageMembers =
-    currentUserRole === "owner" || currentUserRole === "admin";
+  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
   const isOwner = currentUserRole === "owner";
 
   const getRoleIcon = (role: string) => {
@@ -224,9 +207,7 @@ export function MemberList({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Members ({members.length})</CardTitle>
-              <CardDescription>
-                Manage organization members and their roles.
-              </CardDescription>
+              <CardDescription>Manage organization members and their roles.</CardDescription>
             </div>
             {canManageMembers && onInviteMembers && (
               <Button onClick={onInviteMembers}>
@@ -255,17 +236,12 @@ export function MemberList({
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={member.user?.image} />
                           <AvatarFallback>
-                            {member.user?.name?.charAt(0) ||
-                              member.email.charAt(0)}
+                            {member.user?.name?.charAt(0) || member.email.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">
-                            {member.user?.name || "Invited User"}
-                          </div>
-                          <div className="text-muted-foreground text-sm">
-                            {member.email}
-                          </div>
+                          <div className="font-medium">{member.user?.name || "Invited User"}</div>
+                          <div className="text-muted-foreground text-sm">{member.email}</div>
                         </div>
                       </div>
                     </TableCell>
@@ -275,10 +251,7 @@ export function MemberList({
                         variant={getRoleBadgeVariant(member.role)}
                       >
                         {getRoleIcon(member.role)}
-                        <span>
-                          {ROLE_LABELS[member.role as OrganizationRole] ||
-                            member.role}
-                        </span>
+                        <span>{ROLE_LABELS[member.role as OrganizationRole] || member.role}</span>
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -296,9 +269,7 @@ export function MemberList({
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             {canEditMember(member) && (
                               <>
-                                <DropdownMenuItem
-                                  onClick={() => onEditMember?.(member)}
-                                >
+                                <DropdownMenuItem onClick={() => onEditMember?.(member)}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit Role
                                 </DropdownMenuItem>
@@ -308,16 +279,12 @@ export function MemberList({
                                     role !== member.role && (
                                       <DropdownMenuItem
                                         key={role}
-                                        onClick={() =>
-                                          handleUpdateRole(member, role)
-                                        }
+                                        onClick={() => handleUpdateRole(member, role)}
                                       >
                                         {getRoleIcon(role)}
-                                        <span className="ml-2">
-                                          Make {ROLE_LABELS[role]}
-                                        </span>
+                                        <span className="ml-2">Make {ROLE_LABELS[role]}</span>
                                       </DropdownMenuItem>
-                                    )
+                                    ),
                                 )}
                               </>
                             )}
@@ -356,10 +323,8 @@ export function MemberList({
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Member</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove{" "}
-              {memberToRemove?.user?.name || memberToRemove?.email}
-              from this organization? They will lose access to all organization
-              resources.
+              Are you sure you want to remove {memberToRemove?.user?.name || memberToRemove?.email}
+              from this organization? They will lose access to all organization resources.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -385,19 +350,14 @@ export function MemberList({
             <AlertDialogTitle>Update Member Role</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to change{" "}
-              {memberToUpdate?.member.user?.name ||
-                memberToUpdate?.member.email}
-              's role from{" "}
-              {ROLE_LABELS[memberToUpdate?.member.role as OrganizationRole]} to{" "}
+              {memberToUpdate?.member.user?.name || memberToUpdate?.member.email}
+              's role from {ROLE_LABELS[memberToUpdate?.member.role as OrganizationRole]} to{" "}
               {ROLE_LABELS[memberToUpdate?.newRole as OrganizationRole]}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={updateMemberRole.isPending}
-              onClick={confirmUpdateRole}
-            >
+            <AlertDialogAction disabled={updateMemberRole.isPending} onClick={confirmUpdateRole}>
               Update Role
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -36,10 +36,7 @@ vi.mock("h3", () => ({
     statusCode?: number;
     statusMessage?: string;
   }) {
-    return Object.assign(
-      new Error(input.message ?? input.statusMessage ?? "Error"),
-      input
-    );
+    return Object.assign(new Error(input.message ?? input.statusMessage ?? "Error"), input);
   },
   defineEventHandler(handler: unknown) {
     return handler;
@@ -93,9 +90,8 @@ describe("DELETE /api/subscriptions/plan-change/pending", () => {
     };
     mocks.readBody.mockResolvedValue({});
     mocks.cancelPendingPlanChange.mockResolvedValue(expectedCancellation);
-    const handler = (
-      await import("../routes/api/subscriptions/plan-change/pending.delete")
-    ).default as (event: unknown) => Promise<unknown>;
+    const handler = (await import("../routes/api/subscriptions/plan-change/pending.delete"))
+      .default as (event: unknown) => Promise<unknown>;
 
     const response = await handler({});
 
@@ -109,7 +105,7 @@ describe("DELETE /api/subscriptions/plan-change/pending", () => {
         membershipTarget: { type: "user", id: "user_1" },
         paymentProvider: "mercadopago",
         paymentIntegrationId: "mp_app_1",
-      })
+      }),
     );
     expect(response).toEqual({
       provider: "mercadopago",

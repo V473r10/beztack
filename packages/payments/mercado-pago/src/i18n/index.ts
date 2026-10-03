@@ -35,9 +35,7 @@ const translations: Record<SupportedLocale, TranslationKeys> = {
  * console.log(t.components.billingHistory) // "Historial de Facturación"
  * ```
  */
-export function getTranslations(
-  locale: string = DEFAULT_LOCALE
-): TranslationKeys {
+export function getTranslations(locale: string = DEFAULT_LOCALE): TranslationKeys {
   const resolved = resolveLocale(locale);
   return translations[resolved];
 }
@@ -63,11 +61,7 @@ export function getTranslations(
  * t("es", "nonexistent.path") // "nonexistent.path"
  * ```
  */
-export function t(
-  locale: string,
-  path: string,
-  params?: Record<string, string | number>
-): string {
+export function t(locale: string, path: string, params?: Record<string, string | number>): string {
   const trans = getTranslations(locale);
   const keys = path.split(".");
   let value: unknown = trans;
@@ -87,9 +81,8 @@ export function t(
   // Replace params like {n}, {unit}
   if (params) {
     return Object.entries(params).reduce(
-      (str, [key, val]) =>
-        str.replace(new RegExp(`\\{${key}\\}`, "g"), String(val)),
-      value
+      (str, [key, val]) => str.replace(new RegExp(`\\{${key}\\}`, "g"), String(val)),
+      value,
     );
   }
 
@@ -115,14 +108,9 @@ export function t(
  * getPaymentStatusLabel("unknown")        // "unknown" (returns as-is)
  * ```
  */
-export function getPaymentStatusLabel(
-  status: string,
-  locale: string = DEFAULT_LOCALE
-): string {
+export function getPaymentStatusLabel(status: string, locale: string = DEFAULT_LOCALE): string {
   const trans = getTranslations(locale);
-  return (
-    trans.paymentStatus[status as keyof typeof trans.paymentStatus] || status
-  );
+  return trans.paymentStatus[status as keyof typeof trans.paymentStatus] || status;
 }
 
 /**
@@ -142,13 +130,10 @@ export function getPaymentStatusLabel(
  */
 export function getSubscriptionStatusLabel(
   status: string,
-  locale: string = DEFAULT_LOCALE
+  locale: string = DEFAULT_LOCALE,
 ): string {
   const trans = getTranslations(locale);
-  return (
-    trans.subscriptionStatus[status as keyof typeof trans.subscriptionStatus] ||
-    status
-  );
+  return trans.subscriptionStatus[status as keyof typeof trans.subscriptionStatus] || status;
 }
 
 /**
@@ -164,10 +149,7 @@ export function getSubscriptionStatusLabel(
  * getPlanStatusLabel("inactive", "en") // "Inactive"
  * ```
  */
-export function getPlanStatusLabel(
-  status: string,
-  locale: string = DEFAULT_LOCALE
-): string {
+export function getPlanStatusLabel(status: string, locale: string = DEFAULT_LOCALE): string {
   const trans = getTranslations(locale);
   return trans.planStatus[status as keyof typeof trans.planStatus] || status;
 }
@@ -191,7 +173,7 @@ export function getPlanStatusLabel(
 export function formatFrequencyLocalized(
   frequency: number,
   frequencyType: string,
-  locale: string = DEFAULT_LOCALE
+  locale: string = DEFAULT_LOCALE,
 ): string {
   const trans = getTranslations(locale);
   const { day, days, month, months, every } = trans.frequency;
@@ -209,9 +191,7 @@ export function formatFrequencyLocalized(
     return `${every} ${unit}`;
   }
 
-  return trans.frequency.everyN
-    .replace("{n}", String(frequency))
-    .replace("{unit}", unit);
+  return trans.frequency.everyN.replace("{n}", String(frequency)).replace("{unit}", unit);
 }
 
 /**
@@ -232,10 +212,9 @@ export function formatFrequencyLocalized(
 export function formatPriceLocalized(
   amount: number | string,
   currencyId: string,
-  locale: string = DEFAULT_LOCALE
+  locale: string = DEFAULT_LOCALE,
 ): string {
-  const numAmount =
-    typeof amount === "string" ? Number.parseFloat(amount) : amount;
+  const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
 
   // Map locale to Intl locale
   const intlLocale = locale === "es-UY" || locale === "es" ? "es-UY" : "en-US";

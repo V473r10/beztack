@@ -208,9 +208,7 @@ describe("utility functions", () => {
     });
 
     it("formats monthly frequency plural", () => {
-      expect(formatFrequency(FREQUENCY_QUARTERLY, "months")).toBe(
-        "cada 3 meses"
-      );
+      expect(formatFrequency(FREQUENCY_QUARTERLY, "months")).toBe("cada 3 meses");
     });
 
     it("formats daily frequency singular", () => {

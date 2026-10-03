@@ -1,23 +1,10 @@
 "use client";
 
 import { extractTextFromImage } from "@beztack/ocr";
-import {
-  Camera,
-  Copy,
-  Loader2,
-  StopCircle,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { Camera, Copy, Loader2, StopCircle, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -79,9 +66,7 @@ function useCamera() {
         setIsCameraActive(true);
       }
     } catch (err) {
-      setError(
-        `Error accessing camera: ${err instanceof Error ? err.message : "Unknown error"}`
-      );
+      setError(`Error accessing camera: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   };
 
@@ -117,9 +102,7 @@ function useOCRProcessing() {
       const text = await extractTextFromImage(previewUrl, language);
       setExtractedText(text);
     } catch (err) {
-      setError(
-        `Error processing image: ${err instanceof Error ? err.message : "Unknown error"}`
-      );
+      setError(`Error processing image: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
       setIsLoading(false);
     }
@@ -186,7 +169,7 @@ function usePhotoCapture(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
   onCapture: (file: File) => Promise<void>,
-  onComplete: () => void
+  onComplete: () => void,
 ) {
   const capturePhoto = () => {
     if (!(videoRef.current && canvasRef.current)) {
@@ -215,7 +198,7 @@ function usePhotoCapture(
         }
       },
       "image/jpeg",
-      IMAGE_QUALITY
+      IMAGE_QUALITY,
     );
 
     onComplete();
@@ -237,9 +220,7 @@ function LanguageSelector({
       <Card>
         <CardHeader>
           <CardTitle>Configuración</CardTitle>
-          <CardDescription>
-            Seleccione el idioma para el reconocimiento de texto
-          </CardDescription>
+          <CardDescription>Seleccione el idioma para el reconocimiento de texto</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -288,11 +269,7 @@ function CameraControls({
                   <Camera className="size-4" />
                   Capturar Foto
                 </Button>
-                <Button
-                  className="gap-2"
-                  onClick={camera.stopCamera}
-                  variant="destructive"
-                >
+                <Button className="gap-2" onClick={camera.stopCamera} variant="destructive">
                   <StopCircle className="size-4" />
                   Detener Cámara
                 </Button>
@@ -336,9 +313,7 @@ function FileSelector({
       <Card>
         <CardHeader>
           <CardTitle>Seleccionar Imagen</CardTitle>
-          <CardDescription>
-            Cargue una imagen desde su dispositivo
-          </CardDescription>
+          <CardDescription>Cargue una imagen desde su dispositivo</CardDescription>
         </CardHeader>
         <CardContent>
           <input
@@ -348,11 +323,7 @@ function FileSelector({
             ref={fileInputRef}
             type="file"
           />
-          <Button
-            className="gap-2"
-            onClick={() => fileInputRef.current?.click()}
-            variant="outline"
-          >
+          <Button className="gap-2" onClick={() => fileInputRef.current?.click()} variant="outline">
             <Upload className="size-4" />
             Seleccionar Imagen
           </Button>
@@ -379,9 +350,7 @@ function ExtractedText({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Texto Extraído</CardTitle>
-              <CardDescription>
-                Resultado del reconocimiento óptico de caracteres
-              </CardDescription>
+              <CardDescription>Resultado del reconocimiento óptico de caracteres</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button
@@ -393,12 +362,7 @@ function ExtractedText({
                 <Copy className="size-4" />
                 Copiar
               </Button>
-              <Button
-                className="gap-2"
-                disabled={analyzing}
-                onClick={onAnalyze}
-                size="sm"
-              >
+              <Button className="gap-2" disabled={analyzing} onClick={onAnalyze} size="sm">
                 {analyzing ? <Loader2 className="size-4 animate-spin" /> : null}
                 {analyzing ? "Analyzing…" : "Analyze receipt"}
               </Button>
@@ -504,16 +468,12 @@ function OCRResults({
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Receipt Analysis</CardTitle>
-                  <CardDescription>
-                    Structured data extracted from the receipt
-                  </CardDescription>
+                  <CardDescription>Structured data extracted from the receipt</CardDescription>
                 </div>
                 <Button
                   className="gap-2"
                   onClick={() =>
-                    navigator.clipboard.writeText(
-                      JSON.stringify(receipt.analysis, null, 2)
-                    )
+                    navigator.clipboard.writeText(JSON.stringify(receipt.analysis, null, 2))
                   }
                   size="sm"
                   variant="outline"
@@ -528,15 +488,11 @@ function OCRResults({
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="rounded-lg bg-muted p-4">
                     <div className="text-muted-foreground text-sm">Store</div>
-                    <div className="font-medium text-base">
-                      {receipt.analysis.store || "—"}
-                    </div>
+                    <div className="font-medium text-base">{receipt.analysis.store || "—"}</div>
                   </div>
                   <div className="rounded-lg bg-muted p-4">
                     <div className="text-muted-foreground text-sm">Date</div>
-                    <div className="font-medium text-base">
-                      {receipt.analysis.date || "—"}
-                    </div>
+                    <div className="font-medium text-base">{receipt.analysis.date || "—"}</div>
                   </div>
                 </div>
 
@@ -559,18 +515,13 @@ function OCRResults({
                           >
                             <td className="py-2 pr-3">{it.name}</td>
                             <td className="py-2 pr-3">{it.quantity}</td>
-                            <td className="py-2 pr-3">
-                              {it.unitPrice.toFixed(2)}
-                            </td>
+                            <td className="py-2 pr-3">{it.unitPrice.toFixed(2)}</td>
                             <td className="py-2 pr-3">{it.total.toFixed(2)}</td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td
-                            className="py-3 text-muted-foreground"
-                            colSpan={4}
-                          >
+                          <td className="py-3 text-muted-foreground" colSpan={4}>
                             No items detected
                           </td>
                         </tr>
@@ -584,22 +535,17 @@ function OCRResults({
                     <div className="text-muted-foreground">Subtotal</div>
                     <div className="tabular-nums">
                       {(
-                        receipt.analysis.subtotal ??
-                        receipt.analysis.total - receipt.analysis.tax
+                        receipt.analysis.subtotal ?? receipt.analysis.total - receipt.analysis.tax
                       ).toFixed(2)}
                     </div>
                   </div>
                   <div className="flex gap-6 text-sm">
                     <div className="text-muted-foreground">Tax</div>
-                    <div className="tabular-nums">
-                      {receipt.analysis.tax.toFixed(2)}
-                    </div>
+                    <div className="tabular-nums">{receipt.analysis.tax.toFixed(2)}</div>
                   </div>
                   <div className="flex gap-6 font-semibold text-base">
                     <div>Total</div>
-                    <div className="tabular-nums">
-                      {receipt.analysis.total.toFixed(2)}
-                    </div>
+                    <div className="tabular-nums">{receipt.analysis.total.toFixed(2)}</div>
                   </div>
                 </div>
               </div>
@@ -633,7 +579,7 @@ export default function OCR() {
     camera.videoRef,
     canvasRef,
     (file) => ocr.processImage(file, selectedLanguage),
-    camera.stopCamera
+    camera.stopCamera,
   );
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -657,9 +603,7 @@ export default function OCR() {
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
       <div className="px-4 text-center lg:px-6">
         <h1 className="mb-2 font-bold text-3xl">OCR - Extractor de Texto</h1>
-        <p className="text-muted-foreground">
-          Capture o seleccione una imagen para extraer texto
-        </p>
+        <p className="text-muted-foreground">Capture o seleccione una imagen para extraer texto</p>
       </div>
 
       <LanguageSelector
@@ -669,17 +613,9 @@ export default function OCR() {
 
       <CameraControls camera={camera} onCapture={photoCapture.capturePhoto} />
 
-      <FileSelector
-        fileInputRef={fileInputRef}
-        onFileSelect={handleFileSelect}
-      />
+      <FileSelector fileInputRef={fileInputRef} onFileSelect={handleFileSelect} />
 
-      <OCRResults
-        camera={camera}
-        ocr={ocr}
-        onClearResults={clearResults}
-        receipt={receipt}
-      />
+      <OCRResults camera={camera} ocr={ocr} onClearResults={clearResults} receipt={receipt} />
 
       {/* Hidden Canvas for Camera Capture */}
       <canvas className="hidden" ref={canvasRef} />

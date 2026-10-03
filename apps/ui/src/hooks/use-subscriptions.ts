@@ -21,13 +21,7 @@ export type Product = {
 
 export type Subscription = {
   id: string;
-  status:
-    | "active"
-    | "inactive"
-    | "pending"
-    | "canceled"
-    | "paused"
-    | "past_due";
+  status: "active" | "inactive" | "pending" | "canceled" | "paused" | "past_due";
   productId: string;
   productName?: string;
   currentPeriodEnd?: string;
@@ -79,16 +73,13 @@ async function createCheckout(productId: string): Promise<CheckoutResult> {
   return response.json();
 }
 
-async function cancelSubscription(
-  subscriptionId: string,
-  immediately = false
-): Promise<void> {
+async function cancelSubscription(subscriptionId: string, immediately = false): Promise<void> {
   const response = await fetch(
     `${API_URL}/api/subscriptions/${subscriptionId}?immediately=${immediately}`,
     {
       method: "DELETE",
       credentials: "include",
-    }
+    },
   );
   if (!response.ok) {
     throw new Error("Failed to cancel subscription");
@@ -97,17 +88,14 @@ async function cancelSubscription(
 
 async function updateSubscription(
   subscriptionId: string,
-  updates: { status?: "pause" | "resume"; productId?: string }
+  updates: { status?: "pause" | "resume"; productId?: string },
 ): Promise<Subscription> {
-  const response = await fetch(
-    `${API_URL}/api/subscriptions/${subscriptionId}`,
-    {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
-    }
-  );
+  const response = await fetch(`${API_URL}/api/subscriptions/${subscriptionId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
   if (!response.ok) {
     throw new Error("Failed to update subscription");
   }

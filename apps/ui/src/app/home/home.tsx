@@ -21,7 +21,7 @@ export default function Page() {
         position: "right",
       },
     ],
-    [t]
+    [t],
   );
 
   useEffect(() => {

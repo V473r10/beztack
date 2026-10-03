@@ -121,10 +121,8 @@ export function SubscriptionList({
   const isEmpty = subscriptions.length === 0;
 
   // Use i18n defaults if not provided
-  const resolvedEmptyMessage =
-    emptyMessage ?? t(locale, "components.noSubscriptions");
-  const resolvedLoadingMessage =
-    loadingMessage ?? t(locale, "components.loadingSubscriptions");
+  const resolvedEmptyMessage = emptyMessage ?? t(locale, "components.noSubscriptions");
+  const resolvedLoadingMessage = loadingMessage ?? t(locale, "components.loadingSubscriptions");
 
   const renderProps: SubscriptionListRenderProps = {
     subscriptions,

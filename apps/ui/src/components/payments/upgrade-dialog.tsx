@@ -1,11 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowRight,
-  Building2,
-  Clock,
-  Loader2,
-  TrendingDown,
-} from "lucide-react";
+import { ArrowRight, Building2, Clock, Loader2, TrendingDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,7 +64,7 @@ type PlanChangeDisplay =
 
 function buildServerPlanChangeDisplay(
   serverPreview: PlanChangePreviewResponse,
-  clientEstimate: ProrationEstimate | null
+  clientEstimate: ProrationEstimate | null,
 ): PlanChangeDisplay | null {
   const preview = serverPreview.planChangePreview;
   if (preview.direction === "cadence_change") {
@@ -81,10 +75,7 @@ function buildServerPlanChangeDisplay(
     return {
       direction: "downgrade",
       newAmount: preview.targetPlan.price.amount,
-      savings: Math.max(
-        preview.currentPlan.price.amount - preview.targetPlan.price.amount,
-        0
-      ),
+      savings: Math.max(preview.currentPlan.price.amount - preview.targetPlan.price.amount, 0),
       trialDays: clientEstimate?.daysRemaining ?? 0,
     };
   }
@@ -94,16 +85,13 @@ function buildServerPlanChangeDisplay(
     direction: "upgrade",
     fullAmount: preview.firstPayment.fullAmount,
     proratedAmount: preview.firstPayment.amount,
-    unusedCredit: Math.max(
-      preview.firstPayment.fullAmount - preview.firstPayment.amount,
-      0
-    ),
+    unusedCredit: Math.max(preview.firstPayment.fullAmount - preview.firstPayment.amount, 0),
   };
 }
 
 function buildClientPlanChangeDisplay(
   clientEstimate: ProrationEstimate,
-  previewChangeType: string
+  previewChangeType: string,
 ): PlanChangeDisplay {
   if (previewChangeType === "downgrade") {
     return {
@@ -138,9 +126,7 @@ export function UpgradeDialog({
   onUpgrade,
   isLoading = false,
 }: UpgradeDialogProps) {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
-    "monthly"
-  );
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const [selectedTier, setSelectedTier] = useState<string>();
 
   const { getPlanChangeType, activeSubscription } = useMembership();
@@ -153,36 +139,30 @@ export function UpgradeDialog({
 
   // Fetch server-side Plan change preview when a tier is hovered/selected
   const previewTargetId = hoveredTierId ?? selectedTier;
-  const previewChangeType = previewTargetId
-    ? getPlanChangeType(previewTargetId)
-    : "same";
+  const previewChangeType = previewTargetId ? getPlanChangeType(previewTargetId) : "same";
 
-  const { data: serverPreview, isLoading: isPreviewLoading } =
-    useQuery<PlanChangePreviewResponse>({
-      queryKey: ["proration-preview", previewTargetId, billingPeriod],
-      queryFn: async () => {
-        const response = await fetch(
-          `${env.VITE_API_URL}/api/subscriptions/plan-change/preview`,
-          {
-            body: JSON.stringify({
-              targetBillingCadence: billingPeriod,
-              targetTierId: previewTargetId,
-            }),
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            method: "POST",
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch plan change preview");
-        }
-        return response.json() as Promise<PlanChangePreviewResponse>;
-      },
-      enabled: !!activeSubscription && !!previewTargetId,
-      staleTime: 30_000,
-    });
+  const { data: serverPreview, isLoading: isPreviewLoading } = useQuery<PlanChangePreviewResponse>({
+    queryKey: ["proration-preview", previewTargetId, billingPeriod],
+    queryFn: async () => {
+      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/plan-change/preview`, {
+        body: JSON.stringify({
+          targetBillingCadence: billingPeriod,
+          targetTierId: previewTargetId,
+        }),
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch plan change preview");
+      }
+      return response.json() as Promise<PlanChangePreviewResponse>;
+    },
+    enabled: !!activeSubscription && !!previewTargetId,
+    staleTime: 30_000,
+  });
 
   // Client-side estimate as instant placeholder
   const clientEstimate = useMemo(() => {
@@ -206,10 +186,8 @@ export function UpgradeDialog({
     return estimateProration({
       currentAmount,
       newAmount,
-      currentPeriodStart:
-        periodStart instanceof Date ? periodStart : new Date(periodStart),
-      currentPeriodEnd:
-        periodEnd instanceof Date ? periodEnd : new Date(periodEnd),
+      currentPeriodStart: periodStart instanceof Date ? periodStart : new Date(periodStart),
+      currentPeriodEnd: periodEnd instanceof Date ? periodEnd : new Date(periodEnd),
     });
   }, [activeSubscription, previewTargetId, allTiersRaw, billingPeriod]);
 
@@ -225,15 +203,10 @@ export function UpgradeDialog({
   }, [serverPreview, clientEstimate, previewChangeType]);
 
   // Sort tiers by displayOrder and filter to plan changes (upgrades + downgrades)
-  const allTiers = [...allTiersRaw].sort(
-    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
-  );
+  const allTiers = [...allTiersRaw].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
 
   const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
-  const savingsPercent = Math.max(
-    ...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0),
-    0
-  );
+  const savingsPercent = Math.max(...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0), 0);
 
   const availableTiers = allTiers.filter((tier) => {
     const changeType = getPlanChangeType(tier.id);
@@ -264,8 +237,8 @@ export function UpgradeDialog({
           <DialogHeader>
             <DialogTitle>No Plan Changes Available</DialogTitle>
             <DialogDescription>
-              There are no other plans available. Contact our sales team for
-              custom enterprise solutions.
+              There are no other plans available. Contact our sales team for custom enterprise
+              solutions.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 pt-4">
@@ -302,9 +275,7 @@ export function UpgradeDialog({
             <div className="flex items-center justify-center">
               <Tabs
                 className="w-fit"
-                onValueChange={(value) =>
-                  setBillingPeriod(value as "monthly" | "yearly")
-                }
+                onValueChange={(value) => setBillingPeriod(value as "monthly" | "yearly")}
                 value={billingPeriod}
               >
                 <TabsList className="grid w-full grid-cols-2">
@@ -312,10 +283,7 @@ export function UpgradeDialog({
                   <TabsTrigger className="relative" value="yearly">
                     Yearly
                     {savingsPercent > 0 && (
-                      <Badge
-                        className="ml-2 h-5 px-1.5 text-xs"
-                        variant="secondary"
-                      >
+                      <Badge className="ml-2 h-5 px-1.5 text-xs" variant="secondary">
                         -{savingsPercent}%
                       </Badge>
                     )}
@@ -334,9 +302,7 @@ export function UpgradeDialog({
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">
-                        Upgrade Preview
-                      </span>
+                      <span className="font-medium text-sm">Upgrade Preview</span>
                       {isPreviewLoading && (
                         <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                       )}
@@ -349,9 +315,7 @@ export function UpgradeDialog({
                         </span>
                       </span>
                       <ArrowRight className="h-3 w-3" />
-                      <span>
-                        {planChangeDisplay.daysRemaining} days remaining
-                      </span>
+                      <span>{planChangeDisplay.daysRemaining} days remaining</span>
                     </div>
                   </div>
                   <div className="text-right">
@@ -378,19 +342,14 @@ export function UpgradeDialog({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <TrendingDown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      <span className="font-medium text-sm">
-                        Downgrade Preview
-                      </span>
+                      <span className="font-medium text-sm">Downgrade Preview</span>
                       {isPreviewLoading && (
                         <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <Clock className="h-3 w-3" />
-                      <span>
-                        Current benefits kept for {planChangeDisplay.trialDays}{" "}
-                        more days
-                      </span>
+                      <span>Current benefits kept for {planChangeDisplay.trialDays} more days</span>
                     </div>
                   </div>
                   <div className="text-right">
@@ -416,7 +375,7 @@ export function UpgradeDialog({
               availableTiers.length === 1 && "mx-auto max-w-sm grid-cols-1",
               availableTiers.length === 2 && "grid-cols-1 md:grid-cols-2",
               availableTiers.length >= MIN_TIERS_FOR_THREE_COLUMN &&
-                "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
             )}
           >
             {availableTiers.map((tier) => (
@@ -439,28 +398,25 @@ export function UpgradeDialog({
           </div>
 
           {/* Enterprise CTA */}
-          {!availableTiers.find((t) => t.id === "ultimate") &&
-            currentTier !== "ultimate" && (
-              <div className="rounded-lg border bg-muted/30 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      <span className="font-medium text-sm">
-                        Need Enterprise Features?
-                      </span>
-                    </div>
-                    <div className="text-muted-foreground text-sm">
-                      Custom solutions, dedicated support, and unlimited usage
-                      for large organizations.
-                    </div>
+          {!availableTiers.find((t) => t.id === "ultimate") && currentTier !== "ultimate" && (
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    <span className="font-medium text-sm">Need Enterprise Features?</span>
                   </div>
-                  <Button size="sm" variant="outline">
-                    Contact Sales
-                  </Button>
+                  <div className="text-muted-foreground text-sm">
+                    Custom solutions, dedicated support, and unlimited usage for large
+                    organizations.
+                  </div>
                 </div>
+                <Button size="sm" variant="outline">
+                  Contact Sales
+                </Button>
               </div>
-            )}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

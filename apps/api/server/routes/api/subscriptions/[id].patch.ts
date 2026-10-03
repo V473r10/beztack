@@ -37,13 +37,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (
-      !isSubscriptionOwnedByUser(
-        currentSubscription,
-        auth,
-        env.SUBSCRIPTION_MODE
-      )
-    ) {
+    if (!isSubscriptionOwnedByUser(currentSubscription, auth, env.SUBSCRIPTION_MODE)) {
       throw createError({
         statusCode: 403,
         message: "Access denied",
@@ -56,15 +50,11 @@ export default defineEventHandler(async (event) => {
     if (parsed.productId || parsed.prorationBehavior) {
       throw createError({
         statusCode: 410,
-        message:
-          "Subscription Plan changes must use the Plan change acceptance route",
+        message: "Subscription Plan changes must use the Plan change acceptance route",
       });
     }
 
-    const subscription = await provider.updateSubscription(
-      subscriptionId,
-      parsed
-    );
+    const subscription = await provider.updateSubscription(subscriptionId, parsed);
 
     return {
       provider: provider.provider,
@@ -89,10 +79,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to update subscription",
+      message: error instanceof Error ? error.message : "Failed to update subscription",
     });
   }
 });

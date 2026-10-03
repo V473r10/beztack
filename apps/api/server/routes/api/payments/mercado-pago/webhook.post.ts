@@ -3,10 +3,7 @@
  * Kept for existing provider configuration while delegating to Subscription projection.
  */
 
-import {
-  createMercadoPagoClient,
-  type WebhookPayload,
-} from "@beztack/mercadopago/server";
+import { createMercadoPagoClient, type WebhookPayload } from "@beztack/mercadopago/server";
 import { createError, defineEventHandler, getHeader, readBody } from "h3";
 import { env } from "@/env";
 import {
@@ -26,18 +23,13 @@ export default defineEventHandler(async (event) => {
   const xSignature = getHeader(event, "x-signature");
   const xRequestId = getHeader(event, "x-request-id");
 
-  if (
-    !mp.webhooks.validate(xSignature ?? null, xRequestId ?? null, body.data.id)
-  ) {
+  if (!mp.webhooks.validate(xSignature ?? null, xRequestId ?? null, body.data.id)) {
     return { success: false, error: "Invalid signature" };
   }
 
   const envelope = createMercadoPagoProjectionEventEnvelope(body, xRequestId);
   const dependencies = await getDefaultSubscriptionProjectionDependencies();
-  const outcome = await projectSubscriptionProviderEvent(
-    envelope,
-    dependencies
-  );
+  const outcome = await projectSubscriptionProviderEvent(envelope, dependencies);
 
   if (outcome.status === "failed") {
     throw createError({

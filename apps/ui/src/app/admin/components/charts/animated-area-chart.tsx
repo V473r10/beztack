@@ -1,12 +1,5 @@
 import { motion } from "motion/react";
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type AnimatedAreaChartProps = {
   data: Array<{
@@ -32,22 +25,11 @@ export function AnimatedAreaChart({ data }: AnimatedAreaChartProps) {
       transition={{ duration: 0.5 }}
     >
       <ResponsiveContainer height="100%" width="100%">
-        <AreaChart
-          data={chartData}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-        >
+        <AreaChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <defs>
             <linearGradient id="colorGradient" x1="0" x2="0" y1="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="hsl(var(--chart-1))"
-                stopOpacity={0.4}
-              />
-              <stop
-                offset="95%"
-                stopColor="hsl(var(--chart-1))"
-                stopOpacity={0.1}
-              />
+              <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1} />
             </linearGradient>
             <filter id="glow">
               <feMorphology operator="dilate" radius="1" />
@@ -64,11 +46,7 @@ export function AnimatedAreaChart({ data }: AnimatedAreaChartProps) {
             tick={{ fontSize: 12, fill: "#6b7280" }}
             tickLine={false}
           />
-          <YAxis
-            axisLine={false}
-            tick={{ fontSize: 12, fill: "#6b7280" }}
-            tickLine={false}
-          />
+          <YAxis axisLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} tickLine={false} />
           <Tooltip
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
@@ -79,10 +57,7 @@ export function AnimatedAreaChart({ data }: AnimatedAreaChartProps) {
                     initial={{ opacity: 0, scale: 0.9 }}
                   >
                     <p className="font-medium text-sm">{label}</p>
-                    <p
-                      className="text-sm"
-                      style={{ color: "hsl(var(--chart-1))" }}
-                    >
+                    <p className="text-sm" style={{ color: "hsl(var(--chart-1))" }}>
                       {payload[0].value} new users
                     </p>
                   </motion.div>

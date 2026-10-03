@@ -40,10 +40,7 @@ export async function applyUpdatePlan(input: ApplyInput): Promise<ApplyResult> {
     let output = templateContent;
 
     if (!isBinary && change.ownership === "mixed") {
-      const merged = mergeWithProtectedZones(
-        change.currentContent ?? "",
-        templateContent
-      );
+      const merged = mergeWithProtectedZones(change.currentContent ?? "", templateContent);
       output = merged.content;
       for (const conflict of merged.conflicts) {
         conflicts.push(`${change.path}: ${conflict}`);
@@ -54,10 +51,7 @@ export async function applyUpdatePlan(input: ApplyInput): Promise<ApplyResult> {
       const destination = join(input.workspaceRoot, change.path);
       await mkdir(dirname(destination), { recursive: true });
       if (isBinary) {
-        await writeFile(
-          destination,
-          change.templateBinaryContent ?? Buffer.alloc(0)
-        );
+        await writeFile(destination, change.templateBinaryContent ?? Buffer.alloc(0));
       } else {
         await writeFile(destination, output, "utf-8");
       }

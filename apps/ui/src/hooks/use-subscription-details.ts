@@ -101,9 +101,7 @@ export type SubscriptionDetails = {
 /**
  * Transform raw MP response to a cleaner format
  */
-function transformSubscription(
-  raw: MPSubscriptionResponse
-): SubscriptionDetails {
+function transformSubscription(raw: MPSubscriptionResponse): SubscriptionDetails {
   return {
     id: raw.id,
     status: raw.status,
@@ -123,13 +121,9 @@ function transformSubscription(
     },
     dates: {
       created: new Date(raw.date_created),
-      nextPayment: raw.next_payment_date
-        ? new Date(raw.next_payment_date)
-        : null,
+      nextPayment: raw.next_payment_date ? new Date(raw.next_payment_date) : null,
       startDate: new Date(raw.auto_recurring.start_date),
-      endDate: raw.auto_recurring.end_date
-        ? new Date(raw.auto_recurring.end_date)
-        : null,
+      endDate: raw.auto_recurring.end_date ? new Date(raw.auto_recurring.end_date) : null,
     },
     billing: {
       chargedQuantity: raw.summarized.charged_quantity,
@@ -144,14 +138,12 @@ function transformSubscription(
 /**
  * Fetch subscription details by preapproval_id
  */
-async function fetchSubscriptionDetails(
-  preapprovalId: string
-): Promise<SubscriptionDetails> {
+async function fetchSubscriptionDetails(preapprovalId: string): Promise<SubscriptionDetails> {
   const response = await fetch(
     `${API_URL}/api/payments/mercado-pago/subscriptions/${preapprovalId}`,
     {
       credentials: "include",
-    }
+    },
   );
 
   if (!response.ok) {
@@ -198,9 +190,7 @@ export function useSubscriptionDetails(preapprovalId: string | null) {
       // Don't retry on known errors
       if (
         error instanceof Error &&
-        ["SUBSCRIPTION_NOT_FOUND", "SUBSCRIPTION_ACCESS_DENIED"].includes(
-          error.message
-        )
+        ["SUBSCRIPTION_NOT_FOUND", "SUBSCRIPTION_ACCESS_DENIED"].includes(error.message)
       ) {
         return false;
       }
@@ -229,10 +219,7 @@ export function getStatusLabel(status: SubscriptionDetails["status"]): {
 /**
  * Format frequency for display
  */
-export function formatFrequency(
-  frequency: number,
-  frequencyType: "days" | "months"
-): string {
+export function formatFrequency(frequency: number, frequencyType: "days" | "months"): string {
   if (frequencyType === "months") {
     if (frequency === 1) {
       return "mensual";

@@ -14,8 +14,7 @@ export function useIsAdmin() {
   // Sudo users have access to all admin features
   const isSudo =
     session?.user?.role === "sudo" ||
-    (Array.isArray(session?.user?.role) &&
-      session?.user?.role.includes("sudo"));
+    (Array.isArray(session?.user?.role) && session?.user?.role.includes("sudo"));
 
   if (isSudo) return true;
 
@@ -39,8 +38,7 @@ export function useIsAppAdmin() {
     // @ts-ignore - custom property injected by backend
     session?.user?.isAppAdmin === true ||
     session?.user?.role?.includes("sudo") ||
-    (Array.isArray(session?.user?.role) &&
-      session?.user?.role.some((r) => r.includes("sudo")))
+    (Array.isArray(session?.user?.role) && session?.user?.role.some((r) => r.includes("sudo")))
   );
 }
 
@@ -79,9 +77,7 @@ export function getUserStatus(user: AdminUser): {
     return {
       status: "banned",
       label:
-        user.banExpires && new Date(user.banExpires) > new Date()
-          ? "Temporarily Banned"
-          : "Banned",
+        user.banExpires && new Date(user.banExpires) > new Date() ? "Temporarily Banned" : "Banned",
       variant: "destructive",
     };
   }

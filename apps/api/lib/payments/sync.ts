@@ -10,11 +10,7 @@ import type { Product } from "@beztack/payments";
 
 type DbPlan = typeof plan.$inferSelect;
 
-export type SyncStatus =
-  | "synced"
-  | "local-only"
-  | "remote-only"
-  | "out-of-sync";
+export type SyncStatus = "synced" | "local-only" | "remote-only" | "out-of-sync";
 
 export type SyncDiff = {
   field: string;
@@ -115,10 +111,7 @@ function computeDiffs(local: DbPlan, remote: Product): SyncDiff[] {
  * 4. Any unmatched remote products are marked as "remote-only"
  */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Sync view must handle all matching/diffing in one pass
-export function buildSyncView(
-  dbPlans: DbPlan[],
-  remoteProducts: Product[]
-): SyncedPlanView[] {
+export function buildSyncView(dbPlans: DbPlan[], remoteProducts: Product[]): SyncedPlanView[] {
   const results: SyncedPlanView[] = [];
   const matchedRemoteIds = new Set<string>();
 

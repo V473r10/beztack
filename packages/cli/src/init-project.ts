@@ -29,9 +29,7 @@ const PROVIDER_PRUNE_CONFIG: Record<PaymentProvider, ProviderPruneConfig> = {
   },
 };
 
-function normalizeConfig(
-  input: string[] | InitProjectConfig
-): InitProjectConfig {
+function normalizeConfig(input: string[] | InitProjectConfig): InitProjectConfig {
   if (Array.isArray(input)) {
     return {
       enabledModules: input,
@@ -51,9 +49,7 @@ function shouldEnablePayments(moduleNames: string[]): boolean {
 
 function validatePaymentProvider(config: InitProjectConfig): void {
   if (shouldEnablePayments(config.enabledModules) && !config.paymentProvider) {
-    throw new Error(
-      "Payments module requires --payment-provider (polar or mercadopago)"
-    );
+    throw new Error("Payments module requires --payment-provider (polar or mercadopago)");
   }
 }
 
@@ -71,16 +67,12 @@ async function removeFilesByGlob(fileGlobs: string[]): Promise<void> {
   }
 }
 
-async function applyProviderPruning(
-  paymentProvider: PaymentProvider
-): Promise<void> {
+async function applyProviderPruning(paymentProvider: PaymentProvider): Promise<void> {
   const pruneConfig = PROVIDER_PRUNE_CONFIG[paymentProvider];
   await removeFilesByGlob(pruneConfig.fileGlobs);
 }
 
-async function updateProviderInEnvExamples(
-  paymentProvider: PaymentProvider
-): Promise<void> {
+async function updateProviderInEnvExamples(paymentProvider: PaymentProvider): Promise<void> {
   const workspaceRoot = getWorkspaceRoot();
   const envFiles = ["apps/api/.env.example", "apps/ui/.env.example"] as const;
 
@@ -90,10 +82,7 @@ async function updateProviderInEnvExamples(
 
     const updated = original
       .replace(/^PAYMENT_PROVIDER=.*$/m, `PAYMENT_PROVIDER=${paymentProvider}`)
-      .replace(
-        /^VITE_PAYMENT_PROVIDER=.*$/m,
-        `VITE_PAYMENT_PROVIDER=${paymentProvider}`
-      );
+      .replace(/^VITE_PAYMENT_PROVIDER=.*$/m, `VITE_PAYMENT_PROVIDER=${paymentProvider}`);
 
     if (updated !== original) {
       await writeFile(path, updated, "utf-8");

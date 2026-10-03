@@ -43,8 +43,7 @@ export default defineEventHandler(async (event) => {
     if (data.intervalCount !== 1) {
       throw createError({
         statusCode: 400,
-        message:
-          "MercadoPago only supports an interval count of 1 for monthly billing",
+        message: "MercadoPago only supports an interval count of 1 for monthly billing",
       });
     }
   }

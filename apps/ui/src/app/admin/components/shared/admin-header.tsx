@@ -18,9 +18,7 @@ export function AdminHeader({ title, description, action }: AdminHeaderProps) {
           <AdminBreadcrumb />
           <div className="flex items-center gap-4">
             <h1 className="font-semibold text-lg">{title}</h1>
-            {description && (
-              <p className="text-muted-foreground text-sm">{description}</p>
-            )}
+            {description && <p className="text-muted-foreground text-sm">{description}</p>}
           </div>
         </div>
         {action && <div className="flex items-center gap-2">{action}</div>}

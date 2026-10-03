@@ -17,12 +17,7 @@ export type Benefit = {
   details?: Record<string, unknown>;
 };
 
-export type MembershipTier =
-  | "free"
-  | "basic"
-  | "pro"
-  | "ultimate"
-  | "enterprise";
+export type MembershipTier = "free" | "basic" | "pro" | "ultimate" | "enterprise";
 
 export type MembershipInfo = {
   tier: MembershipTier;
@@ -79,10 +74,7 @@ function mapTier(value: string | undefined): MembershipTier {
   return "free";
 }
 
-function isSubscriptionStatusActive(
-  status: string | null,
-  validUntil: Date | null
-): boolean {
+function isSubscriptionStatusActive(status: string | null, validUntil: Date | null): boolean {
   if (status === "active") {
     return true;
   }
@@ -111,7 +103,7 @@ function isSubscriptionActive(subscription: Subscription): boolean {
 function belongsToOrganization(
   subscription: Subscription,
   organizationId?: string,
-  requireOrganization = false
+  requireOrganization = false,
 ): boolean {
   if (!organizationId) {
     return !requireOrganization;
@@ -124,17 +116,10 @@ function belongsToOrganization(
       }
     | undefined;
 
-  return (
-    metadata?.organizationId === organizationId ||
-    metadata?.referenceId === organizationId
-  );
+  return metadata?.organizationId === organizationId || metadata?.referenceId === organizationId;
 }
 
-function belongsToUser(
-  subscription: Subscription,
-  userId: string,
-  email?: string
-): boolean {
+function belongsToUser(subscription: Subscription, userId: string, email?: string): boolean {
   if (subscription.customerId === userId) {
     return true;
   }
@@ -180,7 +165,7 @@ async function canUseCachedMembership(options: {
     mapTier(options.cache.subscriptionTier ?? undefined) !== "free" &&
     isSubscriptionStatusActive(
       options.cache.subscriptionStatus,
-      options.cache.subscriptionValidUntil
+      options.cache.subscriptionValidUntil,
     );
 
   if (!isActivePaidCache || env.PAYMENT_PROVIDER !== "mercadopago") {
@@ -197,9 +182,7 @@ async function canUseCachedMembership(options: {
       return true;
     }
 
-    const subscription = await provider.getSubscription(
-      options.cache.subscriptionId
-    );
+    const subscription = await provider.getSubscription(options.cache.subscriptionId);
     if (!(subscription && isSubscriptionActive(subscription))) {
       return false;
     }
@@ -242,9 +225,7 @@ function getTierFromSubscription(subscription: Subscription): MembershipTier {
   return mapTier(metadata?.tier ?? subscription.productName);
 }
 
-export async function requireAuth(
-  event: H3Event<EventHandlerRequest>
-): Promise<AuthenticatedUser> {
+export async function requireAuth(event: H3Event<EventHandlerRequest>): Promise<AuthenticatedUser> {
   const { auth } = await import("./auth");
 
   const headers = new Headers();
@@ -273,15 +254,12 @@ export async function requireAuth(
   };
 }
 
-function membershipInfoFromAdminTierOverride(
-  override: AdminTierOverrideRecord
-): MembershipInfo {
+function membershipInfoFromAdminTierOverride(override: AdminTierOverrideRecord): MembershipInfo {
   return {
     tier: override.tier,
     hasActiveSubscription: false,
     benefits: [],
-    organizationId:
-      override.targetType === "organization" ? override.targetId : undefined,
+    organizationId: override.targetType === "organization" ? override.targetId : undefined,
     source: "admin-tier-override",
     adminTierOverride: {
       target: {
@@ -297,7 +275,7 @@ function membershipInfoFromAdminTierOverride(
 
 async function getCachedOrganizationMembershipInfo(
   userId: string,
-  organizationId: string
+  organizationId: string,
 ): Promise<MembershipInfo | null> {
   const [org] = await db
     .select({
@@ -324,10 +302,7 @@ async function getCachedOrganizationMembershipInfo(
     return null;
   }
 
-  const isActive = isSubscriptionStatusActive(
-    org.subscriptionStatus,
-    org.subscriptionValidUntil
-  );
+  const isActive = isSubscriptionStatusActive(org.subscriptionStatus, org.subscriptionValidUntil);
   return {
     tier: mapTier(org.subscriptionTier),
     hasActiveSubscription: isActive,
@@ -339,9 +314,7 @@ async function getCachedOrganizationMembershipInfo(
   };
 }
 
-async function getCachedUserMembershipInfo(
-  userId: string
-): Promise<MembershipInfo | null> {
+async function getCachedUserMembershipInfo(userId: string): Promise<MembershipInfo | null> {
   const [dbUser] = await db
     .select({
       subscriptionTier: userTable.subscriptionTier,
@@ -370,7 +343,7 @@ async function getCachedUserMembershipInfo(
 
   const isActive = isSubscriptionStatusActive(
     dbUser.subscriptionStatus,
-    dbUser.subscriptionValidUntil
+    dbUser.subscriptionValidUntil,
   );
   return {
     tier: mapTier(dbUser.subscriptionTier),
@@ -389,7 +362,7 @@ async function getCachedUserMembershipInfo(
  */
 export async function getMembershipInfo(
   userId: string,
-  organizationId?: string
+  organizationId?: string,
 ): Promise<MembershipInfo> {
   const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
   const override = await getAdminTierOverrideForMembershipTarget({
@@ -404,10 +377,7 @@ export async function getMembershipInfo(
 
   let cachedMembership: MembershipInfo | null = null;
   if (isOrgMode && organizationId) {
-    cachedMembership = await getCachedOrganizationMembershipInfo(
-      userId,
-      organizationId
-    );
+    cachedMembership = await getCachedOrganizationMembershipInfo(userId, organizationId);
   } else if (!isOrgMode) {
     cachedMembership = await getCachedUserMembershipInfo(userId);
   }
@@ -422,7 +392,7 @@ export async function getMembershipInfo(
 
 async function getMembershipInfoFromProvider(
   userId: string,
-  organizationId?: string
+  organizationId?: string,
 ): Promise<MembershipInfo> {
   const isOrgMode = env.SUBSCRIPTION_MODE === "organization";
   const [dbUser] = await db
@@ -453,11 +423,10 @@ async function getMembershipInfoFromProvider(
     }
 
     const scopedSubscriptions = subscriptions.filter((subscription) =>
-      belongsToOrganization(subscription, organizationId, isOrgMode)
+      belongsToOrganization(subscription, organizationId, isOrgMode),
     );
 
-    const activeSubscriptions =
-      scopedSubscriptions.filter(isSubscriptionActive);
+    const activeSubscriptions = scopedSubscriptions.filter(isSubscriptionActive);
 
     if (activeSubscriptions.length === 0) {
       return {
@@ -468,13 +437,11 @@ async function getMembershipInfoFromProvider(
       };
     }
 
-    const selectedSubscription = activeSubscriptions
-      .slice()
-      .sort((left, right) => {
-        const leftTs = left.currentPeriodEnd?.getTime() ?? 0;
-        const rightTs = right.currentPeriodEnd?.getTime() ?? 0;
-        return rightTs - leftTs;
-      })[0];
+    const selectedSubscription = activeSubscriptions.slice().sort((left, right) => {
+      const leftTs = left.currentPeriodEnd?.getTime() ?? 0;
+      const rightTs = right.currentPeriodEnd?.getTime() ?? 0;
+      return rightTs - leftTs;
+    })[0];
 
     return {
       tier: getTierFromSubscription(selectedSubscription),
@@ -496,14 +463,14 @@ async function getMembershipInfoFromProvider(
 
 export async function requireMembership(
   event: H3Event<EventHandlerRequest>,
-  requiredTier: MembershipTier
+  requiredTier: MembershipTier,
 ): Promise<AuthenticatedUser> {
   const authenticatedUser = await requireAuth(event);
   const organizationId = authenticatedUser.session.activeOrganizationId;
 
   const membership = await getMembershipInfo(
     authenticatedUser.user.id,
-    organizationId || undefined
+    organizationId || undefined,
   );
 
   if (!hasAccessToTier(membership.tier, requiredTier)) {
@@ -519,10 +486,7 @@ export async function requireMembership(
   };
 }
 
-export function hasAccessToTier(
-  userTier: MembershipTier,
-  requiredTier: MembershipTier
-): boolean {
+export function hasAccessToTier(userTier: MembershipTier, requiredTier: MembershipTier): boolean {
   const tierHierarchy: Record<MembershipTier, number> = {
     free: 0,
     basic: 1,
@@ -534,28 +498,24 @@ export function hasAccessToTier(
   return tierHierarchy[userTier] >= tierHierarchy[requiredTier];
 }
 
-export const requirePro = (event: H3Event<EventHandlerRequest>) =>
-  requireMembership(event, "pro");
+export const requirePro = (event: H3Event<EventHandlerRequest>) => requireMembership(event, "pro");
 
 export const requireEnterprise = (event: H3Event<EventHandlerRequest>) =>
   requireMembership(event, "ultimate");
 
-export function hasBenefit(
-  membership: MembershipInfo,
-  benefitType: string
-): boolean {
+export function hasBenefit(membership: MembershipInfo, benefitType: string): boolean {
   return membership.benefits.some((benefit) => benefit.type === benefitType);
 }
 
 export async function requireBenefit(
   event: H3Event<EventHandlerRequest>,
-  benefitType: string
+  benefitType: string,
 ): Promise<AuthenticatedUser> {
   const authenticatedUser = await requireAuth(event);
   const organizationId = authenticatedUser.session.activeOrganizationId;
   const membership = await getMembershipInfo(
     authenticatedUser.user.id,
-    organizationId || undefined
+    organizationId || undefined,
   );
 
   if (!hasBenefit(membership, benefitType)) {
@@ -579,7 +539,7 @@ export type GetUserMembershipStatusOptions = {
 export async function getUserMembershipStatus(
   userId: string,
   organizationId?: string,
-  options?: GetUserMembershipStatusOptions
+  options?: GetUserMembershipStatusOptions,
 ) {
   const membership = await getMembershipInfo(userId, organizationId);
 

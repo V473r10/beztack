@@ -19,11 +19,7 @@ export function debugLog(message: string): void {
   }
 }
 
-export function debugOutput(
-  label: string,
-  stdout: string,
-  stderr: string
-): void {
+export function debugOutput(label: string, stdout: string, stderr: string): void {
   if (!isDebugMode()) {
     return;
   }

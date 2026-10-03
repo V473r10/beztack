@@ -14,13 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 // import { Separator } from "@/components/ui/separator";
 import { useAppForm } from "@/components/ui/tanstack-form";
@@ -80,7 +74,7 @@ export function OrganizationSettings({
       e.stopPropagation();
       form.handleSubmit();
     },
-    [form]
+    [form],
   );
 
   const handleCancel = () => {
@@ -116,9 +110,7 @@ export function OrganizationSettings({
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Organization Details</CardTitle>
-            <CardDescription>
-              Update your organization's basic information.
-            </CardDescription>
+            <CardDescription>Update your organization's basic information.</CardDescription>
           </div>
           <Badge variant={isOwner ? "default" : "secondary"}>{userRole}</Badge>
         </CardHeader>
@@ -185,15 +177,11 @@ export function OrganizationSettings({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="font-medium text-sm">Name</div>
-                  <p className="text-muted-foreground text-sm">
-                    {organization.name}
-                  </p>
+                  <p className="text-muted-foreground text-sm">{organization.name}</p>
                 </div>
                 <div>
                   <div className="font-medium text-sm">Slug</div>
-                  <p className="text-muted-foreground text-sm">
-                    @{organization.slug}
-                  </p>
+                  <p className="text-muted-foreground text-sm">@{organization.slug}</p>
                 </div>
               </div>
 
@@ -214,9 +202,7 @@ export function OrganizationSettings({
 
               {canEdit && (
                 <div className="flex justify-end">
-                  <Button onClick={() => setIsEditing(true)}>
-                    Edit Organization
-                  </Button>
+                  <Button onClick={() => setIsEditing(true)}>Edit Organization</Button>
                 </div>
               )}
             </div>
@@ -228,9 +214,7 @@ export function OrganizationSettings({
       <Card className="border-destructive">
         <CardHeader>
           <CardTitle className="text-destructive">Danger Zone</CardTitle>
-          <CardDescription>
-            Irreversible and destructive actions.
-          </CardDescription>
+          <CardDescription>Irreversible and destructive actions.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Leave Organization */}
@@ -256,9 +240,8 @@ export function OrganizationSettings({
                       <span>Leave Organization</span>
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to leave "{organization.name}"? You
-                      will lose access to all organization resources and will
-                      need to be invited again to rejoin.
+                      Are you sure you want to leave "{organization.name}"? You will lose access to
+                      all organization resources and will need to be invited again to rejoin.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -283,12 +266,10 @@ export function OrganizationSettings({
           {canDelete && isOwner && (
             <div className="flex items-center justify-between rounded-lg border border-destructive bg-destructive/5 p-4">
               <div className="space-y-1">
-                <h4 className="font-medium text-destructive text-sm">
-                  Delete Organization
-                </h4>
+                <h4 className="font-medium text-destructive text-sm">Delete Organization</h4>
                 <p className="text-muted-foreground text-sm">
-                  Permanently delete this organization and all its data. This
-                  action cannot be undone.
+                  Permanently delete this organization and all its data. This action cannot be
+                  undone.
                 </p>
               </div>
               <AlertDialog>
@@ -305,9 +286,9 @@ export function OrganizationSettings({
                       <span>Delete Organization</span>
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete
-                      the "{organization.name}" organization and remove all of
-                      its members, teams, and data.
+                      This action cannot be undone. This will permanently delete the "
+                      {organization.name}" organization and remove all of its members, teams, and
+                      data.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

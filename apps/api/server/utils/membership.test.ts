@@ -21,8 +21,7 @@ vi.mock("./subscription-discovery", () => ({
   discoverSubscriptionsFromDb: mocks.discoverSubscriptionsFromDb,
 }));
 vi.mock("./admin-tier-override", () => ({
-  getAdminTierOverrideForMembershipTarget:
-    mocks.getAdminTierOverrideForMembershipTarget,
+  getAdminTierOverrideForMembershipTarget: mocks.getAdminTierOverrideForMembershipTarget,
 }));
 vi.mock("drizzle-orm", () => ({ eq: vi.fn(() => true) }));
 vi.mock("@beztack/db", () => ({
@@ -150,14 +149,12 @@ describe("getMembershipInfo", () => {
     mocks.ensurePaymentProvider.mockResolvedValue(paymentProvider);
     mocks.selectResults.push(
       [cachedOrganizationMembership("sub_cross_app")],
-      [{ email: "billing@example.com" }]
+      [{ email: "billing@example.com" }],
     );
 
     const membership = await getMembershipInfo("user_1", "org_1");
 
-    expect(paymentProvider.getSubscription).toHaveBeenCalledWith(
-      "sub_cross_app"
-    );
+    expect(paymentProvider.getSubscription).toHaveBeenCalledWith("sub_cross_app");
     expect(membership).toMatchObject({
       tier: "free",
       hasActiveSubscription: false,
@@ -173,7 +170,7 @@ describe("getMembershipInfo", () => {
     mocks.ensurePaymentProvider.mockResolvedValue(paymentProvider);
     mocks.selectResults.push(
       [cachedOrganizationMembership(null)],
-      [{ email: "billing@example.com" }]
+      [{ email: "billing@example.com" }],
     );
 
     const membership = await getMembershipInfo("user_1", "org_1");

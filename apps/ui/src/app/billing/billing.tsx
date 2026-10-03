@@ -6,10 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMembership } from "@/contexts/membership-context";
 
 const SKELETON_ITEMS = 3;
-const SKELETON_ITEMS_COUNT = Array.from(
-  { length: SKELETON_ITEMS },
-  (_, i) => i + 1
-);
+const SKELETON_ITEMS_COUNT = Array.from({ length: SKELETON_ITEMS }, (_, i) => i + 1);
 
 export default function Billing() {
   const {
@@ -94,10 +91,7 @@ export default function Billing() {
     );
   }
 
-  const handleUpgrade = async (
-    tierId: string,
-    billingPeriod: "monthly" | "yearly"
-  ) => {
+  const handleUpgrade = async (tierId: string, billingPeriod: "monthly" | "yearly") => {
     try {
       await upgradeToTier(tierId, billingPeriod);
     } catch {

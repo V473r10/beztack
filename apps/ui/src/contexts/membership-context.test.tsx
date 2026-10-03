@@ -58,7 +58,7 @@ function renderMembershipProvider(): MembershipContextValue | null {
   renderToStaticMarkup(
     <MembershipProvider>
       <CaptureMembership />
-    </MembershipProvider>
+    </MembershipProvider>,
   );
 
   return value;
@@ -78,40 +78,38 @@ describe("MembershipProvider", () => {
         mutateAsync: vi.fn(),
       };
     });
-    mocks.useQuery.mockImplementation(
-      (options: { queryKey: readonly unknown[] }) => {
-        const queryName = options.queryKey[1];
-        if (queryName === "products") {
-          return {
-            data: {
-              provider: "polar",
-              products: [],
-            },
-            error: null,
-            isLoading: false,
-          };
-        }
-        if (queryName === "list") {
-          return {
-            data: {
-              provider: "polar",
-              subscriptions: mocks.subscriptions,
-            },
-            error: null,
-            isLoading: false,
-          };
-        }
-        if (queryName === "membership") {
-          return {
-            data: mocks.membershipStatus,
-            error: null,
-            isLoading: false,
-          };
-        }
-
-        throw new Error(`Unhandled query key: ${options.queryKey.join(".")}`);
+    mocks.useQuery.mockImplementation((options: { queryKey: readonly unknown[] }) => {
+      const queryName = options.queryKey[1];
+      if (queryName === "products") {
+        return {
+          data: {
+            provider: "polar",
+            products: [],
+          },
+          error: null,
+          isLoading: false,
+        };
       }
-    );
+      if (queryName === "list") {
+        return {
+          data: {
+            provider: "polar",
+            subscriptions: mocks.subscriptions,
+          },
+          error: null,
+          isLoading: false,
+        };
+      }
+      if (queryName === "membership") {
+        return {
+          data: mocks.membershipStatus,
+          error: null,
+          isLoading: false,
+        };
+      }
+
+      throw new Error(`Unhandled query key: ${options.queryKey.join(".")}`);
+    });
   });
 
   it("uses effective Membership status for the current tier", () => {
@@ -197,12 +195,8 @@ describe("MembershipProvider", () => {
       resultKind: "admin-tier-override",
     });
 
-    expect(mocks.toastSuccess).toHaveBeenCalledWith(
-      "Admin tier override applied."
-    );
-    expect(mocks.toastSuccess).not.toHaveBeenCalledWith(
-      "Redirecting to checkout..."
-    );
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Admin tier override applied.");
+    expect(mocks.toastSuccess).not.toHaveBeenCalledWith("Redirecting to checkout...");
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
     });
@@ -216,9 +210,7 @@ describe("MembershipProvider", () => {
 
     clearMutationOptions.onSuccess({ changed: true });
 
-    expect(mocks.toastSuccess).toHaveBeenCalledWith(
-      "Admin tier override cleared."
-    );
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Admin tier override cleared.");
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
     });

@@ -48,9 +48,7 @@ export default function Home() {
         <div className="relative mx-auto max-w-4xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-4 py-2">
             <Zap className="h-4 w-4 text-accent" />
-            <span className="font-medium text-accent text-sm">
-              Modern TypeScript Monorepo
-            </span>
+            <span className="font-medium text-accent text-sm">Modern TypeScript Monorepo</span>
           </div>
 
           <h1 className="mb-6 text-balance font-bold font-heading text-5xl text-foreground md:text-7xl">
@@ -62,8 +60,8 @@ export default function Home() {
           </h1>
 
           <p className="mx-auto mb-8 max-w-2xl text-pretty text-muted-foreground text-xl leading-relaxed">
-            Beztack is a production-ready monorepo starter built on modern
-            TypeScript tools. Stop configuring, start building.
+            Beztack is a production-ready monorepo starter built on modern TypeScript tools. Stop
+            configuring, start building.
           </p>
 
           <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -104,10 +102,7 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            <TechBadge
-              logoUrl="https://svgl.app/library/vite.svg"
-              name="Vite"
-            />
+            <TechBadge logoUrl="https://svgl.app/library/vite.svg" name="Vite" />
             <TechBadge
               logoUrl="https://svgl.app/library/react_dark.svg"
               logoUrlLight="https://svgl.app/library/react_light.svg"
@@ -141,10 +136,7 @@ export default function Home() {
               logoUrlLight="https://svgl.app/library/vercel.svg"
               name="AI SDK"
             />
-            <TechBadge
-              logoUrl="https://svgl.app/library/nextjs_icon_dark.svg"
-              name="Next.js"
-            />
+            <TechBadge logoUrl="https://svgl.app/library/nextjs_icon_dark.svg" name="Next.js" />
             <TechBadge logoComponent={<FumaDocsIcon />} name="Fumadocs" />
           </div>
         </div>
@@ -179,9 +171,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-bold font-heading text-lg">apps/ui</h3>
-                    <p className="font-mono text-muted-foreground text-xs">
-                      Frontend SPA
-                    </p>
+                    <p className="font-mono text-muted-foreground text-xs">Frontend SPA</p>
                   </div>
                 </div>
 
@@ -248,9 +238,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-bold font-heading text-lg">apps/api</h3>
-                    <p className="font-mono text-muted-foreground text-xs">
-                      Backend Server
-                    </p>
+                    <p className="font-mono text-muted-foreground text-xs">Backend Server</p>
                   </div>
                 </div>
 
@@ -303,12 +291,8 @@ export default function Home() {
                     <FileText className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold font-heading text-lg">
-                      apps/docs
-                    </h3>
-                    <p className="font-mono text-muted-foreground text-xs">
-                      Landing & Docs
-                    </p>
+                    <h3 className="font-bold font-heading text-lg">apps/docs</h3>
+                    <p className="font-mono text-muted-foreground text-xs">Landing & Docs</p>
                   </div>
                 </div>
 
@@ -323,9 +307,7 @@ export default function Home() {
                   <span className="font-semibold text-foreground">Next.js</span>
                   <ArrowRight className="h-3 w-3" />
                   <FumaDocsIcon className="h-4 w-4" />
-                  <span className="font-semibold text-foreground">
-                    Fumadocs
-                  </span>
+                  <span className="font-semibold text-foreground">Fumadocs</span>
                 </div>
 
                 <ul className="space-y-1.5 text-muted-foreground text-sm">
@@ -350,13 +332,9 @@ export default function Home() {
           <div className="mt-8 flex items-center justify-center gap-4">
             <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
               <Globe className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium text-muted-foreground text-sm">
-                Deploy anywhere
-              </span>
+              <span className="font-medium text-muted-foreground text-sm">Deploy anywhere</span>
               <span className="text-muted-foreground/50">•</span>
-              <span className="text-muted-foreground text-sm">
-                Vercel, Cloudflare, Node.js
-              </span>
+              <span className="text-muted-foreground text-sm">Vercel, Cloudflare, Node.js</span>
             </div>
           </div>
         </div>
@@ -397,17 +375,13 @@ export default function Home() {
                   <div className="rounded-lg bg-green-500/10 p-2 text-green-500">
                     <Shield className="h-6 w-6" />
                   </div>
-                  <h3 className="font-bold font-heading text-2xl">
-                    Authentication Ready
-                  </h3>
+                  <h3 className="font-bold font-heading text-2xl">Authentication Ready</h3>
                 </div>
 
                 <p className="mb-6 max-w-lg text-muted-foreground">
                   Built-in auth with{" "}
-                  <span className="font-semibold text-foreground">
-                    better-auth
-                  </span>
-                  . Secure, flexible, and easy to customize for your needs.
+                  <span className="font-semibold text-foreground">better-auth</span>. Secure,
+                  flexible, and easy to customize for your needs.
                 </p>
 
                 <div className="mt-auto grid gap-8 md:grid-cols-2">
@@ -420,17 +394,15 @@ export default function Home() {
                       Integrated Plugins
                     </h4>
                     <ul className="space-y-2">
-                      {["2FA Support", "Admin & Roles", "Organizations"].map(
-                        (item) => (
-                          <li
-                            className="flex items-center gap-2 text-muted-foreground text-sm"
-                            key={item}
-                          >
-                            <Check className="h-4 w-4 text-green-500" />
-                            {item}
-                          </li>
-                        )
-                      )}
+                      {["2FA Support", "Admin & Roles", "Organizations"].map((item) => (
+                        <li
+                          className="flex items-center gap-2 text-muted-foreground text-sm"
+                          key={item}
+                        >
+                          <Check className="h-4 w-4 text-green-500" />
+                          {item}
+                        </li>
+                      ))}
                     </ul>
                   </div>
 
@@ -489,14 +461,12 @@ export default function Home() {
                 <div className="rounded-lg bg-orange-500/10 p-2 text-orange-500">
                   <Database className="h-6 w-6" />
                 </div>
-                <h3 className="font-bold font-heading text-xl">
-                  Type-Safe Database
-                </h3>
+                <h3 className="font-bold font-heading text-xl">Type-Safe Database</h3>
               </div>
 
               <p className="mb-6 grow text-muted-foreground">
-                Drizzle ORM with full TypeScript support. Write queries with
-                confidence, autocomplete, and zero runtime overhead.
+                Drizzle ORM with full TypeScript support. Write queries with confidence,
+                autocomplete, and zero runtime overhead.
               </p>
 
               <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 font-mono text-muted-foreground text-xs">
@@ -566,9 +536,8 @@ export default function Home() {
                 </div>
 
                 <p className="mb-6 max-w-2xl text-muted-foreground">
-                  Choose the payment stack that fits your market and rollout.
-                  Beztack supports both provider-native flows and centralized
-                  integration points.
+                  Choose the payment stack that fits your market and rollout. Beztack supports both
+                  provider-native flows and centralized integration points.
                 </p>
 
                 <div className="grid gap-6 md:grid-cols-2">
@@ -595,7 +564,7 @@ export default function Home() {
               </div>
             </Card>
 
-            {/* Modern UI - Now Full Width in this row or separate? Let's make it span 3 cols in a new row if needed, or just fit it here. 
+            {/* Modern UI - Now Full Width in this row or separate? Let's make it span 3 cols in a new row if needed, or just fit it here.
                 Wait, I want to separate Rapid and Monorepo. So UI should stay with Auth and DB.
                 If I have 3 cols: Auth(2), DB(1). Row filled.
                 Next row: UI(3).
@@ -623,16 +592,12 @@ export default function Home() {
                   <div className="rounded-lg bg-pink-500/10 p-2 text-pink-500">
                     <Code2 className="h-6 w-6" />
                   </div>
-                  <h3 className="font-bold font-heading text-xl">
-                    Modern UI Components
-                  </h3>
+                  <h3 className="font-bold font-heading text-xl">Modern UI Components</h3>
                 </div>
                 <p className="mb-4 max-w-2xl text-muted-foreground">
                   Beautiful, accessible components with{" "}
-                  <span className="font-semibold text-foreground">
-                    shadcn/ui
-                  </span>
-                  . Customizable and production-ready out of the box.
+                  <span className="font-semibold text-foreground">shadcn/ui</span>. Customizable and
+                  production-ready out of the box.
                 </p>
                 <div className="flex w-fit items-center gap-1.5 rounded-md border border-secondary bg-secondary/50 px-2 py-1 font-medium text-muted-foreground text-xs">
                   <Image
@@ -695,16 +660,14 @@ export default function Home() {
                   <div className="rounded-lg bg-blue-500/10 p-2 text-blue-500">
                     <Link2 className="h-6 w-6" />
                   </div>
-                  <h3 className="font-bold font-heading text-2xl">
-                    URL State Management
-                  </h3>
+                  <h3 className="font-bold font-heading text-2xl">URL State Management</h3>
                 </div>
 
                 <p className="mb-6 max-w-2xl text-muted-foreground">
                   Type-safe URL search params with{" "}
-                  <span className="font-semibold text-foreground">nuqs</span>.
-                  Synchronize component state with the URL effortlessly with
-                  full TypeScript support and SSR compatibility.
+                  <span className="font-semibold text-foreground">nuqs</span>. Synchronize component
+                  state with the URL effortlessly with full TypeScript support and SSR
+                  compatibility.
                 </p>
 
                 <div className="grid gap-6 md:grid-cols-2">
@@ -736,9 +699,7 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <h4 className="mb-3 font-semibold text-foreground text-sm">
-                      Built-in Parsers
-                    </h4>
+                    <h4 className="mb-3 font-semibold text-foreground text-sm">Built-in Parsers</h4>
                     <div className="flex flex-wrap gap-2">
                       {[
                         "String",
@@ -808,12 +769,8 @@ export default function Home() {
                 </div>
 
                 <p className="mb-6 max-w-2xl text-muted-foreground">
-                  Integrated{" "}
-                  <span className="font-semibold text-foreground">
-                    Vercel AI SDK
-                  </span>
-                  . Build AI-powered features with streaming, tool calling, and
-                  structured outputs.
+                  Integrated <span className="font-semibold text-foreground">Vercel AI SDK</span>.
+                  Build AI-powered features with streaming, tool calling, and structured outputs.
                 </p>
 
                 <div className="grid gap-6 md:grid-cols-2">
@@ -830,9 +787,7 @@ export default function Home() {
                       </div>
                       <div className="flex gap-2 pl-2">
                         <span className="text-purple-400">from</span>
-                        <span className="text-green-400">
-                          &apos;@beztack/ai&apos;
-                        </span>
+                        <span className="text-green-400">&apos;@beztack/ai&apos;</span>
                       </div>
                       <div className="mt-2 flex gap-2">
                         <span className="text-purple-400">const</span>
@@ -848,9 +803,7 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <h4 className="mb-3 font-semibold text-foreground text-sm">
-                      Features
-                    </h4>
+                    <h4 className="mb-3 font-semibold text-foreground text-sm">Features</h4>
                     <div className="flex flex-wrap gap-2">
                       {[
                         "Streaming",
@@ -916,11 +869,9 @@ export default function Home() {
                   </h3>
                 </div>
                 <p className="mb-4 text-muted-foreground">
-                  Powered by{" "}
-                  <span className="font-semibold text-foreground">T3 Env</span>{" "}
-                  and <span className="font-semibold text-foreground">Zod</span>
-                  . Environment variables validated at build time with full
-                  TypeScript support.
+                  Powered by <span className="font-semibold text-foreground">T3 Env</span> and{" "}
+                  <span className="font-semibold text-foreground">Zod</span>. Environment variables
+                  validated at build time with full TypeScript support.
                 </p>
                 <div className="flex gap-3">
                   <div className="flex w-fit items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
@@ -963,10 +914,8 @@ export default function Home() {
                   </h3>
                 </div>
                 <p className="mb-4 text-muted-foreground">
-                  Powered by{" "}
-                  <span className="font-semibold text-foreground">Vite</span>.
-                  Experience hot module replacement, instant server start, and
-                  optimized build times.
+                  Powered by <span className="font-semibold text-foreground">Vite</span>. Experience
+                  hot module replacement, instant server start, and optimized build times.
                 </p>
                 <div className="flex w-fit items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
                   <Image
@@ -1017,13 +966,10 @@ export default function Home() {
                   </h3>
                 </div>
                 <p className="mb-4 text-muted-foreground">
-                  Powered by{" "}
-                  <span className="font-semibold text-foreground">
-                    pnpm workspaces
-                  </span>{" "}
-                  and <span className="font-semibold text-foreground">NX</span>.
-                  Efficient dependency management, task orchestration, and
-                  repeatable template updates with Template Sync.
+                  Powered by <span className="font-semibold text-foreground">pnpm workspaces</span>{" "}
+                  and <span className="font-semibold text-foreground">NX</span>. Efficient
+                  dependency management, task orchestration, and repeatable template updates with
+                  Template Sync.
                 </p>
                 <div className="mt-auto flex gap-3">
                   <div className="flex items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
@@ -1083,11 +1029,7 @@ export default function Home() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <a
-                href={process.env.NEXT_PUBLIC_REPO_URL}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
+              <a href={process.env.NEXT_PUBLIC_REPO_URL} rel="noopener noreferrer" target="_blank">
                 View on GitHub
               </a>
             </Button>
@@ -1101,9 +1043,7 @@ export default function Home() {
       <footer className="border-border border-t">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-muted-foreground text-sm">
-              Beztack - Modern TypeScript Monorepo
-            </p>
+            <p className="text-muted-foreground text-sm">Beztack - Modern TypeScript Monorepo</p>
             <div className="flex items-center gap-6">
               <Link
                 className="text-muted-foreground text-sm transition-colors hover:text-accent"

@@ -16,18 +16,12 @@ const AUTH_ERROR_CODES = {
  * Maps Better Auth error codes to i18n translation keys
  */
 const ERROR_CODE_TO_I18N_KEY: Record<string, string> = {
-  [AUTH_ERROR_CODES.INVALID_PASSWORD]:
-    "notifications.twoFactor.errors.invalidPassword",
-  [AUTH_ERROR_CODES.INVALID_TOTP_CODE]:
-    "notifications.twoFactor.errors.invalidTotpCode",
-  [AUTH_ERROR_CODES.TOTP_NOT_ENABLED]:
-    "notifications.twoFactor.errors.totpNotEnabled",
-  [AUTH_ERROR_CODES.INVALID_TWO_FACTOR_COOKIE]:
-    "notifications.twoFactor.errors.invalidCookie",
-  [AUTH_ERROR_CODES.BACKUP_CODE_NOT_FOUND]:
-    "notifications.twoFactor.errors.backupCodeNotFound",
-  [AUTH_ERROR_CODES.BACKUP_CODE_USED]:
-    "notifications.twoFactor.errors.backupCodeUsed",
+  [AUTH_ERROR_CODES.INVALID_PASSWORD]: "notifications.twoFactor.errors.invalidPassword",
+  [AUTH_ERROR_CODES.INVALID_TOTP_CODE]: "notifications.twoFactor.errors.invalidTotpCode",
+  [AUTH_ERROR_CODES.TOTP_NOT_ENABLED]: "notifications.twoFactor.errors.totpNotEnabled",
+  [AUTH_ERROR_CODES.INVALID_TWO_FACTOR_COOKIE]: "notifications.twoFactor.errors.invalidCookie",
+  [AUTH_ERROR_CODES.BACKUP_CODE_NOT_FOUND]: "notifications.twoFactor.errors.backupCodeNotFound",
+  [AUTH_ERROR_CODES.BACKUP_CODE_USED]: "notifications.twoFactor.errors.backupCodeUsed",
 };
 
 type AuthError = Error & {
@@ -38,11 +32,7 @@ type AuthError = Error & {
  * Gets a user-friendly translated error message for auth errors
  * Falls back to the original error message if no translation is found
  */
-export function getAuthErrorMessage(
-  t: TFunction,
-  error: AuthError,
-  fallbackKey?: string
-): string {
+export function getAuthErrorMessage(t: TFunction, error: AuthError, fallbackKey?: string): string {
   const errorCode = error.code;
 
   // Try to get a translated message for the error code

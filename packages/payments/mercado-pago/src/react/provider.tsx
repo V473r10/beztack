@@ -1,12 +1,5 @@
 import { initMercadoPago } from "@mercadopago/sdk-react";
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
 // ============================================================================
 // Types
@@ -57,9 +50,7 @@ const MercadoPagoContext = createContext<MercadoPagoContextValue | null>(null);
 export function useMercadoPagoContext(): MercadoPagoContextValue {
   const context = useContext(MercadoPagoContext);
   if (!context) {
-    throw new Error(
-      "useMercadoPagoContext must be used within a MercadoPagoProvider"
-    );
+    throw new Error("useMercadoPagoContext must be used within a MercadoPagoProvider");
   }
   return context;
 }
@@ -106,9 +97,5 @@ export function MercadoPagoProvider({
     };
   }, [publicKey, apiBaseUrl, locale, isInitialized]);
 
-  return (
-    <MercadoPagoContext.Provider value={value}>
-      {children}
-    </MercadoPagoContext.Provider>
-  );
+  return <MercadoPagoContext.Provider value={value}>{children}</MercadoPagoContext.Provider>;
 }

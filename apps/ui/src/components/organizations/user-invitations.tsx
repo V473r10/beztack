@@ -1,15 +1,6 @@
 // import { Badge } from "@/components/ui/badge";
 
-import {
-  Building2,
-  Check,
-  Clock,
-  Crown,
-  Mail,
-  Shield,
-  User,
-  X,
-} from "lucide-react";
+import { Building2, Check, Clock, Crown, Mail, Shield, User, X } from "lucide-react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -22,13 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useAcceptInvitation,
@@ -45,8 +30,7 @@ import {
 const MILLISECONDS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
 const MINUTES_PER_HOUR = 60;
-const MILLISECONDS_PER_HOUR =
-  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
+const MILLISECONDS_PER_HOUR = MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
 const HOURS_PER_DAY = 24;
 const DAYS_PER_WEEK = 7;
 
@@ -66,9 +50,7 @@ const formatDate = (date: Date | string) => {
 const formatRelativeTime = (date: Date | string) => {
   const now = new Date();
   const targetDate = new Date(date);
-  const diffInHours = Math.floor(
-    (targetDate.getTime() - now.getTime()) / MILLISECONDS_PER_HOUR
-  );
+  const diffInHours = Math.floor((targetDate.getTime() - now.getTime()) / MILLISECONDS_PER_HOUR);
 
   if (diffInHours < 1) {
     return "Expires soon";
@@ -86,10 +68,8 @@ const formatRelativeTime = (date: Date | string) => {
 };
 
 export function UserInvitations({ className }: UserInvitationsProps) {
-  const [invitationToAccept, setInvitationToAccept] =
-    useState<OrganizationInvitation | null>(null);
-  const [invitationToReject, setInvitationToReject] =
-    useState<OrganizationInvitation | null>(null);
+  const [invitationToAccept, setInvitationToAccept] = useState<OrganizationInvitation | null>(null);
+  const [invitationToReject, setInvitationToReject] = useState<OrganizationInvitation | null>(null);
 
   const { data: invitations = [], isLoading } = useUserInvitations();
   const acceptInvitation = useAcceptInvitation();
@@ -201,9 +181,7 @@ export function UserInvitations({ className }: UserInvitationsProps) {
             <Mail className="h-5 w-5" />
             <span>Organization Invitations ({pendingInvitations.length})</span>
           </CardTitle>
-          <CardDescription>
-            You have been invited to join these organizations.
-          </CardDescription>
+          <CardDescription>You have been invited to join these organizations.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -236,8 +214,7 @@ export function UserInvitations({ className }: UserInvitationsProps) {
                         <span className="inline-flex items-center space-x-1">
                           {getRoleIcon(invitation.role)}
                           <span className="font-medium">
-                            {ROLE_LABELS[invitation.role as OrganizationRole] ||
-                              invitation.role}
+                            {ROLE_LABELS[invitation.role as OrganizationRole] || invitation.role}
                           </span>
                         </span>
                       </p>
@@ -250,9 +227,7 @@ export function UserInvitations({ className }: UserInvitationsProps) {
                 </div>
                 <div className="flex space-x-2">
                   <Button
-                    disabled={
-                      acceptInvitation.isPending || rejectInvitation.isPending
-                    }
+                    disabled={acceptInvitation.isPending || rejectInvitation.isPending}
                     onClick={() => handleRejectInvitation(invitation)}
                     variant="outline"
                   >
@@ -260,9 +235,7 @@ export function UserInvitations({ className }: UserInvitationsProps) {
                     Decline
                   </Button>
                   <Button
-                    disabled={
-                      acceptInvitation.isPending || rejectInvitation.isPending
-                    }
+                    disabled={acceptInvitation.isPending || rejectInvitation.isPending}
                     onClick={() => handleAcceptInvitation(invitation)}
                   >
                     <Check className="mr-2 h-4 w-4" />
@@ -284,8 +257,7 @@ export function UserInvitations({ className }: UserInvitationsProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Accept Invitation</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to join "
-              {invitationToAccept?.organization?.name}" as{" "}
+              Are you sure you want to join "{invitationToAccept?.organization?.name}" as{" "}
               {ROLE_LABELS[invitationToAccept?.role as OrganizationRole]}?
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -311,8 +283,8 @@ export function UserInvitations({ className }: UserInvitationsProps) {
             <AlertDialogTitle>Decline Invitation</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to decline the invitation to join "
-              {invitationToReject?.organization?.name}"? You can ask to be
-              invited again later if you change your mind.
+              {invitationToReject?.organization?.name}"? You can ask to be invited again later if
+              you change your mind.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

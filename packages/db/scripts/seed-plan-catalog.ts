@@ -37,19 +37,9 @@ const BASE_TIERS: BaseTier[] = [
     canonicalTierId: "basic",
     displayName: "Basic",
     description: "For growing teams",
-    features: [
-      "basic_dashboard",
-      "up_to_5_users",
-      "community_support",
-      "export_data",
-    ],
+    features: ["basic_dashboard", "up_to_5_users", "community_support", "export_data"],
     limits: { users: 5, projects: 3, storage: 10, apiCalls: 10_000 },
-    permissions: [
-      "dashboard.read",
-      "projects.read",
-      "projects.write",
-      "billing.read",
-    ],
+    permissions: ["dashboard.read", "projects.read", "projects.write", "billing.read"],
     displayOrder: 1,
     highlighted: false,
   },
@@ -153,11 +143,7 @@ function buildSeedPlans(provider: string): SeedPlan[] {
 
     plans.push({ ...tier, price: prices.monthly, currency, interval: "month" });
 
-    if (
-      !isMP &&
-      "yearly" in prices &&
-      (prices as { yearly: number }).yearly > 0
-    ) {
+    if (!isMP && "yearly" in prices && (prices as { yearly: number }).yearly > 0) {
       plans.push({
         ...tier,
         price: (prices as { yearly: number }).yearly,

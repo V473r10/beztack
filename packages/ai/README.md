@@ -19,28 +19,29 @@ bun add @beztack/ai
 ### Basic AI SDK Usage
 
 ```typescript
-import { generateText } from '@beztack/ai';
+import { generateText } from "@beztack/ai";
 
 const result = await generateText({
-  model: 'your-model',
-  prompt: 'Hello, world!'
+  model: "your-model",
+  prompt: "Hello, world!",
 });
 ```
 
 ### Amazon Bedrock Provider
 
 ```typescript
-import { bedrock, generateText } from '@beztack/ai';
+import { bedrock, generateText } from "@beztack/ai";
 
 const result = await generateText({
-  model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
-  prompt: 'Explain quantum computing'
+  model: bedrock("anthropic.claude-3-sonnet-20240229-v1:0"),
+  prompt: "Explain quantum computing",
 });
 ```
 
 ## Configuration
 
 The Bedrock provider is pre-configured with:
+
 - **Region**: `us-east-1`
 - **Credentials**: AWS Node.js credential provider chain (supports environment variables, AWS profiles, IAM roles, etc.)
 

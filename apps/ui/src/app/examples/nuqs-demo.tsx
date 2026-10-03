@@ -8,13 +8,7 @@ import {
   useQueryStates,
 } from "@beztack/state";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -32,34 +26,22 @@ const PRESET_MAX_PRICE = 80;
 
 export default function NuqsDemo() {
   // String state
-  const [search, setSearch] = useQueryState(
-    "search",
-    parseAsString.withDefault("")
-  );
+  const [search, setSearch] = useQueryState("search", parseAsString.withDefault(""));
 
   // Number state with parser
-  const [page, setPage] = useQueryState(
-    "page",
-    parseAsInteger.withDefault(DEFAULT_PAGE)
-  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(DEFAULT_PAGE));
 
   // Boolean state
-  const [enabled, setEnabled] = useQueryState(
-    "enabled",
-    parseAsBoolean.withDefault(false)
-  );
+  const [enabled, setEnabled] = useQueryState("enabled", parseAsBoolean.withDefault(false));
 
   // Enum state
   const [sort, setSort] = useQueryState(
     "sort",
-    parseAsStringEnum([...sortOptions]).withDefault("asc")
+    parseAsStringEnum([...sortOptions]).withDefault("asc"),
   );
 
   // Array state
-  const [tags, setTags] = useQueryState(
-    "tags",
-    parseAsArrayOf(parseAsInteger).withDefault([])
-  );
+  const [tags, setTags] = useQueryState("tags", parseAsArrayOf(parseAsInteger).withDefault([]));
 
   // Batched state updates
   const [filters, setFilters] = useQueryStates({
@@ -72,9 +54,7 @@ export default function NuqsDemo() {
     <div className="container mx-auto space-y-8 py-8">
       <div className="space-y-2">
         <h1 className="font-bold text-4xl">nuqs Demo</h1>
-        <p className="text-muted-foreground">
-          Type-safe URL search params state management
-        </p>
+        <p className="text-muted-foreground">Type-safe URL search params state management</p>
       </div>
 
       <Tabs className="w-full" defaultValue="basic">
@@ -103,9 +83,7 @@ export default function NuqsDemo() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => setSearch("example")}>
-                  Set to "example"
-                </Button>
+                <Button onClick={() => setSearch("example")}>Set to "example"</Button>
                 <Button onClick={() => setSearch(null)} variant="outline">
                   Clear
                 </Button>
@@ -123,16 +101,11 @@ export default function NuqsDemo() {
           <Card>
             <CardHeader>
               <CardTitle>Number Parser</CardTitle>
-              <CardDescription>
-                parseAsInteger with default value
-              </CardDescription>
+              <CardDescription>parseAsInteger with default value</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                <Button
-                  disabled={page <= DEFAULT_PAGE}
-                  onClick={() => setPage((p) => p - 1)}
-                >
+                <Button disabled={page <= DEFAULT_PAGE} onClick={() => setPage((p) => p - 1)}>
                   Previous
                 </Button>
                 <div className="min-w-[100px] rounded-md bg-muted p-3 text-center">
@@ -140,11 +113,7 @@ export default function NuqsDemo() {
                 </div>
                 <Button onClick={() => setPage((p) => p + 1)}>Next</Button>
               </div>
-              <Button
-                className="w-full"
-                onClick={() => setPage(DEFAULT_PAGE)}
-                variant="outline"
-              >
+              <Button className="w-full" onClick={() => setPage(DEFAULT_PAGE)} variant="outline">
                 Reset to page 1
               </Button>
             </CardContent>
@@ -153,23 +122,15 @@ export default function NuqsDemo() {
           <Card>
             <CardHeader>
               <CardTitle>Boolean Parser</CardTitle>
-              <CardDescription>
-                parseAsBoolean for toggle states
-              </CardDescription>
+              <CardDescription>parseAsBoolean for toggle states</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label htmlFor="enabled-switch">Feature Enabled</Label>
-                <Switch
-                  checked={enabled}
-                  id="enabled-switch"
-                  onCheckedChange={setEnabled}
-                />
+                <Switch checked={enabled} id="enabled-switch" onCheckedChange={setEnabled} />
               </div>
               <div className="rounded-md bg-muted p-3">
-                <p className="font-mono text-sm">
-                  Status: {enabled ? "Enabled" : "Disabled"}
-                </p>
+                <p className="font-mono text-sm">Status: {enabled ? "Enabled" : "Disabled"}</p>
               </div>
             </CardContent>
           </Card>
@@ -177,9 +138,7 @@ export default function NuqsDemo() {
           <Card>
             <CardHeader>
               <CardTitle>Enum Parser</CardTitle>
-              <CardDescription>
-                parseAsStringEnum for select options
-              </CardDescription>
+              <CardDescription>parseAsStringEnum for select options</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-2">
@@ -202,9 +161,7 @@ export default function NuqsDemo() {
           <Card>
             <CardHeader>
               <CardTitle>Array Parser</CardTitle>
-              <CardDescription>
-                parseAsArrayOf for multiple values
-              </CardDescription>
+              <CardDescription>parseAsArrayOf for multiple values</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -215,7 +172,7 @@ export default function NuqsDemo() {
                       setTags((current) =>
                         current.includes(tag)
                           ? current.filter((t) => t !== tag)
-                          : [...current, tag]
+                          : [...current, tag],
                       );
                     }}
                     size="sm"
@@ -225,11 +182,7 @@ export default function NuqsDemo() {
                   </Button>
                 ))}
               </div>
-              <Button
-                className="w-full"
-                onClick={() => setTags([])}
-                variant="outline"
-              >
+              <Button className="w-full" onClick={() => setTags([])} variant="outline">
                 Clear all
               </Button>
               <div className="rounded-md bg-muted p-3">
@@ -252,9 +205,7 @@ export default function NuqsDemo() {
             <CardContent className="space-y-4">
               <div className="grid gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="min-price">
-                    Min Price: {filters.minPrice}
-                  </Label>
+                  <Label htmlFor="min-price">Min Price: {filters.minPrice}</Label>
                   <Input
                     max="100"
                     min="0"
@@ -269,9 +220,7 @@ export default function NuqsDemo() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="max-price">
-                    Max Price: {filters.maxPrice}
-                  </Label>
+                  <Label htmlFor="max-price">Max Price: {filters.maxPrice}</Label>
                   <Input
                     id="max-price"
                     max="100"
@@ -326,9 +275,7 @@ export default function NuqsDemo() {
               <div className="space-y-1 rounded-md bg-muted p-3">
                 <p className="font-mono text-sm">Min: {filters.minPrice}</p>
                 <p className="font-mono text-sm">Max: {filters.maxPrice}</p>
-                <p className="font-mono text-sm">
-                  Category: {filters.category || "none"}
-                </p>
+                <p className="font-mono text-sm">Category: {filters.category || "none"}</p>
               </div>
             </CardContent>
           </Card>
@@ -338,9 +285,7 @@ export default function NuqsDemo() {
       <Card>
         <CardHeader>
           <CardTitle>Current URL</CardTitle>
-          <CardDescription>
-            All state is synced with the URL search params
-          </CardDescription>
+          <CardDescription>All state is synced with the URL search params</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto rounded-md bg-muted p-3">

@@ -1,12 +1,4 @@
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Html,
-  Preview,
-  Text,
-} from "@react-email/components";
+import { Body, Button, Container, Head, Html, Preview, Text } from "@react-email/components";
 
 type WelcomeEmailProps = {
   username?: string;
@@ -24,18 +16,16 @@ export const WelcomeEmail = ({
       <Container style={container}>
         <Text style={title}>¡Bienvenido a beztack, {username}!</Text>
         <Text style={paragraph}>
-          Tu cuenta ha sido creada exitosamente. Ahora podés acceder a todas las
-          funcionalidades de la plataforma.
+          Tu cuenta ha sido creada exitosamente. Ahora podés acceder a todas las funcionalidades de
+          la plataforma.
         </Text>
-        <Text style={paragraph}>
-          Para comenzar, iniciá sesión con el siguiente enlace:
-        </Text>
+        <Text style={paragraph}>Para comenzar, iniciá sesión con el siguiente enlace:</Text>
         <Button href={loginUrl} style={button}>
           Iniciar Sesión
         </Button>
         <Text style={paragraph}>
-          Si tenés alguna pregunta, no dudes en contactarnos. ¡Esperamos que
-          disfrutes usando beztack!
+          Si tenés alguna pregunta, no dudes en contactarnos. ¡Esperamos que disfrutes usando
+          beztack!
         </Text>
         <Text style={footer}>
           Saludos,

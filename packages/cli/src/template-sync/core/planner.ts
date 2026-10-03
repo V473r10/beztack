@@ -8,15 +8,10 @@ interface BuildPlanInput {
   manifest: TemplateManifest;
 }
 
-export async function buildUpdatePlan(
-  input: BuildPlanInput
-): Promise<UpdatePlan> {
+export async function buildUpdatePlan(input: BuildPlanInput): Promise<UpdatePlan> {
   const diffResult = await computeDiff(input.workspaceRoot, input.templateRoot);
   const changes = diffResult.changes.map((change) => {
-    const ownership = resolveOwnership(
-      change.path,
-      input.manifest.strategyByPath
-    );
+    const ownership = resolveOwnership(change.path, input.manifest.strategyByPath);
 
     let conflictReason: string | undefined;
     if (ownership === "custom-owned") {
@@ -30,9 +25,7 @@ export async function buildUpdatePlan(
     };
   });
 
-  const conflicts = changes.filter(
-    (change) => typeof change.conflictReason === "string"
-  );
+  const conflicts = changes.filter((change) => typeof change.conflictReason === "string");
 
   return {
     changes,

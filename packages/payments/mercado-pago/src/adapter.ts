@@ -17,17 +17,10 @@ import type {
   UpdateSubscriptionOptions,
   WebhookPayload,
 } from "@beztack/payments";
-import {
-  decodeExternalReference,
-  encodeExternalReference,
-} from "./helpers/external-reference.js";
+import { decodeExternalReference, encodeExternalReference } from "./helpers/external-reference.js";
 import { mapMPStatus } from "./helpers/status-mapping.js";
 import { createMercadoPagoClient } from "./server/client.js";
-import type {
-  MPPreapproval,
-  MPPreapprovalPlan,
-  MPSubscriptionResponse,
-} from "./types.js";
+import type { MPPreapproval, MPPreapprovalPlan, MPSubscriptionResponse } from "./types.js";
 
 const PROVIDER_PAGE_LIMIT = 50;
 const MAX_APPLICATION_SCAN_PAGES = 50;
@@ -49,7 +42,7 @@ function mapMPInterval(frequencyType: string): BillingInterval {
  */
 function toMPRecurring(
   interval: BillingInterval,
-  intervalCount = 1
+  intervalCount = 1,
 ): { frequency: number; frequency_type: "months" | "days" } {
   return {
     frequency: intervalCount,
@@ -76,9 +69,8 @@ function maskEmail(email?: string): string | undefined {
 function buildSubscriptionBody(
   options: CreateSubscriptionOptions,
   successUrl: string,
-  currency: string
+  currency: string,
 ): Record<string, unknown> {
-
   const body: Record<string, unknown> = {
     payer_email: options.customerEmail,
     back_url: options.backUrl ?? successUrl,
@@ -90,20 +82,14 @@ function buildSubscriptionBody(
   } else if (options.customPlan) {
     body.reason = options.customPlan.reason;
     const autoRecurring: Record<string, unknown> = {
-      ...toMPRecurring(
-        options.customPlan.interval,
-        options.customPlan.intervalCount
-      ),
+      ...toMPRecurring(options.customPlan.interval, options.customPlan.intervalCount),
       transaction_amount: options.customPlan.amount,
       currency_id: options.customPlan.currency || currency,
     };
     if (options.customPlan.freeTrial) {
       autoRecurring.free_trial = {
         frequency: options.customPlan.freeTrial.frequency,
-        frequency_type:
-          options.customPlan.freeTrial.frequencyType === "days"
-            ? "days"
-            : "months",
+        frequency_type: options.customPlan.freeTrial.frequencyType === "days" ? "days" : "months",
       };
     }
     body.auto_recurring = autoRecurring;
@@ -113,7 +99,6 @@ function buildSubscriptionBody(
     customerId: options.customerId,
     metadata: options.metadata,
   });
-
 
   if (externalReference) {
     body.external_reference = externalReference;
@@ -138,11 +123,9 @@ function resolveWebhookPayload(payload: {
   let mappedType: WebhookPayload["type"] = "subscription.updated";
 
   if (payload.type === "subscription_preapproval") {
-    mappedType =
-      SUBSCRIPTION_ACTION_MAP[payload.action] ?? "subscription.updated";
+    mappedType = SUBSCRIPTION_ACTION_MAP[payload.action] ?? "subscription.updated";
   } else if (payload.type === "payment") {
-    const isFailed =
-      payload.action.includes("rejected") || payload.action.includes("failed");
+    const isFailed = payload.action.includes("rejected") || payload.action.includes("failed");
     mappedType = isFailed ? "payment.failed" : "payment.success";
   }
 
@@ -190,38 +173,32 @@ function normalizeApplicationId(value: unknown): string | null {
   return null;
 }
 
-function resolveRequiredApplicationId(
-  applicationId: string | undefined
-): string {
+function resolveRequiredApplicationId(applicationId: string | undefined): string {
   const normalized = normalizeApplicationId(applicationId);
   if (!normalized) {
-    throw new Error(
-      "MERCADO_PAGO_APPLICATION_ID is required when using Mercado Pago"
-    );
+    throw new Error("MERCADO_PAGO_APPLICATION_ID is required when using Mercado Pago");
   }
   return normalized;
 }
 
 function belongsToApplication(
   resource: ApplicationScopedResource,
-  expectedApplicationId: string
+  expectedApplicationId: string,
 ): boolean {
-  return (
-    normalizeApplicationId(resource.application_id) === expectedApplicationId
-  );
+  return normalizeApplicationId(resource.application_id) === expectedApplicationId;
 }
 
 function assertBelongsToApplication(
   resource: ApplicationScopedResource,
   expectedApplicationId: string,
-  resourceType: string
+  resourceType: string,
 ): void {
   if (belongsToApplication(resource, expectedApplicationId)) {
     return;
   }
 
   throw new Error(
-    `Mercado Pago ${resourceType} does not belong to the configured Mercado Pago Application`
+    `Mercado Pago ${resourceType} does not belong to the configured Mercado Pago Application`,
   );
 }
 
@@ -231,21 +208,18 @@ function hasMetadata(metadata: Record<string, unknown>): boolean {
 
 function withProviderIntegrationMetadata(
   metadata: Record<string, unknown> | undefined,
-  resource: ApplicationScopedResource
+  resource: ApplicationScopedResource,
 ): Record<string, unknown> | undefined {
   const providerIntegrationId = normalizeApplicationId(resource.application_id);
   const merged = {
-    ...(metadata ?? {}),
+    ...metadata,
     ...(providerIntegrationId ? { providerIntegrationId } : {}),
   };
 
   return hasMetadata(merged) ? merged : undefined;
 }
 
-function mapPlanToProduct(
-  plan: MPPreapprovalPlan,
-  metadata?: Record<string, unknown>
-): Product {
+function mapPlanToProduct(plan: MPPreapprovalPlan, metadata?: Record<string, unknown>): Product {
   return {
     id: plan.id,
     name: plan.reason,
@@ -263,7 +237,7 @@ function mapPlanToProduct(
 
 function mapSubscriptionResource(
   sub: MPPreapproval | MPSubscriptionResponse,
-  fallbackId?: string
+  fallbackId?: string,
 ): Subscription {
   const decodedRef = decodeExternalReference(sub.external_reference);
 
@@ -274,32 +248,24 @@ function mapSubscriptionResource(
     productName: sub.reason ?? undefined,
     customerId: decodedRef?.userId ?? String(sub.payer_id ?? ""),
     customerEmail: sub.payer_email,
-    currentPeriodStart: sub.date_created
-      ? new Date(sub.date_created)
-      : undefined,
-    currentPeriodEnd: sub.next_payment_date
-      ? new Date(sub.next_payment_date)
-      : undefined,
+    currentPeriodStart: sub.date_created ? new Date(sub.date_created) : undefined,
+    currentPeriodEnd: sub.next_payment_date ? new Date(sub.next_payment_date) : undefined,
     cancelAtPeriodEnd: false,
     metadata: withProviderIntegrationMetadata(
       {
         ...decodedRef,
         billingAmount: sub.auto_recurring?.transaction_amount,
         billingCurrency: sub.auto_recurring?.currency_id,
-        billingInterval: mapMPInterval(
-          sub.auto_recurring?.frequency_type ?? "months"
-        ),
+        billingInterval: mapMPInterval(sub.auto_recurring?.frequency_type ?? "months"),
         billingFrequency: sub.auto_recurring?.frequency,
         ...("init_point" in sub ? { initPoint: sub.init_point } : {}),
       },
-      sub
+      sub,
     ),
   };
 }
 
-function appendApplicationMatches<
-  T extends ApplicationScopedResource,
->(options: {
+function appendApplicationMatches<T extends ApplicationScopedResource>(options: {
   items: T[];
   expectedApplicationId: string;
   matches: T[];
@@ -319,10 +285,7 @@ function appendApplicationMatches<
   return false;
 }
 
-function getNextPageOffset<T>(
-  page: SearchPage<T>,
-  currentOffset: number
-): number {
+function getNextPageOffset<T>(page: SearchPage<T>, currentOffset: number): number {
   return (page.paging?.offset ?? currentOffset) + page.results.length;
 }
 
@@ -345,9 +308,7 @@ function isApplicationScanExhausted<T>(options: {
   return options.page.results.length < pageLimit;
 }
 
-async function scanApplicationPages<
-  T extends ApplicationScopedResource,
->(options: {
+async function scanApplicationPages<T extends ApplicationScopedResource>(options: {
   expectedApplicationId: string;
   pageLimit: number;
   initialOffset: number;
@@ -414,9 +375,7 @@ function mapSearchResult(sub: MPPreapproval): {
   };
 }
 
-export function createMercadoPagoAdapter(
-  config: MercadoPagoAdapterConfig
-): PaymentProviderAdapter {
+export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): PaymentProviderAdapter {
   const { accessToken, successUrl, currency = "UYU" } = config;
   const applicationId = resolveRequiredApplicationId(config.applicationId);
   const client = createMercadoPagoClient({
@@ -433,8 +392,7 @@ export function createMercadoPagoAdapter(
         expectedApplicationId: applicationId,
         pageLimit: PROVIDER_PAGE_LIMIT,
         initialOffset: 0,
-        fetchPage: ({ limit, offset }) =>
-          client.plans.list({ status, limit, offset }),
+        fetchPage: ({ limit, offset }) => client.plans.list({ status, limit, offset }),
       });
 
       return plans.map((plan) => mapPlanToProduct(plan));
@@ -469,10 +427,7 @@ export function createMercadoPagoAdapter(
       return mapPlanToProduct(plan, options.metadata);
     },
 
-    async updateProduct(
-      productId: string,
-      options: UpdateProductOptions
-    ): Promise<Product> {
+    async updateProduct(productId: string, options: UpdateProductOptions): Promise<Product> {
       const current = await client.plans.get(productId);
       if (!belongsToApplication(current, applicationId)) {
         throw new Error("Product not found");
@@ -514,9 +469,7 @@ export function createMercadoPagoAdapter(
       assertBelongsToApplication(deactivated, applicationId, "Product");
     },
 
-    async createCheckout(
-      options: CreateCheckoutOptions
-    ): Promise<CheckoutResult> {
+    async createCheckout(options: CreateCheckoutOptions): Promise<CheckoutResult> {
       const plan = await client.plans.get(options.productId);
       if (!belongsToApplication(plan, applicationId)) {
         throw new Error("Product not found");
@@ -524,14 +477,12 @@ export function createMercadoPagoAdapter(
 
       if (plan.status !== "active") {
         throw new Error(
-          `Plan is not active (status: ${plan.status}). Only active plans can be used for checkout.`
+          `Plan is not active (status: ${plan.status}). Only active plans can be used for checkout.`,
         );
       }
 
       if (!options.customerEmail) {
-        throw new Error(
-          "Customer email is required to create Mercado Pago subscription checkout"
-        );
+        throw new Error("Customer email is required to create Mercado Pago subscription checkout");
       }
 
       const body = buildSubscriptionBody(
@@ -552,17 +503,15 @@ export function createMercadoPagoAdapter(
           },
         },
         successUrl,
-        currency
+        currency,
       );
       const subscription = await client.subscriptions.create(
-        body as Parameters<typeof client.subscriptions.create>[0]
+        body as Parameters<typeof client.subscriptions.create>[0],
       );
       assertBelongsToApplication(subscription, applicationId, "Subscription");
 
       if (!(subscription.id && subscription.init_point)) {
-        throw new Error(
-          "Mercado Pago did not return a checkout URL for the subscription"
-        );
+        throw new Error("Mercado Pago did not return a checkout URL for the subscription");
       }
 
       return {
@@ -571,9 +520,7 @@ export function createMercadoPagoAdapter(
       };
     },
 
-    async createSubscription(
-      options: CreateSubscriptionOptions
-    ): Promise<Subscription> {
+    async createSubscription(options: CreateSubscriptionOptions): Promise<Subscription> {
       if (options.productId) {
         const plan = await client.plans.get(options.productId);
         if (!belongsToApplication(plan, applicationId)) {
@@ -584,7 +531,7 @@ export function createMercadoPagoAdapter(
       const body = buildSubscriptionBody(options, successUrl, currency);
 
       const subscription = await client.subscriptions.create(
-        body as Parameters<typeof client.subscriptions.create>[0]
+        body as Parameters<typeof client.subscriptions.create>[0],
       );
       assertBelongsToApplication(subscription, applicationId, "Subscription");
 
@@ -592,19 +539,17 @@ export function createMercadoPagoAdapter(
       result.productId = options.productId ?? result.productId;
       result.metadata = withProviderIntegrationMetadata(
         {
-          ...(options.metadata ?? {}),
-          ...(result.metadata ?? {}),
+          ...options.metadata,
+          ...result.metadata,
           initPoint: subscription.init_point,
         },
-        subscription
+        subscription,
       );
 
       return result;
     },
 
-    async getSubscription(
-      subscriptionId: string
-    ): Promise<Subscription | null> {
+    async getSubscription(subscriptionId: string): Promise<Subscription | null> {
       try {
         const sub = await client.subscriptions.get(subscriptionId);
         if (!belongsToApplication(sub, applicationId)) {
@@ -619,7 +564,7 @@ export function createMercadoPagoAdapter(
 
     async updateSubscription(
       subscriptionId: string,
-      options: UpdateSubscriptionOptions
+      options: UpdateSubscriptionOptions,
     ): Promise<Subscription> {
       const body: Record<string, unknown> = {};
 
@@ -638,7 +583,7 @@ export function createMercadoPagoAdapter(
 
       await client.subscriptions.update(
         subscriptionId,
-        body as Parameters<typeof client.subscriptions.update>[1]
+        body as Parameters<typeof client.subscriptions.update>[1],
       );
       const updated = await client.subscriptions.get(subscriptionId);
       assertBelongsToApplication(updated, applicationId, "Subscription");
@@ -646,10 +591,7 @@ export function createMercadoPagoAdapter(
       return mapSubscriptionResource(updated, subscriptionId);
     },
 
-    async cancelSubscription(
-      subscriptionId: string,
-      _immediately = false
-    ): Promise<Subscription> {
+    async cancelSubscription(subscriptionId: string, _immediately = false): Promise<Subscription> {
       const current = await client.subscriptions.get(subscriptionId);
       if (!belongsToApplication(current, applicationId)) {
         throw new Error("Subscription not found");
@@ -665,9 +607,7 @@ export function createMercadoPagoAdapter(
       };
     },
 
-    async listSubscriptions(
-      options: ListSubscriptionsOptions
-    ): Promise<Subscription[]> {
+    async listSubscriptions(options: ListSubscriptionsOptions): Promise<Subscription[]> {
       const searchParams = {
         payer_email: options.customerEmail,
         status: options.status ? options.status : "authorized",
@@ -689,17 +629,12 @@ export function createMercadoPagoAdapter(
           }),
       });
       const mappedResults = matchingResults.map(mapSearchResult);
-      const subscriptions = mappedResults.map(
-        ({ subscription }) => subscription
-      );
+      const subscriptions = mappedResults.map(({ subscription }) => subscription);
 
       return subscriptions;
     },
 
-    async createCustomer(
-      email: string,
-      metadata?: Record<string, unknown>
-    ): Promise<Customer> {
+    async createCustomer(email: string, metadata?: Record<string, unknown>): Promise<Customer> {
       const customer = await client.customers.create({
         email,
       });
@@ -755,9 +690,7 @@ export function createMercadoPagoAdapter(
  * Factory function matching the ProviderAdapterFactory signature.
  * Used by the core factory registry.
  */
-export function createAdapter(
-  config: Record<string, string>
-): PaymentProviderAdapter {
+export function createAdapter(config: Record<string, string>): PaymentProviderAdapter {
   return createMercadoPagoAdapter({
     accessToken: config.MERCADO_PAGO_ACCESS_TOKEN ?? "",
     applicationId: config.MERCADO_PAGO_APPLICATION_ID ?? "",

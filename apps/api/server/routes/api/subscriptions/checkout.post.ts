@@ -11,10 +11,7 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
 import type { Product } from "@/lib/payments/types";
-import {
-  applyAdminTierOverride,
-  isAppAdminActor,
-} from "@/server/utils/admin-tier-override";
+import { applyAdminTierOverride, isAppAdminActor } from "@/server/utils/admin-tier-override";
 import { resolveCheckoutCallbackUrls } from "@/server/utils/checkout-callback-urls";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 
@@ -52,22 +49,20 @@ function getAuthRole(auth: AuthenticatedUser): string | string[] | null {
 
 function resolveCheckoutOrganizationId(
   parsed: CheckoutInput,
-  auth: AuthenticatedUser
+  auth: AuthenticatedUser,
 ): string | undefined {
   if (env.SUBSCRIPTION_MODE !== "organization") {
     return;
   }
 
-  return (
-    parsed.organizationId ?? auth.session?.activeOrganizationId ?? undefined
-  );
+  return parsed.organizationId ?? auth.session?.activeOrganizationId ?? undefined;
 }
 
 function resolveCheckoutProduct(
   products: Product[],
   productId: string | undefined,
   planId: string | undefined,
-  billingPeriod: "monthly" | "yearly"
+  billingPeriod: "monthly" | "yearly",
 ) {
   if (productId) {
     return products.find((product) => product.id === productId) ?? null;
@@ -80,10 +75,7 @@ function resolveCheckoutProduct(
   return resolveProductByCanonicalPlan(products, planId, billingPeriod);
 }
 
-function validateCheckoutInput(
-  parsed: CheckoutInput,
-  providerName: string
-): void {
+function validateCheckoutInput(parsed: CheckoutInput, providerName: string): void {
   if (providerName === "mercadopago" && parsed.billingPeriod === "yearly") {
     throw createError({
       statusCode: 400,
@@ -99,9 +91,7 @@ function validateCheckoutInput(
   }
 }
 
-async function resolveProducts(
-  provider: PaymentProviderAdapter
-): Promise<Product[]> {
+async function resolveProducts(provider: PaymentProviderAdapter): Promise<Product[]> {
   const providerProducts = await provider.listProducts();
   if (provider.provider === "polar") {
     return providerProducts;
@@ -113,7 +103,7 @@ function buildCheckoutMetadata(
   parsed: CheckoutInput,
   userId: string,
   organizationId: string | undefined,
-  productTierId: string | undefined
+  productTierId: string | undefined,
 ): Record<string, unknown> {
   return {
     ...parsed.metadata,
@@ -122,9 +112,7 @@ function buildCheckoutMetadata(
     tier:
       parsed.planId ??
       productTierId ??
-      (typeof parsed.metadata?.tier === "string"
-        ? parsed.metadata.tier
-        : undefined),
+      (typeof parsed.metadata?.tier === "string" ? parsed.metadata.tier : undefined),
   };
 }
 
@@ -147,8 +135,7 @@ function rethrowOrWrap(error: unknown): never {
 
   throw createError({
     statusCode: 500,
-    message:
-      error instanceof Error ? error.message : "Failed to create checkout",
+    message: error instanceof Error ? error.message : "Failed to create checkout",
   });
 }
 
@@ -176,8 +163,7 @@ export default defineEventHandler(async (event) => {
         productId: parsed.productId,
         provider: env.PAYMENT_PROVIDER,
         sourceAction: "checkout",
-        subscriptionMode:
-          env.SUBSCRIPTION_MODE === "organization" ? "organization" : "user",
+        subscriptionMode: env.SUBSCRIPTION_MODE === "organization" ? "organization" : "user",
         userId: auth.user.id,
       });
 
@@ -207,14 +193,13 @@ export default defineEventHandler(async (event) => {
       products,
       parsed.productId,
       parsed.planId,
-      parsed.billingPeriod
+      parsed.billingPeriod,
     );
 
     if (!selectedProduct) {
       throw createError({
         statusCode: 400,
-        message:
-          "Could not resolve checkout product for the selected plan and billing period",
+        message: "Could not resolve checkout product for the selected plan and billing period",
       });
     }
 
@@ -227,14 +212,13 @@ export default defineEventHandler(async (event) => {
       parsed,
       auth.user.id,
       organizationId,
-      productTierId
+      productTierId,
     );
 
     if (parsed.upgrade) {
       throw createError({
         statusCode: 410,
-        message:
-          "Subscription Plan changes must use the Plan change acceptance route",
+        message: "Subscription Plan changes must use the Plan change acceptance route",
       });
     }
 

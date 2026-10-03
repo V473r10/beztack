@@ -2,7 +2,15 @@
   "name": "@beztack/env",
   "version": "0.1.0",
   "description": "Centralized T3 Env configuration for Beztack monorepo",
-
+  "keywords": [
+    "env",
+    "environment",
+    "monorepo",
+    "t3",
+    "validation"
+  ],
+  "license": "MIT",
+  "author": "",
   "type": "module",
   "exports": {
     "./db": {
@@ -26,9 +34,6 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
-  "peerDependencies": {
-    "zod": "^3.23.0"
-  },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.8",
     "@t3-oss/env-nextjs": "^0.13.8"
@@ -37,14 +42,8 @@
     "@types/node": "^24.10.2",
     "typescript": "^5.9.3"
   },
-  "keywords": [
-    "env",
-    "environment",
-    "validation",
-    "t3",
-    "monorepo"
-  ],
-  "author": "",
-  "license": "MIT",
+  "peerDependencies": {
+    "zod": "^3.23.0"
+  },
   "packageManager": "pnpm@10.12.1"
 }

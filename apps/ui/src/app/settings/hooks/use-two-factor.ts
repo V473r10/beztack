@@ -24,14 +24,10 @@ type TwoFactorMutationParams = {
 export function useTwoFactorMutation(
   dispatch: React.Dispatch<SettingsAction>,
   currentAction: "enable" | "disable" | null,
-  t: TFunction
+  t: TFunction,
 ) {
   return useMutation({
-    mutationFn: async ({
-      action,
-      password,
-      totpCode,
-    }: TwoFactorMutationParams) => {
+    mutationFn: async ({ action, password, totpCode }: TwoFactorMutationParams) => {
       // When disabling 2FA, verify TOTP code first
       if (action === "disable") {
         if (!totpCode) {
@@ -55,9 +51,7 @@ export function useTwoFactorMutation(
           : await authClient.twoFactor.disable({ password });
 
       if (response.error) {
-        throw new Error(
-          response.error.message || "Two-factor authentication operation failed"
-        );
+        throw new Error(response.error.message || "Two-factor authentication operation failed");
       }
 
       return { action, data: response.data };
@@ -108,10 +102,7 @@ export function useTwoFactorMutation(
   });
 }
 
-export function useTotpVerification(
-  dispatch: React.Dispatch<SettingsAction>,
-  t: TFunction
-) {
+export function useTotpVerification(dispatch: React.Dispatch<SettingsAction>, t: TFunction) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -135,7 +126,7 @@ export function useTotpVerification(
       const errorMessage = getAuthErrorMessage(
         t,
         error,
-        "notifications.twoFactor.errors.invalidTotpCode"
+        "notifications.twoFactor.errors.invalidTotpCode",
       );
       toast.error(errorMessage);
       dispatch({ type: "SET_TOTP_CODE", value: "" });
@@ -150,19 +141,14 @@ type RegenerateBackupCodesResponse = {
   backupCodes: string[];
 };
 
-export function useBackupCodesRegenerate(
-  dispatch: React.Dispatch<SettingsAction>,
-  t: TFunction
-) {
+export function useBackupCodesRegenerate(dispatch: React.Dispatch<SettingsAction>, t: TFunction) {
   return useMutation({
     mutationFn: async (password: string) => {
       const response = await authClient.twoFactor.generateBackupCodes({
         password,
       });
       if (response.error) {
-        throw new Error(
-          response.error.message || "Failed to regenerate backup codes"
-        );
+        throw new Error(response.error.message || "Failed to regenerate backup codes");
       }
       return response.data as RegenerateBackupCodesResponse;
     },
@@ -178,7 +164,7 @@ export function useBackupCodesRegenerate(
       const errorMessage = getAuthErrorMessage(
         t,
         error,
-        "notifications.twoFactor.errors.regenerateFailed"
+        "notifications.twoFactor.errors.regenerateFailed",
       );
       toast.error(errorMessage);
 

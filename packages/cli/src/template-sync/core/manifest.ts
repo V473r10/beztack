@@ -23,9 +23,7 @@ export function getManifestPath(workspaceRoot: string): string {
  * @param {string} workspaceRoot - The root of the workspace.
  * @returns {Promise<TemplateManifest>} - The template manifest.
  */
-export async function readManifest(
-  workspaceRoot: string
-): Promise<TemplateManifest> {
+export async function readManifest(workspaceRoot: string): Promise<TemplateManifest> {
   const manifestPath = getManifestPath(workspaceRoot);
 
   try {
@@ -37,25 +35,18 @@ export async function readManifest(
       return DEFAULT_MANIFEST;
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown manifest error";
-    throw new Error(
-      `Failed to read template manifest at ${manifestPath}: ${message}`
-    );
+    const message = error instanceof Error ? error.message : "Unknown manifest error";
+    throw new Error(`Failed to read template manifest at ${manifestPath}: ${message}`);
   }
 }
 
 export async function writeManifest(
   workspaceRoot: string,
-  manifest: TemplateManifest
+  manifest: TemplateManifest,
 ): Promise<void> {
   const manifestPath = getManifestPath(workspaceRoot);
   const normalized = normalizeManifest(manifest);
-  await writeFile(
-    manifestPath,
-    `${JSON.stringify(normalized, null, 2)}\n`,
-    "utf-8"
-  );
+  await writeFile(manifestPath, `${JSON.stringify(normalized, null, 2)}\n`, "utf-8");
 }
 
 function normalizeManifest(input: Partial<TemplateManifest>): TemplateManifest {
@@ -65,12 +56,10 @@ function normalizeManifest(input: Partial<TemplateManifest>): TemplateManifest {
         ? input.templateId
         : DEFAULT_MANIFEST.templateId,
     currentVersion:
-      typeof input.currentVersion === "string" &&
-      input.currentVersion.length > 0
+      typeof input.currentVersion === "string" && input.currentVersion.length > 0
         ? input.currentVersion
         : DEFAULT_MANIFEST.currentVersion,
-    lastAppliedAt:
-      typeof input.lastAppliedAt === "string" ? input.lastAppliedAt : undefined,
+    lastAppliedAt: typeof input.lastAppliedAt === "string" ? input.lastAppliedAt : undefined,
     strategyByPath:
       input.strategyByPath && Object.keys(input.strategyByPath).length > 0
         ? input.strategyByPath
@@ -78,8 +67,7 @@ function normalizeManifest(input: Partial<TemplateManifest>): TemplateManifest {
     customZones: input.customZones,
     appliedMigrations: Array.isArray(input.appliedMigrations)
       ? input.appliedMigrations.filter(
-          (migration): migration is string =>
-            typeof migration === "string" && migration.length > 0
+          (migration): migration is string => typeof migration === "string" && migration.length > 0,
         )
       : DEFAULT_MANIFEST.appliedMigrations,
   };

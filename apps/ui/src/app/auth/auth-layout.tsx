@@ -15,9 +15,7 @@ const AuthLayout = ({ className }: AuthLayoutProps) => {
       <div className="hidden w-1/2 flex-col justify-between bg-primary p-12 text-primary-foreground lg:flex">
         <div>
           <h1 className="mb-4 font-bold text-4xl">{t("auth.signIn.title")}</h1>
-          <p className="text-primary-foreground/80">
-            {t("common.workflowStreamline")}
-          </p>
+          <p className="text-primary-foreground/80">{t("common.workflowStreamline")}</p>
         </div>
         <div className="text-primary-foreground/60 text-sm">
           {t("common.footer", { year: new Date().getFullYear() })}

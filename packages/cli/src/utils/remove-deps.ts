@@ -2,10 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getWorkspaceRoot } from "./workspace.js";
 
-export async function removeDepsFromPackageJson(
-  projectRoot: string,
-  deps: string[]
-) {
+export async function removeDepsFromPackageJson(projectRoot: string, deps: string[]) {
   const workspaceRoot = getWorkspaceRoot();
   const packageJsonPath = join(workspaceRoot, projectRoot, "package.json");
 
@@ -29,11 +26,7 @@ export async function removeDepsFromPackageJson(
       }
     }
 
-    await writeFile(
-      packageJsonPath,
-      `${JSON.stringify(json, null, 2)}\n`,
-      "utf-8"
-    );
+    await writeFile(packageJsonPath, `${JSON.stringify(json, null, 2)}\n`, "utf-8");
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       // File doesn't exist, skip

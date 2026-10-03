@@ -29,6 +29,7 @@ const authSecret = env.BETTER_AUTH_SECRET;
 ```
 
 **Available variables:**
+
 - Database: `DATABASE_URL`
 - Auth: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `APP_NAME`
 - Polar: Multiple product IDs and configuration
@@ -48,6 +49,7 @@ const basePath = env.VITE_BASE_PATH;
 ```
 
 **Available variables:**
+
 - `VITE_API_URL`: API server URL (default: http://localhost:3000)
 - `VITE_BASE_PATH`: Application base path (default: /)
 
@@ -63,6 +65,7 @@ const nodeEnv = env.NODE_ENV;
 ```
 
 **Available variables:**
+
 - `NODE_ENV`: Node environment (development/production/test)
 
 ## Usage in Applications

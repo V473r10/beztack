@@ -6,10 +6,4 @@ import { EmailModule } from "./email/index.js";
 import { OcrModule } from "./ocr/index.js";
 import { PaymentsModule } from "./payments/index.js";
 
-export const modules = [
-  AuthModule,
-  PaymentsModule,
-  EmailModule,
-  AiModule,
-  OcrModule,
-];
+export const modules = [AuthModule, PaymentsModule, EmailModule, AiModule, OcrModule];

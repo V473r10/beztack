@@ -81,9 +81,7 @@ describe("i18n", () => {
     });
 
     it("handles deep nested paths", () => {
-      expect(t("es", "components.billingHistory")).toBe(
-        "Historial de Facturación"
-      );
+      expect(t("es", "components.billingHistory")).toBe("Historial de Facturación");
       expect(t("en", "components.billingHistory")).toBe("Billing History");
     });
   });
@@ -104,9 +102,7 @@ describe("i18n", () => {
     });
 
     it("returns status as-is for unknown statuses", () => {
-      expect(getPaymentStatusLabel("unknown_status", "es")).toBe(
-        "unknown_status"
-      );
+      expect(getPaymentStatusLabel("unknown_status", "es")).toBe("unknown_status");
     });
   });
 
@@ -139,36 +135,24 @@ describe("i18n", () => {
   describe("formatFrequencyLocalized", () => {
     it("formats monthly frequency in Spanish", () => {
       expect(formatFrequencyLocalized(1, "months", "es")).toBe("cada mes");
-      expect(
-        formatFrequencyLocalized(FREQUENCY_QUARTERLY, "months", "es")
-      ).toBe("cada 3 meses");
-      expect(formatFrequencyLocalized(FREQUENCY_BIANNUAL, "months", "es")).toBe(
-        "cada 6 meses"
-      );
+      expect(formatFrequencyLocalized(FREQUENCY_QUARTERLY, "months", "es")).toBe("cada 3 meses");
+      expect(formatFrequencyLocalized(FREQUENCY_BIANNUAL, "months", "es")).toBe("cada 6 meses");
     });
 
     it("formats daily frequency in Spanish", () => {
       expect(formatFrequencyLocalized(1, "days", "es")).toBe("cada día");
-      expect(formatFrequencyLocalized(FREQUENCY_WEEKLY, "days", "es")).toBe(
-        "cada 7 días"
-      );
-      expect(
-        formatFrequencyLocalized(FREQUENCY_MONTHLY_DAYS, "days", "es")
-      ).toBe("cada 30 días");
+      expect(formatFrequencyLocalized(FREQUENCY_WEEKLY, "days", "es")).toBe("cada 7 días");
+      expect(formatFrequencyLocalized(FREQUENCY_MONTHLY_DAYS, "days", "es")).toBe("cada 30 días");
     });
 
     it("formats monthly frequency in English", () => {
       expect(formatFrequencyLocalized(1, "months", "en")).toBe("every month");
-      expect(
-        formatFrequencyLocalized(FREQUENCY_QUARTERLY, "months", "en")
-      ).toBe("every 3 months");
+      expect(formatFrequencyLocalized(FREQUENCY_QUARTERLY, "months", "en")).toBe("every 3 months");
     });
 
     it("formats daily frequency in English", () => {
       expect(formatFrequencyLocalized(1, "days", "en")).toBe("every day");
-      expect(formatFrequencyLocalized(FREQUENCY_WEEKLY, "days", "en")).toBe(
-        "every 7 days"
-      );
+      expect(formatFrequencyLocalized(FREQUENCY_WEEKLY, "days", "en")).toBe("every 7 days");
     });
   });
 

@@ -27,9 +27,7 @@ const AUTHORIZED_ACTOR = {
   userId: "user_1",
 };
 
-function catalogPlan(
-  overrides: Partial<PlanChangeCatalogPlan> = {}
-): PlanChangeCatalogPlan {
+function catalogPlan(overrides: Partial<PlanChangeCatalogPlan> = {}): PlanChangeCatalogPlan {
   return {
     id: "mercadopago_basic_month",
     paymentProvider: PAYMENT_PROVIDER,
@@ -53,25 +51,16 @@ function createStore(options: {
   plans: PlanChangeCatalogPlan[];
 }): PlanChangeStore & {
   membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][];
-  pendingPlanChanges: Map<
-    string,
-    Parameters<PlanChangeStore["savePendingPlanChange"]>[0]
-  >;
+  pendingPlanChanges: Map<string, Parameters<PlanChangeStore["savePendingPlanChange"]>[0]>;
 } {
   const billingManagers = new Set(options.billingManagers ?? []);
-  const membershipMoves: Parameters<
-    PlanChangeStore["moveMembershipToPlan"]
-  >[0][] = [];
+  const membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][] = [];
   const pendingPlanChanges = new Map<
     string,
     Parameters<PlanChangeStore["savePendingPlanChange"]>[0]
   >();
-  for (const existingPendingPlanChange of options.existingPendingPlanChanges ??
-    []) {
-    pendingPlanChanges.set(
-      existingPendingPlanChange.subscriptionId,
-      existingPendingPlanChange
-    );
+  for (const existingPendingPlanChange of options.existingPendingPlanChanges ?? []) {
+    pendingPlanChanges.set(existingPendingPlanChange.subscriptionId, existingPendingPlanChange);
   }
 
   return {
@@ -81,14 +70,12 @@ function createStore(options: {
       return Promise.resolve(options.currentSubscription ?? null);
     },
     cancelPendingPlanChange(subscriptionId) {
-      const canceledPendingPlanChange =
-        pendingPlanChanges.get(subscriptionId) ?? null;
+      const canceledPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
       pendingPlanChanges.delete(subscriptionId);
       return Promise.resolve(canceledPendingPlanChange);
     },
     clearPendingPlanChange(subscriptionId) {
-      const clearedPendingPlanChange =
-        pendingPlanChanges.get(subscriptionId) ?? null;
+      const clearedPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
       pendingPlanChanges.delete(subscriptionId);
       return Promise.resolve(clearedPendingPlanChange);
     },
@@ -96,13 +83,11 @@ function createStore(options: {
       return Promise.resolve(pendingPlanChanges.get(subscriptionId) ?? null);
     },
     isBillingManager(input) {
-      return Promise.resolve(
-        billingManagers.has(`${input.organizationId}:${input.actorUserId}`)
-      );
+      return Promise.resolve(billingManagers.has(`${input.organizationId}:${input.actorUserId}`));
     },
     listActiveVisiblePricingCatalogPlans(paymentProvider) {
       return Promise.resolve(
-        options.plans.filter((plan) => plan.paymentProvider === paymentProvider)
+        options.plans.filter((plan) => plan.paymentProvider === paymentProvider),
       );
     },
     moveMembershipToPlan(input) {
@@ -124,9 +109,7 @@ function createStore(options: {
 }
 
 function pendingPlanChange(
-  overrides: Partial<
-    Parameters<PlanChangeStore["savePendingPlanChange"]>[0] & { id: string }
-  > = {}
+  overrides: Partial<Parameters<PlanChangeStore["savePendingPlanChange"]>[0] & { id: string }> = {},
 ): Parameters<PlanChangeStore["savePendingPlanChange"]>[0] & { id: string } {
   return {
     id: "pending_sub_current",
@@ -143,21 +126,15 @@ function pendingPlanChange(
 function createPaymentAdapter(
   firstPaymentStatus: "pending" | "confirmed" = "pending",
   operationLog?: string[],
-  pendingPlanChangeId = "provider_pending_change_1"
+  pendingPlanChangeId = "provider_pending_change_1",
 ): PlanChangePaymentAdapter & {
-  pendingConfirmations: Parameters<
-    PlanChangePaymentAdapter["confirmPendingPlanChange"]
-  >[0][];
-  upgradeConfirmations: Parameters<
-    PlanChangePaymentAdapter["confirmUpgrade"]
-  >[0][];
+  pendingConfirmations: Parameters<PlanChangePaymentAdapter["confirmPendingPlanChange"]>[0][];
+  upgradeConfirmations: Parameters<PlanChangePaymentAdapter["confirmUpgrade"]>[0][];
 } {
   const pendingConfirmations: Parameters<
     PlanChangePaymentAdapter["confirmPendingPlanChange"]
   >[0][] = [];
-  const upgradeConfirmations: Parameters<
-    PlanChangePaymentAdapter["confirmUpgrade"]
-  >[0][] = [];
+  const upgradeConfirmations: Parameters<PlanChangePaymentAdapter["confirmUpgrade"]>[0][] = [];
 
   return {
     paymentIntegrationId: PAYMENT_INTEGRATION_ID,
@@ -186,7 +163,7 @@ function createPaymentAdapter(
 }
 
 function currentSubscription(
-  overrides: Partial<PlanChangeCurrentSubscription> = {}
+  overrides: Partial<PlanChangeCurrentSubscription> = {},
 ): PlanChangeCurrentSubscription {
   return {
     id: "sub_current",
@@ -201,9 +178,7 @@ function currentSubscription(
   };
 }
 
-async function readRejectedPlanChangeError(
-  promise: Promise<unknown>
-): Promise<unknown> {
+async function readRejectedPlanChangeError(promise: Promise<unknown>): Promise<unknown> {
   try {
     await promise;
   } catch (error) {
@@ -348,8 +323,8 @@ describe("previewPlanChange", () => {
             billingCadence: "monthly",
           },
           store,
-        })
-      )
+        }),
+      ),
     ).resolves.toMatchObject({
       code: "invalid_target" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
@@ -374,8 +349,8 @@ describe("previewPlanChange", () => {
             billingCadence: "monthly",
           },
           store,
-        })
-      )
+        }),
+      ),
     ).resolves.toMatchObject({
       code: "missing_current_subscription" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
@@ -400,8 +375,8 @@ describe("previewPlanChange", () => {
             billingCadence: "monthly",
           },
           store,
-        })
-      )
+        }),
+      ),
     ).resolves.toMatchObject({
       code: "not_a_plan_change" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
@@ -436,8 +411,8 @@ describe("previewPlanChange", () => {
             billingCadence: "monthly",
           },
           store,
-        })
-      )
+        }),
+      ),
     ).resolves.toMatchObject({
       code: "payment_integration_mismatch" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
@@ -472,8 +447,8 @@ describe("previewPlanChange", () => {
             billingCadence: "monthly",
           },
           store,
-        })
-      )
+        }),
+      ),
     ).resolves.toMatchObject({
       code: "unauthorized_plan_change" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
@@ -542,8 +517,8 @@ describe("previewPlanChange", () => {
             billingCadence: "monthly",
           },
           store,
-        })
-      )
+        }),
+      ),
     ).resolves.toMatchObject({
       code: "unauthorized_plan_change" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
@@ -828,8 +803,8 @@ describe("previewPlanChange", () => {
             billingCadence: "yearly",
           },
           store,
-        })
-      )
+        }),
+      ),
     ).resolves.toMatchObject({
       code: "unsupported_plan_change_acceptance" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
@@ -882,15 +857,13 @@ describe("previewPlanChange", () => {
           paymentProvider: PAYMENT_PROVIDER,
           paymentIntegrationId: PAYMENT_INTEGRATION_ID,
           store,
-        })
-      )
+        }),
+      ),
     ).resolves.toMatchObject({
       code: "unauthorized_plan_change" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
     });
-    expect(store.pendingPlanChanges.get("sub_current")).toBe(
-      existingPendingPlanChange
-    );
+    expect(store.pendingPlanChanges.get("sub_current")).toBe(existingPendingPlanChange);
   });
 
   it("keeps one pending per Subscription after cancellation and later replacement", async () => {
@@ -908,11 +881,7 @@ describe("previewPlanChange", () => {
         }),
       ],
     });
-    const paymentAdapter = createPaymentAdapter(
-      "pending",
-      undefined,
-      "provider_pending_change_2"
-    );
+    const paymentAdapter = createPaymentAdapter("pending", undefined, "provider_pending_change_2");
 
     await cancelPendingPlanChange({
       actor: AUTHORIZED_ACTOR,

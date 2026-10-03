@@ -59,16 +59,16 @@ Wrap your app with the `NuqsAdapter`:
 
 ```tsx
 // apps/ui/src/main.tsx
-import { NuqsAdapter } from '@beztack/state/adapters/react';
-import { createRoot } from 'react-dom/client';
-import App from './app';
+import { NuqsAdapter } from "@beztack/state/adapters/react";
+import { createRoot } from "react-dom/client";
+import App from "./app";
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <NuqsAdapter>
       <App />
     </NuqsAdapter>
-  </StrictMode>
+  </StrictMode>,
 );
 ```
 
@@ -76,7 +76,7 @@ createRoot(document.getElementById('root')!).render(
 
 ```tsx
 // app/layout.tsx
-import { NuqsAdapter } from '@beztack/state/adapters/next/app';
+import { NuqsAdapter } from "@beztack/state/adapters/next/app";
 
 export default function RootLayout({ children }) {
   return (
@@ -93,7 +93,7 @@ export default function RootLayout({ children }) {
 
 ```tsx
 // pages/_app.tsx
-import { NuqsAdapter } from '@beztack/state/adapters/next/pages';
+import { NuqsAdapter } from "@beztack/state/adapters/next/pages";
 
 export default function App({ Component, pageProps }) {
   return (
@@ -111,20 +111,13 @@ export default function App({ Component, pageProps }) {
 Use `useQueryState` for a single search param:
 
 ```tsx
-import { useQueryState, parseAsString } from '@beztack/state';
+import { useQueryState, parseAsString } from "@beztack/state";
 
 function SearchBox() {
-  const [search, setSearch] = useQueryState(
-    'search',
-    parseAsString.withDefault('')
-  );
+  const [search, setSearch] = useQueryState("search", parseAsString.withDefault(""));
 
   return (
-    <input
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      placeholder="Search..."
-    />
+    <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." />
   );
 }
 ```
@@ -134,13 +127,13 @@ function SearchBox() {
 Use `useQueryStates` for batched updates:
 
 ```tsx
-import { useQueryStates, parseAsInteger, parseAsString } from '@beztack/state';
+import { useQueryStates, parseAsInteger, parseAsString } from "@beztack/state";
 
 function Filters() {
   const [filters, setFilters] = useQueryStates({
     minPrice: parseAsInteger.withDefault(0),
     maxPrice: parseAsInteger.withDefault(100),
-    category: parseAsString.withDefault(''),
+    category: parseAsString.withDefault(""),
   });
 
   // Update multiple params at once (single URL update)
@@ -148,14 +141,16 @@ function Filters() {
     setFilters({
       minPrice: 20,
       maxPrice: 80,
-      category: 'electronics',
+      category: "electronics",
     });
   };
 
   return (
     <div>
-      <p>Price: {filters.minPrice} - {filters.maxPrice}</p>
-      <p>Category: {filters.category || 'All'}</p>
+      <p>
+        Price: {filters.minPrice} - {filters.maxPrice}
+      </p>
+      <p>Category: {filters.category || "All"}</p>
       <button onClick={applyFilters}>Apply Filters</button>
     </div>
   );
@@ -169,94 +164,76 @@ nuqs provides type-safe parsers for common data types:
 ### String
 
 ```tsx
-import { useQueryState, parseAsString } from '@beztack/state';
+import { useQueryState, parseAsString } from "@beztack/state";
 
-const [name, setName] = useQueryState(
-  'name',
-  parseAsString.withDefault('')
-);
+const [name, setName] = useQueryState("name", parseAsString.withDefault(""));
 ```
 
 ### Integer
 
 ```tsx
-import { useQueryState, parseAsInteger } from '@beztack/state';
+import { useQueryState, parseAsInteger } from "@beztack/state";
 
-const [page, setPage] = useQueryState(
-  'page',
-  parseAsInteger.withDefault(1)
-);
+const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
 ```
 
 ### Float
 
 ```tsx
-import { useQueryState, parseAsFloat } from '@beztack/state';
+import { useQueryState, parseAsFloat } from "@beztack/state";
 
-const [price, setPrice] = useQueryState(
-  'price',
-  parseAsFloat.withDefault(0.0)
-);
+const [price, setPrice] = useQueryState("price", parseAsFloat.withDefault(0.0));
 ```
 
 ### Boolean
 
 ```tsx
-import { useQueryState, parseAsBoolean } from '@beztack/state';
+import { useQueryState, parseAsBoolean } from "@beztack/state";
 
-const [enabled, setEnabled] = useQueryState(
-  'enabled',
-  parseAsBoolean.withDefault(false)
-);
+const [enabled, setEnabled] = useQueryState("enabled", parseAsBoolean.withDefault(false));
 ```
 
 ### Enum
 
 ```tsx
-import { useQueryState, parseAsStringEnum } from '@beztack/state';
+import { useQueryState, parseAsStringEnum } from "@beztack/state";
 
-const sortOptions = ['asc', 'desc', 'newest', 'oldest'] as const;
+const sortOptions = ["asc", "desc", "newest", "oldest"] as const;
 
 const [sort, setSort] = useQueryState(
-  'sort',
-  parseAsStringEnum([...sortOptions]).withDefault('asc')
+  "sort",
+  parseAsStringEnum([...sortOptions]).withDefault("asc"),
 );
 ```
 
 ### Array
 
 ```tsx
-import { useQueryState, parseAsArrayOf, parseAsInteger } from '@beztack/state';
+import { useQueryState, parseAsArrayOf, parseAsInteger } from "@beztack/state";
 
-const [tags, setTags] = useQueryState(
-  'tags',
-  parseAsArrayOf(parseAsInteger).withDefault([])
-);
+const [tags, setTags] = useQueryState("tags", parseAsArrayOf(parseAsInteger).withDefault([]));
 ```
 
 ### JSON
 
 ```tsx
-import { useQueryState, parseAsJson } from '@beztack/state';
+import { useQueryState, parseAsJson } from "@beztack/state";
 
 const [config, setConfig] = useQueryState(
-  'config',
+  "config",
   parseAsJson<{ theme: string; lang: string }>().withDefault({
-    theme: 'dark',
-    lang: 'en',
-  })
+    theme: "dark",
+    lang: "en",
+  }),
 );
 ```
 
 ### DateTime
 
 ```tsx
-import { useQueryState, parseAsIsoDateTime } from '@beztack/state';
+import { useQueryState, parseAsIsoDateTime } from "@beztack/state";
 
-const [date, setDate] = useQueryState(
-  'date',
-  parseAsIsoDateTime.withDefault(new Date())
-);
+const [date, setDate] = useQueryState("date", parseAsIsoDateTime.withDefault(new Date()));
 ```
 
 ## Advanced Patterns
@@ -288,8 +265,8 @@ Set to `null` to remove from URL:
 Prevent scroll to top on URL change:
 
 ```tsx
-const [tab, setTab] = useQueryState('tab', {
-  defaultValue: 'home',
+const [tab, setTab] = useQueryState("tab", {
+  defaultValue: "home",
   shallow: true, // Don't scroll to top
 });
 ```
@@ -299,7 +276,7 @@ const [tab, setTab] = useQueryState('tab', {
 Access search params on the server:
 
 ```tsx
-import { createSearchParamsCache, parseAsInteger } from '@beztack/state/server';
+import { createSearchParamsCache, parseAsInteger } from "@beztack/state/server";
 
 // Define your parsers
 const searchParamsCache = createSearchParamsCache({
@@ -311,7 +288,7 @@ const searchParamsCache = createSearchParamsCache({
 export async function loader({ request }) {
   const searchParams = new URL(request.url).searchParams;
   const { page, limit } = searchParamsCache.parse(searchParams);
-  
+
   const data = await fetchData({ page, limit });
   return { data };
 }
@@ -323,26 +300,20 @@ export async function loader({ request }) {
 
 ```tsx
 // ✅ Good - Type-safe with parser
-const [count, setCount] = useQueryState(
-  'count',
-  parseAsInteger.withDefault(0)
-);
+const [count, setCount] = useQueryState("count", parseAsInteger.withDefault(0));
 
 // ❌ Bad - Returns string | null
-const [count, setCount] = useQueryState('count');
+const [count, setCount] = useQueryState("count");
 ```
 
 ### Provide Default Values
 
 ```tsx
 // ✅ Good - Never null
-const [search, setSearch] = useQueryState(
-  'search',
-  parseAsString.withDefault('')
-);
+const [search, setSearch] = useQueryState("search", parseAsString.withDefault(""));
 
 // ❌ Bad - Can be null
-const [search, setSearch] = useQueryState('search');
+const [search, setSearch] = useQueryState("search");
 ```
 
 ### Use Batched Updates
@@ -356,8 +327,8 @@ const [filters, setFilters] = useQueryStates({
 setFilters({ min: 10, max: 90 });
 
 // ❌ Bad - Multiple URL updates
-const [min, setMin] = useQueryState('min', parseAsInteger.withDefault(0));
-const [max, setMax] = useQueryState('max', parseAsInteger.withDefault(100));
+const [min, setMin] = useQueryState("min", parseAsInteger.withDefault(0));
+const [max, setMax] = useQueryState("max", parseAsInteger.withDefault(100));
 setMin(10);
 setMax(90);
 ```
@@ -366,14 +337,14 @@ setMax(90);
 
 ```tsx
 // ✅ Good - Type-safe options
-const sortOptions = ['asc', 'desc'] as const;
+const sortOptions = ["asc", "desc"] as const;
 const [sort, setSort] = useQueryState(
-  'sort',
-  parseAsStringEnum([...sortOptions]).withDefault('asc')
+  "sort",
+  parseAsStringEnum([...sortOptions]).withDefault("asc"),
 );
 
 // ❌ Bad - Any string allowed
-const [sort, setSort] = useQueryState('sort', parseAsString.withDefault('asc'));
+const [sort, setSort] = useQueryState("sort", parseAsString.withDefault("asc"));
 ```
 
 ## Demo
@@ -415,7 +386,7 @@ If you see "Invalid hook call" errors:
 Use server-side parsers to match client-side state:
 
 ```tsx
-import { createSearchParamsCache } from '@beztack/state/server';
+import { createSearchParamsCache } from "@beztack/state/server";
 
 const cache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),

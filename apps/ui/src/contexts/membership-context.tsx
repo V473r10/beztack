@@ -71,10 +71,8 @@ const SECONDS_PER_MINUTE = 60;
 const FIVE_MINUTES = 5;
 const TWO_MINUTES = 2;
 
-const CUSTOMER_STATE_STALE_TIME =
-  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * FIVE_MINUTES;
-const SUBSCRIPTIONS_STALE_TIME =
-  MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * TWO_MINUTES;
+const CUSTOMER_STATE_STALE_TIME = MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * FIVE_MINUTES;
+const SUBSCRIPTIONS_STALE_TIME = MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * TWO_MINUTES;
 
 const EMPTY_PRODUCTS: Product[] = [];
 const EMPTY_SUBSCRIPTIONS: Subscription[] = [];
@@ -82,11 +80,7 @@ const EMPTY_ORDERS: Order[] = [];
 const EMPTY_METERS: CustomerMeter[] = [];
 const EMPTY_BENEFITS: string[] = [];
 
-export type {
-  CustomerMeter,
-  Order,
-  Subscription,
-} from "./membership/membership-types";
+export type { CustomerMeter, Order, Subscription } from "./membership/membership-types";
 
 export type PlanChangeType = "upgrade" | "downgrade" | "same" | "period_change";
 
@@ -118,7 +112,7 @@ export type MembershipContextValue = {
   upgradeToTier: (
     tierId: string,
     billingPeriod?: "monthly" | "yearly",
-    organizationId?: string
+    organizationId?: string,
   ) => Promise<void>;
   changePlan: (
     productId: string,
@@ -126,7 +120,7 @@ export type MembershipContextValue = {
       billingPeriod?: "monthly" | "yearly";
       organizationId?: string;
       prorationBehavior?: "invoice" | "prorate";
-    }
+    },
   ) => Promise<PlanChangeResult>;
   openBillingPortal: (returnUrl?: string) => Promise<void>;
   refreshMembership: () => Promise<void>;
@@ -163,7 +157,7 @@ function parseTierIdFromProduct(product: Product): MembershipTier {
 function buildTierConfigFromPlansAndProducts(
   products: Product[],
   plans: CatalogPlan[] | undefined,
-  provider: "polar" | "mercadopago"
+  provider: "polar" | "mercadopago",
 ): MembershipTierConfig[] {
   return buildTierConfigs(products, plans, provider);
 }
@@ -173,13 +167,11 @@ function isAdminTierOverrideCheckoutResponse(data: CheckoutResponse): boolean {
 }
 
 function getAdminTierOverrideToastMessage(data: CheckoutResponse): string {
-  return data.changed
-    ? "Admin tier override applied."
-    : "Admin tier override already active.";
+  return data.changed ? "Admin tier override applied." : "Admin tier override already active.";
 }
 
 function parseAdminTierOverride(
-  data: AdminTierOverrideResponse | undefined
+  data: AdminTierOverrideResponse | undefined,
 ): AdminTierOverrideStatus | null {
   if (!data) {
     return null;
@@ -206,21 +198,15 @@ export type MembershipProviderProps = {
 export function MembershipProvider({ children }: MembershipProviderProps) {
   const queryClient = useQueryClient();
   const { data: activeOrganization } = useActiveOrganization();
-  const isOrganizationSubscriptionMode =
-    env.VITE_SUBSCRIPTION_MODE === "organization";
-  const activeOrganizationId = isOrganizationSubscriptionMode
-    ? activeOrganization?.id
-    : undefined;
+  const isOrganizationSubscriptionMode = env.VITE_SUBSCRIPTION_MODE === "organization";
+  const activeOrganizationId = isOrganizationSubscriptionMode ? activeOrganization?.id : undefined;
 
   const productsQuery = useQuery({
     queryKey: ["subscriptions", "products"],
     queryFn: async (): Promise<ProductsResponse> => {
-      const response = await fetch(
-        `${env.VITE_API_URL}/api/subscriptions/products`,
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/products`, {
+        credentials: "include",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch subscription products");
@@ -243,7 +229,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         `${env.VITE_API_URL}/api/subscriptions${queryString ? `?${queryString}` : ""}`,
         {
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -267,7 +253,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         `${env.VITE_API_URL}/api/membership/status${queryString ? `?${queryString}` : ""}`,
         {
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -288,35 +274,30 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       upgrade?: boolean;
     }): Promise<CheckoutResponse> => {
       const selectedProduct = productsQuery.data?.products.find(
-        (product) => product.id === params.productId
+        (product) => product.id === params.productId,
       );
-      const selectedPlanId = selectedProduct
-        ? parseTierIdFromProduct(selectedProduct)
-        : "free";
+      const selectedPlanId = selectedProduct ? parseTierIdFromProduct(selectedProduct) : "free";
 
-      const response = await fetch(
-        `${env.VITE_API_URL}/api/subscriptions/checkout`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            productId: params.productId,
-            planId: selectedPlanId !== "free" ? selectedPlanId : undefined,
+      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          productId: params.productId,
+          planId: selectedPlanId !== "free" ? selectedPlanId : undefined,
+          billingPeriod: params.billingPeriod,
+          organizationId: params.organizationId,
+          successUrl: `${window.location.origin}/checkout-success`,
+          cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
+          upgrade: params.upgrade,
+          metadata: {
             billingPeriod: params.billingPeriod,
-            organizationId: params.organizationId,
-            successUrl: `${window.location.origin}/checkout-success`,
-            cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
-            upgrade: params.upgrade,
-            metadata: {
-              billingPeriod: params.billingPeriod,
-              ...params.metadata,
-            },
-          }),
-        }
-      );
+            ...params.metadata,
+          },
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`Checkout failed: ${response.statusText}`);
@@ -350,28 +331,22 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       organizationId?: string;
       productId: string;
     }): Promise<PlanChangeResult> => {
-      const response = await fetch(
-        `${env.VITE_API_URL}/api/subscriptions/plan-change/accept`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            targetPricingCatalogPlanId: params.productId,
-            targetBillingCadence: params.billingPeriod,
-            organizationId: params.organizationId,
-          }),
-        }
-      );
+      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/plan-change/accept`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          targetPricingCatalogPlanId: params.productId,
+          targetBillingCadence: params.billingPeriod,
+          organizationId: params.organizationId,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.statusMessage ||
-            `Plan change failed: ${response.statusText}`
-        );
+        throw new Error(errorData.statusMessage || `Plan change failed: ${response.statusText}`);
       }
 
       const payload = await response.json();
@@ -382,13 +357,11 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       };
     },
     onSuccess: (data) => {
-      const acceptance = data.planChangeAcceptance as
-        | { reconciliationStatus?: string }
-        | undefined;
+      const acceptance = data.planChangeAcceptance as { reconciliationStatus?: string } | undefined;
       toast.success(
         acceptance?.reconciliationStatus === "reconciling"
           ? "Payment confirmed. Plan change is still reconciling."
-          : "Plan change accepted successfully!"
+          : "Plan change accepted successfully!",
       );
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
@@ -420,9 +393,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
       const result = await portalFn();
       if (result.error) {
-        throw new Error(
-          result.error.message || "Failed to open billing portal"
-        );
+        throw new Error(result.error.message || "Failed to open billing portal");
       }
       if (result.data?.url) {
         window.open(result.data.url, "_blank");
@@ -432,9 +403,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       toast.success("Opening billing portal...");
     },
     onError: (billingPortalError: Error) => {
-      toast.error(
-        billingPortalError.message || "Failed to open billing portal"
-      );
+      toast.error(billingPortalError.message || "Failed to open billing portal");
     },
   });
 
@@ -450,7 +419,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -461,9 +430,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
     onSuccess: (data) => {
       toast.success(
-        data.changed
-          ? "Admin tier override cleared."
-          : "Admin tier override already cleared."
+        data.changed ? "Admin tier override cleared." : "Admin tier override already cleared.",
       );
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
@@ -473,8 +440,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   });
 
   const products = productsQuery.data?.products ?? EMPTY_PRODUCTS;
-  const subscriptions =
-    subscriptionsQuery.data?.subscriptions ?? EMPTY_SUBSCRIPTIONS;
+  const subscriptions = subscriptionsQuery.data?.subscriptions ?? EMPTY_SUBSCRIPTIONS;
 
   const activeSubscription = (() => {
     const isValidSub = (sub: Subscription) =>
@@ -494,7 +460,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     membershipStatusQuery.data?.data.tier ||
       (activeSubscription?.metadata?.tier as string | undefined) ||
       (activeSubscription?.metadata?.planId as string | undefined) ||
-      activeSubscription?.productName
+      activeSubscription?.productName,
   );
 
   const dbPlans = productsQuery.data?.plans;
@@ -502,17 +468,15 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const provider = productsQuery.data?.provider ?? "polar";
   const tierConfigs = useMemo(
     () => buildTierConfigFromPlansAndProducts(products, dbPlans, provider),
-    [products, dbPlans, provider]
+    [products, dbPlans, provider],
   );
 
-  const tierConfig =
-    tierConfigs.find((config) => config.id === currentTier) || null;
+  const tierConfig = tierConfigs.find((config) => config.id === currentTier) || null;
 
-  const rawAdminTierOverride =
-    membershipStatusQuery.data?.data.adminTierOverride;
+  const rawAdminTierOverride = membershipStatusQuery.data?.data.adminTierOverride;
   const adminTierOverride = useMemo(
     () => parseAdminTierOverride(rawAdminTierOverride),
-    [rawAdminTierOverride]
+    [rawAdminTierOverride],
   );
 
   const isAppAdmin = membershipStatusQuery.data?.data.isAppAdmin === true;
@@ -541,7 +505,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     async (
       tierId: string,
       billingPeriod: "monthly" | "yearly" = "monthly",
-      organizationId?: string
+      organizationId?: string,
     ) => {
       const checkoutOrganizationId = organizationId ?? activeOrganizationId;
       if (activeSubscription) {
@@ -557,14 +521,10 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         productId: tierId,
         billingPeriod,
         organizationId: checkoutOrganizationId,
-        metadata: {
-          ...(checkoutOrganizationId
-            ? { organizationId: checkoutOrganizationId }
-            : {}),
-        },
+        metadata: checkoutOrganizationId ? { organizationId: checkoutOrganizationId } : {},
       });
     },
-    [activeSubscription, activeOrganizationId]
+    [activeSubscription, activeOrganizationId],
   );
 
   const changePlan = useCallback(
@@ -574,7 +534,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         billingPeriod?: "monthly" | "yearly";
         organizationId?: string;
         prorationBehavior?: "invoice" | "prorate";
-      }
+      },
     ): Promise<PlanChangeResult> => {
       if (!activeSubscription) {
         throw new Error("No active subscription to change");
@@ -586,7 +546,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         productId,
       });
     },
-    [activeSubscription, activeOrganizationId]
+    [activeSubscription, activeOrganizationId],
   );
 
   const billingPortalRef = useRef(billingPortalMutation.mutateAsync);
@@ -600,11 +560,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
   }, [queryClient]);
 
-  const clearAdminTierOverrideRef = useRef(
-    clearAdminTierOverrideMutation.mutateAsync
-  );
-  clearAdminTierOverrideRef.current =
-    clearAdminTierOverrideMutation.mutateAsync;
+  const clearAdminTierOverrideRef = useRef(clearAdminTierOverrideMutation.mutateAsync);
+  clearAdminTierOverrideRef.current = clearAdminTierOverrideMutation.mutateAsync;
 
   const clearAdminTierOverride = useCallback(async () => {
     await clearAdminTierOverrideRef.current();
@@ -616,10 +573,10 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         return false;
       }
       return tierConfig.features.some((featureValue) =>
-        featureValue.toLowerCase().includes(feature.toLowerCase())
+        featureValue.toLowerCase().includes(feature.toLowerCase()),
       );
     },
-    [tierConfig]
+    [tierConfig],
   );
 
   const hasPermission = useCallback(
@@ -629,7 +586,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       }
       return tierConfig.permissions.includes(permission);
     },
-    [tierConfig]
+    [tierConfig],
   );
 
   const isWithinLimit = useCallback(
@@ -637,14 +594,13 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       if (!tierConfig?.limits) {
         return true;
       }
-      const limit =
-        tierConfig.limits[limitKey as keyof typeof tierConfig.limits];
+      const limit = tierConfig.limits[limitKey as keyof typeof tierConfig.limits];
       if (limit === undefined || limit === -1) {
         return true;
       }
       return currentUsage <= limit;
     },
-    [tierConfig]
+    [tierConfig],
   );
 
   const canUpgrade = currentTier !== "ultimate";
@@ -669,7 +625,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       }
       return "same";
     },
-    [currentTier]
+    [currentTier],
   );
 
   const value = useMemo<MembershipContextValue>(
@@ -717,12 +673,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       adminTierOverride,
       isAppAdmin,
       clearAdminTierOverrideMutation.isPending,
-    ]
+    ],
   );
 
-  return (
-    <MembershipContext.Provider value={value}>
-      {children}
-    </MembershipContext.Provider>
-  );
+  return <MembershipContext.Provider value={value}>{children}</MembershipContext.Provider>;
 }

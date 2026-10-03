@@ -2,20 +2,12 @@
   "name": "@beztack/email",
   "version": "0.1.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.js",
   "scripts": {
     "dev": "email dev --port 3005"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.12.1",
-  "devDependencies": {
-    "@react-email/preview-server": "~5.0.6",
-    "@types/node": "~22.19.2",
-    "@types/react": "~19.2.7",
-    "@types/react-dom": "~19.2.3",
-    "react-email": "~5.0.6"
   },
   "dependencies": {
     "@react-email/components": "~1.0.1",
@@ -24,8 +16,16 @@
     "react-dom": "~19.2.1",
     "resend": "~6.6.0"
   },
+  "devDependencies": {
+    "@react-email/preview-server": "~5.0.6",
+    "@types/node": "~22.19.2",
+    "@types/react": "~19.2.7",
+    "@types/react-dom": "~19.2.3",
+    "react-email": "~5.0.6"
+  },
   "peerDependencies": {
     "react": "~19.2.1",
     "react-dom": "~19.2.1"
-  }
+  },
+  "packageManager": "pnpm@10.12.1"
 }

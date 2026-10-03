@@ -21,11 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { AdminUser, ListUsersQuery } from "@/lib/admin-types";
-import {
-  formatDate,
-  formatRelativeTime,
-  getUserStatus,
-} from "@/lib/admin-utils";
+import { formatDate, formatRelativeTime, getUserStatus } from "@/lib/admin-utils";
 import { authClient } from "@/lib/auth-client";
 import { UserActions } from "./user-actions";
 
@@ -84,8 +80,7 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
     setQuery((prev) => ({
       ...prev,
       sortBy,
-      sortDirection:
-        prev.sortBy === sortBy && prev.sortDirection === "asc" ? "desc" : "asc",
+      sortDirection: prev.sortBy === sortBy && prev.sortDirection === "asc" ? "desc" : "asc",
     }));
   };
 
@@ -94,9 +89,7 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-2 text-center">
-            <p className="text-muted-foreground text-sm">
-              Failed to load users. Please try again.
-            </p>
+            <p className="text-muted-foreground text-sm">Failed to load users. Please try again.</p>
             <Button onClick={() => refetch()} variant="outline">
               Retry
             </Button>
@@ -148,29 +141,18 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
           {/* Users Table */}
           {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 5 }, (_, i) => `loading-row-${i}`).map(
-                (key) => (
-                  <div
-                    className="h-16 animate-pulse rounded bg-muted"
-                    key={key}
-                  />
-                )
-              )}
+              {Array.from({ length: 5 }, (_, i) => `loading-row-${i}`).map((key) => (
+                <div className="h-16 animate-pulse rounded bg-muted" key={key} />
+              ))}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead
-                    className="cursor-pointer"
-                    onClick={() => handleSortChange("email")}
-                  >
+                  <TableHead className="cursor-pointer" onClick={() => handleSortChange("email")}>
                     Email
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer"
-                    onClick={() => handleSortChange("name")}
-                  >
+                  <TableHead className="cursor-pointer" onClick={() => handleSortChange("name")}>
                     Name
                   </TableHead>
                   <TableHead>Status</TableHead>
@@ -189,9 +171,7 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
                   const status = getUserStatus(user);
                   return (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">
-                        {user.email}
-                      </TableCell>
+                      <TableCell className="font-medium">{user.email}</TableCell>
                       <TableCell>{user.name || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={status.variant}>{status.label}</Badge>
@@ -201,9 +181,7 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="text-sm">
-                            {formatDate(user.createdAt)}
-                          </div>
+                          <div className="text-sm">{formatDate(user.createdAt)}</div>
                           <div className="text-muted-foreground text-xs">
                             {formatRelativeTime(user.createdAt)}
                           </div>
@@ -228,9 +206,8 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
             <div className="mt-4 text-muted-foreground text-sm">
               Showing {Math.min(Number(query.offset || 0) + 1, data.total)} -{" "}
               {Math.min(
-                Number(query.offset || 0) +
-                  Number(query.limit || DEFAULT_PAGE_LIMIT),
-                data.total
+                Number(query.offset || 0) + Number(query.limit || DEFAULT_PAGE_LIMIT),
+                data.total,
               )}{" "}
               of {data.total} users
             </div>

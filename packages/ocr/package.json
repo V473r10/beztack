@@ -1,14 +1,14 @@
 {
   "name": "@beztack/ocr",
-  "module": "index.ts",
   "type": "module",
+  "module": "index.ts",
+  "dependencies": {
+    "tesseract.js": "^6.0.1"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
-    "tesseract.js": "^6.0.1"
   }
 }

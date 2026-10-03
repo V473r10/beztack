@@ -1,10 +1,4 @@
-import {
-  Content,
-  Header,
-  Item,
-  Root,
-  Trigger,
-} from "@radix-ui/react-accordion";
+import { Content, Header, Item, Root, Trigger } from "@radix-ui/react-accordion";
 import { ChevronDownIcon } from "lucide-react";
 import type * as React from "react";
 
@@ -14,10 +8,7 @@ function Accordion({ ...props }: React.ComponentProps<typeof Root>) {
   return <Root data-slot="accordion" {...props} />;
 }
 
-function AccordionItem({
-  className,
-  ...props
-}: React.ComponentProps<typeof Item>) {
+function AccordionItem({ className, ...props }: React.ComponentProps<typeof Item>) {
   return (
     <Item
       className={cn("border-b last:border-b-0", className)}
@@ -27,17 +18,13 @@ function AccordionItem({
   );
 }
 
-function AccordionTrigger({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof Trigger>) {
+function AccordionTrigger({ className, children, ...props }: React.ComponentProps<typeof Trigger>) {
   return (
     <Header className="flex">
       <Trigger
         className={cn(
           "flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left font-medium text-sm outline-none transition-all hover:underline focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
-          className
+          className,
         )}
         data-slot="accordion-trigger"
         {...props}
@@ -49,11 +36,7 @@ function AccordionTrigger({
   );
 }
 
-function AccordionContent({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof Content>) {
+function AccordionContent({ className, children, ...props }: React.ComponentProps<typeof Content>) {
   return (
     <Content
       className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"

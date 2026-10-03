@@ -57,7 +57,7 @@ export function SignInForm() {
           onResponse() {
             setIsLoading(false);
           },
-        }
+        },
       );
     },
   });
@@ -68,7 +68,7 @@ export function SignInForm() {
       e.stopPropagation();
       form.handleSubmit();
     },
-    [form]
+    [form],
   );
 
   return (
@@ -100,9 +100,7 @@ export function SignInForm() {
           {(field) => (
             <field.FormItem>
               <div className="flex items-center justify-between">
-                <field.FormLabel>
-                  {t("auth.signIn.form.password")}
-                </field.FormLabel>
+                <field.FormLabel>{t("auth.signIn.form.password")}</field.FormLabel>
                 <Button
                   asChild
                   className="h-auto p-0 text-muted-foreground text-xs"
@@ -126,21 +124,13 @@ export function SignInForm() {
                     value={field.state.value}
                   />
                   <button
-                    aria-label={
-                      showPassword
-                        ? t("form.password.hide")
-                        : t("form.password.show")
-                    }
+                    aria-label={showPassword ? t("form.password.hide") : t("form.password.show")}
                     className="-translate-y-1/2 absolute top-1/2 right-3 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
                     type="button"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </field.FormControl>

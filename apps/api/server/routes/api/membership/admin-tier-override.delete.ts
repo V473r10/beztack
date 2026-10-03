@@ -30,9 +30,7 @@ export default defineEventHandler(async (event) => {
   const requestedOrganizationId = readQueryString(query.organizationId);
   const organizationId =
     env.SUBSCRIPTION_MODE === "organization"
-      ? (requestedOrganizationId ??
-        auth.session.activeOrganizationId ??
-        undefined)
+      ? (requestedOrganizationId ?? auth.session.activeOrganizationId ?? undefined)
       : undefined;
 
   try {
@@ -45,8 +43,7 @@ export default defineEventHandler(async (event) => {
       appAdminEmails: getAppAdminEmails(),
       organizationId,
       sourceAction: "global-banner",
-      subscriptionMode:
-        env.SUBSCRIPTION_MODE === "organization" ? "organization" : "user",
+      subscriptionMode: env.SUBSCRIPTION_MODE === "organization" ? "organization" : "user",
       userId: auth.user.id,
     });
 
@@ -78,10 +75,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage:
-        error instanceof Error
-          ? error.message
-          : "Failed to clear Admin tier override",
+      statusMessage: error instanceof Error ? error.message : "Failed to clear Admin tier override",
     });
   }
 });

@@ -52,12 +52,10 @@ export type InvoicesResponse = {
 export const subscriptionsKeys = {
   all: ["mp-subscriptions"] as const,
   lists: () => [...subscriptionsKeys.all, "list"] as const,
-  list: (filters: Record<string, unknown>) =>
-    [...subscriptionsKeys.lists(), filters] as const,
+  list: (filters: Record<string, unknown>) => [...subscriptionsKeys.lists(), filters] as const,
   details: () => [...subscriptionsKeys.all, "detail"] as const,
   detail: (id: string) => [...subscriptionsKeys.details(), id] as const,
-  invoices: (id: string) =>
-    [...subscriptionsKeys.detail(id), "invoices"] as const,
+  invoices: (id: string) => [...subscriptionsKeys.detail(id), "invoices"] as const,
 };
 
 // ============================================================================
@@ -128,10 +126,9 @@ export function useSubscription(subscriptionId: string | undefined) {
   return useQuery({
     queryKey: subscriptionsKeys.detail(subscriptionId || ""),
     queryFn: async (): Promise<SubscriptionResponse> => {
-      const response = await fetch(
-        `${endpoints.subscriptions}/${subscriptionId}`,
-        { credentials: "include" }
-      );
+      const response = await fetch(`${endpoints.subscriptions}/${subscriptionId}`, {
+        credentials: "include",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch subscription");
@@ -153,7 +150,7 @@ export function useSubscription(subscriptionId: string | undefined) {
  */
 export function useSubscriptionInvoices(
   subscriptionId: string | undefined,
-  options: { status?: string; limit?: number; enabled?: boolean } = {}
+  options: { status?: string; limit?: number; enabled?: boolean } = {},
 ) {
   const { endpoints } = useMercadoPagoContext();
   const { status, limit, enabled = true } = options;
@@ -195,15 +192,12 @@ export function usePauseSubscription() {
 
   return useMutation({
     mutationFn: async (subscriptionId: string) => {
-      const response = await fetch(
-        `${endpoints.subscriptions}/${subscriptionId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status: "paused" }),
-        }
-      );
+      const response = await fetch(`${endpoints.subscriptions}/${subscriptionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: "paused" }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to pause subscription");
@@ -226,15 +220,12 @@ export function useResumeSubscription() {
 
   return useMutation({
     mutationFn: async (subscriptionId: string) => {
-      const response = await fetch(
-        `${endpoints.subscriptions}/${subscriptionId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status: "authorized" }),
-        }
-      );
+      const response = await fetch(`${endpoints.subscriptions}/${subscriptionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: "authorized" }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to resume subscription");
@@ -257,15 +248,12 @@ export function useCancelSubscription() {
 
   return useMutation({
     mutationFn: async (subscriptionId: string) => {
-      const response = await fetch(
-        `${endpoints.subscriptions}/${subscriptionId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status: "cancelled" }),
-        }
-      );
+      const response = await fetch(`${endpoints.subscriptions}/${subscriptionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: "cancelled" }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to cancel subscription");

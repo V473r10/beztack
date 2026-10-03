@@ -6,10 +6,4 @@ import { OcrRoutes } from "./features/ocr/routes.js";
 import { PaymentsRoutes } from "./features/payments/routes.js";
 import { StateRoutes } from "./features/state/routes.js";
 
-export const routes = [
-  ...AuthRoutes,
-  ...PaymentsRoutes,
-  ...AiRoutes,
-  ...OcrRoutes,
-  ...StateRoutes,
-];
+export const routes = [...AuthRoutes, ...PaymentsRoutes, ...AiRoutes, ...OcrRoutes, ...StateRoutes];

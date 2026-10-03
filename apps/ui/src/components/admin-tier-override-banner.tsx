@@ -17,9 +17,7 @@ function getTargetLabel(options: {
   target: { type: "user" | "organization"; id: string };
 }): string {
   if (options.target.type === "organization") {
-    return (
-      options.activeOrganizationName || `organization ${options.target.id}`
-    );
+    return options.activeOrganizationName || `organization ${options.target.id}`;
   }
 
   return "your user Membership";
@@ -27,12 +25,8 @@ function getTargetLabel(options: {
 
 export function AdminTierOverrideBanner() {
   const { data: activeOrganization } = useActiveOrganization();
-  const {
-    adminTierOverride,
-    clearAdminTierOverride,
-    isAppAdmin,
-    isClearingAdminTierOverride,
-  } = useMembership();
+  const { adminTierOverride, clearAdminTierOverride, isAppAdmin, isClearingAdminTierOverride } =
+    useMembership();
 
   if (!(isAppAdmin && adminTierOverride)) {
     return null;
@@ -56,23 +50,19 @@ export function AdminTierOverrideBanner() {
       <div
         className={cn(
           "pointer-events-auto flex w-full max-w-4xl items-center gap-3 rounded-xl border border-amber-300/70 bg-zinc-950/95 px-3 py-2 text-zinc-50 shadow-2xl shadow-amber-950/20 backdrop-blur-md dark:border-amber-400/30",
-          "sm:w-auto sm:min-w-[min(52rem,calc(100vw-2rem))] sm:px-4"
+          "sm:w-auto sm:min-w-[min(52rem,calc(100vw-2rem))] sm:px-4",
         )}
       >
         <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-300 text-zinc-950">
           <ShieldAlert className="size-4" />
         </div>
         <div className="min-w-0 flex-1 text-sm leading-5">
-          <span className="font-semibold text-amber-200">
-            Admin tier override active:
-          </span>{" "}
+          <span className="font-semibold text-amber-200">Admin tier override active:</span>{" "}
           <span className="font-medium">
             {tierLabel}
             {cadenceLabel} for {targetLabel}.
           </span>{" "}
-          <span className="text-zinc-300">
-            Real subscriptions are unchanged.
-          </span>
+          <span className="text-zinc-300">Real subscriptions are unchanged.</span>
         </div>
         <Button
           className="h-8 shrink-0 border-amber-200/40 bg-zinc-900/60 px-2.5 text-amber-100 hover:bg-amber-200 hover:text-zinc-950 sm:px-3"

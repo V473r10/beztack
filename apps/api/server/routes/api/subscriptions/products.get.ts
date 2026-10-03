@@ -14,9 +14,7 @@ export default defineEventHandler(async () => {
   const providerProducts = await provider.listProducts();
 
   // Enrich all provider products with catalog metadata from DB
-  const products = await Promise.all(
-    providerProducts.map(enrichProductWithCatalog)
-  );
+  const products = await Promise.all(providerProducts.map(enrichProductWithCatalog));
 
   return {
     provider: provider.provider,

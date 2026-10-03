@@ -1,10 +1,7 @@
 import type { SettingsAction } from "../types/settings-action";
 import type { SettingsState } from "../types/settings-state";
 
-export function settingsReducer(
-  state: SettingsState,
-  action: SettingsAction
-): SettingsState {
+export function settingsReducer(state: SettingsState, action: SettingsAction): SettingsState {
   switch (action.type) {
     case "SET_USER_DATA":
       return {

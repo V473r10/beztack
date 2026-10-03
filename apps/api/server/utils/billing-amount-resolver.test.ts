@@ -14,7 +14,7 @@ function mockSubscription(overrides: Partial<Subscription> = {}): Subscription {
 }
 
 function mockProvider(
-  product: { amount: number; currency: string; interval: string } | null = null
+  product: { amount: number; currency: string; interval: string } | null = null,
 ): PaymentProviderAdapter {
   return {
     provider: "mercadopago",
@@ -28,7 +28,7 @@ function mockProvider(
             interval: product.interval,
             intervalCount: 1,
           }
-        : null
+        : null,
     ),
   } as unknown as PaymentProviderAdapter;
 }

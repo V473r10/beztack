@@ -4,6 +4,13 @@
 dist
 tmp
 out-tsc
+*.tsbuildinfo
+# @beztack/ai and @beztack/ocr ship source (exports -> index.ts); their tsconfig
+# emits in place, so a typecheck leaves compiled siblings next to the source.
+packages/ai/index.js
+packages/ai/index.d.ts
+packages/ocr/index.js
+packages/ocr/index.d.ts
 
 # dependencies
 node_modules

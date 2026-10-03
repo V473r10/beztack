@@ -194,9 +194,7 @@ export type WebhookPayload = {
 /**
  * Webhook payload handler function type
  */
-export type WebhookPayloadHandler = (
-  payload: WebhookPayloadData
-) => Promise<void>;
+export type WebhookPayloadHandler = (payload: WebhookPayloadData) => Promise<void>;
 
 /**
  * Generic webhook payload data
@@ -235,10 +233,7 @@ export type PaymentProviderAdapter = {
   listProducts(): Promise<Product[]>;
   getProduct(productId: string): Promise<Product | null>;
   createProduct(options: CreateProductOptions): Promise<Product>;
-  updateProduct(
-    productId: string,
-    options: UpdateProductOptions
-  ): Promise<Product>;
+  updateProduct(productId: string, options: UpdateProductOptions): Promise<Product>;
   deleteProduct(productId: string): Promise<void>;
 
   // Checkout
@@ -249,19 +244,13 @@ export type PaymentProviderAdapter = {
   getSubscription(subscriptionId: string): Promise<Subscription | null>;
   updateSubscription(
     subscriptionId: string,
-    options: UpdateSubscriptionOptions
+    options: UpdateSubscriptionOptions,
   ): Promise<Subscription>;
-  cancelSubscription(
-    subscriptionId: string,
-    immediately?: boolean
-  ): Promise<Subscription>;
+  cancelSubscription(subscriptionId: string, immediately?: boolean): Promise<Subscription>;
   listSubscriptions(options: ListSubscriptionsOptions): Promise<Subscription[]>;
 
   // Customers
-  createCustomer(
-    email: string,
-    metadata?: Record<string, unknown>
-  ): Promise<Customer>;
+  createCustomer(email: string, metadata?: Record<string, unknown>): Promise<Customer>;
   getCustomer(customerId: string): Promise<Customer | null>;
   getCustomerByEmail(email: string): Promise<Customer | null>;
 
@@ -320,6 +309,4 @@ export type ProviderProduct = {
 /**
  * Provider adapter factory function signature
  */
-export type ProviderAdapterFactory = (
-  config: Record<string, string>
-) => PaymentProviderAdapter;
+export type ProviderAdapterFactory = (config: Record<string, string>) => PaymentProviderAdapter;

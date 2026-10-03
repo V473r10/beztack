@@ -9,12 +9,7 @@ import { and, eq } from "drizzle-orm";
 
 export type AdminTierOverrideTargetType = "user" | "organization";
 export type AdminTierOverrideBillingCadence = "monthly" | "yearly";
-export type AdminTierOverrideTier =
-  | "free"
-  | "basic"
-  | "pro"
-  | "ultimate"
-  | "enterprise";
+export type AdminTierOverrideTier = "free" | "basic" | "pro" | "ultimate" | "enterprise";
 
 export type AdminTierOverrideTarget = {
   type: AdminTierOverrideTargetType;
@@ -58,12 +53,8 @@ export type OverrideAuditEntry = {
 };
 
 export type AdminTierOverrideStore = {
-  listActiveVisibleCatalogPlans(
-    provider: string
-  ): Promise<OverrideCatalogPlan[]>;
-  findOverride(
-    target: AdminTierOverrideTarget
-  ): Promise<AdminTierOverrideRecord | null>;
+  listActiveVisibleCatalogPlans(provider: string): Promise<OverrideCatalogPlan[]>;
+  findOverride(target: AdminTierOverrideTarget): Promise<AdminTierOverrideRecord | null>;
   saveOverride(input: {
     target: AdminTierOverrideTarget;
     tier: AdminTierOverrideTier;
@@ -72,14 +63,9 @@ export type AdminTierOverrideStore = {
     sourceAction: string | null;
     now: Date;
   }): Promise<AdminTierOverrideRecord>;
-  deleteOverride(
-    target: AdminTierOverrideTarget
-  ): Promise<AdminTierOverrideRecord | null>;
+  deleteOverride(target: AdminTierOverrideTarget): Promise<AdminTierOverrideRecord | null>;
   createAuditEntry(input: Omit<OverrideAuditEntry, "id">): Promise<void>;
-  isOrganizationMember(
-    userId: string,
-    organizationId: string
-  ): Promise<boolean>;
+  isOrganizationMember(userId: string, organizationId: string): Promise<boolean>;
 };
 
 export type AdminTierOverrideActor = {
@@ -143,17 +129,12 @@ function hasAppAdminRole(role: AdminTierOverrideActor["role"]): boolean {
   return role?.includes("sudo") ?? false;
 }
 
-export function isAppAdminActor(
-  actor: AdminTierOverrideActor,
-  appAdminEmails: string[]
-): boolean {
+export function isAppAdminActor(actor: AdminTierOverrideActor, appAdminEmails: string[]): boolean {
   if (!hasAppAdminRole(actor.role)) {
     return false;
   }
 
-  return normalizeAppAdminEmails(appAdminEmails).includes(
-    actor.email.trim().toLowerCase()
-  );
+  return normalizeAppAdminEmails(appAdminEmails).includes(actor.email.trim().toLowerCase());
 }
 
 function parseTier(value: string): AdminTierOverrideTier {
@@ -162,15 +143,10 @@ function parseTier(value: string): AdminTierOverrideTier {
     return normalized as AdminTierOverrideTier;
   }
 
-  throw new AdminTierOverrideError(
-    HTTP_BAD_REQUEST,
-    `Unsupported Pricing catalog tier: ${value}`
-  );
+  throw new AdminTierOverrideError(HTTP_BAD_REQUEST, `Unsupported Pricing catalog tier: ${value}`);
 }
 
-function resolvePlanCadence(
-  plan: OverrideCatalogPlan
-): AdminTierOverrideBillingCadence | null {
+function resolvePlanCadence(plan: OverrideCatalogPlan): AdminTierOverrideBillingCadence | null {
   if (plan.canonicalTierId === "free") {
     return null;
   }
@@ -191,29 +167,26 @@ function resolvePlanCadence(
 
   throw new AdminTierOverrideError(
     HTTP_BAD_REQUEST,
-    `Unsupported Billing cadence for Pricing catalog plan: ${plan.id}`
+    `Unsupported Billing cadence for Pricing catalog plan: ${plan.id}`,
   );
 }
 
-function findProductPlan(
-  plans: OverrideCatalogPlan[],
-  productId: string
-): OverrideCatalogPlan {
+function findProductPlan(plans: OverrideCatalogPlan[], productId: string): OverrideCatalogPlan {
   const matches = plans.filter(
-    (plan) => plan.id === productId || plan.providerPlanId === productId
+    (plan) => plan.id === productId || plan.providerPlanId === productId,
   );
 
   if (matches.length === 0) {
     throw new AdminTierOverrideError(
       HTTP_BAD_REQUEST,
-      "No active visible Pricing catalog plan matches the selected product"
+      "No active visible Pricing catalog plan matches the selected product",
     );
   }
 
   if (matches.length > 1) {
     throw new AdminTierOverrideError(
       HTTP_CONFLICT,
-      "Ambiguous Pricing catalog product configuration"
+      "Ambiguous Pricing catalog product configuration",
     );
   }
 
@@ -230,10 +203,7 @@ function resolveOverrideSelection(options: {
   billingCadence: AdminTierOverrideBillingCadence | null;
 } {
   if (!(options.productId || options.planId)) {
-    throw new AdminTierOverrideError(
-      HTTP_BAD_REQUEST,
-      "Either productId or planId is required"
-    );
+    throw new AdminTierOverrideError(HTTP_BAD_REQUEST, "Either productId or planId is required");
   }
 
   const selectedByProduct = options.productId
@@ -254,18 +224,14 @@ function resolveOverrideSelection(options: {
   if (options.planId && parseTier(options.planId) !== tier) {
     throw new AdminTierOverrideError(
       HTTP_BAD_REQUEST,
-      "Selected product does not match the requested Pricing catalog tier"
+      "Selected product does not match the requested Pricing catalog tier",
     );
   }
 
-  if (
-    selectedByProduct &&
-    billingCadence &&
-    billingCadence !== options.billingPeriod
-  ) {
+  if (selectedByProduct && billingCadence && billingCadence !== options.billingPeriod) {
     throw new AdminTierOverrideError(
       HTTP_BAD_REQUEST,
-      "Selected product does not match the requested Billing cadence"
+      "Selected product does not match the requested Billing cadence",
     );
   }
 
@@ -280,14 +246,14 @@ function resolveOverrideSelection(options: {
   if (matchingPlans.length === 0) {
     throw new AdminTierOverrideError(
       HTTP_BAD_REQUEST,
-      "No active visible Pricing catalog plan matches the selected tier and Billing cadence"
+      "No active visible Pricing catalog plan matches the selected tier and Billing cadence",
     );
   }
 
   if (matchingPlans.length > 1) {
     throw new AdminTierOverrideError(
       HTTP_CONFLICT,
-      "Duplicate active visible Pricing catalog plans exist for the selected tier and Billing cadence"
+      "Duplicate active visible Pricing catalog plans exist for the selected tier and Billing cadence",
     );
   }
 
@@ -308,16 +274,14 @@ async function resolveTarget(options: {
   if (!organizationId) {
     throw new AdminTierOverrideError(
       HTTP_BAD_REQUEST,
-      "An organization target is required for Admin tier override"
+      "An organization target is required for Admin tier override",
     );
   }
 
-  if (
-    !(await options.store.isOrganizationMember(options.userId, organizationId))
-  ) {
+  if (!(await options.store.isOrganizationMember(options.userId, organizationId))) {
     throw new AdminTierOverrideError(
       HTTP_FORBIDDEN,
-      "Admin tier override requires membership in the target organization"
+      "Admin tier override requires membership in the target organization",
     );
   }
 
@@ -327,21 +291,18 @@ async function resolveTarget(options: {
 function isSameOverride(
   override: AdminTierOverrideRecord,
   tier: AdminTierOverrideTier,
-  billingCadence: AdminTierOverrideBillingCadence | null
+  billingCadence: AdminTierOverrideBillingCadence | null,
 ): boolean {
   return override.tier === tier && override.billingCadence === billingCadence;
 }
 
-function mapOverrideRow(
-  row: typeof adminTierOverride.$inferSelect
-): AdminTierOverrideRecord {
+function mapOverrideRow(row: typeof adminTierOverride.$inferSelect): AdminTierOverrideRecord {
   return {
     id: row.id,
     targetType: row.targetType as AdminTierOverrideTargetType,
     targetId: row.targetId,
     tier: parseTier(row.tier),
-    billingCadence:
-      row.billingCadence as AdminTierOverrideBillingCadence | null,
+    billingCadence: row.billingCadence as AdminTierOverrideBillingCadence | null,
     actorUserId: row.actorUserId,
     sourceAction: row.sourceAction,
     createdAt: row.createdAt,
@@ -368,8 +329,8 @@ export const dbAdminTierOverrideStore: AdminTierOverrideStore = {
         and(
           eq(planTable.provider, provider),
           eq(planTable.visible, true),
-          eq(planTable.status, "active")
-        )
+          eq(planTable.status, "active"),
+        ),
       );
 
     return rows.map((row) => ({
@@ -385,8 +346,8 @@ export const dbAdminTierOverrideStore: AdminTierOverrideStore = {
       .where(
         and(
           eq(adminTierOverride.targetType, target.type),
-          eq(adminTierOverride.targetId, target.id)
-        )
+          eq(adminTierOverride.targetId, target.id),
+        ),
       )
       .limit(1);
 
@@ -428,9 +389,7 @@ export const dbAdminTierOverrideStore: AdminTierOverrideStore = {
       return null;
     }
 
-    await db
-      .delete(adminTierOverride)
-      .where(eq(adminTierOverride.id, existing.id));
+    await db.delete(adminTierOverride).where(eq(adminTierOverride.id, existing.id));
     return existing;
   },
   async createAuditEntry(input) {
@@ -449,12 +408,7 @@ export const dbAdminTierOverrideStore: AdminTierOverrideStore = {
     const [membership] = await db
       .select({ id: memberTable.id })
       .from(memberTable)
-      .where(
-        and(
-          eq(memberTable.userId, userId),
-          eq(memberTable.organizationId, organizationId)
-        )
-      )
+      .where(and(eq(memberTable.userId, userId), eq(memberTable.organizationId, organizationId)))
       .limit(1);
 
     return Boolean(membership);
@@ -462,14 +416,11 @@ export const dbAdminTierOverrideStore: AdminTierOverrideStore = {
 };
 
 export async function applyAdminTierOverride(
-  input: ApplyAdminTierOverrideInput
+  input: ApplyAdminTierOverrideInput,
 ): Promise<ApplyAdminTierOverrideResult> {
   const store = input.store ?? dbAdminTierOverrideStore;
   if (!isAppAdminActor(input.actor, input.appAdminEmails)) {
-    throw new AdminTierOverrideError(
-      HTTP_FORBIDDEN,
-      "App admin access required"
-    );
+    throw new AdminTierOverrideError(HTTP_FORBIDDEN, "App admin access required");
   }
 
   const target = await resolveTarget({
@@ -540,10 +491,7 @@ export async function clearAdminTierOverride(input: {
 }> {
   const store = input.store ?? dbAdminTierOverrideStore;
   if (!isAppAdminActor(input.actor, input.appAdminEmails)) {
-    throw new AdminTierOverrideError(
-      HTTP_FORBIDDEN,
-      "App admin access required"
-    );
+    throw new AdminTierOverrideError(HTTP_FORBIDDEN, "App admin access required");
   }
 
   const target = await resolveTarget({

@@ -9,7 +9,9 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const updateSchema = z.object({
-  canonicalTierId: z.string().nullable().optional(),
+  // canonicalTierId is a NOT NULL column (packages/db schema): accept a value
+  // to change it, but never null — nulling a required column is a type error.
+  canonicalTierId: z.string().optional(),
   displayName: z.string().optional(),
   description: z.string().nullable().optional(),
   features: z.array(z.string()).optional(),
@@ -31,11 +33,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const data = updateSchema.parse(body);
 
-  const [existing] = await db
-    .select()
-    .from(plan)
-    .where(eq(plan.id, planId))
-    .limit(1);
+  const [existing] = await db.select().from(plan).where(eq(plan.id, planId)).limit(1);
 
   if (!existing) {
     throw createError({ statusCode: 404, message: "Plan not found" });
@@ -51,18 +49,13 @@ export default defineEventHandler(async (event) => {
       if (view && view.syncStatus === "out-of-sync") {
         throw createError({
           statusCode: 409,
-          message:
-            "Plan is out-of-sync with provider. Resolve sync conflict before editing.",
+          message: "Plan is out-of-sync with provider. Resolve sync conflict before editing.",
         });
       }
     }
   }
 
-  const [updated] = await db
-    .update(plan)
-    .set(data)
-    .where(eq(plan.id, planId))
-    .returning();
+  const [updated] = await db.update(plan).set(data).where(eq(plan.id, planId)).returning();
 
   return { plan: updated };
 });

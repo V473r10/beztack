@@ -22,10 +22,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * Detect if we're running in development mode (from the monorepo source)
  */
 function isDevMode(): boolean {
-  const monorepoCliPath = resolve(
-    __dirname,
-    "../../../packages/cli/dist/cli.js"
-  );
+  const monorepoCliPath = resolve(__dirname, "../../../packages/cli/dist/cli.js");
   return existsSync(monorepoCliPath);
 }
 

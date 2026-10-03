@@ -2,15 +2,7 @@
 
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import {
-  cancel,
-  intro,
-  isCancel,
-  multiselect,
-  outro,
-  select,
-  spinner,
-} from "@clack/prompts";
+import { cancel, intro, isCancel, multiselect, outro, select, spinner } from "@clack/prompts";
 import pc from "picocolors";
 import type { CreateProjectOptions } from "./create.js";
 import { createProject } from "./create.js";
@@ -70,13 +62,9 @@ function getCommandHelpLines() {
   const lines: string[] = [];
 
   for (const definition of COMMAND_DEFINITIONS) {
-    const aliases = definition.aliases?.length
-      ? ` (${definition.aliases.join(", ")})`
-      : "";
+    const aliases = definition.aliases?.length ? ` (${definition.aliases.join(", ")})` : "";
 
-    lines.push(
-      `  ${definition.name.padEnd(9)}${definition.description}${aliases}`
-    );
+    lines.push(`  ${definition.name.padEnd(9)}${definition.description}${aliases}`);
   }
 
   return lines.join("\n");
@@ -92,11 +80,7 @@ export async function main(args: string[] = []) {
   const optionalModules = modules.filter((m) => !m.required);
 
   if (optionalModules.length === 0) {
-    outro(
-      pc.green(
-        "No optional modules available. All required modules are included."
-      )
-    );
+    outro(pc.green("No optional modules available. All required modules are included."));
     process.exit(0);
   }
 
@@ -104,10 +88,7 @@ export async function main(args: string[] = []) {
   let enabledModuleNames = modules.filter((m) => m.required).map((m) => m.name);
 
   if (options.nonInteractive) {
-    enabledModuleNames = [
-      ...enabledModuleNames,
-      ...(options.selectedModules ?? []),
-    ];
+    enabledModuleNames = [...enabledModuleNames, ...(options.selectedModules ?? [])];
   } else {
     const selected = await multiselect({
       message: "Select the modules you want to include:",
@@ -154,9 +135,7 @@ export async function main(args: string[] = []) {
     }
 
     if (!paymentProvider) {
-      cancel(
-        "Payments module requires --payment-provider in non-interactive mode."
-      );
+      cancel("Payments module requires --payment-provider in non-interactive mode.");
       process.exit(1);
     }
   }
@@ -173,9 +152,7 @@ export async function main(args: string[] = []) {
   } catch (err) {
     s.stop("Failed to configure modules.");
     if (err instanceof Error) {
-      process.stderr.write(
-        `${pc.red("Error:")} ${err.message}\n${pc.dim(err.stack || "")}\n`
-      );
+      process.stderr.write(`${pc.red("Error:")} ${err.message}\n${pc.dim(err.stack || "")}\n`);
     } else {
       process.stderr.write(`${pc.red("Error:")} ${String(err)}\n`);
     }
@@ -246,9 +223,7 @@ ${pc.bold("Examples:")}
 }
 
 function parseModulesList(value: string): string[] {
-  const optionalModuleNames = new Set(
-    modules.filter((m) => !m.required).map((m) => m.name)
-  );
+  const optionalModuleNames = new Set(modules.filter((m) => !m.required).map((m) => m.name));
 
   const parsed = value
     .split(",")
@@ -258,9 +233,9 @@ function parseModulesList(value: string): string[] {
   for (const moduleName of parsed) {
     if (!optionalModuleNames.has(moduleName)) {
       throw new Error(
-        `Unknown optional module "${moduleName}". Valid values: ${[
-          ...optionalModuleNames,
-        ].join(", ")}`
+        `Unknown optional module "${moduleName}". Valid values: ${[...optionalModuleNames].join(
+          ", ",
+        )}`,
       );
     }
   }
@@ -273,9 +248,7 @@ function parsePaymentProvider(value: string): PaymentProvider {
     return value;
   }
 
-  throw new Error(
-    `Invalid payment provider "${value}". Use "polar" or "mercadopago".`
-  );
+  throw new Error(`Invalid payment provider "${value}". Use "polar" or "mercadopago".`);
 }
 
 interface InitCommandOptions {
@@ -412,7 +385,7 @@ function parseCreateCommandOptions(args: string[]): CreateProjectOptions {
 
   if (options.nonInteractive === true && !options.name && !yesMode) {
     throw new Error(
-      'Missing project name for non-interactive create. Use "--name <project-name>" or "--yes".'
+      'Missing project name for non-interactive create. Use "--name <project-name>" or "--yes".',
     );
   }
 

@@ -1,10 +1,7 @@
 import { createError, defineEventHandler, getQuery } from "h3";
 import { env } from "@/env";
 import { isAppAdminActor } from "@/server/utils/admin-tier-override";
-import {
-  getUserMembershipStatus,
-  requireAuth,
-} from "@/server/utils/membership";
+import { getUserMembershipStatus, requireAuth } from "@/server/utils/membership";
 
 function getAppAdminEmails(): string[] {
   return env.APP_ADMIN_EMAILS.split(",")
@@ -30,9 +27,7 @@ export default defineEventHandler(async (event) => {
   // Get organization context from query params or session
   const query = getQuery(event);
   const organizationId =
-    (query.organizationId as string | undefined) ??
-    user.session.activeOrganizationId ??
-    undefined;
+    (query.organizationId as string | undefined) ?? user.session.activeOrganizationId ?? undefined;
 
   try {
     // Get membership status
@@ -42,16 +37,12 @@ export default defineEventHandler(async (event) => {
         id: user.user.id,
         role: getAuthRole(user.user),
       },
-      getAppAdminEmails()
+      getAppAdminEmails(),
     );
-    const membershipStatus = await getUserMembershipStatus(
-      user.user.id,
-      organizationId,
-      {
-        isAppAdmin,
-        includeAdminTierOverride: isAppAdmin,
-      }
-    );
+    const membershipStatus = await getUserMembershipStatus(user.user.id, organizationId, {
+      isAppAdmin,
+      includeAdminTierOverride: isAppAdmin,
+    });
 
     return {
       success: true,

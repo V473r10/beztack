@@ -13,10 +13,7 @@ type ExternalReferenceMetadata = {
   previousSubscriptionId?: string;
 };
 
-function readString(
-  source: Record<string, unknown> | undefined,
-  key: string
-): string | undefined {
+function readString(source: Record<string, unknown> | undefined, key: string): string | undefined {
   const value = source?.[key];
   return typeof value === "string" ? value : undefined;
 }
@@ -25,11 +22,7 @@ function isTruthy(value: unknown): boolean {
   return value === true || value === "true";
 }
 
-function pushStringPart(
-  parts: string[],
-  key: string,
-  value: string | undefined
-): void {
+function pushStringPart(parts: string[], key: string, value: string | undefined): void {
   if (value) {
     parts.push(`${key}=${value}`);
   }
@@ -37,7 +30,7 @@ function pushStringPart(
 
 function buildReferenceParts(
   metadata: Record<string, unknown> | undefined,
-  customerId: string | undefined
+  customerId: string | undefined,
 ): string[] {
   const userId = readString(metadata, "userId") ?? customerId;
   const parts: string[] = [];
@@ -82,7 +75,7 @@ export function encodeExternalReference(options: {
 }
 
 export function decodeExternalReference(
-  rawExternalReference?: string
+  rawExternalReference?: string,
 ): ExternalReferenceMetadata | undefined {
   if (!rawExternalReference) {
     return;

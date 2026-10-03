@@ -5,14 +5,8 @@
  * All provider-specific logic lives in packages/payments/{provider}.
  */
 
-import type {
-  PaymentProviderAdapter,
-  PaymentProviderName,
-} from "@beztack/payments";
-import {
-  createPaymentProvider,
-  getPaymentProvider as getCoreProvider,
-} from "@beztack/payments";
+import type { PaymentProviderAdapter, PaymentProviderName } from "@beztack/payments";
+import { createPaymentProvider, getPaymentProvider as getCoreProvider } from "@beztack/payments";
 import { env } from "@/env";
 
 // Re-export all types from core so existing imports keep working

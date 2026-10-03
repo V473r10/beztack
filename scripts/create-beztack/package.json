@@ -2,23 +2,31 @@
   "name": "create-beztack",
   "version": "0.1.0",
   "description": "Proxy to beztack CLI - Create a new Beztack monorepo project",
-  "type": "module",
-  "license": "MIT",
+  "keywords": [
+    "beztack",
+    "monorepo",
+    "nx",
+    "pnpm",
+    "scaffold",
+    "template"
+  ],
   "homepage": "https://beztack.com",
   "bugs": {
     "url": "https://github.com/v473r10/beztack/issues"
   },
+  "license": "MIT",
+  "author": "Facundo Valerio <oss@facundovalerio.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/v473r10/beztack.git"
   },
-  "author": "Facundo Valerio <oss@facundovalerio.com>",
   "bin": {
     "create-beztack": "./dist/index.js"
   },
   "files": [
     "dist"
   ],
+  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,19 +41,11 @@
     "build": "tsdown && node ./scripts/postbuild.js",
     "dev": "tsdown --watch",
     "start": "pnpm run build && node dist/index.js",
-    "test": "vitest",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "prepare": "pnpm run build",
     "release": "bumpp && npm publish --access public"
   },
-  "keywords": [
-    "beztack",
-    "monorepo",
-    "template",
-    "scaffold",
-    "nx",
-    "pnpm"
-  ],
   "devDependencies": {
     "@types/node": "^22.18.6",
     "bumpp": "^10.1.0",

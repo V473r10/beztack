@@ -1,12 +1,6 @@
 export const FumaDocsIcon = ({ className }: { className?: string }) => {
   return (
-    <svg
-      className={className}
-      fill="none"
-      height="80"
-      viewBox="0 0 180 180"
-      width="80"
-    >
+    <svg className={className} fill="none" height="80" viewBox="0 0 180 180" width="80">
       <circle
         cx="90"
         cy="90"

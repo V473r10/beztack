@@ -137,13 +137,7 @@ export function useDeletePlanMutation() {
 export function useUpdatePlanMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      planId,
-      data,
-    }: {
-      planId: string;
-      data: Record<string, unknown>;
-    }) => {
+    mutationFn: async ({ planId, data }: { planId: string; data: Record<string, unknown> }) => {
       const res = await fetch(`${API_URL}/api/admin/plans/${planId}`, {
         method: "PATCH",
         credentials: "include",

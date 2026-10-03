@@ -1,12 +1,4 @@
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Html,
-  Preview,
-  Text,
-} from "@react-email/components";
+import { Body, Button, Container, Head, Html, Preview, Text } from "@react-email/components";
 
 type OrganizationInvitationEmailProps = {
   invitedByUsername?: string;
@@ -31,19 +23,19 @@ export const OrganizationInvitationEmail = ({
         <Text style={title}>Invitación a {organizationName}</Text>
         <Text style={paragraph}>
           {invitedByUsername}
-          {invitedByEmail ? ` (${invitedByEmail})` : ""} te ha invitado a unirte
-          a <strong>{organizationName}</strong> en beztack.
+          {invitedByEmail ? ` (${invitedByEmail})` : ""} te ha invitado a unirte a{" "}
+          <strong>{organizationName}</strong> en beztack.
         </Text>
         <Text style={paragraph}>
-          Aceptá la invitación para colaborar con tu equipo y acceder a todos
-          los recursos compartidos.
+          Aceptá la invitación para colaborar con tu equipo y acceder a todos los recursos
+          compartidos.
         </Text>
         <Button href={invitationUrl} style={button}>
           Aceptar Invitación
         </Button>
         <Text style={paragraph}>
-          Si no esperabas esta invitación o no conocés al remitente, podés
-          ignorar este email de forma segura.
+          Si no esperabas esta invitación o no conocés al remitente, podés ignorar este email de
+          forma segura.
         </Text>
         <Text style={footer}>
           Este enlace de invitación es único y personal.

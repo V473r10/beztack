@@ -108,6 +108,7 @@ pnpm run db:generate
 ```
 
 This command:
+
 1. Compares the current schema with the database
 2. Generates SQL files in the `drizzle/` folder
 3. Maintains a change history
@@ -153,15 +154,10 @@ import { eq } from "drizzle-orm";
 const users = await db.select().from(user);
 
 // Get a user by ID
-const specificUser = await db
-  .select()
-  .from(user)
-  .where(eq(user.id, "user-123"));
+const specificUser = await db.select().from(user).where(eq(user.id, "user-123"));
 
 // Get with specific fields
-const userEmails = await db
-  .select({ email: user.email, name: user.name })
-  .from(user);
+const userEmails = await db.select({ email: user.email, name: user.name }).from(user);
 ```
 
 #### INSERT
@@ -202,9 +198,7 @@ const updated = await db
 
 ```typescript
 // Delete a user
-await db
-  .delete(user)
-  .where(eq(user.id, "user-123"));
+await db.delete(user).where(eq(user.id, "user-123"));
 ```
 
 ### Queries with JOINs
@@ -233,7 +227,10 @@ import { eq, ne, gt, gte, lt, lte, like, and, or } from "drizzle-orm";
 await db.select().from(user).where(eq(user.email, "john@example.com"));
 
 // Greater/Less than
-await db.select().from(user).where(gt(user.createdAt, new Date("2024-01-01")));
+await db
+  .select()
+  .from(user)
+  .where(gt(user.createdAt, new Date("2024-01-01")));
 
 // LIKE
 await db.select().from(user).where(like(user.name, "%John%"));
@@ -242,12 +239,7 @@ await db.select().from(user).where(like(user.name, "%John%"));
 await db
   .select()
   .from(user)
-  .where(
-    and(
-      eq(user.emailVerified, true),
-      gt(user.createdAt, new Date("2024-01-01"))
-    )
-  );
+  .where(and(eq(user.emailVerified, true), gt(user.createdAt, new Date("2024-01-01"))));
 ```
 
 ## Best Practices

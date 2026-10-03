@@ -1,10 +1,7 @@
 import pc from "picocolors";
 import { readManifest } from "../core/manifest.js";
 import { buildUpdatePlan } from "../core/planner.js";
-import {
-  ensureTemplateRoot,
-  resolveTemplateRoot,
-} from "../core/post-checks.js";
+import { ensureTemplateRoot, resolveTemplateRoot } from "../core/post-checks.js";
 import { writePlanReport } from "../core/report.js";
 import { readTemplateVersion } from "../core/template-version.js";
 
@@ -43,6 +40,6 @@ export async function runPlan(options: PlanOptions): Promise<void> {
       `- Changes: ${plan.changes.length}\n` +
       `- Skipped unchanged template files: ${plan.skippedUnchangedTemplateFiles}\n` +
       `- Conflicts: ${plan.conflicts.length}\n` +
-      `- Report: ${reportPath}\n`
+      `- Report: ${reportPath}\n`,
   );
 }
