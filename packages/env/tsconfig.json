@@ -16,6 +16,7 @@
     "isolatedModules": true,
     "noEmit": false,
     "composite": true,
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "types": ["node"]
   },
   "include": ["src/**/*"],
