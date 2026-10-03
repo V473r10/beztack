@@ -1,0 +1,154 @@
+name: CI
+
+# Adapted from lncd's ci.yml (#38).
+#
+# TEST JOBS RUN PER APP, FROM INSIDE THE APP DIRECTORY
+# `vp test` must be invoked from inside each app so that app's own
+# resolve.alias applies. Run from the repo root instead and the `@/...`
+# imports fail to resolve, producing false failures.
+#
+# NO QUARANTINE
+# Do not add test excludes here. If a test fails, fix the test or the code:
+# an exclude hides a regression from every later PR.
+#
+# TYPECHECK IS BLOCKING
+# `vp check` covers format and lint only -- it is not a type gate.
+# `nx run-many -t typecheck` is, and must stay green.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "11"
+
+jobs:
+  check:
+    name: Format & lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vp check
+
+  test-api:
+    name: Test apps/api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      # postinstall builds env, payments core and the providers (build:packages).
+      - run: pnpm install --frozen-lockfile
+      - name: vp test run
+        working-directory: apps/api
+        run: |
+          pnpm exec vp test run \
+            --reporter=github-actions \
+            --reporter=default
+
+  test-ui:
+    name: Test apps/ui
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: vp test run
+        working-directory: apps/ui
+        run: |
+          pnpm exec vp test run \
+            --reporter=github-actions \
+            --reporter=default
+
+  test-packages:
+    name: Test packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The app suites are covered above.
+      - run: pnpm exec nx run-many -t test --exclude @beztack/api,@beztack/ui
+
+  build:
+    name: Build all projects
+    runs-on: ubuntu-latest
+    # The API env schema (packages/env/src/api.ts) is validated at build time.
+    # These are throwaway values that satisfy the schema -- they are NOT
+    # secrets and must never be reused anywhere real. Keep in sync with
+    # packages/env/src/api.ts.
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      BETTER_AUTH_SECRET: ci-build-only-secret
+      BETTER_AUTH_URL: http://localhost:3000
+      APP_NAME: beztack-ci
+      APP_URL: http://localhost:5173
+      RESEND_FROM_NAME: Beztack CI
+      RESEND_FROM_EMAIL: ci@example.test
+      RESEND_API_KEY: ci-build-only
+      PAYMENTS_SUCCESS_URL: http://localhost:3000/success
+      PAYMENTS_CANCEL_URL: http://localhost:3000/cancel
+      # Polar would demand six product UUIDs; Mercado Pago needs two strings.
+      PAYMENT_PROVIDER: mercadopago
+      MERCADO_PAGO_ACCESS_TOKEN: ci-build-only
+      MERCADO_PAGO_APPLICATION_ID: ci-build-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many -t build
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Without built package outputs, tsc reports TS6305 "output file has not
+      # been built from source file" -- noise that hides the real type errors.
+      - run: pnpm exec nx run-many -t build --exclude @beztack/api,@beztack/ui,docs
+      - run: pnpm exec nx run-many -t typecheck
