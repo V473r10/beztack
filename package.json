@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build": "nx run-many -t build",
-    "build:packages": "pnpm --filter @beztack/env --filter @beztack/payments run build && pnpm --filter @beztack/mercadopago --filter @beztack/payments-polar run build",
+    "build:packages": "pnpm --filter @beztack/env --filter @beztack/payments run build && pnpm --filter @beztack/mercadopago run build && pnpm --filter @beztack/payments-polar run build",
     "postinstall": "pnpm run build:packages",
     "start": "nx run-many -t start",
     "dev": "nx run-many -t dev --parallel=10",
