@@ -1,0 +1,18 @@
+{
+  // Type-check-only projection of ./tsconfig.json.
+  //
+  // Why this file exists: apps/api/tsconfig.json sets "noEmit": true because
+  // Nitro produces the build output and tsc must not emit alongside it. The
+  // @nx/js/typescript plugin cannot run `tsc --build` on a noEmit project, so
+  // it replaced the inferred `typecheck` target with a shell `echo` that exits
+  // 0 -- the gate reported green without ever running a type checker, which hid
+  // real type errors in server routes. apps/api/package.json now runs
+  // `tsc -p tsconfig.typecheck.json` directly.
+  //
+  // Test files are excluded here: they import `vitest` (a dev-only module not
+  // in the API's production dependency graph) and are already covered by the
+  // `vp test` run in CI. Production server code is what this gate protects.
+  "extends": "./tsconfig.json",
+  "include": ["server/**/*.ts", "env.ts", "nitro.config.ts", "drizzle.config.ts", "lib/**/*.ts"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "node_modules", ".nitro", ".output"]
+}

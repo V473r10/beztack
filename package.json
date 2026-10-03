@@ -8,8 +8,11 @@
     "postinstall": "pnpm run build:packages",
     "start": "nx run-many -t start",
     "dev": "nx run-many -t dev --parallel=10",
-    "lint": "nx lint",
-    "test": "nx test",
+    "lint": "vp lint",
+    "fmt": "vp fmt",
+    "check": "vp check",
+    "typecheck": "nx run-many -t typecheck",
+    "test": "nx run-many -t test",
     "db:generate": "pnpm --filter @beztack/db db:generate",
     "db:migrate": "pnpm --filter @beztack/db db:migrate",
     "db:push": "pnpm --filter @beztack/db db:push",
@@ -17,21 +20,13 @@
     "generate-auth-schema": "pnpm --filter @beztack/db generate-auth-schema"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.2",
     "@nx/js": "21.4.1",
     "@swc-node/register": "~1.9.2",
     "@swc/core": "~1.5.29",
     "@swc/helpers": "~0.5.17",
-    "lefthook": "^1.13.6",
-    "lint-staged": "^16.2.7",
     "nx": "21.4.1",
     "tslib": "^2.8.1",
     "typescript": "~5.8.3",
-    "ultracite": "5.3.3"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
-      "pnpm dlx ultracite fix"
-    ]
+    "vite-plus": "1.0.0"
   }
 }
