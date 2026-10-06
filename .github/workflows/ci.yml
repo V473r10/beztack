@@ -112,6 +112,7 @@ jobs:
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
       BETTER_AUTH_SECRET: ci-build-only-secret
       BETTER_AUTH_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:4173
       APP_NAME: beztack-ci
       APP_URL: http://localhost:5173
       RESEND_FROM_NAME: Beztack CI

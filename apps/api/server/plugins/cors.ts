@@ -1,19 +1,15 @@
 import { defineNitroPlugin } from "nitropack/runtime";
+import { env } from "@/env";
+import { resolveAllowedOrigins } from "@/server/utils/cors-origins";
 
 // HTTP status code constants
 const HTTP_NO_CONTENT = 204;
 
-// Allowed origins for CORS
-const ALLOWED_ORIGINS = [
-  "http://localhost:5173",
-  "http://localhost:4173", // Vite preview
-  "https://localhost:5173", // HTTPS local development
-  "https://beztack-ui.vercel.app",
-  "https://beztack-api.vercel.app", // Allow API domain for proxy requests
-  "https://beztack-api.codedicated.com",
-  "https://beztack-ui.codedicated.com",
-  "https://app.beztack.com",
-];
+// Allowed origins for CORS: CORS_ORIGINS plus the origin of APP_URL.
+const ALLOWED_ORIGINS = resolveAllowedOrigins({
+  corsOrigins: env.CORS_ORIGINS,
+  appUrl: env.APP_URL,
+});
 
 /**
  * Get the appropriate origin for CORS headers based on the request origin

@@ -2,6 +2,15 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 const URL_SCHEMA = z.string().url();
+const URL_LIST_SCHEMA = z.string().refine(
+  (value) =>
+    value
+      .split(",")
+      .map((url) => url.trim())
+      .filter(Boolean)
+      .every((url) => URL_SCHEMA.safeParse(url).success),
+  "Must be a comma-separated list of valid URLs",
+);
 const UUID_SCHEMA = z.string().uuid();
 
 const PAYMENT_PROVIDERS = ["polar", "mercadopago"] as const;
@@ -87,6 +96,10 @@ export const env = createEnv({
     // UI URL
     APP_URL: z.string().url(),
 
+    // Extra browser origins allowed by API CORS (comma-separated).
+    // The origin of APP_URL is always allowed.
+    CORS_ORIGINS: URL_LIST_SCHEMA.default(""),
+
     // Node
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
@@ -103,6 +116,22 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 });
+
+/**
+ * Scheduled routes read their own `<NAME>_CRON_SECRET` at request time through
+ * `requireCronSecret`. Each one is optional (unset disables that job with a
+ * 503), but a secret that IS set must be strong enough to guard a public route.
+ */
+const CRON_SECRET_SUFFIX = "_CRON_SECRET";
+const CRON_SECRET_MIN_LENGTH = 32;
+
+for (const [name, value] of Object.entries(process.env)) {
+  if (name.endsWith(CRON_SECRET_SUFFIX) && value && value.length < CRON_SECRET_MIN_LENGTH) {
+    throw new Error(
+      `Environment variable "${name}" must be at least ${CRON_SECRET_MIN_LENGTH} characters`,
+    );
+  }
+}
 
 const activePaymentProvider = env.PAYMENT_PROVIDER;
 const successUrl = env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
