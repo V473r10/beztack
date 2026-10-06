@@ -108,7 +108,8 @@ const BASE_TIERS: BaseTier[] = [
 /**
  * Prices per provider:
  * - Polar: in cents (900 = $9 USD)
- * - MercadoPago: in display currency (45 = 45 UYU)
+ * - MercadoPago: in display units of the project DEFAULT_CURRENCY
+ *   (4500 = 4500 units). Adjust these demo amounts to your currency.
  */
 const POLAR_PRICING: Record<string, { monthly: number; yearly: number }> = {
   free: { monthly: 0, yearly: 0 },
@@ -119,9 +120,9 @@ const POLAR_PRICING: Record<string, { monthly: number; yearly: number }> = {
 
 const MP_PRICING: Record<string, { monthly: number }> = {
   free: { monthly: 0 },
-  basic: { monthly: 4500 }, // 4500/mo UYU
-  pro: { monthly: 8000 }, // 8000/mo UYU
-  ultimate: { monthly: 15_000 }, // 15000/mo UYU
+  basic: { monthly: 4500 },
+  pro: { monthly: 8000 },
+  ultimate: { monthly: 15_000 },
 };
 
 type Interval = "month" | "year";
@@ -132,10 +133,25 @@ type SeedPlan = BaseTier & {
   interval: Interval;
 };
 
+/**
+ * Polar prices in USD (the only currency Polar charges in). Mercado Pago
+ * plans use the project's DEFAULT_CURRENCY; there is no built-in default.
+ */
+function resolveSeedCurrency(isMP: boolean): string {
+  if (!isMP) {
+    return "USD";
+  }
+  const currency = process.env.DEFAULT_CURRENCY?.trim();
+  if (!currency) {
+    throw new Error("DEFAULT_CURRENCY is required to seed Mercado Pago plans");
+  }
+  return currency;
+}
+
 function buildSeedPlans(provider: string): SeedPlan[] {
   const isMP = provider === "mercadopago";
   const pricing = isMP ? MP_PRICING : POLAR_PRICING;
-  const currency = isMP ? "UYU" : "USD";
+  const currency = resolveSeedCurrency(isMP);
   const plans: SeedPlan[] = [];
 
   for (const tier of BASE_TIERS) {

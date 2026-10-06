@@ -1487,7 +1487,8 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
         id: String(payment.id),
         status: payment.status ?? "unknown",
         amount: payment.transaction_amount ?? 0,
-        currency: payment.currency_id ?? "UYU",
+        // The Payment's own currency wins; the project default only fills a gap.
+        currency: payment.currency_id || env.DEFAULT_CURRENCY,
         payerEmail: payment.payer?.email ?? null,
         externalReference: payment.external_reference ?? null,
         subscriptionId: payment.point_of_interaction?.transaction_data?.subscription_id ?? null,

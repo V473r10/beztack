@@ -1,6 +1,6 @@
 import type { Product, Subscription } from "@beztack/payments";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createMercadoPagoAdapter } from "./adapter.js";
+import { createAdapter as createAdapterFromEnv, createMercadoPagoAdapter } from "./adapter.js";
 import { createMercadoPagoClient } from "./server/client.js";
 import type { MPPreapproval, MPPreapprovalPlan } from "./types.js";
 
@@ -9,6 +9,9 @@ vi.mock("./server/client.js", () => ({
 }));
 
 const APPLICATION_ID = "123456789";
+// Deliberately not the fixtures' "UYU": a request carrying it proves the
+// project default was used rather than the resource's own currency.
+const PROJECT_CURRENCY = "EUR";
 const OTHER_APPLICATION_ID = "987654321";
 
 type MercadoPagoClientDouble = {
@@ -62,6 +65,7 @@ function createAdapter() {
     accessToken: "access-token",
     applicationId: APPLICATION_ID,
     successUrl: "https://example.com/success",
+    currency: PROJECT_CURRENCY,
   });
 }
 
@@ -131,8 +135,106 @@ describe("createMercadoPagoAdapter", () => {
       createMercadoPagoAdapter({
         accessToken: "access-token",
         successUrl: "https://example.com/success",
+        currency: PROJECT_CURRENCY,
       }),
     ).toThrow("MERCADO_PAGO_APPLICATION_ID");
+  });
+
+  describe("project currency", () => {
+    const factoryConfig = {
+      MERCADO_PAGO_ACCESS_TOKEN: "access-token",
+      MERCADO_PAGO_APPLICATION_ID: APPLICATION_ID,
+      PAYMENTS_SUCCESS_URL: "https://example.com/success",
+    };
+
+    it("requires the project default currency", () => {
+      expect(() =>
+        createMercadoPagoAdapter({
+          accessToken: "access-token",
+          applicationId: APPLICATION_ID,
+          successUrl: "https://example.com/success",
+          currency: "",
+        }),
+      ).toThrow("DEFAULT_CURRENCY");
+    });
+
+    it("refuses to build from env config without DEFAULT_CURRENCY", () => {
+      expect(() => createAdapterFromEnv(factoryConfig)).toThrow("DEFAULT_CURRENCY");
+    });
+
+    it("uses DEFAULT_CURRENCY from env config when a custom plan has no currency", async () => {
+      client.subscriptions.create.mockResolvedValueOnce(subscription("sub_created"));
+
+      await createAdapterFromEnv({ ...factoryConfig, DEFAULT_CURRENCY: "JPY" }).createSubscription({
+        customerEmail: "payer@example.com",
+        customPlan: {
+          reason: "Custom",
+          amount: 500,
+          currency: "",
+          interval: "month",
+          intervalCount: 1,
+        },
+      });
+
+      expect(client.subscriptions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          auto_recurring: expect.objectContaining({ currency_id: "JPY" }),
+        }),
+      );
+    });
+
+    it("creates a plan in the price's own currency, not the project default", async () => {
+      client.plans.create.mockResolvedValueOnce(plan("plan_created"));
+
+      await createAdapter().createProduct({
+        name: "Pro",
+        type: "plan",
+        price: { amount: 1000, currency: "UYU" },
+        interval: "month",
+        intervalCount: 1,
+      });
+
+      expect(client.plans.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          auto_recurring: expect.objectContaining({ currency_id: "UYU" }),
+        }),
+      );
+    });
+
+    it("creates a plan in the project default when the price carries no currency", async () => {
+      client.plans.create.mockResolvedValueOnce(plan("plan_created"));
+
+      await createAdapter().createProduct({
+        name: "Pro",
+        type: "plan",
+        price: { amount: 1000, currency: "" },
+        interval: "month",
+        intervalCount: 1,
+      });
+
+      expect(client.plans.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          auto_recurring: expect.objectContaining({ currency_id: PROJECT_CURRENCY }),
+        }),
+      );
+    });
+
+    it("checks out in the plan's own currency, not the project default", async () => {
+      client.plans.get.mockResolvedValueOnce(plan("plan_match"));
+      client.subscriptions.create.mockResolvedValueOnce(subscription("sub_created"));
+
+      await createAdapter().createCheckout({
+        productId: "plan_match",
+        customerEmail: "payer@example.com",
+        successUrl: "https://example.com/success",
+      });
+
+      expect(client.subscriptions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          auto_recurring: expect.objectContaining({ currency_id: "UYU" }),
+        }),
+      );
+    });
   });
 
   it("returns only plans from the configured Application and scans later pages", async () => {

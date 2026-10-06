@@ -6,6 +6,7 @@ import { db, plan } from "@beztack/db";
 import type { BillingInterval } from "@beztack/payments";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
+import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAdmin } from "@/server/utils/require-auth";
 
@@ -14,7 +15,8 @@ const createSchema = z.object({
   description: z.string().nullable().optional(),
   canonicalTierId: z.string().default("custom"),
   price: z.number().positive(),
-  currency: z.string().default("USD"),
+  // Omitted -> the project DEFAULT_CURRENCY (no built-in regional default).
+  currency: z.string().min(1).optional(),
   interval: z.string().default("month"),
   intervalCount: z.number().int().positive().default(1),
   features: z.array(z.string()).optional(),
@@ -48,11 +50,13 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  const currency = data.currency ?? env.DEFAULT_CURRENCY;
+
   const remoteProduct = await adapter.createProduct({
     name: data.displayName,
     description: data.description ?? undefined,
     type: "plan",
-    price: { amount: data.price, currency: data.currency },
+    price: { amount: data.price, currency },
     interval: data.interval as BillingInterval,
     intervalCount: data.intervalCount,
   });
@@ -69,7 +73,7 @@ export default defineEventHandler(async (event) => {
       displayName: data.displayName,
       description: data.description ?? null,
       price: String(data.price),
-      currency: data.currency,
+      currency,
       interval: data.interval,
       intervalCount: data.intervalCount,
       features: data.features ?? [],
