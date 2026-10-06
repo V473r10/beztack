@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { calculateProration } from "./proration.js";
 
 const MILLISECONDS_PER_SECOND = 1000;
@@ -43,6 +43,19 @@ function daysFromNow(days: number): Date {
 function daysAgo(days: number): Date {
   return new Date(Date.now() - days * MILLISECONDS_PER_DAY);
 }
+
+// Freeze the clock: the helpers and calculateProration each read Date.now(),
+// and a millisecond between those reads made Math.ceil round 30 days up to 31.
+const FIXED_NOW = new Date("2026-01-15T12:00:00.000Z");
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(FIXED_NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("calculateProration", () => {
   it("calculates proration for mid-cycle upgrade", () => {
