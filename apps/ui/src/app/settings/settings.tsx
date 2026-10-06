@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { UserInvitations } from "@/components/organizations";
 import { ThemeSelector } from "@/components/theme-selector";
 import { PasswordConfirmDialog } from "./components/password-confirm-dialog";
 import { ProfileCard } from "./components/profile-card";
@@ -148,6 +149,9 @@ export function Settings() {
       <h1 className="font-semibold text-2xl">{t("account.settings.title")}</h1>
 
       <ThemeSelector />
+
+      {/* Invitations this user received: every user, whatever their Organization role. */}
+      <UserInvitations />
 
       <ProfileCard
         email={state.profile.email}
