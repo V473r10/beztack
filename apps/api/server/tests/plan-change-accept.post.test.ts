@@ -106,6 +106,7 @@ describe("POST /api/subscriptions/plan-change/accept", () => {
         actor: {
           email: "billing@example.com",
           isAppAdmin: false,
+          isBillingManager: false,
           userId: "user_1",
         },
         membershipTarget: { type: "user", id: "user_1" },

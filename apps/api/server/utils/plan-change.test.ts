@@ -24,8 +24,12 @@ const PERIOD_END = new Date("2026-07-01T00:00:00.000Z");
 const AUTHORIZED_ACTOR = {
   email: "billing@example.com",
   isAppAdmin: false,
+  isBillingManager: false,
   userId: "user_1",
 };
+
+/** An actor that passed the route's Billing manager gate for the organization. */
+const BILLING_MANAGER_ACTOR = { ...AUTHORIZED_ACTOR, isBillingManager: true };
 
 function catalogPlan(overrides: Partial<PlanChangeCatalogPlan> = {}): PlanChangeCatalogPlan {
   return {
@@ -41,7 +45,6 @@ function catalogPlan(overrides: Partial<PlanChangeCatalogPlan> = {}): PlanChange
 }
 
 function createStore(options: {
-  billingManagers?: string[];
   currentSubscription?: PlanChangeCurrentSubscription | null;
   existingPendingPlanChanges?: Array<
     Parameters<PlanChangeStore["savePendingPlanChange"]>[0] & { id: string }
@@ -53,7 +56,6 @@ function createStore(options: {
   membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][];
   pendingPlanChanges: Map<string, Parameters<PlanChangeStore["savePendingPlanChange"]>[0]>;
 } {
-  const billingManagers = new Set(options.billingManagers ?? []);
   const membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][] = [];
   const pendingPlanChanges = new Map<
     string,
@@ -81,9 +83,6 @@ function createStore(options: {
     },
     findPendingPlanChange(subscriptionId) {
       return Promise.resolve(pendingPlanChanges.get(subscriptionId) ?? null);
-    },
-    isBillingManager(input) {
-      return Promise.resolve(billingManagers.has(`${input.organizationId}:${input.actorUserId}`));
     },
     listActiveVisiblePricingCatalogPlans(paymentProvider) {
       return Promise.resolve(
@@ -457,7 +456,6 @@ describe("previewPlanChange", () => {
 
   it("authorizes organization Plan changes for Billing managers", async () => {
     const store = createStore({
-      billingManagers: ["org_1:user_1"],
       currentSubscription: currentSubscription({
         organizationId: "org_1",
         subscriptionOwnerUserId: null,
@@ -474,7 +472,7 @@ describe("previewPlanChange", () => {
     });
 
     const preview = await previewPlanChange({
-      actor: AUTHORIZED_ACTOR,
+      actor: BILLING_MANAGER_ACTOR,
       membershipTarget: ORGANIZATION_MEMBERSHIP_TARGET,
       paymentProvider: PAYMENT_PROVIDER,
       paymentIntegrationId: PAYMENT_INTEGRATION_ID,
@@ -545,6 +543,7 @@ describe("previewPlanChange", () => {
       actor: {
         email: "admin@example.com",
         isAppAdmin: true,
+        isBillingManager: false,
         userId: "admin_1",
       },
       membershipTarget: MEMBERSHIP_TARGET,

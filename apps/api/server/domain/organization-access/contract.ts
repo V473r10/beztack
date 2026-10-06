@@ -8,8 +8,8 @@ import type { Subscription } from "@/lib/payments/types";
  *   allowlist. Either half alone grants nothing.
  * - App admin gives NO Organization role. An App admin who is not a member of
  *   an Organization is refused by every Organization guard. The only
- *   exceptions are billing ones: the Billing manager gate (decided in
- *   `plan-change`) and Subscription ownership below, and Admin tier override.
+ *   exceptions are billing ones: the Billing manager gate
+ *   (`canManageBilling`), Subscription ownership and Admin tier override.
  * - Organization roles rank `member < admin < owner`; Organization admin means
  *   `admin` or higher.
  */
@@ -73,10 +73,20 @@ export interface OrganizationAccess {
   ): Promise<OrganizationMembership>;
 
   /**
-   * Whether the member holds the Organization's billing role. Membership only:
-   * the App admin exception is applied by the Billing manager gate itself.
+   * Billing manager: the member's Organization role ranks at least as high as
+   * the Organization's billing role (default `owner`). Membership only.
    */
   isBillingManager(input: { userId: string; organizationId: string }): Promise<boolean>;
+
+  /**
+   * The Billing manager gate on every billing route: App admin, or Billing
+   * manager of the given Organization. No Organization means no access unless
+   * App admin.
+   */
+  canManageBilling(
+    actor: OrganizationAccessActor,
+    organizationId: string | null | undefined,
+  ): Promise<boolean>;
 
   /** Whether the caller may read or manage this Subscription. */
   ownsSubscription(

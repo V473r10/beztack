@@ -143,6 +143,67 @@ describe("Billing manager membership", () => {
 
     expect(await access.isBillingManager({ userId: ADMIN.id, organizationId: "org_2" })).toBe(true);
   });
+
+  it("admits a higher role than the configured one (owner when the role is admin)", async () => {
+    const access = createOrganizationAccessTestModule({
+      memberships: [
+        { organizationId: "org_1", userId: OWNER.id, role: "owner", billingManagedByRole: "admin" },
+        { organizationId: "org_1", userId: ADMIN.id, role: "admin", billingManagedByRole: "admin" },
+        {
+          organizationId: "org_1",
+          userId: MEMBER.id,
+          role: "member",
+          billingManagedByRole: "admin",
+        },
+      ],
+    });
+
+    expect(await access.isBillingManager({ userId: OWNER.id, organizationId: "org_1" })).toBe(true);
+    expect(await access.isBillingManager({ userId: ADMIN.id, organizationId: "org_1" })).toBe(true);
+    expect(await access.isBillingManager({ userId: MEMBER.id, organizationId: "org_1" })).toBe(
+      false,
+    );
+  });
+
+  it("matches an unknown configured role exactly instead of ranking it", async () => {
+    const access = createOrganizationAccessTestModule({
+      memberships: [
+        {
+          organizationId: "org_1",
+          userId: OWNER.id,
+          role: "owner",
+          billingManagedByRole: "finance",
+        },
+        {
+          organizationId: "org_1",
+          userId: MEMBER.id,
+          role: "member,finance",
+          billingManagedByRole: "finance",
+        },
+      ],
+    });
+
+    expect(await access.isBillingManager({ userId: OWNER.id, organizationId: "org_1" })).toBe(
+      false,
+    );
+    expect(await access.isBillingManager({ userId: MEMBER.id, organizationId: "org_1" })).toBe(
+      true,
+    );
+  });
+});
+
+describe("Billing manager gate (canManageBilling)", () => {
+  it("admits Billing managers and App admins, nobody else", async () => {
+    const access = world();
+
+    expect(await access.canManageBilling(OWNER, "org_1")).toBe(true);
+    expect(await access.canManageBilling(OPERATOR, "org_1")).toBe(true);
+    expect(await access.canManageBilling(OPERATOR, null)).toBe(true);
+    expect(await access.canManageBilling(MEMBER, "org_1")).toBe(false);
+    expect(await access.canManageBilling(ADMIN, "org_1")).toBe(false);
+    expect(await access.canManageBilling(STRANGER, "org_1")).toBe(false);
+    expect(await access.canManageBilling(OWNER, null)).toBe(false);
+  });
 });
 
 describe("Subscription ownership", () => {

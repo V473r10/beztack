@@ -23,6 +23,7 @@ import {
 } from "@/server/utils/plan-change";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { organizationAccess } from "@/server/domain/organization-access";
+import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 const SINGLE_INTERVAL_COUNT = 1;
@@ -325,12 +326,6 @@ function createPlanChangeStore(options: {
 
       return pendingPlanChange ? mapPendingPlanChangeRecord(pendingPlanChange) : null;
     },
-    isBillingManager(input) {
-      return organizationAccess.isBillingManager({
-        userId: input.actorUserId,
-        organizationId: input.organizationId,
-      });
-    },
     async listActiveVisiblePricingCatalogPlans(paymentProvider) {
       const rows = await db
         .select({
@@ -529,10 +524,15 @@ export default defineEventHandler(async (event) => {
     const provider = await ensurePaymentProvider();
     const paymentIntegrationId = resolvePaymentIntegrationId(provider.provider);
     const membershipTarget = resolveMembershipTarget(auth, body);
+    if (membershipTarget.type === "organization") {
+      await requireOrganizationBillingManagerAccess(auth, membershipTarget.id);
+    }
     const acceptance = await acceptPlanChange({
       actor: {
         email: auth.user.email,
         isAppAdmin: organizationAccess.isAppAdmin(auth.user),
+        // The gate above refused everyone else for an organization target.
+        isBillingManager: membershipTarget.type === "organization",
         userId: auth.user.id,
       },
       membershipTarget,

@@ -1,4 +1,9 @@
-import { hasAuthRole, hasOrganizationRoleAtLeast } from "@beztack/auth";
+import {
+  hasAuthRole,
+  hasOrganizationRoleAtLeast,
+  ORGANIZATION_ROLES,
+  type OrganizationRole,
+} from "@beztack/auth";
 import type { Subscription } from "@/lib/payments/types";
 import {
   type OrganizationAccess,
@@ -43,6 +48,23 @@ export function isAppAdminActor(
 
 /** The Organization role that manages billing when none is configured. */
 export const DEFAULT_BILLING_MANAGER_ROLE = "owner";
+
+function isRankedOrganizationRole(role: string): role is OrganizationRole {
+  return (ORGANIZATION_ROLES as readonly string[]).includes(role);
+}
+
+/**
+ * Billing manager rule: the member's Organization role ranks at least as high
+ * as the configured billing role (`member < admin < owner`). A configured role
+ * outside that ranking (a Derived project's own role) is matched exactly, so
+ * an unknown role never admits everyone.
+ */
+export function holdsBillingRole(memberRole: unknown, billingRole: string): boolean {
+  if (isRankedOrganizationRole(billingRole)) {
+    return hasOrganizationRoleAtLeast(memberRole, billingRole);
+  }
+  return hasAuthRole<string>(memberRole, billingRole);
+}
 
 type SubscriptionMetadata = {
   userId?: string;
@@ -132,12 +154,20 @@ export function createOrganizationAccess(
       if (!membership) {
         return false;
       }
-      // Exact role match, as before this module existed. #61 replaces it with
-      // "at least the billing role" on the `member < admin < owner` ranking.
-      return hasAuthRole<string>(
+      return holdsBillingRole(
         membership.role,
         membership.billingManagedByRole ?? DEFAULT_BILLING_MANAGER_ROLE,
       );
+    },
+
+    async canManageBilling(actor, organizationId) {
+      if (isAppAdminActor(actor, appAdminEmails)) {
+        return true;
+      }
+      if (!organizationId) {
+        return false;
+      }
+      return await access.isBillingManager({ userId: actor.id, organizationId });
     },
 
     ownsSubscription(actor, subscription, mode) {

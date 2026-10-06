@@ -9,6 +9,12 @@ export type PlanChangeActor = {
   userId: string;
   email: string;
   isAppAdmin: boolean;
+  /**
+   * Passed the Billing manager gate for the organization Membership target.
+   * Routes set it from `requireOrganizationBillingManagerAccess`; it is
+   * meaningless for a user Membership target.
+   */
+  isBillingManager: boolean;
 };
 
 export type PlanChangeCatalogPlan = {
@@ -51,7 +57,6 @@ export type PlanChangeStore = {
     input: FindCurrentSubscriptionInput,
   ): Promise<PlanChangeCurrentSubscription | null>;
   findPendingPlanChange(subscriptionId: string): Promise<PendingPlanChangeRecord | null>;
-  isBillingManager(input: { actorUserId: string; organizationId: string }): Promise<boolean>;
   listActiveVisiblePricingCatalogPlans(paymentProvider: string): Promise<PlanChangeCatalogPlan[]>;
   moveMembershipToPlan(input: {
     membershipTarget: PlanChangeMembershipTarget;
@@ -429,11 +434,7 @@ async function assertAuthorizedForPlanChange(input: {
     );
   }
 
-  const isBillingManager = await input.store.isBillingManager({
-    actorUserId: input.actor.userId,
-    organizationId: input.membershipTarget.id,
-  });
-  if (isBillingManager) {
+  if (input.actor.isBillingManager) {
     return;
   }
 

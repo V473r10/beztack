@@ -8,7 +8,7 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { organizationAccess } from "@/server/domain/organization-access";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import {
-  assertOrganizationMember,
+  requireOrganizationBillingManagerAccess,
   toOrganizationAccessActor,
 } from "@/server/utils/organization-access";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
@@ -47,8 +47,10 @@ export default defineEventHandler(async (event) => {
       ? (requestedOrganizationId ?? auth.session.activeOrganizationId ?? undefined)
       : undefined;
 
-  if (env.SUBSCRIPTION_MODE === "organization" && requestedOrganizationId) {
-    await assertOrganizationMember(auth, requestedOrganizationId);
+  // The Subscription list is billing data: hidden from members who are not
+  // Billing managers. Without any Organization there is nothing to list.
+  if (env.SUBSCRIPTION_MODE === "organization" && organizationId) {
+    await requireOrganizationBillingManagerAccess(auth, organizationId);
   }
   const scopedAuth = withSubscriptionOrganization(auth, organizationId);
 
