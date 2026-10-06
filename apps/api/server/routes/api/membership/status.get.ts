@@ -1,7 +1,6 @@
 import { createError, defineEventHandler, getQuery } from "h3";
-import { isAppAdminActor } from "@/server/utils/app-admin";
 import { getUserMembershipStatus, requireAuth } from "@/server/utils/membership";
-import { getAppAdminEmails } from "@/server/utils/app-admin-emails";
+import { organizationAccess } from "@/server/domain/organization-access";
 
 export default defineEventHandler(async (event) => {
   // Require authentication
@@ -14,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Get membership status
-    const isAppAdmin = isAppAdminActor(user.user, getAppAdminEmails());
+    const isAppAdmin = organizationAccess.isAppAdmin(user.user);
     const membershipStatus = await getUserMembershipStatus(user.user.id, organizationId, {
       isAppAdmin,
       includeAdminTierOverride: isAppAdmin,

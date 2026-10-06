@@ -1,7 +1,6 @@
 import { createError, type EventHandler, type H3Event } from "h3";
 import { auth } from "./auth";
-import { isAppAdminActor } from "./app-admin";
-import { getAppAdminEmails } from "./app-admin-emails";
+import { organizationAccess } from "../domain/organization-access";
 
 // =============================================================================
 // Types
@@ -15,7 +14,7 @@ type AuthenticatedSession = NonNullable<Session>;
 // =============================================================================
 
 function isAppAdmin(session: AuthenticatedSession): boolean {
-  return isAppAdminActor(session.user, getAppAdminEmails());
+  return organizationAccess.isAppAdmin(session.user);
 }
 
 /**

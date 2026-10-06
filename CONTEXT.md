@@ -130,6 +130,32 @@ _Avoid_: promotion, upstream copy, generalization by copy-paste
 The PR label on a Derived project change that explicitly opts the change into Promotion consideration.
 _Avoid_: branch name, commit prefix, issue label
 
+### Access
+
+**App role**:
+A user's role across the whole application, independent of any organization. The default App roles are `sudo` and `user`; a Derived project may add its own.
+_Avoid_: global role, user type
+
+**App admin**:
+A platform operator: a user who holds the `sudo` App role AND whose email is on the operator allowlist in environment configuration. Either condition alone grants nothing. An App admin has access to internal tools (like the plan-sync UI), passes the Billing manager rule, may manage any Subscription and may use an Admin tier override, but holds no Organization role: outside billing, an App admin acts on an organization only as a member of it.
+_Avoid_: sudo (that is the App role, not the person), superuser, system admin
+
+**Organization role**:
+A member's role within one organization, ranked `member < admin < owner`. A requirement for a role is met by that role or any higher one. A Derived project may add its own Organization roles.
+_Avoid_: team role, permission level
+
+**Organization admin**:
+A member whose Organization role is `admin` or higher in that organization. Organization admins manage the organization's members, invitations and settings.
+_Avoid_: App admin, org owner (owner is one Organization role, not the only admin)
+
+**Active organization**:
+The organization a signed-in user is currently acting in, chosen per session. Organization-scoped actions apply to the Active organization only if the user is a member of it.
+_Avoid_: current org, selected tenant
+
+**Invitation**:
+An offer for a person, addressed by email, to join an organization with a given Organization role. An Invitation is pending until it is accepted, rejected, canceled or it expires; accepting it creates the membership.
+_Avoid_: invite link, join request
+
 ### Subscription Billing
 
 **Plan change**:
@@ -207,10 +233,6 @@ _Avoid_: webhook handler, subscription sync
 **Membership**:
 The effective access state derived from a Subscription, including tier, active status, benefits, limits, and organization scope.
 _Avoid_: access level, entitlement state
-
-**App admin**:
-A system-level superuser (typically a developer or staff member) identified via environment configuration rather than standard database roles. App admins have global access to internal tools (like the plan-sync UI) and can override Subscription owner and Billing manager rules.
-_Avoid_: sudo, superuser, system admin
 
 **Admin tier override**:
 A Membership state selected by an App admin to exercise a Subscription tier without a customer Subscription or Payment. An Admin tier override applies to the same Membership target as a normal Subscription, takes precedence over real Subscription-derived Membership while present, and leaves real Subscriptions untouched.

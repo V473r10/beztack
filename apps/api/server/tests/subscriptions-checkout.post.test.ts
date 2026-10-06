@@ -40,9 +40,9 @@ vi.mock("@/lib/payments/catalog-mp", () => ({
 vi.mock("@/server/utils/admin-tier-override", () => ({
   applyAdminTierOverride: mocks.applyAdminTierOverride,
 }));
-vi.mock("@/server/utils/app-admin", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/server/utils/app-admin")>()),
-  isAppAdminActor: mocks.isAppAdminActor,
+vi.mock("@/server/domain/organization-access", () => ({
+  getAppAdminEmails: () => ["admin@example.com"],
+  organizationAccess: { isAppAdmin: mocks.isAppAdminActor },
 }));
 vi.mock("@/server/utils/billing-amount-resolver", () => ({
   estimatePeriodEnd: vi.fn(),
@@ -56,9 +56,6 @@ vi.mock("@/server/utils/membership", () => ({
 }));
 vi.mock("@/server/utils/subscription-discovery", () => ({
   discoverSubscriptionsFromDb: vi.fn(),
-}));
-vi.mock("@/server/utils/subscription-ownership", () => ({
-  isSubscriptionOwnedByUser: vi.fn(),
 }));
 describe("POST /api/subscriptions/checkout", () => {
   it("applies an Admin tier override before initializing the payment provider", async () => {

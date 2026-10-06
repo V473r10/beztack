@@ -64,9 +64,6 @@ vi.mock("@/server/utils/plan-change", () => ({
 vi.mock("@/server/utils/subscription-discovery", () => ({
   discoverSubscriptionsFromDb: vi.fn(),
 }));
-vi.mock("@/server/utils/subscription-ownership", () => ({
-  isSubscriptionOwnedByUser: vi.fn(),
-}));
 
 describe("POST /api/subscriptions/plan-change/preview", () => {
   beforeEach(() => {

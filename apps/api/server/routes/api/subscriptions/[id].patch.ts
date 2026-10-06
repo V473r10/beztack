@@ -7,7 +7,8 @@ import { z } from "zod";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
-import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
+import { organizationAccess } from "@/server/domain/organization-access";
+import { toOrganizationAccessActor } from "@/server/utils/organization-access";
 
 const updateSchema = z.object({
   productId: z.string().optional(),
@@ -37,7 +38,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (!isSubscriptionOwnedByUser(currentSubscription, auth, env.SUBSCRIPTION_MODE)) {
+    if (
+      !organizationAccess.ownsSubscription(
+        toOrganizationAccessActor(auth),
+        currentSubscription,
+        env.SUBSCRIPTION_MODE,
+      )
+    ) {
       throw createError({
         statusCode: 403,
         message: "Access denied",
