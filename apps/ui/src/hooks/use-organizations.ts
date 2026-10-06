@@ -1,5 +1,6 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { requestJson } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
 import type {
   CreateOrganizationData,
@@ -13,16 +14,17 @@ import type {
   UpdateMemberRoleData,
   UpdateOrganizationData,
 } from "@/lib/organization-types";
+import { queryKeys } from "@/lib/query-keys";
 
 function invalidateOrganizationContext(queryClient: QueryClient): void {
-  queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
-  queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+  queryClient.invalidateQueries({ queryKey: queryKeys.organizations.active() });
+  queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
 }
 
 // Organization queries
 export function useOrganizations() {
   return useQuery({
-    queryKey: ["organizations"],
+    queryKey: queryKeys.organizations.list(),
     queryFn: async () => {
       const response = await authClient.organization.list();
       if (!response.data) {
@@ -35,7 +37,7 @@ export function useOrganizations() {
 
 export function useActiveOrganization() {
   return useQuery({
-    queryKey: ["activeOrganization"],
+    queryKey: queryKeys.organizations.active(),
     queryFn: async () => {
       const response = await authClient.organization.getFullOrganization();
       return response.data as Organization | null;
@@ -45,7 +47,7 @@ export function useActiveOrganization() {
 
 export function useOrganizationMembers(organizationId?: string) {
   return useQuery({
-    queryKey: ["organizationMembers", organizationId],
+    queryKey: queryKeys.organizations.members(organizationId),
     queryFn: async () => {
       if (!organizationId) {
         return [];
@@ -70,7 +72,7 @@ export function useOrganizationMembers(organizationId?: string) {
 
 export function useOrganizationInvitations(organizationId?: string) {
   return useQuery({
-    queryKey: ["organizationInvitations", organizationId],
+    queryKey: queryKeys.organizations.invitations(organizationId),
     queryFn: async () => {
       if (!organizationId) {
         return [];
@@ -97,31 +99,17 @@ export function useOrganizationInvitations(organizationId?: string) {
 
 export function useUserInvitations() {
   return useQuery({
-    queryKey: ["userInvitations"],
+    queryKey: queryKeys.organizations.userInvitations(),
     queryFn: async () => {
-      // Use custom endpoint to get invitations for the current user
-      const { env } = await import("@/env");
-      const baseURL = env.VITE_API_URL;
-      const response = await fetch(`${baseURL}/api/invitations/me`, {
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user invitations");
-      }
-
-      const data = await response.json();
-      return data as OrganizationInvitation[];
+      // Custom endpoint: invitations addressed to the current user
+      return requestJson<OrganizationInvitation[]>("/api/invitations/me");
     },
   });
 }
 
 export function useTeams(organizationId?: string) {
   return useQuery({
-    queryKey: ["teams", organizationId],
+    queryKey: queryKeys.organizations.teams(organizationId),
     queryFn: async () => {
       if (!organizationId) {
         return [];
@@ -142,7 +130,7 @@ export function useTeams(organizationId?: string) {
 
 export function useTeamMembers(teamId?: string) {
   return useQuery({
-    queryKey: ["teamMembers", teamId],
+    queryKey: queryKeys.organizations.teamMembers(teamId),
     queryFn: async () => {
       if (!teamId) {
         return [];
@@ -182,7 +170,7 @@ export function useCreateOrganization() {
       } as Organization;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       invalidateOrganizationContext(queryClient);
       toast.success(`Organization "${data.name}" created successfully`);
     },
@@ -217,7 +205,7 @@ export function useUpdateOrganization() {
       } as Organization;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       invalidateOrganizationContext(queryClient);
       toast.success("Organization updated successfully");
     },
@@ -238,7 +226,7 @@ export function useDeleteOrganization() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       invalidateOrganizationContext(queryClient);
       toast.success("Organization deleted successfully");
     },
@@ -290,7 +278,7 @@ export function useInviteMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["organizationInvitations", variables.organizationId],
+        queryKey: queryKeys.organizations.invitations(variables.organizationId),
       });
       toast.success(`Invitation sent to ${variables.data.email}`);
     },
@@ -322,7 +310,7 @@ export function useUpdateMemberRole() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["organizationMembers", variables.organizationId],
+        queryKey: queryKeys.organizations.members(variables.organizationId),
       });
       toast.success("Member role updated successfully");
     },
@@ -345,7 +333,7 @@ export function useRemoveMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["organizationMembers", variables.organizationId],
+        queryKey: queryKeys.organizations.members(variables.organizationId),
       });
       toast.success("Member removed successfully");
     },
@@ -366,7 +354,7 @@ export function useLeaveOrganization() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       invalidateOrganizationContext(queryClient);
       toast.success("Left organization successfully");
     },
@@ -388,8 +376,8 @@ export function useAcceptInvitation() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userInvitations"] });
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.userInvitations() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       toast.success("Invitation accepted successfully");
     },
     onError: (error) => {
@@ -409,7 +397,7 @@ export function useRejectInvitation() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userInvitations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.userInvitations() });
       toast.success("Invitation rejected");
     },
     onError: (error) => {
@@ -428,9 +416,9 @@ export function useCancelInvitation() {
       });
       return response.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["organizationInvitations", variables.invitationId],
+        queryKey: queryKeys.organizations.allInvitations(),
       });
       toast.success("Invitation cancelled");
     },
@@ -456,7 +444,7 @@ export function useCreateTeam() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["teams", data.id],
+        queryKey: queryKeys.organizations.teams(data.id),
       });
       toast.success(`Team "${data.name}" created successfully`);
     },
@@ -478,10 +466,10 @@ export function useDeleteTeam() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["teams", variables.teamId],
+        queryKey: queryKeys.organizations.teams(variables.teamId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["teamMembers", variables.teamId],
+        queryKey: queryKeys.organizations.teamMembers(variables.teamId),
       });
       toast.success("Team deleted successfully");
     },
@@ -504,7 +492,7 @@ export function useAddTeamMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["teamMembers", variables.teamId],
+        queryKey: queryKeys.organizations.teamMembers(variables.teamId),
       });
       toast.success("Member added to team successfully");
     },
@@ -527,7 +515,7 @@ export function useRemoveTeamMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["teamMembers", variables.teamId],
+        queryKey: queryKeys.organizations.teamMembers(variables.teamId),
       });
       toast.success("Member removed from team successfully");
     },

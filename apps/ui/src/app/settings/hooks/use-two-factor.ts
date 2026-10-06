@@ -9,6 +9,7 @@ import {
   isTotpCodeError,
 } from "@/lib/auth-error-messages";
 import type { SettingsAction } from "../types/settings-action";
+import { queryKeys } from "@/lib/query-keys";
 
 type TwoFactorEnableSuccessData = {
   totpURI: string;
@@ -120,7 +121,7 @@ export function useTotpVerification(dispatch: React.Dispatch<SettingsAction>, t:
       toast.success(t("notifications.twoFactor.verifySuccess"));
       dispatch({ type: "SET_2FA_ENABLED", enabled: true });
       dispatch({ type: "HIDE_TOTP_VERIFICATION" });
-      queryClient.invalidateQueries({ queryKey: ["user-session"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userSession.all() });
     },
     onError: (error: AuthError) => {
       const errorMessage = getAuthErrorMessage(

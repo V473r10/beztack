@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { env } from "@/env";
+import { redirectToExternalUrl } from "@/lib/browser-navigation";
 
 type SubscriptionFormProps = {
   planId?: string;
@@ -96,11 +97,11 @@ const SubscriptionForm = ({
 
       if (data.mode === "checkout") {
         onSuccess?.(data.plan.id, data.checkoutUrl);
-        window.location.href = data.checkoutUrl;
+        redirectToExternalUrl(data.checkoutUrl);
       } else {
         onSuccess?.(data.subscription.id, data.subscription.initPoint || "");
         if (data.subscription.initPoint) {
-          window.location.href = data.subscription.initPoint;
+          redirectToExternalUrl(data.subscription.initPoint);
         }
       }
     } catch (error) {

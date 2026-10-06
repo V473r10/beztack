@@ -3,9 +3,8 @@
  * Used primarily for the subscription welcome page after checkout redirect
  */
 import { useQuery } from "@tanstack/react-query";
-import { env } from "@/env";
-
-const API_URL = env.VITE_API_URL;
+import { ApiError, requestJson } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 // Time constants
 const SECONDS_PER_MINUTE = 60;
@@ -139,24 +138,21 @@ function transformSubscription(raw: MPSubscriptionResponse): SubscriptionDetails
  * Fetch subscription details by preapproval_id
  */
 async function fetchSubscriptionDetails(preapprovalId: string): Promise<SubscriptionDetails> {
-  const response = await fetch(
-    `${API_URL}/api/payments/mercado-pago/subscriptions/${preapprovalId}`,
-    {
-      credentials: "include",
-    },
-  );
-
-  if (!response.ok) {
-    if (response.status === HTTP_NOT_FOUND) {
+  let data: MPSubscriptionResponse;
+  try {
+    data = await requestJson<MPSubscriptionResponse>(
+      `/api/payments/mercado-pago/subscriptions/${preapprovalId}`,
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.statusCode === HTTP_NOT_FOUND) {
       throw new Error("SUBSCRIPTION_NOT_FOUND");
     }
-    if (response.status === HTTP_FORBIDDEN) {
+    if (error instanceof ApiError && error.statusCode === HTTP_FORBIDDEN) {
       throw new Error("SUBSCRIPTION_ACCESS_DENIED");
     }
     throw new Error("SUBSCRIPTION_FETCH_ERROR");
   }
 
-  const data: MPSubscriptionResponse = await response.json();
   return transformSubscription(data);
 }
 
@@ -177,7 +173,7 @@ async function fetchSubscriptionDetails(preapprovalId: string): Promise<Subscrip
  */
 export function useSubscriptionDetails(preapprovalId: string | null) {
   return useQuery({
-    queryKey: ["subscription-details", preapprovalId],
+    queryKey: queryKeys.subscriptions.details(preapprovalId),
     queryFn: () => {
       if (!preapprovalId) {
         throw new Error("SUBSCRIPTION_ID_REQUIRED");

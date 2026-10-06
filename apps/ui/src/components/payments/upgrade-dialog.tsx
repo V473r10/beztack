@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMembership } from "@/contexts/membership-context";
-import { env } from "@/env";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { estimateProration, type ProrationEstimate } from "@/lib/proration";
 import { cn } from "@/lib/utils";
@@ -20,6 +19,8 @@ import type { MembershipTier } from "@/types/membership";
 import type { PricingTier } from "@/types/pricing";
 import { MembershipBadge } from "./membership-badge";
 import { formatCurrency, PricingCard } from "./pricing-card";
+import { requestJson } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 // Constants
 const MIN_TIERS_FOR_THREE_COLUMN = 3;
@@ -133,7 +134,7 @@ export function UpgradeDialog({
   const [hoveredTierId, setHoveredTierId] = useState<string>();
 
   const { data: allTiersRaw = [] } = useQuery<PricingTier[]>({
-    queryKey: ["subscriptions", "products", "tiers"],
+    queryKey: queryKeys.subscriptions.productTiers(),
     queryFn: usePricingTiers,
   });
 
@@ -142,24 +143,22 @@ export function UpgradeDialog({
   const previewChangeType = previewTargetId ? getPlanChangeType(previewTargetId) : "same";
 
   const { data: serverPreview, isLoading: isPreviewLoading } = useQuery<PlanChangePreviewResponse>({
-    queryKey: ["proration-preview", previewTargetId, billingPeriod],
-    queryFn: async () => {
-      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/plan-change/preview`, {
+    queryKey: queryKeys.subscriptions.planChangePreview(
+      activeSubscription?.id,
+      previewTargetId,
+      billingPeriod,
+    ),
+    queryFn: () =>
+      requestJson<PlanChangePreviewResponse>("/api/subscriptions/plan-change/preview", {
         body: JSON.stringify({
           targetBillingCadence: billingPeriod,
           targetTierId: previewTargetId,
         }),
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         method: "POST",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch plan change preview");
-      }
-      return response.json() as Promise<PlanChangePreviewResponse>;
-    },
+      }),
     enabled: !!activeSubscription && !!previewTargetId,
     staleTime: 30_000,
   });

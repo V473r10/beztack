@@ -2,6 +2,7 @@ import { IconClock, IconUserCheck, IconUsers, IconUserX } from "@tabler/icons-re
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
+import { queryKeys } from "@/lib/query-keys";
 
 type AdminStats = {
   totalUsers: number;
@@ -48,7 +49,7 @@ export function AdminStats() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["admin", "stats"],
+    queryKey: queryKeys.admin.stats(),
     queryFn: fetchAdminStats,
     refetchInterval: 30_000, // Refetch every 30 seconds
   });

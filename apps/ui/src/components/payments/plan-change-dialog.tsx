@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
 import type { PricingTier } from "@/types/pricing";
 import { formatCurrency } from "./pricing-card";
+import { queryKeys } from "@/lib/query-keys";
 
 const MAX_FEATURES_TO_SHOW = 4;
 
@@ -148,7 +149,7 @@ export function PlanChangeDialog({
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
 
   const { data: allTiers = [] } = useQuery<PricingTier[]>({
-    queryKey: ["subscriptions", "products", "tiers"],
+    queryKey: queryKeys.subscriptions.productTiers(),
     queryFn: usePricingTiers,
   });
 

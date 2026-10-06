@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import type { AdminUser } from "@/lib/admin-types";
 import { formatDate, formatRelativeTime, getUserRoles, getUserStatus } from "@/lib/admin-utils";
 import { authClient } from "@/lib/auth-client";
+import { queryKeys } from "@/lib/query-keys";
 
 // Constants
 const SESSION_ID_PREVIEW_LENGTH = 8;
@@ -30,7 +31,7 @@ export function UserDetails({ user, onEdit }: UserDetailsProps) {
 
   // Fetch user sessions
   const { data: sessions, refetch: refetchSessions } = useQuery({
-    queryKey: ["admin", "user", user.id, "sessions"],
+    queryKey: queryKeys.admin.userSessions(user.id),
     queryFn: async () => {
       const response = await authClient.admin.listUserSessions({
         userId: user.id,

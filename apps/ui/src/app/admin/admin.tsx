@@ -7,6 +7,7 @@ import { formatRelativeTime } from "@/lib/admin-utils";
 import { authClient } from "@/lib/auth-client";
 import { AdminStats } from "./components/analytics/admin-stats";
 import { AdminHeader } from "./components/shared/admin-header";
+import { queryKeys } from "@/lib/query-keys";
 
 // Mock function for recent activity - replace with actual admin API call
 async function fetchRecentActivity() {
@@ -36,7 +37,7 @@ async function fetchRecentActivity() {
 
 export default function AdminDashboard() {
   const { data: recentActivity, isLoading } = useQuery({
-    queryKey: ["admin", "recent-activity"],
+    queryKey: queryKeys.admin.recentActivity(),
     queryFn: fetchRecentActivity,
   });
 
