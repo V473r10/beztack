@@ -37,6 +37,7 @@ let initialized = false;
 function getEnvConfig(): Record<string, string> {
   return {
     // Shared
+    DEFAULT_CURRENCY: env.DEFAULT_CURRENCY,
     PAYMENTS_SUCCESS_URL: env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL,
     PAYMENTS_CANCEL_URL: env.PAYMENTS_CANCEL_URL || env.POLAR_CANCEL_URL,
     // Polar

@@ -124,6 +124,11 @@ jobs:
       PAYMENT_PROVIDER: mercadopago
       MERCADO_PAGO_ACCESS_TOKEN: ci-build-only
       MERCADO_PAGO_APPLICATION_ID: ci-build-only
+      # Project regional defaults have no code default (#52); any valid pair works.
+      DEFAULT_CURRENCY: USD
+      DEFAULT_LOCALE: en-US
+      VITE_DEFAULT_CURRENCY: USD
+      VITE_DEFAULT_LOCALE: en-US
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

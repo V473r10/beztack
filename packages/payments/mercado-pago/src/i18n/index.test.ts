@@ -174,6 +174,20 @@ describe("i18n", () => {
       expect(result).toContain("250");
     });
 
+    it("formats in the caller's own locale instead of remapping it", () => {
+      expect(formatPriceLocalized(1234.5, "EUR", "de-DE").replace(/\u00a0/g, " ")).toBe(
+        "1.234,50 €",
+      );
+      expect(formatPriceLocalized(1234.5, "BRL", "pt-BR").replace(/\u00a0/g, " ")).toBe(
+        "R$ 1.234,50",
+      );
+    });
+
+    it("uses the decimals Intl gives for the currency", () => {
+      expect(formatPriceLocalized(1500, "JPY", "en-US")).toBe("¥1,500");
+      expect(formatPriceLocalized(1.5, "KWD", "en-US").replace(/\u00a0/g, " ")).toBe("KWD 1.500");
+    });
+
     it("handles integer amounts without decimals", () => {
       const result = formatPriceLocalized(PRICE_INTEGER, "USD", "en");
       expect(result).toContain("100");

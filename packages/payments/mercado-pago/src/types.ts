@@ -583,13 +583,20 @@ export type ProcessPaymentResponse = {
 // Utility Functions
 // ============================================================================
 
-export function formatPlanPrice(amount: number | string, currencyId: string): string {
+/**
+ * Format a plan price in `locale`, with the decimals `Intl` gives for the
+ * currency. The caller supplies the locale (the project's DEFAULT_LOCALE);
+ * there is no built-in regional default.
+ */
+export function formatPlanPrice(
+  amount: number | string,
+  currencyId: string,
+  locale: string,
+): string {
   const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
-  return new Intl.NumberFormat("es-UY", {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currencyId,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
   }).format(numAmount);
 }
 

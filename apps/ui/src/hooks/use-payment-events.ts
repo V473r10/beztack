@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { env } from "@/env";
+import { formatPrice } from "@/lib/format";
 
 // =============================================================================
 // Types
@@ -93,10 +94,7 @@ function formatAmount(
   if (Number.isNaN(num)) {
     return "";
   }
-  return new Intl.NumberFormat("es-UY", {
-    style: "currency",
-    currency: currency || "UYU",
-  }).format(num);
+  return formatPrice(num, currency);
 }
 
 // =============================================================================

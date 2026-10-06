@@ -2,7 +2,6 @@ import {
   CardForm,
   CheckoutButton,
   formatFrequency,
-  formatPlanPrice,
   PaymentBrick,
   type Plan,
 } from "@beztack/mercadopago/react";
@@ -33,6 +32,8 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { env } from "@/env";
+import { formatPrice } from "@/lib/format";
 
 type PaymentResult = {
   id: number;
@@ -180,7 +181,7 @@ export default function MercadoPagoDemo() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="amount">Monto (UYU)</Label>
+                    <Label htmlFor="amount">Monto ({env.VITE_DEFAULT_CURRENCY})</Label>
                     <Input
                       id="amount"
                       min={1}
@@ -349,7 +350,7 @@ export default function MercadoPagoDemo() {
                               payment_method_id: "visa",
                               payment_type_id: "credit_card",
                               transaction_amount: customAmount,
-                              currency_id: "UYU",
+                              currency_id: env.VITE_DEFAULT_CURRENCY,
                               payer: {
                                 id: 123_456,
                                 email: "user@email.com",
@@ -448,7 +449,7 @@ import {
                       Plan seleccionado:{" "}
                       <strong>
                         {selectedPlan.reason} -{" "}
-                        {formatPlanPrice(selectedPlan.transactionAmount, selectedPlan.currencyId)}{" "}
+                        {formatPrice(selectedPlan.transactionAmount, selectedPlan.currencyId)}{" "}
                         {formatFrequency(selectedPlan.frequency, selectedPlan.frequencyType)}
                       </strong>
                     </CardDescription>

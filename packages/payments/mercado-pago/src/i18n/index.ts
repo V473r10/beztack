@@ -199,14 +199,16 @@ export function formatFrequencyLocalized(
  *
  * @param amount - Price amount (number or string)
  * @param currencyId - ISO currency code (e.g., "UYU", "USD", "ARS")
- * @param locale - Locale string (default: "es-UY")
- * @returns Formatted price string with currency symbol
+ * @param locale - Locale passed straight to Intl; pass the project's
+ *   DEFAULT_LOCALE (the fallback is only the translation-bundle default)
+ * @returns Formatted price string with currency symbol; decimals come from
+ *   Intl for the currency
  *
  * @example
  * ```typescript
- * formatPriceLocalized(1500, "UYU", "es-UY")  // "$ 1.500"
+ * formatPriceLocalized(1500, "UYU", "es-UY")  // "$ 1.500,00"
  * formatPriceLocalized(99.99, "USD", "en-US") // "$99.99"
- * formatPriceLocalized("250.50", "UYU", "es") // "$ 250,50"
+ * formatPriceLocalized(1500, "JPY", "en-US")  // "¥1,500"
  * ```
  */
 export function formatPriceLocalized(
@@ -216,14 +218,11 @@ export function formatPriceLocalized(
 ): string {
   const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
 
-  // Map locale to Intl locale
-  const intlLocale = locale === "es-UY" || locale === "es" ? "es-UY" : "en-US";
-
-  return new Intl.NumberFormat(intlLocale, {
+  // Format in the caller's own locale (no remapping to a regional default);
+  // decimals come from Intl for the currency.
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currencyId,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
   }).format(numAmount);
 }
 

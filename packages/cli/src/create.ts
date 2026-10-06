@@ -17,6 +17,14 @@ import { debugLog, debugOutput } from "./debug.js";
 import { initProject } from "./init-project.js";
 import type { PaymentProvider } from "./modules.js";
 import { modules } from "./modules.js";
+import {
+  applyRegionalDefaults,
+  normalizeCurrencyCode,
+  type RegionalDefaults,
+  requireRegionalDefaults,
+  validateCurrencyCode,
+  validateLocale,
+} from "./regional-defaults.js";
 import { isTemplateExcludedPath } from "./template-excludes.js";
 import {
   hashContent,
@@ -65,6 +73,7 @@ interface ProjectConfig {
   templateSource: string;
   selectedModules?: string[];
   paymentProvider?: PaymentProvider;
+  regionalDefaults: RegionalDefaults;
 }
 
 export interface CreateProjectOptions {
@@ -77,6 +86,10 @@ export interface CreateProjectOptions {
   templateSource?: string;
   selectedModules?: string[];
   paymentProvider?: PaymentProvider;
+  /** ISO 4217 code written as DEFAULT_CURRENCY. Required when non-interactive. */
+  defaultCurrency?: string;
+  /** BCP 47 tag written as DEFAULT_LOCALE. Required when non-interactive. */
+  defaultLocale?: string;
 }
 
 export async function createProject(options: CreateProjectOptions = {}) {
@@ -121,6 +134,12 @@ async function getProjectConfig(options: CreateProjectOptions): Promise<ProjectC
       throw new Error(`Invalid project name "${name}": ${validationError}`);
     }
 
+    // No regional default is built in: a scripted create must say which.
+    const regionalDefaults = requireRegionalDefaults({
+      currency: options.defaultCurrency,
+      locale: options.defaultLocale,
+    });
+
     return {
       name,
       description: options.description ?? "",
@@ -131,6 +150,7 @@ async function getProjectConfig(options: CreateProjectOptions): Promise<ProjectC
       templateSource: options.templateSource ?? "https://github.com/V473r10/beztack.git",
       selectedModules: options.selectedModules,
       paymentProvider: options.paymentProvider,
+      regionalDefaults,
     };
   }
 
@@ -146,6 +166,20 @@ async function getProjectConfig(options: CreateProjectOptions): Promise<ProjectC
         text({
           message: "Project description:",
           placeholder: "My awesome Beztack project",
+        }),
+      defaultCurrency: () =>
+        text({
+          message: "Default currency (ISO 4217, used when a price has none):",
+          placeholder: "e.g. USD, EUR, UYU",
+          initialValue: options.defaultCurrency,
+          validate: validateCurrencyCode,
+        }),
+      defaultLocale: () =>
+        text({
+          message: "Default locale (BCP 47, for prices and dates):",
+          placeholder: "e.g. en-US, es-UY, pt-BR",
+          initialValue: options.defaultLocale,
+          validate: validateLocale,
         }),
       initializeGit: () =>
         confirm({
@@ -171,8 +205,17 @@ async function getProjectConfig(options: CreateProjectOptions): Promise<ProjectC
     },
   );
 
+  const { defaultCurrency, defaultLocale, ...answers } = config as Omit<
+    ProjectConfig,
+    "nonInteractive" | "templateSource" | "regionalDefaults"
+  > & { defaultCurrency: string; defaultLocale: string };
+
   return {
-    ...(config as Omit<ProjectConfig, "nonInteractive">),
+    ...answers,
+    regionalDefaults: {
+      currency: normalizeCurrencyCode(defaultCurrency),
+      locale: defaultLocale.trim(),
+    },
     nonInteractive: false,
     templateSource: "https://github.com/V473r10/beztack.git",
   };
@@ -388,6 +431,7 @@ async function copyDir(options: CopyDirOptions) {
 
       if (entry.name === ".env.example") {
         content = content.replace(/APP_NAME=beztack/g, `APP_NAME=${config.name}`);
+        content = applyRegionalDefaults(content, config.regionalDefaults);
       }
 
       await writeFile(destPath, content, "utf-8");

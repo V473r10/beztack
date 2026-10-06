@@ -186,19 +186,30 @@ describe("types", () => {
 describe("utility functions", () => {
   describe("formatPlanPrice", () => {
     it("formats numeric amounts", () => {
-      const result = formatPlanPrice(PRICE_UYU, "UYU");
+      const result = formatPlanPrice(PRICE_UYU, "UYU", "es-UY");
       expect(result).toContain("1");
       expect(result).toContain("500");
     });
 
     it("formats string amounts", () => {
-      const result = formatPlanPrice(PRICE_STRING, "UYU");
+      const result = formatPlanPrice(PRICE_STRING, "UYU", "es-UY");
       expect(result).toContain("250");
     });
 
     it("handles different currencies", () => {
-      const usd = formatPlanPrice(PRICE_USD, "USD");
+      const usd = formatPlanPrice(PRICE_USD, "USD", "en-US");
       expect(usd).toContain("$");
+    });
+
+    it("formats in the caller's locale", () => {
+      expect(formatPlanPrice(1234.5, "USD", "en-US")).toBe("$1,234.50");
+      expect(formatPlanPrice(1234.5, "EUR", "de-DE").replace(/\u00a0/g, " ")).toBe("1.234,50 €");
+    });
+
+    it("uses the decimals Intl gives for the currency", () => {
+      expect(formatPlanPrice(1500, "JPY", "en-US")).toBe("¥1,500");
+      expect(formatPlanPrice(1.5, "KWD", "en-US").replace(/\u00a0/g, " ")).toBe("KWD 1.500");
+      expect(formatPlanPrice(100, "USD", "en-US")).toBe("$100.00");
     });
   });
 

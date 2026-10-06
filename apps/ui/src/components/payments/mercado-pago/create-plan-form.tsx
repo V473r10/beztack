@@ -12,11 +12,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppForm } from "@/components/ui/tanstack-form";
+import { env } from "@/env";
 
 type CreatePlanFormProps = {
   onSuccess?: () => void;
   onCancel?: () => void;
 };
+
+// The project currency first; USD is offered as an alternative Mercado Pago
+// sites commonly accept. No regional currency is built in.
+const CURRENCY_OPTIONS = [...new Set([env.VITE_DEFAULT_CURRENCY, "USD"])];
 
 const DEFAULT_VALUES: CreatePlanData = {
   reason: "",
@@ -24,7 +29,7 @@ const DEFAULT_VALUES: CreatePlanData = {
     frequency: 1,
     frequency_type: "months",
     transaction_amount: 0,
-    currency_id: "UYU",
+    currency_id: env.VITE_DEFAULT_CURRENCY,
   },
 };
 
@@ -111,8 +116,11 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
                     </SelectTrigger>
                   </field.FormControl>
                   <SelectContent>
-                    <SelectItem value="UYU">UYU</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
+                    {CURRENCY_OPTIONS.map((currency) => (
+                      <SelectItem key={currency} value={currency}>
+                        {currency}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <field.FormMessage />

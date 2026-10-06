@@ -34,6 +34,7 @@ import {
   useSubscriptionDetails,
 } from "@/hooks/use-subscription-details";
 import { authClient } from "@/lib/auth-client";
+import { formatDate, formatRelativeFromNow } from "@/lib/format";
 
 /**
  * Loading state component
@@ -260,11 +261,14 @@ export default function SubscriptionWelcome() {
                   <div>
                     <p className="text-muted-foreground text-xs">Proximo cobro</p>
                     <p className="font-medium">
-                      {subscription.dates.nextPayment.toLocaleDateString("es-AR", {
+                      {formatDate(subscription.dates.nextPayment, {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
                       })}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {formatRelativeFromNow(subscription.dates.nextPayment)}
                     </p>
                   </div>
                 </div>

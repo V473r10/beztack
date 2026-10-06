@@ -1,25 +1,18 @@
 import { initMercadoPago } from "@mercadopago/sdk-react";
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import type { MercadoPagoLocale } from "./locale.js";
+
+export type { MercadoPagoLocale } from "./locale.js";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export type MercadoPagoLocale =
-  | "es-UY"
-  | "es-AR"
-  | "es-CL"
-  | "es-CO"
-  | "es-MX"
-  | "es-VE"
-  | "es-PE"
-  | "pt-BR"
-  | "en-US";
-
 export type MercadoPagoContextValue = {
   publicKey: string;
   apiBaseUrl: string;
-  locale: MercadoPagoLocale;
+  /** Undefined when the SDK uses its own default locale. */
+  locale?: MercadoPagoLocale;
   isInitialized: boolean;
   endpoints: {
     preference: string;
@@ -33,6 +26,10 @@ export type MercadoPagoContextValue = {
 export type MercadoPagoProviderProps = {
   publicKey: string;
   apiBaseUrl: string;
+  /**
+   * SDK checkout locale. Pass the project locale through
+   * `resolveMercadoPagoLocale`; omitted -> the SDK's own default.
+   */
   locale?: MercadoPagoLocale;
   children: ReactNode;
 };
@@ -68,14 +65,14 @@ declare global {
 export function MercadoPagoProvider({
   publicKey,
   apiBaseUrl,
-  locale = "es-UY",
+  locale,
   children,
 }: MercadoPagoProviderProps) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (!window.MercadoPago && publicKey) {
-      initMercadoPago(publicKey, { locale });
+      initMercadoPago(publicKey, locale ? { locale } : undefined);
     }
     setIsInitialized(true);
   }, [publicKey, locale]);

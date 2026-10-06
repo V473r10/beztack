@@ -155,7 +155,7 @@ export function CreatePlanSheet({
               <Label>Currency</Label>
               <Input
                 onChange={(e) => setForm((s) => ({ ...s, currency: e.target.value }))}
-                placeholder="USD"
+                placeholder={env.VITE_DEFAULT_CURRENCY}
                 value={form.currency}
               />
             </div>

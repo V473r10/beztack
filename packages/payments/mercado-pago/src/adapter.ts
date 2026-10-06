@@ -141,7 +141,12 @@ export type MercadoPagoAdapterConfig = {
   applicationId?: string;
   successUrl: string;
   cancelUrl?: string;
-  currency?: string;
+  /**
+   * The project's default currency (`DEFAULT_CURRENCY`). Used only when a
+   * price or plan carries no currency of its own. Required: there is no
+   * built-in regional default.
+   */
+  currency: string;
   webhookSecret?: string;
   integratorId?: string;
 };
@@ -177,6 +182,14 @@ function resolveRequiredApplicationId(applicationId: string | undefined): string
   const normalized = normalizeApplicationId(applicationId);
   if (!normalized) {
     throw new Error("MERCADO_PAGO_APPLICATION_ID is required when using Mercado Pago");
+  }
+  return normalized;
+}
+
+function resolveRequiredCurrency(currency: string | undefined): string {
+  const normalized = currency?.trim();
+  if (!normalized) {
+    throw new Error("DEFAULT_CURRENCY is required when using Mercado Pago");
   }
   return normalized;
 }
@@ -376,8 +389,9 @@ function mapSearchResult(sub: MPPreapproval): {
 }
 
 export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): PaymentProviderAdapter {
-  const { accessToken, successUrl, currency = "UYU" } = config;
+  const { accessToken, successUrl } = config;
   const applicationId = resolveRequiredApplicationId(config.applicationId);
+  const currency = resolveRequiredCurrency(config.currency);
   const client = createMercadoPagoClient({
     accessToken,
     webhookSecret: config.webhookSecret,
@@ -417,7 +431,8 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
         auto_recurring: {
           ...toMPRecurring(options.interval, options.intervalCount),
           transaction_amount: options.price.amount,
-          currency_id: currency,
+          // The price's own currency wins; the project default only fills a gap.
+          currency_id: options.price.currency || currency,
         },
         back_url: successUrl,
       });
@@ -696,7 +711,7 @@ export function createAdapter(config: Record<string, string>): PaymentProviderAd
     applicationId: config.MERCADO_PAGO_APPLICATION_ID ?? "",
     successUrl: config.PAYMENTS_SUCCESS_URL ?? config.POLAR_SUCCESS_URL ?? "",
     cancelUrl: config.PAYMENTS_CANCEL_URL,
-    currency: config.MERCADO_PAGO_CURRENCY ?? "UYU",
+    currency: config.DEFAULT_CURRENCY ?? "",
     webhookSecret: config.MERCADO_PAGO_WEBHOOK_SECRET,
     integratorId: config.MERCADO_PAGO_INTEGRATOR_ID,
   });

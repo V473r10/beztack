@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { env } from "@/env";
 import { redirectToExternalUrl } from "@/lib/browser-navigation";
+import { formatPrice } from "@/lib/format";
 
 type SubscriptionFormProps = {
   planId?: string;
@@ -49,7 +50,7 @@ const SubscriptionForm = ({
   amount = 1000,
   frequency: initialFrequency = 1,
   frequencyType: initialFrequencyType = "months",
-  currencyId = "UYU",
+  currencyId = env.VITE_DEFAULT_CURRENCY,
   onSuccess,
   onError,
 }: SubscriptionFormProps) => {
@@ -168,7 +169,7 @@ const SubscriptionForm = ({
 
           <div className="rounded-lg bg-muted p-4">
             <p className="font-medium text-lg">
-              {currencyId} {amount.toLocaleString()}
+              {formatPrice(amount, currencyId)}
               <span className="font-normal text-muted-foreground text-sm">
                 {" "}
                 / cada {frequency} {frequencyType === "months" ? "mes(es)" : "día(s)"}

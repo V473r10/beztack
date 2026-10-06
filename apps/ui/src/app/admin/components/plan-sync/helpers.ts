@@ -14,11 +14,6 @@ export function planToEditState(plan: DbPlan): EditState {
   };
 }
 
-export function formatPrice(amount: number | string, currency: string): string {
-  const num = typeof amount === "string" ? Number.parseFloat(amount) : amount;
-  return `${num.toFixed(2)} ${currency}`;
-}
-
 export function getPlanDisplayName(view: SyncedPlanView): string {
   if (view.localPlan) {
     return view.localPlan.displayName;

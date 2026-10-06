@@ -35,18 +35,21 @@ export function estimatePeriodEnd(activeSub: Subscription, interval: string): Da
  *    (common for just-created subscriptions where MP hasn't processed first payment)
  * 3. Returns 0 as last resort (caller should handle this edge case)
  *
- * Default currency is "UYU" — matches the current deployment (Uruguay).
+ * Currency precedence: the Subscription's or product price's own currency,
+ * then `defaultCurrency` (the project's `DEFAULT_CURRENCY`). There is no
+ * built-in regional default.
  */
 export const resolveCurrentBillingAmount = async (
   activeSub: Subscription,
   provider: PaymentProviderAdapter,
+  defaultCurrency: string,
 ): Promise<{ amount: number; currency: string; interval: string }> => {
   const metaAmount =
     typeof activeSub.metadata?.billingAmount === "number" ? activeSub.metadata.billingAmount : 0;
   const metaCurrency =
-    typeof activeSub.metadata?.billingCurrency === "string"
+    typeof activeSub.metadata?.billingCurrency === "string" && activeSub.metadata.billingCurrency
       ? activeSub.metadata.billingCurrency
-      : "UYU";
+      : defaultCurrency;
   const metaInterval =
     typeof activeSub.metadata?.billingInterval === "string"
       ? activeSub.metadata.billingInterval

@@ -206,12 +206,14 @@ ${pc.bold("Create Flags:")}
   --modules <list>               Comma-separated optional modules
   --payment-provider <provider>  Payment provider: polar|mercadopago
   --template-source <path-or-url>  Custom template source
+  --currency <code>              Default currency, ISO 4217 (required with --yes)
+  --locale <tag>                 Default locale, BCP 47 (required with --yes)
 
 ${pc.bold("Examples:")}
   pnpm dlx beztack create
-  pnpm dlx beztack create --yes --name my-app --no-install --no-git
-  pnpm dlx beztack create --yes --name my-app --modules payments,email --payment-provider mercadopago
-  pnpm dlx beztack create --yes --name my-app --template-source ../beztack
+  pnpm dlx beztack create --yes --name my-app --currency USD --locale en-US --no-install --no-git
+  pnpm dlx beztack create --yes --name my-app --currency UYU --locale es-UY --modules payments,email --payment-provider mercadopago
+  pnpm dlx beztack create --yes --name my-app --currency EUR --locale fr-FR --template-source ../beztack
   beztack init
   beztack init --modules payments,ai --payment-provider polar
   beztack template status
@@ -328,7 +330,9 @@ function parseCreateCommandOptions(args: string[]): CreateProjectOptions {
       token === "--description" ||
       token === "--modules" ||
       token === "--payment-provider" ||
-      token === "--template-source"
+      token === "--template-source" ||
+      token === "--currency" ||
+      token === "--locale"
     ) {
       const value = args[index + 1];
       if (!value || value.startsWith("--")) {
@@ -343,6 +347,10 @@ function parseCreateCommandOptions(args: string[]): CreateProjectOptions {
         options.paymentProvider = parsePaymentProvider(value);
       } else if (token === "--template-source") {
         options.templateSource = value;
+      } else if (token === "--currency") {
+        options.defaultCurrency = value;
+      } else if (token === "--locale") {
+        options.defaultLocale = value;
       } else {
         options.description = value;
       }

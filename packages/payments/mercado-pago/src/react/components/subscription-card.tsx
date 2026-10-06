@@ -55,10 +55,6 @@ export type SubscriptionCardProps = {
 // Helpers
 // ============================================================================
 
-function getIntlLocale(locale: string): string {
-  return locale === "es-UY" || locale === "es" ? "es-UY" : "en-US";
-}
-
 function formatDate(dateStr: string | null | undefined, locale: string): string | null {
   if (!dateStr) {
     return null;
@@ -67,7 +63,7 @@ function formatDate(dateStr: string | null | undefined, locale: string): string 
   if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return date.toLocaleDateString(getIntlLocale(locale), {
+  return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -82,7 +78,7 @@ function formatDateTime(dateStr: string | null | undefined, locale: string): str
   if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return date.toLocaleDateString(getIntlLocale(locale), {
+  return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -224,14 +220,10 @@ export function SubscriptionCard({
             <span className="font-medium">{t.components.charges}:</span>{" "}
             {subscription.chargedQuantity}
           </div>
-          {subscription.chargedAmount && (
+          {subscription.chargedAmount && subscription.currencyId && (
             <div>
               <span className="font-medium">{t.components.total}:</span>{" "}
-              {formatPriceLocalized(
-                subscription.chargedAmount,
-                subscription.currencyId || "UYU",
-                locale,
-              )}
+              {formatPriceLocalized(subscription.chargedAmount, subscription.currencyId, locale)}
             </div>
           )}
         </div>

@@ -16,6 +16,14 @@ vi.mock("@tanstack/react-query", () => ({
   }),
 }));
 
+vi.mock("@/env", () => ({
+  env: {
+    VITE_API_URL: "https://api.example.test",
+    VITE_DEFAULT_CURRENCY: "USD",
+    VITE_DEFAULT_LOCALE: "en-US",
+  },
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     success: mocks.toastSuccess,

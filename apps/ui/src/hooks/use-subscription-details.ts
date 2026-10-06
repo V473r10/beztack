@@ -4,6 +4,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { ApiError, requestJson } from "@/lib/api-client";
+import { formatPrice } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
 
 // Time constants
@@ -235,13 +236,8 @@ export function formatFrequency(frequency: number, frequencyType: "days" | "mont
 }
 
 /**
- * Format currency amount
+ * Format currency amount in the project locale, with the currency's own decimals.
  */
 export function formatAmount(amount: number, currency: string): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return formatPrice(amount, currency);
 }
