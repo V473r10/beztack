@@ -4,7 +4,10 @@ import { createContext, useCallback, useContext, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { env } from "@/env";
 import { useActiveOrganization } from "@/hooks/use-organizations";
+import { requestJson } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
+import { redirectToExternalUrl } from "@/lib/browser-navigation";
+import { queryKeys } from "@/lib/query-keys";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 import type {
   CatalogPlan,
@@ -170,6 +173,10 @@ function getAdminTierOverrideToastMessage(data: CheckoutResponse): string {
   return data.changed ? "Admin tier override applied." : "Admin tier override already active.";
 }
 
+function organizationQueryString(organizationId: string | undefined): string {
+  return organizationId ? `?${new URLSearchParams({ organizationId }).toString()}` : "";
+}
+
 function parseAdminTierOverride(
   data: AdminTierOverrideResponse | undefined,
 ): AdminTierOverrideStatus | null {
@@ -202,66 +209,26 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const activeOrganizationId = isOrganizationSubscriptionMode ? activeOrganization?.id : undefined;
 
   const productsQuery = useQuery({
-    queryKey: ["subscriptions", "products"],
-    queryFn: async (): Promise<ProductsResponse> => {
-      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/products`, {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch subscription products");
-      }
-
-      return response.json();
-    },
+    queryKey: queryKeys.subscriptions.products(),
+    queryFn: () => requestJson<ProductsResponse>("/api/subscriptions/products"),
     staleTime: CUSTOMER_STATE_STALE_TIME,
   });
 
   const subscriptionsQuery = useQuery({
-    queryKey: ["subscriptions", "list", activeOrganizationId],
-    queryFn: async (): Promise<SubscriptionsResponse> => {
-      const query = new URLSearchParams();
-      if (activeOrganizationId) {
-        query.set("organizationId", activeOrganizationId);
-      }
-      const queryString = query.toString();
-      const response = await fetch(
-        `${env.VITE_API_URL}/api/subscriptions${queryString ? `?${queryString}` : ""}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch subscriptions");
-      }
-
-      return response.json();
-    },
+    queryKey: queryKeys.subscriptions.list(activeOrganizationId),
+    queryFn: () =>
+      requestJson<SubscriptionsResponse>(
+        `/api/subscriptions${organizationQueryString(activeOrganizationId)}`,
+      ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
   });
 
   const membershipStatusQuery = useQuery({
-    queryKey: ["subscriptions", "membership", activeOrganizationId],
-    queryFn: async (): Promise<MembershipStatusResponse> => {
-      const query = new URLSearchParams();
-      if (activeOrganizationId) {
-        query.set("organizationId", activeOrganizationId);
-      }
-      const queryString = query.toString();
-      const response = await fetch(
-        `${env.VITE_API_URL}/api/membership/status${queryString ? `?${queryString}` : ""}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch membership status");
-      }
-
-      return response.json();
-    },
+    queryKey: queryKeys.subscriptions.membership(activeOrganizationId),
+    queryFn: () =>
+      requestJson<MembershipStatusResponse>(
+        `/api/membership/status${organizationQueryString(activeOrganizationId)}`,
+      ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
   });
 
@@ -278,12 +245,11 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       );
       const selectedPlanId = selectedProduct ? parseTierIdFromProduct(selectedProduct) : "free";
 
-      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/checkout`, {
+      const data = await requestJson<CheckoutResponse>("/api/subscriptions/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({
           productId: params.productId,
           planId: selectedPlanId !== "free" ? selectedPlanId : undefined,
@@ -299,14 +265,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Checkout failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
       if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+        redirectToExternalUrl(data.checkoutUrl);
       }
 
       return data;
@@ -314,7 +274,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     onSuccess: (data) => {
       if (isAdminTierOverrideCheckoutResponse(data)) {
         toast.success(getAdminTierOverrideToastMessage(data));
-        queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
         return;
       }
 
@@ -331,25 +291,20 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       organizationId?: string;
       productId: string;
     }): Promise<PlanChangeResult> => {
-      const response = await fetch(`${env.VITE_API_URL}/api/subscriptions/plan-change/accept`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const payload = await requestJson<{ planChangeAcceptance?: unknown }>(
+        "/api/subscriptions/plan-change/accept",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            targetPricingCatalogPlanId: params.productId,
+            targetBillingCadence: params.billingPeriod,
+            organizationId: params.organizationId,
+          }),
         },
-        credentials: "include",
-        body: JSON.stringify({
-          targetPricingCatalogPlanId: params.productId,
-          targetBillingCadence: params.billingPeriod,
-          organizationId: params.organizationId,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.statusMessage || `Plan change failed: ${response.statusText}`);
-      }
-
-      const payload = await response.json();
+      );
 
       return {
         success: true,
@@ -363,7 +318,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
           ? "Payment confirmed. Plan change is still reconciling."
           : "Plan change accepted successfully!",
       );
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
     onError: (mutationError: Error) => {
       toast.error(mutationError.message || "Failed to change plan");
@@ -409,30 +364,16 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   const clearAdminTierOverrideMutation = useMutation({
     mutationFn: async (): Promise<ClearAdminTierOverrideResponse> => {
-      const query = new URLSearchParams();
-      if (activeOrganizationId) {
-        query.set("organizationId", activeOrganizationId);
-      }
-      const queryString = query.toString();
-      const response = await fetch(
-        `${env.VITE_API_URL}/api/membership/admin-tier-override${queryString ? `?${queryString}` : ""}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
+      return requestJson<ClearAdminTierOverrideResponse>(
+        `/api/membership/admin-tier-override${organizationQueryString(activeOrganizationId)}`,
+        { method: "DELETE" },
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to clear Admin tier override");
-      }
-
-      return response.json();
     },
     onSuccess: (data) => {
       toast.success(
         data.changed ? "Admin tier override cleared." : "Admin tier override already cleared.",
       );
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
     onError: () => {
       toast.error("Failed to clear Admin tier override");
@@ -557,7 +498,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   }, []);
 
   const refreshMembership = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
   }, [queryClient]);
 
   const clearAdminTierOverrideRef = useRef(clearAdminTierOverrideMutation.mutateAsync);

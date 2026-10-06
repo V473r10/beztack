@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MembershipContextValue } from "./membership-context";
 
 const mocks = vi.hoisted(() => ({
@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   invalidateQueries: vi.fn(),
   membershipStatus: undefined as unknown,
   mutationOptions: [] as unknown[],
+  redirectToExternalUrl: vi.fn(),
   subscriptions: [] as unknown[],
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
@@ -28,6 +29,10 @@ vi.mock("@/hooks/use-organizations", () => ({
 
 vi.mock("@/lib/auth-client", () => ({
   authClient: {},
+}));
+
+vi.mock("@/lib/browser-navigation", () => ({
+  redirectToExternalUrl: mocks.redirectToExternalUrl,
 }));
 
 vi.mock("@tanstack/react-query", () => ({
@@ -213,6 +218,79 @@ describe("MembershipProvider", () => {
     expect(mocks.toastSuccess).toHaveBeenCalledWith("Admin tier override cleared.");
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
+    });
+  });
+
+  describe("checkout", () => {
+    const fetchMock = vi.fn();
+
+    beforeEach(() => {
+      fetchMock.mockReset();
+      vi.stubGlobal("fetch", fetchMock);
+      vi.stubGlobal("window", { location: { origin: "https://app.example.test" } });
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    function checkoutMutationFn() {
+      renderMembershipProvider();
+      return (
+        mocks.mutationOptions[0] as {
+          mutationFn: (params: {
+            billingPeriod: "monthly" | "yearly";
+            organizationId?: string;
+            productId: string;
+          }) => Promise<unknown>;
+        }
+      ).mutationFn;
+    }
+
+    it("redirects to the provider checkout through redirectToExternalUrl", async () => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ checkoutUrl: "https://checkout.example.test/c/1" })),
+      );
+
+      await checkoutMutationFn()({
+        billingPeriod: "monthly",
+        organizationId: "org_1",
+        productId: "prod_pro",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.example.test/api/subscriptions/checkout",
+        expect.objectContaining({ credentials: "include", method: "POST" }),
+      );
+      expect(mocks.redirectToExternalUrl).toHaveBeenCalledWith("https://checkout.example.test/c/1");
+    });
+
+    it("does not redirect when the response carries no checkout URL", async () => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ changed: true, resultKind: "admin-tier-override" })),
+      );
+
+      await checkoutMutationFn()({ billingPeriod: "monthly", productId: "prod_pro" });
+
+      expect(mocks.redirectToExternalUrl).not.toHaveBeenCalled();
+    });
+
+    it("rejects with an ApiError and does not redirect when checkout fails", async () => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ message: "Only Billing managers can check out" }), {
+          status: 403,
+          statusText: "Forbidden",
+        }),
+      );
+
+      await expect(
+        checkoutMutationFn()({ billingPeriod: "monthly", productId: "prod_pro" }),
+      ).rejects.toMatchObject({
+        message: "Only Billing managers can check out",
+        name: "ApiError",
+        statusCode: 403,
+      });
+      expect(mocks.redirectToExternalUrl).not.toHaveBeenCalled();
     });
   });
 });
