@@ -24,6 +24,7 @@ import type { AdminUser, ListUsersQuery } from "@/lib/admin-types";
 import { formatDate, formatRelativeTime, getUserStatus } from "@/lib/admin-utils";
 import { authClient } from "@/lib/auth-client";
 import { UserActions } from "./user-actions";
+import { queryKeys } from "@/lib/query-keys";
 
 // Constants
 const DEFAULT_PAGE_LIMIT = 50;
@@ -45,7 +46,7 @@ export function UserList({ onEditUser, onCreateUser }: UserListProps) {
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["admin", "users", query],
+    queryKey: queryKeys.admin.users(query),
     queryFn: async () => {
       const response = await authClient.admin.listUsers({ query });
       if (!response.data) {

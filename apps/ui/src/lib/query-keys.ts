@@ -37,6 +37,9 @@ export const organizationKeys = {
   active: () => ["activeOrganization"] as const,
   members: (organizationId?: string) => ["organizationMembers", organizationId] as const,
   invitations: (organizationId?: string) => ["organizationInvitations", organizationId] as const,
+  /** Prefix of every organization's invitation list, for callers that only
+   * hold an invitation id. */
+  allInvitations: () => ["organizationInvitations"] as const,
   userInvitations: () => ["userInvitations"] as const,
   teams: (organizationId?: string) => ["teams", organizationId] as const,
   teamMembers: (teamId?: string) => ["teamMembers", teamId] as const,

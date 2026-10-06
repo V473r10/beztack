@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { queryKeys } from "@/lib/query-keys";
 
 type ProfileData = {
   username: string;
@@ -47,7 +48,7 @@ export function useProfileMutation(currentEmail?: string) {
       if (!data.emailChangeRequested) {
         toast.success("Profile settings saved!");
       }
-      queryClient.invalidateQueries({ queryKey: ["user-session"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userSession.all() });
     },
     onError: (error: Error) => {
       toast.error(`Failed to save profile: ${error.message}`);

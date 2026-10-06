@@ -1,19 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { API_URL, QUERY_KEY } from "./constants";
+import { requestJson } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 import type { SyncedPlanView } from "./types";
 
 export function useSyncStatusQuery() {
-  return useQuery<{ plans: SyncedPlanView[]; provider: string }>({
-    queryKey: [...QUERY_KEY],
+  return useQuery({
+    queryKey: queryKeys.admin.plansSync(),
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/admin/plans/sync-status`, {
-        credentials: "include",
-      });
-      if (!res.ok) {
-        throw new Error("Failed to fetch sync status");
-      }
-      return res.json();
+      return requestJson<{ plans: SyncedPlanView[]; provider: string }>(
+        "/api/admin/plans/sync-status",
+      );
     },
   });
 }
@@ -28,19 +25,14 @@ export function useSyncMutation() {
       planId: string;
       direction: "push-to-provider" | "pull-from-provider";
     }) => {
-      const res = await fetch(`${API_URL}/api/admin/plans/sync`, {
+      return requestJson(`/api/admin/plans/sync`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId, direction }),
       });
-      if (!res.ok) {
-        throw new Error("Sync failed");
-      }
-      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.plansSync() });
       toast.success("Plan synced successfully");
     },
     onError: () => {
@@ -61,9 +53,8 @@ export function useImportMutation() {
       canonicalTierId?: string;
       displayOrder?: number;
     }) => {
-      const res = await fetch(`${API_URL}/api/admin/plans/import`, {
+      return requestJson(`/api/admin/plans/import`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           remoteProductId,
@@ -71,13 +62,9 @@ export function useImportMutation() {
           displayOrder,
         }),
       });
-      if (!res.ok) {
-        throw new Error("Import failed");
-      }
-      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.plansSync() });
       toast.success("Plan imported successfully");
     },
     onError: () => {
@@ -90,19 +77,14 @@ export function useCreatePlanMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
-      const res = await fetch(`${API_URL}/api/admin/plans`, {
+      return requestJson(`/api/admin/plans`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) {
-        throw new Error("Create failed");
-      }
-      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.plansSync() });
       toast.success("Plan created successfully");
     },
     onError: () => {
@@ -115,17 +97,12 @@ export function useDeletePlanMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (planId: string) => {
-      const res = await fetch(`${API_URL}/api/admin/plans/${planId}`, {
+      return requestJson(`/api/admin/plans/${planId}`, {
         method: "DELETE",
-        credentials: "include",
       });
-      if (!res.ok) {
-        throw new Error("Delete failed");
-      }
-      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.plansSync() });
       toast.success("Plan deleted successfully");
     },
     onError: () => {
@@ -138,19 +115,14 @@ export function useUpdatePlanMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ planId, data }: { planId: string; data: Record<string, unknown> }) => {
-      const res = await fetch(`${API_URL}/api/admin/plans/${planId}`, {
+      return requestJson(`/api/admin/plans/${planId}`, {
         method: "PATCH",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) {
-        throw new Error("Update failed");
-      }
-      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.plansSync() });
       toast.success("Plan updated successfully");
     },
     onError: () => {

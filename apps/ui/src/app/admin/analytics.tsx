@@ -13,6 +13,8 @@ import { authClient } from "@/lib/auth-client";
 import { AnimatedBarChart } from "./components/charts/animated-bar-chart";
 import { StatsCard } from "./components/charts/stats-card";
 import { AdminHeader } from "./components/shared/admin-header";
+import { requestJson } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 // Types for API responses
 type SystemMetric = {
@@ -66,21 +68,7 @@ async function fetchUserGrowthData() {
 // Real data fetchers
 async function fetchSystemMetrics(): Promise<SystemMetric[]> {
   try {
-    const { env } = await import("@/env");
-    const baseURL = env.VITE_API_URL;
-    const response = await fetch(`${baseURL}/api/admin/metrics`, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: SystemMetricsResponse = await response.json();
+    const data = await requestJson<SystemMetricsResponse>("/api/admin/metrics");
 
     if (data?.metrics && Array.isArray(data.metrics)) {
       return data.metrics;
@@ -133,7 +121,7 @@ async function fetchUserStats() {
 
 export default function AdminAnalytics() {
   const { data: growthData, isLoading } = useQuery({
-    queryKey: ["admin", "analytics", "growth"],
+    queryKey: queryKeys.admin.growth(),
     queryFn: fetchUserGrowthData,
   });
 
@@ -146,7 +134,7 @@ export default function AdminAnalytics() {
   };
 
   const { data: userStats } = useQuery({
-    queryKey: ["admin", "user-stats"],
+    queryKey: queryKeys.admin.userStats(),
     queryFn: fetchUserStats,
   });
 
@@ -155,7 +143,7 @@ export default function AdminAnalytics() {
     isLoading: isLoadingMetrics,
     error: metricsError,
   } = useQuery({
-    queryKey: ["admin", "system-metrics"],
+    queryKey: queryKeys.admin.systemMetrics(),
     queryFn: fetchSystemMetrics,
     refetchInterval: 30_000, // Refresh every 30 seconds
     retry: 3, // Retry failed requests up to 3 times

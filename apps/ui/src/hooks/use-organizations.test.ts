@@ -51,7 +51,7 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-import { useSetActiveOrganization } from "./use-organizations";
+import { useCancelInvitation, useSetActiveOrganization } from "./use-organizations";
 
 describe("useSetActiveOrganization", () => {
   beforeEach(() => {
@@ -76,6 +76,27 @@ describe("useSetActiveOrganization", () => {
     });
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
+    });
+  });
+});
+
+describe("useCancelInvitation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("invalidates the organization invitation lists, not a key built from the invitation id", () => {
+    const mutation = useCancelInvitation() as unknown as {
+      onSuccess: (data: unknown, variables: { invitationId: string }) => void;
+    };
+
+    mutation.onSuccess(undefined, { invitationId: "inv_1" });
+
+    expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["organizationInvitations"],
+    });
+    expect(mocks.invalidateQueries).not.toHaveBeenCalledWith({
+      queryKey: ["organizationInvitations", "inv_1"],
     });
   });
 });
