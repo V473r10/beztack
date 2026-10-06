@@ -104,6 +104,13 @@ server: {
 }
 ```
 
+#### Cron secrets
+
+Scheduled routes are protected with `requireCronSecret(event, "<NAME>_CRON_SECRET")`
+(`apps/api/server/utils/cron-secret.ts`), which reads the secret at request time.
+No schema entry is needed: `api.ts` checks every `*_CRON_SECRET` at startup and
+rejects one shorter than 32 characters. An unset secret disables its job (503).
+
 ### For UI (Client-side)
 
 Edit `packages/env/src/ui.ts` and add your variable to the `client` object:
