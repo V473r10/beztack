@@ -1,13 +1,14 @@
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import { authClient } from "@/lib/auth-client";
+import { getPostSignInTarget, withNext } from "@/lib/auth-redirect";
 
 // Constants
 const MIN_PASSWORD_LENGTH = 8;
@@ -26,6 +27,7 @@ export function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const form = useAppForm({
     validators: { onChange: FormSchema },
@@ -45,10 +47,10 @@ export function SignInForm() {
           onSuccess(context) {
             if (context.data.twoFactorRedirect) {
               toast.success(t("notifications.auth.twoFactorRequired"));
-              navigate("/auth/sign-in/two-factor");
+              navigate(withNext("/auth/sign-in/two-factor", location.search));
             } else {
               toast.success(t("notifications.auth.signInSuccess"));
-              navigate("/");
+              navigate(getPostSignInTarget(location.search));
             }
           },
           onError(error) {

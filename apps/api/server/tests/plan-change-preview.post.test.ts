@@ -122,4 +122,30 @@ describe("POST /api/subscriptions/plan-change/preview", () => {
       planChangePreview: expectedPreview,
     });
   });
+
+  it.each([
+    { role: "sudo", isAppAdmin: true },
+    { role: "user,sudo", isAppAdmin: true },
+    { role: "pseudo", isAppAdmin: false },
+    { role: "sudoer", isAppAdmin: false },
+    { role: "user,revoked-sudo", isAppAdmin: false },
+    { role: ["pseudo"], isAppAdmin: false },
+  ])("reads App admin from the exact role $role", async ({ role, isAppAdmin }) => {
+    mocks.requireAuth.mockResolvedValue({
+      user: { id: "user_1", email: "admin@example.com", role },
+      session: {},
+    });
+    mocks.readBody.mockResolvedValue({ targetTierId: "pro", targetBillingCadence: "monthly" });
+    mocks.previewPlanChange.mockResolvedValue({ kind: "plan-change-preview" });
+    const handler = (await import("../routes/api/subscriptions/plan-change/preview.post"))
+      .default as (event: unknown) => Promise<unknown>;
+
+    await handler({});
+
+    expect(mocks.previewPlanChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: expect.objectContaining({ isAppAdmin }),
+      }),
+    );
+  });
 });

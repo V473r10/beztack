@@ -1,3 +1,4 @@
+import { hasAuthRole } from "@beztack/auth";
 import {
   adminTierOverride,
   adminTierOverrideAudit,
@@ -126,7 +127,7 @@ function normalizeAppAdminEmails(emails: string[]): string[] {
 }
 
 function hasAppAdminRole(role: AdminTierOverrideActor["role"]): boolean {
-  return role?.includes("sudo") ?? false;
+  return hasAuthRole(role, "sudo");
 }
 
 export function isAppAdminActor(actor: AdminTierOverrideActor, appAdminEmails: string[]): boolean {

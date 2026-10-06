@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@beztack/ai": "workspace:*",
+    "@beztack/auth": "workspace:*",
     "@beztack/env": "workspace:*",
     "@beztack/mercadopago": "workspace:*",
     "@beztack/ocr": "workspace:*",

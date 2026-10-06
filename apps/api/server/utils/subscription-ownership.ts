@@ -1,3 +1,4 @@
+import { hasAuthRole } from "@beztack/auth";
 import type { Subscription } from "@/lib/payments/types";
 import type { AuthenticatedUser } from "./membership";
 
@@ -11,15 +12,9 @@ type SubscriptionMetadata = {
 type SubscriptionMode = "user" | "organization";
 
 function hasAdminRole(role: unknown): boolean {
-  if (role === "admin") {
-    return true;
-  }
-
-  if (Array.isArray(role)) {
-    return role.includes("admin");
-  }
-
-  return false;
+  // "admin" is not a Beztack App role; ownership by App admin is decided by
+  // domain/organization-access (#51). Kept as an exact role match until then.
+  return hasAuthRole<string>(role, "admin");
 }
 
 function normalizeEmail(value: string): string {

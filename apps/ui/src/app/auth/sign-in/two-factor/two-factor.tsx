@@ -1,7 +1,7 @@
 import { Key, Loader2, Shield } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/input-otp";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { authClient } from "@/lib/auth-client";
+import { getPostSignInTarget, withNext } from "@/lib/auth-redirect";
 
 const BACKUP_CODE_LENGTH = 11;
 const FOCUS_DELAY_MS = 50;
@@ -38,6 +39,8 @@ const TwoFactor = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [verificationMethod, setVerificationMethod] = useState<"totp" | "backup">("totp");
   const navigate = useNavigate();
+  const location = useLocation();
+  const postSignInTarget = getPostSignInTarget(location.search);
 
   const totpContainerRef = useRef<HTMLDivElement>(null);
   const backupContainerRef = useRef<HTMLDivElement>(null);
@@ -74,7 +77,7 @@ const TwoFactor = () => {
         onSuccess() {
           setIsLoading(false);
           toast.success(t("notifications.auth.signIn2FASuccess"));
-          navigate("/");
+          navigate(postSignInTarget);
         },
         onError(res) {
           setIsLoading(false);
@@ -105,7 +108,7 @@ const TwoFactor = () => {
         onSuccess() {
           setIsLoading(false);
           toast.success("Signed in successfully with backup code!");
-          navigate("/");
+          navigate(postSignInTarget);
         },
         onError() {
           // If dash format fails, try without dash
@@ -117,7 +120,7 @@ const TwoFactor = () => {
               onSuccess() {
                 setIsLoading(false);
                 toast.success(t("notifications.auth.signInBackupSuccess"));
-                navigate("/");
+                navigate(postSignInTarget);
               },
               onError(res) {
                 setIsLoading(false);
@@ -280,7 +283,7 @@ const TwoFactor = () => {
       <Button
         className="h-auto p-0 text-xs"
         disabled={isLoading}
-        onClick={() => navigate("/auth/sign-in")}
+        onClick={() => navigate(withNext("/auth/sign-in", location.search))}
         variant="link"
       >
         {t("auth.signIn.backToSignIn")}

@@ -1,3 +1,4 @@
+import { getAuthRoles, hasAuthRole } from "@beztack/auth";
 import { useActiveOrganization, useOrganizationMembers } from "@/hooks/use-organizations";
 import type { AdminUser } from "./admin-types";
 import { authClient } from "./auth-client";
@@ -12,9 +13,7 @@ export function useIsAdmin() {
   const { data: members } = useOrganizationMembers(activeOrg?.id);
 
   // Sudo users have access to all admin features
-  const isSudo =
-    session?.user?.role === "sudo" ||
-    (Array.isArray(session?.user?.role) && session?.user?.role.includes("sudo"));
+  const isSudo = hasAuthRole(session?.user?.role, "sudo");
 
   if (isSudo) return true;
 
@@ -36,9 +35,7 @@ export function useIsAppAdmin() {
   // Prefer the injected property, fallback to role check for existing sessions
   return (
     // @ts-ignore - custom property injected by backend
-    session?.user?.isAppAdmin === true ||
-    session?.user?.role?.includes("sudo") ||
-    (Array.isArray(session?.user?.role) && session?.user?.role.some((r) => r.includes("sudo")))
+    session?.user?.isAppAdmin === true || hasAuthRole(session?.user?.role, "sudo")
   );
 }
 
@@ -46,23 +43,14 @@ export function useIsAppAdmin() {
  * Get user role(s) as an array
  */
 export function getUserRoles(user: AdminUser | undefined): string[] {
-  if (!user?.role) {
-    return ["user"];
-  }
-
-  if (typeof user.role === "string") {
-    return user.role.split(",").map((r) => r.trim());
-  }
-
-  return Array.isArray(user.role) ? user.role : ["user"];
+  return getAuthRoles(user?.role);
 }
 
 /**
  * Check if user has a specific role
  */
 export function hasRole(user: AdminUser | undefined, role: string): boolean {
-  const roles = getUserRoles(user);
-  return roles.includes(role);
+  return hasAuthRole<string>(user?.role, role);
 }
 
 /**

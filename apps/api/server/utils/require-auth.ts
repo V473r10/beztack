@@ -1,3 +1,4 @@
+import { hasAuthRole } from "@beztack/auth";
 import { createError, type EventHandler, type H3Event } from "h3";
 import { env } from "@/env";
 import { auth } from "./auth";
@@ -22,7 +23,7 @@ function isAppAdmin(session: AuthenticatedSession): boolean {
   // present at runtime. Read it through a narrow cast rather than widening the
   // whole session type. Behaviour is identical to the previous untyped access.
   const role = (session.user as { role?: string | string[] } | undefined)?.role;
-  const hasAppAdminRole = role?.includes("sudo");
+  const hasAppAdminRole = hasAuthRole(role, "sudo");
 
   if (!hasAppAdminRole) {
     return false;
