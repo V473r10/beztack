@@ -23,11 +23,18 @@ pnpm create beztack
 pnpm dlx beztack create
 
 # Non-interactive mode (CI/scripts)
-pnpm dlx beztack create --yes --name my-app --no-install --no-git --no-init
+pnpm dlx beztack create --yes --name my-app --currency USD --locale en-US --no-install --no-git --no-init
 
 # Use a local template source (useful for offline tests)
-pnpm dlx beztack create --yes --name my-app --template-source ../beztack
+pnpm dlx beztack create --yes --name my-app --currency USD --locale en-US --template-source ../beztack
 ```
+
+`create` asks for the project's default currency (ISO 4217, e.g. `USD`) and
+locale (BCP 47, e.g. `en-US`) and writes them to every `.env.example` as
+`DEFAULT_CURRENCY` / `DEFAULT_LOCALE` (API) and `VITE_DEFAULT_CURRENCY` /
+`VITE_DEFAULT_LOCALE` (UI). Beztack has no built-in default: the apps refuse to
+start without them, and non-interactive mode requires `--currency` and
+`--locale`. A price or Payment that carries its own currency always keeps it.
 
 ### Configure modules in existing project
 

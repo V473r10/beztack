@@ -23,7 +23,8 @@
     "build": "tsdown",
     "start": "pnpm run build && node dist/cli.js",
     "dev": "tsdown --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vp test run"
   },
   "dependencies": {
     "@clack/prompts": "^0.10.1",
