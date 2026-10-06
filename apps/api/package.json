@@ -18,7 +18,7 @@
     "@beztack/payments": "workspace:*",
     "@beztack/payments-polar": "workspace:*",
     "@types/react": "^19.2.7",
-    "better-auth": "^1.4.6",
+    "better-auth": "~1.5.6",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",

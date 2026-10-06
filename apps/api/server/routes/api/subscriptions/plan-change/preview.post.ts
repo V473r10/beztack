@@ -1,4 +1,3 @@
-import { hasAuthRole } from "@beztack/auth";
 import {
   db,
   member as memberTable,
@@ -19,6 +18,8 @@ import {
   previewPlanChange,
 } from "@/server/utils/plan-change";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
+import { isAppAdminActor } from "@/server/utils/app-admin";
+import { getAppAdminEmails } from "@/server/utils/app-admin-emails";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 const SINGLE_INTERVAL_COUNT = 1;
@@ -40,35 +41,6 @@ function resolvePaymentIntegrationId(providerName: string): string | undefined {
   }
 
   return;
-}
-
-function getAppAdminEmails(): string[] {
-  return env.APP_ADMIN_EMAILS.split(",")
-    .map((email: string) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-function getAuthRole(auth: AuthenticatedUser): string | string[] | null {
-  const role = (auth.user as { role?: unknown }).role;
-  if (typeof role === "string") {
-    return role;
-  }
-  if (Array.isArray(role) && role.every((entry) => typeof entry === "string")) {
-    return role;
-  }
-  return null;
-}
-
-function hasAppAdminRole(role: string | string[] | null): boolean {
-  return hasAuthRole(role, "sudo");
-}
-
-function isAppAdmin(auth: AuthenticatedUser): boolean {
-  if (!hasAppAdminRole(getAuthRole(auth))) {
-    return false;
-  }
-
-  return getAppAdminEmails().includes(auth.user.email.trim().toLowerCase());
 }
 
 function resolveMembershipTarget(auth: AuthenticatedUser, body: PlanChangePreviewRequest) {
@@ -357,7 +329,7 @@ export default defineEventHandler(async (event) => {
     const preview = await previewPlanChange({
       actor: {
         email: auth.user.email,
-        isAppAdmin: isAppAdmin(auth),
+        isAppAdmin: isAppAdminActor(auth.user, getAppAdminEmails()),
         userId: auth.user.id,
       },
       membershipTarget,

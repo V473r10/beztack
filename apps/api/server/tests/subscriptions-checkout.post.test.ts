@@ -39,6 +39,9 @@ vi.mock("@/lib/payments/catalog-mp", () => ({
 }));
 vi.mock("@/server/utils/admin-tier-override", () => ({
   applyAdminTierOverride: mocks.applyAdminTierOverride,
+}));
+vi.mock("@/server/utils/app-admin", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/utils/app-admin")>()),
   isAppAdminActor: mocks.isAppAdminActor,
 }));
 vi.mock("@/server/utils/billing-amount-resolver", () => ({

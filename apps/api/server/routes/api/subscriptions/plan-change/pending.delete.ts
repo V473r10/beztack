@@ -1,4 +1,3 @@
-import { hasAuthRole } from "@beztack/auth";
 import {
   db,
   member as memberTable,
@@ -21,6 +20,8 @@ import {
   type PlanChangeStore,
 } from "@/server/utils/plan-change";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
+import { isAppAdminActor } from "@/server/utils/app-admin";
+import { getAppAdminEmails } from "@/server/utils/app-admin-emails";
 
 const DEFAULT_BILLING_MANAGER_ROLE = "owner";
 
@@ -77,29 +78,6 @@ function resolveMembershipTarget(
   }
 
   return { type: "user" as const, id: auth.user.id };
-}
-
-function getAuthRole(auth: AuthenticatedUser): string | string[] | null {
-  const role = (auth.user as { role?: unknown }).role;
-  if (typeof role === "string") {
-    return role;
-  }
-  if (Array.isArray(role) && role.every((entry) => typeof entry === "string")) {
-    return role;
-  }
-  return null;
-}
-
-function isAppAdmin(auth: AuthenticatedUser): boolean {
-  const role = getAuthRole(auth);
-  if (!hasAuthRole(role, "sudo")) {
-    return false;
-  }
-
-  return env.APP_ADMIN_EMAILS.split(",")
-    .map((email: string) => email.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(auth.user.email.trim().toLowerCase());
 }
 
 function readString(source: Record<string, unknown> | undefined, key: string): string | undefined {
@@ -369,7 +347,7 @@ export default defineEventHandler(async (event) => {
     const cancellation = await cancelPendingPlanChange({
       actor: {
         email: auth.user.email,
-        isAppAdmin: isAppAdmin(auth),
+        isAppAdmin: isAppAdminActor(auth.user, getAppAdminEmails()),
         userId: auth.user.id,
       },
       membershipTarget,

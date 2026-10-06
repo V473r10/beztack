@@ -1,7 +1,7 @@
-import { hasAuthRole } from "@beztack/auth";
 import { createError, type EventHandler, type H3Event } from "h3";
-import { env } from "@/env";
 import { auth } from "./auth";
+import { isAppAdminActor } from "./app-admin";
+import { getAppAdminEmails } from "./app-admin-emails";
 
 // =============================================================================
 // Types
@@ -14,26 +14,8 @@ type AuthenticatedSession = NonNullable<Session>;
 // Helpers
 // =============================================================================
 
-/**
- * Check if a user has the internal role value and is actively in APP_ADMIN_EMAILS.
- * This strict double-check mitigates role escalation vulnerabilities.
- */
 function isAppAdmin(session: AuthenticatedSession): boolean {
-  // better-auth's base user type does not declare `role`; it is a custom field
-  // present at runtime. Read it through a narrow cast rather than widening the
-  // whole session type. Behaviour is identical to the previous untyped access.
-  const role = (session.user as { role?: string | string[] } | undefined)?.role;
-  const hasAppAdminRole = hasAuthRole(role, "sudo");
-
-  if (!hasAppAdminRole) {
-    return false;
-  }
-
-  const appAdminEmails = env.APP_ADMIN_EMAILS.split(",")
-    .map((e: string) => e.trim().toLowerCase())
-    .filter(Boolean);
-
-  return appAdminEmails.includes(session.user?.email?.toLowerCase() ?? "");
+  return isAppAdminActor(session.user, getAppAdminEmails());
 }
 
 /**

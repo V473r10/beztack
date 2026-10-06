@@ -1,4 +1,3 @@
-import { hasAuthRole } from "@beztack/auth";
 import {
   adminTierOverride,
   adminTierOverrideAudit,
@@ -7,6 +6,7 @@ import {
   plan as planTable,
 } from "@beztack/db";
 import { and, eq } from "drizzle-orm";
+import { isAppAdminActor } from "./app-admin";
 
 export type AdminTierOverrideTargetType = "user" | "organization";
 export type AdminTierOverrideBillingCadence = "monthly" | "yearly";
@@ -121,22 +121,6 @@ const HTTP_FORBIDDEN = 403;
 const HTTP_CONFLICT = 409;
 const SINGLE_INTERVAL_COUNT = 1;
 const MONTHS_PER_YEAR = 12;
-
-function normalizeAppAdminEmails(emails: string[]): string[] {
-  return emails.map((email) => email.trim().toLowerCase()).filter(Boolean);
-}
-
-function hasAppAdminRole(role: AdminTierOverrideActor["role"]): boolean {
-  return hasAuthRole(role, "sudo");
-}
-
-export function isAppAdminActor(actor: AdminTierOverrideActor, appAdminEmails: string[]): boolean {
-  if (!hasAppAdminRole(actor.role)) {
-    return false;
-  }
-
-  return normalizeAppAdminEmails(appAdminEmails).includes(actor.email.trim().toLowerCase());
-}
 
 function parseTier(value: string): AdminTierOverrideTier {
   const normalized = value.trim().toLowerCase();

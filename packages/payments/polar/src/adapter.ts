@@ -19,6 +19,7 @@ import type {
   WebhookPayload,
 } from "@beztack/payments";
 import { Polar } from "@polar-sh/sdk";
+import type { PresentmentCurrency } from "@polar-sh/sdk/models/components/presentmentcurrency.js";
 
 const CENTS_TO_DOLLARS = 100;
 const MIN_PRICE_CENTS = 50;
@@ -173,7 +174,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
               Math.round(options.price.amount * CENTS_TO_DOLLARS),
               MIN_PRICE_CENTS,
             ),
-            priceCurrency: options.price.currency.toLowerCase(),
+            priceCurrency: options.price.currency.toLowerCase() as PresentmentCurrency,
           },
         ],
         metadata: options.metadata as Record<string, string | number | boolean> | undefined,
@@ -205,7 +206,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
               Math.round(options.price.amount * CENTS_TO_DOLLARS),
               MIN_PRICE_CENTS,
             ),
-            priceCurrency: options.price.currency.toLowerCase(),
+            priceCurrency: options.price.currency.toLowerCase() as PresentmentCurrency,
           },
         ];
       }
