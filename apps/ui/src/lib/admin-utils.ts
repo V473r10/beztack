@@ -1,44 +1,6 @@
 import { getAuthRoles, hasAuthRole } from "@beztack/auth";
-import { useActiveOrganization, useOrganizationMembers } from "@/hooks/use-organizations";
 import type { AdminUser } from "./admin-types";
-import { authClient } from "./auth-client";
 import { formatDate as formatProjectDate } from "@/lib/format";
-
-/**
- * Check if the current user has Org Admin permissions
- * Sudo is treated as a superset and will also return true
- */
-export function useIsAdmin() {
-  const { data: session } = authClient.useSession();
-  const { data: activeOrg } = useActiveOrganization();
-  const { data: members } = useOrganizationMembers(activeOrg?.id);
-
-  // Sudo users have access to all admin features
-  const isSudo = hasAuthRole(session?.user?.role, "sudo");
-
-  if (isSudo) return true;
-
-  if (!session?.user?.id || !members) return false;
-
-  // Check if user is owner or admin of the active organization
-  const currentMember = members.find((m) => m.userId === session.user.id);
-  const orgRole = currentMember?.role;
-
-  return orgRole === "owner" || orgRole === "admin";
-}
-
-/**
- * Check if the current user has Platform Superuser (App Admin) permissions
- */
-export function useIsAppAdmin() {
-  const { data: session } = authClient.useSession();
-
-  // Prefer the injected property, fallback to role check for existing sessions
-  return (
-    // @ts-ignore - custom property injected by backend
-    session?.user?.isAppAdmin === true || hasAuthRole(session?.user?.role, "sudo")
-  );
-}
 
 /**
  * Get user role(s) as an array

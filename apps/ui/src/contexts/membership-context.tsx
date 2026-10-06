@@ -34,6 +34,8 @@ type MembershipStatusResponse = {
     expiresAt?: string;
     organizationId?: string;
     isAppAdmin?: boolean;
+    organizationRole?: string | null;
+    canManageBilling?: boolean;
     adminTierOverride?: AdminTierOverrideResponse;
   };
 };
@@ -135,6 +137,12 @@ export type MembershipContextValue = {
   getPlanChangeType: (targetTierId: string) => PlanChangeType;
   adminTierOverride: AdminTierOverrideStatus | null;
   isAppAdmin: boolean;
+  /** The caller's Organization role in the Active organization, if a member. */
+  organizationRole: string | null;
+  /** Passes the server's Billing manager gate (always true in user mode). */
+  canManageBilling: boolean;
+  /** Whether the server's access answer (status) has arrived. */
+  isAccessLoading: boolean;
   isClearingAdminTierOverride: boolean;
 };
 
@@ -190,6 +198,11 @@ function parseAdminTierOverride(
   };
 }
 
+/** The membership context, or `null` outside a MembershipProvider. */
+export function useOptionalMembership(): MembershipContextValue | null {
+  return useContext(MembershipContext);
+}
+
 export function useMembership() {
   const context = useContext(MembershipContext);
   if (!context) {
@@ -214,15 +227,6 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     staleTime: CUSTOMER_STATE_STALE_TIME,
   });
 
-  const subscriptionsQuery = useQuery({
-    queryKey: queryKeys.subscriptions.list(activeOrganizationId),
-    queryFn: () =>
-      requestJson<SubscriptionsResponse>(
-        `/api/subscriptions${organizationQueryString(activeOrganizationId)}`,
-      ),
-    staleTime: SUBSCRIPTIONS_STALE_TIME,
-  });
-
   const membershipStatusQuery = useQuery({
     queryKey: queryKeys.subscriptions.membership(activeOrganizationId),
     queryFn: () =>
@@ -230,6 +234,20 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         `/api/membership/status${organizationQueryString(activeOrganizationId)}`,
       ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
+  });
+
+  // The Subscription list is billing data: only fetched for callers who pass
+  // the Billing manager gate (the API answers 403 otherwise).
+  const canManageBilling = membershipStatusQuery.data?.data.canManageBilling === true;
+
+  const subscriptionsQuery = useQuery({
+    queryKey: queryKeys.subscriptions.list(activeOrganizationId),
+    queryFn: () =>
+      requestJson<SubscriptionsResponse>(
+        `/api/subscriptions${organizationQueryString(activeOrganizationId)}`,
+      ),
+    staleTime: SUBSCRIPTIONS_STALE_TIME,
+    enabled: canManageBilling,
   });
 
   const checkoutMutation = useMutation({
@@ -421,6 +439,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   );
 
   const isAppAdmin = membershipStatusQuery.data?.data.isAppAdmin === true;
+  const organizationRole = membershipStatusQuery.data?.data.organizationRole ?? null;
+  const isAccessLoading = membershipStatusQuery.isLoading;
 
   const isLoading =
     productsQuery.isLoading ||
@@ -592,6 +612,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       getPlanChangeType,
       adminTierOverride,
       isAppAdmin,
+      organizationRole,
+      canManageBilling,
+      isAccessLoading,
       isClearingAdminTierOverride: clearAdminTierOverrideMutation.isPending,
     }),
     [
@@ -613,6 +636,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       getPlanChangeType,
       adminTierOverride,
       isAppAdmin,
+      organizationRole,
+      canManageBilling,
+      isAccessLoading,
       clearAdminTierOverrideMutation.isPending,
     ],
   );

@@ -7,7 +7,6 @@ import {
   OrganizationList,
   OrganizationSettings,
   PendingInvitations,
-  UserInvitations,
 } from "@/components/organizations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,9 +56,6 @@ export default function OrganizationsPage() {
           Create Organization
         </Button>
       </div>
-
-      {/* User Invitations */}
-      <UserInvitations />
 
       {(() => {
         if (activeOrganization) {

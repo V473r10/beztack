@@ -20,11 +20,15 @@ import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
 import OrganizationsPage from "./app/organizations/organizations.tsx";
 import { Settings } from "./app/settings/settings.tsx";
-import { AdminRoute } from "./components/admin-route.tsx";
 import { AdminTierOverrideBanner } from "./components/admin-tier-override-banner.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
 import { PaymentProviderWrapper } from "./components/payment-provider-wrapper.tsx";
-import { ProtectedRoute } from "./components/protected-route.tsx";
+import {
+  AdminRoute,
+  BillingManagerRoute,
+  OrgAdminRoute,
+  ProtectedRoute,
+} from "./components/protected-route.tsx";
 import { PublicRoute } from "./components/public-route.tsx";
 import { MembershipProvider } from "./contexts/membership-context.tsx";
 import { ThemeProvider } from "./contexts/theme-context.tsx";
@@ -98,8 +102,22 @@ function App() {
                       >
                         <Route element={<Home />} index />
                         <Route element={<Settings />} path="settings" />
-                        <Route element={<OrganizationsPage />} path="organizations" />
-                        <Route element={<Billing />} path="billing" />
+                        <Route
+                          element={
+                            <OrgAdminRoute>
+                              <OrganizationsPage />
+                            </OrgAdminRoute>
+                          }
+                          path="organizations"
+                        />
+                        <Route
+                          element={
+                            <BillingManagerRoute>
+                              <Billing />
+                            </BillingManagerRoute>
+                          }
+                          path="billing"
+                        />
                       </Route>
 
                       <Route
