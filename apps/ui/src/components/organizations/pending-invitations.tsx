@@ -28,6 +28,7 @@ import {
   type OrganizationRole,
   ROLE_LABELS,
 } from "@/lib/organization-types";
+import { formatDate as formatProjectDate } from "@/lib/format";
 
 // Time calculation constants
 const MILLISECONDS_PER_SECOND = 1000;
@@ -44,7 +45,7 @@ type PendingInvitationsProps = {
 
 // Simple date formatting utility
 const formatDate = (date: Date | string) => {
-  return new Date(date).toLocaleDateString("en-US", {
+  return formatProjectDate(date, {
     month: "short",
     day: "numeric",
     year: "numeric",

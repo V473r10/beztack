@@ -10,7 +10,12 @@ import { env } from "@/env";
 // --- Provider lazy imports (codemod boundary) ---
 const MercadoPagoProvider = lazy(() =>
   import("@beztack/mercadopago/react").then((m) => ({
-    default: m.MercadoPagoProvider,
+    default: (props: { apiBaseUrl: string; publicKey: string; children: ReactNode }) => (
+      <m.MercadoPagoProvider
+        {...props}
+        locale={m.resolveMercadoPagoLocale(env.VITE_DEFAULT_LOCALE)}
+      />
+    ),
   })),
 );
 // --- End provider lazy imports ---

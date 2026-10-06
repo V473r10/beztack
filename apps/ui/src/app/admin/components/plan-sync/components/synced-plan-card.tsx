@@ -9,7 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatPrice, getPlanDisplayName } from "../helpers";
+import { formatPrice } from "@/lib/format";
+import { getPlanDisplayName } from "../helpers";
 import { useDeletePlanMutation, useImportMutation, useSyncMutation } from "../hooks";
 import type { SyncedPlanView } from "../types";
 import { DiffTable } from "./diff-table";

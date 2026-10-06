@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
+import { formatPrice } from "@/lib/format";
 
 export type PricingCardProps = {
   tier: PricingTier;
@@ -358,11 +359,9 @@ const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
   };
 };
 
-export const formatCurrency = (amount: number, currency = "USD"): string => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-};
+/**
+ * Format a price in the project locale. Without an explicit `currency` the
+ * project default (`VITE_DEFAULT_CURRENCY`) applies.
+ */
+export const formatCurrency = (amount: number, currency?: string | null): string =>
+  formatPrice(amount, currency);

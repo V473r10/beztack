@@ -216,14 +216,11 @@ export function formatPriceLocalized(
 ): string {
   const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
 
-  // Map locale to Intl locale
-  const intlLocale = locale === "es-UY" || locale === "es" ? "es-UY" : "en-US";
-
-  return new Intl.NumberFormat(intlLocale, {
+  // Format in the caller's own locale (no remapping to a regional default);
+  // decimals come from Intl for the currency.
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currencyId,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
   }).format(numAmount);
 }
 

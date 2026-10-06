@@ -14,6 +14,7 @@ import { AnimatedBarChart } from "./components/charts/animated-bar-chart";
 import { StatsCard } from "./components/charts/stats-card";
 import { AdminHeader } from "./components/shared/admin-header";
 import { requestJson } from "@/lib/api-client";
+import { formatDate } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
 
 // Types for API responses
@@ -49,7 +50,7 @@ async function fetchUserGrowthData() {
     (acc, user) => {
       const date = new Date(user.createdAt);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      const monthLabel = date.toLocaleDateString("en-US", {
+      const monthLabel = formatDate(date, {
         month: "short",
         year: "2-digit",
       });

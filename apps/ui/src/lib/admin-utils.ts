@@ -2,6 +2,7 @@ import { getAuthRoles, hasAuthRole } from "@beztack/auth";
 import { useActiveOrganization, useOrganizationMembers } from "@/hooks/use-organizations";
 import type { AdminUser } from "./admin-types";
 import { authClient } from "./auth-client";
+import { formatDate as formatProjectDate } from "@/lib/format";
 
 /**
  * Check if the current user has Org Admin permissions
@@ -89,8 +90,7 @@ export function getUserStatus(user: AdminUser): {
  * Format date for display
  */
 export function formatDate(date: Date | string): string {
-  const d = new Date(date);
-  return d.toLocaleDateString("en-US", {
+  return formatProjectDate(date, {
     year: "numeric",
     month: "short",
     day: "numeric",

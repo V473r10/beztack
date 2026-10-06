@@ -26,7 +26,7 @@ export const INITIAL_CREATE_STATE: CreatePlanState = {
   description: "",
   canonicalTierId: "basic",
   price: "",
-  currency: "USD",
+  currency: env.VITE_DEFAULT_CURRENCY,
   interval: "month",
   intervalCount: "1",
   features: "",

@@ -1,6 +1,5 @@
 import {
   formatFrequency,
-  formatPlanPrice,
   getStatusColor,
   getStatusLabel,
   type Plan,
@@ -9,6 +8,7 @@ import { CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/format";
 
 type PlanCardProps = {
   plan: Plan;
@@ -47,7 +47,7 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
         <div className="space-y-2">
           <div className="flex items-baseline gap-1">
             <span className="font-bold text-2xl">
-              {formatPlanPrice(plan.transactionAmount, plan.currencyId)}
+              {formatPrice(plan.transactionAmount, plan.currencyId)}
             </span>
             <span className="text-muted-foreground text-sm">
               {formatFrequency(plan.frequency, plan.frequencyType)}

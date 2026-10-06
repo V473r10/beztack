@@ -7,6 +7,7 @@ import {
   type PaymentEvent,
   usePaymentEvents,
 } from "@/hooks/use-payment-events";
+import { formatDate, formatPrice } from "@/lib/format";
 
 type PaymentEventsMonitorProps = {
   /** Filter events for a specific user ID */
@@ -60,7 +61,7 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
 };
 
 function formatEventTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleTimeString("es-UY", {
+  return formatDate(timestamp, {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -78,10 +79,7 @@ function formatAmount(
   if (Number.isNaN(num)) {
     return "";
   }
-  return new Intl.NumberFormat("es-UY", {
-    style: "currency",
-    currency: currency || "UYU",
-  }).format(num);
+  return formatPrice(num, currency);
 }
 
 export function PaymentEventsMonitor({

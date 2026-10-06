@@ -17,6 +17,9 @@ export type {
   SyncPlansResponse,
 } from "../types.js";
 
+// Locale
+export { MERCADO_PAGO_LOCALES, resolveMercadoPagoLocale } from "./locale.js";
+
 // Re-export utility functions
 export { formatFrequency, formatPlanPrice, getStatusColor, getStatusLabel } from "../types.js";
 
