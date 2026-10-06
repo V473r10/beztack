@@ -39,10 +39,12 @@ describe("hasAuthRole", () => {
     expect(hasAuthRole(["user", "sudo"], "sudo")).toBe(true);
   });
 
-  it('never matches "sudo" inside "pseudo"', () => {
+  it('never matches "sudo" inside "pseudo" or any role merely containing it', () => {
     expect(hasAuthRole("pseudo", "sudo")).toBe(false);
     expect(hasAuthRole(["pseudo"], "sudo")).toBe(false);
     expect(hasAuthRole("user,pseudo", "sudo")).toBe(false);
+    expect(hasAuthRole("sudoer", "sudo")).toBe(false);
+    expect(hasAuthRole("revoked-sudo", "sudo")).toBe(false);
   });
 
   it("treats a missing role as the default user role", () => {

@@ -35,6 +35,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@beztack/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@beztack/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -184,6 +187,9 @@ importers:
       '@beztack/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@beztack/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@beztack/env':
         specifier: workspace:*
         version: link:../../packages/env

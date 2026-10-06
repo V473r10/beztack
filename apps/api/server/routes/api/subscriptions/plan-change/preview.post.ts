@@ -1,3 +1,4 @@
+import { hasAuthRole } from "@beztack/auth";
 import {
   db,
   member as memberTable,
@@ -59,7 +60,7 @@ function getAuthRole(auth: AuthenticatedUser): string | string[] | null {
 }
 
 function hasAppAdminRole(role: string | string[] | null): boolean {
-  return role?.includes("sudo") ?? false;
+  return hasAuthRole(role, "sudo");
 }
 
 function isAppAdmin(auth: AuthenticatedUser): boolean {
