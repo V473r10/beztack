@@ -31,7 +31,13 @@ MERCADO_PAGO_WEBHOOK_SECRET=... # optional but recommended
 MERCADO_PAGO_INTEGRATOR_ID=...  # optional
 PAYMENT_PROVIDER=mercadopago
 APP_URL=http://localhost:3000
+DEFAULT_CURRENCY=UYU # your project's currency, e.g. the Mercado Pago site's
+DEFAULT_LOCALE=es-UY
 ```
+
+`DEFAULT_CURRENCY` and `DEFAULT_LOCALE` are required for every project (the
+`create` CLI asks for them). Mercado Pago plans are created in the price's own
+currency; `DEFAULT_CURRENCY` only fills in when a price carries none.
 
 `MERCADO_PAGO_APPLICATION_ID` is required because it is the Mercado Pago-native
 Payment integration boundary. Beztack uses it to prevent plans,
@@ -52,6 +58,8 @@ Beztack.
 VITE_PAYMENT_PROVIDER=mercadopago
 VITE_MERCADO_PAGO_PUBLIC_KEY=APP_USR-...
 VITE_API_URL=http://localhost:3000
+VITE_DEFAULT_CURRENCY=UYU
+VITE_DEFAULT_LOCALE=es-UY
 ```
 
 Implementation references:
