@@ -465,5 +465,35 @@
     "homeTour": {
       "step1": "En la página de configuración puedes gestionar tus configuraciones de autenticación de dos factores, información, etc."
     }
+  },
+  "invitation": {
+    "loading": "Cargando invitación",
+    "title": "Te invitaron a {{organization}}",
+    "role": "Vas a unirte como {{role}}.",
+    "expires": "Esta invitación vence el {{date}}.",
+    "roles": {
+      "member": "Miembro",
+      "admin": "Administrador",
+      "owner": "Propietario"
+    },
+    "signInPrompt": "Iniciá sesión o creá una cuenta para aceptar esta invitación.",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "accept": "Aceptar invitación",
+    "decline": "Rechazar",
+    "accepted": "Te uniste a {{organization}}.",
+    "declined": "Rechazaste la invitación.",
+    "actionFailed": "No pudimos actualizar esta invitación. Puede que sea para otra cuenta.",
+    "wrongAccount": "¿Entraste con otra cuenta?",
+    "signOut": "Cerrar sesión y continuar",
+    "unavailableTitle": "Invitación no disponible",
+    "notFound": "No encontramos esta invitación.",
+    "status": {
+      "accepted": "Esta invitación ya fue aceptada.",
+      "rejected": "Esta invitación fue rechazada.",
+      "canceled": "Esta invitación fue cancelada."
+    },
+    "expired": "Esta invitación venció.",
+    "goHome": "Ir al inicio"
   }
 }

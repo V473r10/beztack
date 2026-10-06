@@ -1,13 +1,14 @@
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import { authClient } from "@/lib/auth-client";
+import { getPostSignInTarget } from "@/lib/auth-redirect";
 
 const MIN_PASSWORD_LENGTH = 8;
 const UPPERCASE_REGEX = /[A-Z]/;
@@ -49,6 +50,7 @@ export function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const FormSchema = getFormSchema(t);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const form = useAppForm({
     validators: { onChange: FormSchema },
@@ -67,7 +69,8 @@ export function SignUpForm() {
           password: value.password,
         });
         toast.success(t("notifications.account.created"));
-        navigate("/");
+        // Back to where sign-up started (e.g. an invitation), or home.
+        navigate(getPostSignInTarget(location.search));
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : t("notifications.account.creationFailed");

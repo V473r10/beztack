@@ -18,6 +18,7 @@ import SubscriptionWelcome from "./app/billing/subscription-welcome.tsx";
 import NuqsDemo from "./app/examples/nuqs-demo.tsx";
 import Home from "./app/home/home.tsx";
 import OCR from "./app/ocr/ocr.tsx";
+import AcceptInvitation from "./app/invitations/accept-invitation.tsx";
 import OrganizationsPage from "./app/organizations/organizations.tsx";
 import { Settings } from "./app/settings/settings.tsx";
 import { AdminTierOverrideBanner } from "./components/admin-tier-override-banner.tsx";
@@ -145,6 +146,7 @@ function App() {
                       </Route>
 
                       <Route element={<Pricing />} path="pricing" />
+                      <Route element={<AcceptInvitation />} path="accept-invitation/:id" />
                       <Route element={<CheckoutSuccess />} path="checkout-success" />
                       <Route element={<SubscriptionWelcome />} path="subscription-welcome" />
                       <Route element={<AI />} path="ai" />
