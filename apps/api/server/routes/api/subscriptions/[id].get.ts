@@ -7,10 +7,18 @@ import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
 import { organizationAccess } from "@/server/domain/organization-access";
-import { toOrganizationAccessActor } from "@/server/utils/organization-access";
+import {
+  requireOrganizationBillingManagerAccess,
+  toOrganizationAccessActor,
+} from "@/server/utils/organization-access";
 
 export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
+  // Organization billing: only Billing managers (and App admins) may view or
+  // manage the organization's Subscriptions.
+  if (env.SUBSCRIPTION_MODE === "organization") {
+    await requireOrganizationBillingManagerAccess(auth, auth.session.activeOrganizationId);
+  }
   const provider = await ensurePaymentProvider();
 
   const subscriptionId = getRouterParam(event, "id");

@@ -16,8 +16,12 @@ vi.mock("h3", () => ({
   },
 }));
 
-const { requireActiveOrganization, requireOrgAdmin, requireOrganizationMember } =
-  await import("./organization-access");
+const {
+  requireActiveOrganization,
+  requireOrgAdmin,
+  requireOrganizationBillingManagerAccess,
+  requireOrganizationMember,
+} = await import("./organization-access");
 
 const access = createOrganizationAccessTestModule({
   appAdminEmails: "operator@example.com",
@@ -84,5 +88,55 @@ describe("Organization guards", () => {
     );
 
     expect(await statusOf(requireOrganizationMember(event, "org_1", access))).toBe(401);
+  });
+});
+
+describe("requireOrganizationBillingManagerAccess", () => {
+  const billingAccess = createOrganizationAccessTestModule({
+    appAdminEmails: "operator@example.com",
+    memberships: [
+      {
+        organizationId: "org_1",
+        userId: "user_owner",
+        role: "owner",
+        billingManagedByRole: "admin",
+      },
+      {
+        organizationId: "org_1",
+        userId: "user_member",
+        role: "member",
+        billingManagedByRole: "admin",
+      },
+    ],
+  });
+  const auth = (id: string, role = "user") =>
+    ({ user: { id, email: `${id}@example.com`, role }, session: {} }) as never;
+
+  it("admits an owner when the billing role is admin, refuses a plain member", async () => {
+    expect(
+      await statusOf(
+        requireOrganizationBillingManagerAccess(auth("user_owner"), "org_1", billingAccess),
+      ),
+    ).toBe(200);
+    expect(
+      await statusOf(
+        requireOrganizationBillingManagerAccess(auth("user_member"), "org_1", billingAccess),
+      ),
+    ).toBe(403);
+  });
+
+  it("admits an App admin even without an Organization; refuses others without one", async () => {
+    const operator = {
+      user: { id: "user_operator", email: "operator@example.com", role: "sudo" },
+      session: {},
+    } as never;
+    expect(
+      await statusOf(requireOrganizationBillingManagerAccess(operator, null, billingAccess)),
+    ).toBe(200);
+    expect(
+      await statusOf(
+        requireOrganizationBillingManagerAccess(auth("user_owner"), null, billingAccess),
+      ),
+    ).toBe(403);
   });
 });

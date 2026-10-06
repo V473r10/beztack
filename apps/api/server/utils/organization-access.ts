@@ -96,3 +96,19 @@ export async function requireOrgAdmin(
   );
   return { auth, organizationId, membership };
 }
+
+/**
+ * The single Billing manager gate for organization-scoped billing routes
+ * (view, list, cancel, checkout, Plan change): App admin, or a member whose
+ * Organization role ranks at least the Organization's billing role. 403
+ * otherwise, including when no Organization is given.
+ */
+export async function requireOrganizationBillingManagerAccess(
+  auth: AuthenticatedUser,
+  organizationId: string | null | undefined,
+  access: OrganizationAccess = organizationAccess,
+): Promise<void> {
+  if (!(await access.canManageBilling(toOrganizationAccessActor(auth), organizationId))) {
+    throw createError({ statusCode: 403, statusMessage: "Billing manager access required" });
+  }
+}

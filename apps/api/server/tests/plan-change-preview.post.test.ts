@@ -104,6 +104,7 @@ describe("POST /api/subscriptions/plan-change/preview", () => {
         actor: {
           email: "billing@example.com",
           isAppAdmin: false,
+          isBillingManager: false,
           userId: "user_1",
         },
         paymentProvider: "mercadopago",

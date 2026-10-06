@@ -100,6 +100,7 @@ describe("DELETE /api/subscriptions/plan-change/pending", () => {
         actor: {
           email: "billing@example.com",
           isAppAdmin: false,
+          isBillingManager: false,
           userId: "user_1",
         },
         membershipTarget: { type: "user", id: "user_1" },

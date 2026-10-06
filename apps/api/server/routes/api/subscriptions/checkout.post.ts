@@ -15,6 +15,7 @@ import { applyAdminTierOverride } from "@/server/utils/admin-tier-override";
 import { resolveCheckoutCallbackUrls } from "@/server/utils/checkout-callback-urls";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import { getAppAdminEmails, organizationAccess } from "@/server/domain/organization-access";
+import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 
@@ -147,6 +148,9 @@ export default defineEventHandler(async (event) => {
       role: getAuthRole(auth),
     };
     const organizationId = resolveCheckoutOrganizationId(parsed, auth);
+    if (env.SUBSCRIPTION_MODE === "organization") {
+      await requireOrganizationBillingManagerAccess(auth, organizationId);
+    }
 
     if (organizationAccess.isAppAdmin(actor)) {
       const result = await applyAdminTierOverride({
