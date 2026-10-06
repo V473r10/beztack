@@ -2,32 +2,19 @@
  * List user's subscriptions
  * Works with both Polar and Mercado Pago based on PAYMENT_PROVIDER config
  */
-import { db, member as memberTable } from "@beztack/db";
-import { and, eq } from "drizzle-orm";
-import { createError, defineEventHandler, getQuery } from "h3";
+import { defineEventHandler, getQuery } from "h3";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
+import { organizationAccess } from "@/server/domain/organization-access";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
+import {
+  assertOrganizationMember,
+  toOrganizationAccessActor,
+} from "@/server/utils/organization-access";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
-import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
 
 function readQueryString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
-}
-
-async function assertOrganizationMember(userId: string, organizationId: string): Promise<void> {
-  const [membership] = await db
-    .select({ id: memberTable.id })
-    .from(memberTable)
-    .where(and(eq(memberTable.userId, userId), eq(memberTable.organizationId, organizationId)))
-    .limit(1);
-
-  if (!membership) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: "Access denied: You are not a member of this organization",
-    });
-  }
 }
 
 function withSubscriptionOrganization(
@@ -61,7 +48,7 @@ export default defineEventHandler(async (event) => {
       : undefined;
 
   if (env.SUBSCRIPTION_MODE === "organization" && requestedOrganizationId) {
-    await assertOrganizationMember(auth.user.id, requestedOrganizationId);
+    await assertOrganizationMember(auth, requestedOrganizationId);
   }
   const scopedAuth = withSubscriptionOrganization(auth, organizationId);
 
@@ -87,7 +74,11 @@ export default defineEventHandler(async (event) => {
   }
 
   subscriptions = subscriptions.filter((subscription) =>
-    isSubscriptionOwnedByUser(subscription, scopedAuth, env.SUBSCRIPTION_MODE),
+    organizationAccess.ownsSubscription(
+      toOrganizationAccessActor(scopedAuth),
+      subscription,
+      env.SUBSCRIPTION_MODE,
+    ),
   );
 
   return {

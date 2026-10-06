@@ -7,6 +7,25 @@ export default defineConfig({
       // under the strict default rule set; mirror the ignores Beztack carried
       // in its Biome config so the migration is behaviour-neutral.
       "react-hooks/exhaustive-deps": "off",
+      // Opt-in module shape (AGENTS.md): nothing outside a domain module
+      // imports its internal/ folder. Inside the module, `./internal/...`
+      // does not match these patterns.
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@/server/domain/*/internal",
+                "@/server/domain/*/internal/**",
+                "**/domain/*/internal",
+                "**/domain/*/internal/**",
+              ],
+              message: "Import the domain module's directory, not its internal/ files.",
+            },
+          ],
+        },
+      ],
     },
     ignorePatterns: [
       "**/components/ui/*.tsx",

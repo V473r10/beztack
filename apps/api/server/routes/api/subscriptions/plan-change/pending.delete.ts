@@ -1,9 +1,4 @@
-import {
-  db,
-  member as memberTable,
-  organization as organizationTable,
-  pendingPlanChange as pendingPlanChangeTable,
-} from "@beztack/db";
+import { db, pendingPlanChange as pendingPlanChangeTable } from "@beztack/db";
 import type { PaymentProviderAdapter, Subscription } from "@beztack/payments";
 import { and, eq } from "drizzle-orm";
 import { createError, defineEventHandler, readBody } from "h3";
@@ -20,10 +15,7 @@ import {
   type PlanChangeStore,
 } from "@/server/utils/plan-change";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
-import { isAppAdminActor } from "@/server/utils/app-admin";
-import { getAppAdminEmails } from "@/server/utils/app-admin-emails";
-
-const DEFAULT_BILLING_MANAGER_ROLE = "owner";
+import { organizationAccess } from "@/server/domain/organization-access";
 
 const planChangePendingCancellationSchema = z.object({
   organizationId: z.string().min(1).optional(),
@@ -113,13 +105,6 @@ function readMembershipTargetId(
       : undefined) ??
     subscription.customerId
   );
-}
-
-function roleListIncludes(role: string | null, expectedRole: string): boolean {
-  return (role ?? "")
-    .split(",")
-    .map((entry) => entry.trim())
-    .includes(expectedRole);
 }
 
 function subscriptionMatchesTarget(
@@ -268,30 +253,11 @@ function createPlanChangeStore(options: {
 
       return pendingPlanChange ? mapPendingPlanChangeRecord(pendingPlanChange) : null;
     },
-    async isBillingManager(input) {
-      const [membership] = await db
-        .select({
-          billingManagedByRole: organizationTable.billingManagedByRole,
-          memberRole: memberTable.role,
-        })
-        .from(memberTable)
-        .innerJoin(organizationTable, eq(memberTable.organizationId, organizationTable.id))
-        .where(
-          and(
-            eq(memberTable.userId, input.actorUserId),
-            eq(memberTable.organizationId, input.organizationId),
-          ),
-        )
-        .limit(1);
-
-      if (!membership) {
-        return false;
-      }
-
-      return roleListIncludes(
-        membership.memberRole,
-        membership.billingManagedByRole ?? DEFAULT_BILLING_MANAGER_ROLE,
-      );
+    isBillingManager(input) {
+      return organizationAccess.isBillingManager({
+        userId: input.actorUserId,
+        organizationId: input.organizationId,
+      });
     },
     listActiveVisiblePricingCatalogPlans() {
       return Promise.resolve([]);
@@ -347,7 +313,7 @@ export default defineEventHandler(async (event) => {
     const cancellation = await cancelPendingPlanChange({
       actor: {
         email: auth.user.email,
-        isAppAdmin: isAppAdminActor(auth.user, getAppAdminEmails()),
+        isAppAdmin: organizationAccess.isAppAdmin(auth.user),
         userId: auth.user.id,
       },
       membershipTarget,

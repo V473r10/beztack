@@ -4,7 +4,7 @@ import { createPolarAuthPlugin } from "@beztack/payments-polar/auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { env } from "@/env";
 import { getPolarProductMappings } from "@/lib/payments/config";
-import { getAppAdminEmails } from "./app-admin-emails";
+import { getAppAdminEmails } from "../domain/organization-access";
 import { createAuth } from "./auth-config";
 
 const isPolarProvider = env.PAYMENT_PROVIDER === "polar";

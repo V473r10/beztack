@@ -3,7 +3,10 @@ import { type BetterAuthOptions, type BetterAuthPlugin, betterAuth } from "bette
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { admin, organization, twoFactor } from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
-import { isAllowlistedAppAdminEmail, isAppAdminActor } from "./app-admin";
+import {
+  isAllowlistedAppAdminEmail,
+  isAppAdminActor,
+} from "../domain/organization-access/implementation";
 import { resolveAllowedOrigins } from "./cors-origins";
 
 /**

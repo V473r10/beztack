@@ -12,10 +12,9 @@ import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
 import type { Product } from "@/lib/payments/types";
 import { applyAdminTierOverride } from "@/server/utils/admin-tier-override";
-import { isAppAdminActor } from "@/server/utils/app-admin";
 import { resolveCheckoutCallbackUrls } from "@/server/utils/checkout-callback-urls";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
-import { getAppAdminEmails } from "@/server/utils/app-admin-emails";
+import { getAppAdminEmails, organizationAccess } from "@/server/domain/organization-access";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 
@@ -149,7 +148,7 @@ export default defineEventHandler(async (event) => {
     };
     const organizationId = resolveCheckoutOrganizationId(parsed, auth);
 
-    if (isAppAdminActor(actor, appAdminEmails)) {
+    if (organizationAccess.isAppAdmin(actor)) {
       const result = await applyAdminTierOverride({
         actor,
         appAdminEmails,

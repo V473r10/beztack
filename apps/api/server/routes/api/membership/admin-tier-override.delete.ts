@@ -2,7 +2,7 @@ import { createError, defineEventHandler, getQuery } from "h3";
 import { env } from "@/env";
 import { clearAdminTierOverride } from "@/server/utils/admin-tier-override";
 import { requireAuth } from "@/server/utils/membership";
-import { getAppAdminEmails } from "@/server/utils/app-admin-emails";
+import { getAppAdminEmails } from "@/server/domain/organization-access";
 
 function getAuthRole(user: unknown): string | string[] | null {
   const role = (user as { role?: unknown }).role;

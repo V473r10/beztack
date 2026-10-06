@@ -1,32 +1,24 @@
 import { db, schema } from "@beztack/db";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, getRouterParam } from "h3";
-import { auth } from "@/server/utils/auth";
+import { requireOrganizationMember } from "@/server/utils/organization-access";
 
 /**
  * Get organization membership status
  */
 export default defineEventHandler(async (event) => {
+  const organizationId = getRouterParam(event, "id");
+  if (!organizationId) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Organization ID is required",
+    });
+  }
+
+  // 401 when signed out, 403 when not a member of this organization.
+  const { membership } = await requireOrganizationMember(event, organizationId);
+
   try {
-    // Get the session to verify the user is authenticated
-    const session = await auth.api.getSession({ headers: event.headers });
-
-    if (!session?.user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Authentication required",
-      });
-    }
-
-    const organizationId = getRouterParam(event, "id");
-    if (!organizationId) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "Organization ID is required",
-      });
-    }
-
-    // Get organization with membership info
     const organization = await db
       .select({
         id: schema.organization.id,
@@ -50,25 +42,6 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Check if user is a member of this organization
-    const membership = await db
-      .select()
-      .from(schema.member)
-      .where(
-        and(
-          eq(schema.member.organizationId, organizationId),
-          eq(schema.member.userId, session.user.id),
-        ),
-      )
-      .limit(1);
-
-    if (membership.length === 0) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: "Access denied: You are not a member of this organization",
-      });
-    }
-
     const org = organization[0];
     const now = new Date();
     const isSubscriptionActive =
@@ -84,7 +57,7 @@ export default defineEventHandler(async (event) => {
       isActive: isSubscriptionActive,
       validUntil: org.subscriptionValidUntil,
       usageMetrics: org.usageMetrics ? JSON.parse(org.usageMetrics) : null,
-      memberRole: membership[0].role,
+      memberRole: membership.role,
     };
   } catch (error) {
     if (error && typeof error === "object" && "statusCode" in error && error.statusCode) {

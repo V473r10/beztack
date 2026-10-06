@@ -5,6 +5,7 @@ import {
   type MembershipTier,
   requireAuth,
 } from "@/server/utils/membership";
+import { assertOrganizationMember } from "@/server/utils/organization-access";
 
 export default defineEventHandler(async (event) => {
   // Require authentication
@@ -20,6 +21,9 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Organization ID is required",
     });
   }
+
+  // Only members may read an Organization's membership and features.
+  await assertOrganizationMember(user, organizationId);
 
   try {
     // Get membership info for the organization

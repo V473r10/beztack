@@ -6,7 +6,7 @@ import {
   plan as planTable,
 } from "@beztack/db";
 import { and, eq } from "drizzle-orm";
-import { isAppAdminActor } from "./app-admin";
+import { isAppAdminActor } from "../domain/organization-access/implementation";
 
 export type AdminTierOverrideTargetType = "user" | "organization";
 export type AdminTierOverrideBillingCadence = "monthly" | "yearly";

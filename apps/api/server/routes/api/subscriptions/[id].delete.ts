@@ -6,7 +6,8 @@ import { createError, defineEventHandler, getQuery, getRouterParam } from "h3";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { requireAuth } from "@/server/utils/membership";
-import { isSubscriptionOwnedByUser } from "@/server/utils/subscription-ownership";
+import { organizationAccess } from "@/server/domain/organization-access";
+import { toOrganizationAccessActor } from "@/server/utils/organization-access";
 
 export default defineEventHandler(async (event) => {
   const auth = await requireAuth(event);
@@ -32,7 +33,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (!isSubscriptionOwnedByUser(currentSubscription, auth, env.SUBSCRIPTION_MODE)) {
+    if (
+      !organizationAccess.ownsSubscription(
+        toOrganizationAccessActor(auth),
+        currentSubscription,
+        env.SUBSCRIPTION_MODE,
+      )
+    ) {
       throw createError({
         statusCode: 403,
         message: "Access denied",
