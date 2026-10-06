@@ -4,8 +4,9 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { env } from "@/env";
-
-const API_URL = env.VITE_API_URL;
+import { requestJson } from "@/lib/api-client";
+import { redirectToExternalUrl } from "@/lib/browser-navigation";
+import { queryKeys } from "@/lib/query-keys";
 
 export type Product = {
   id: string;
@@ -34,86 +35,63 @@ export type CheckoutResult = {
   checkoutUrl: string;
 };
 
-async function fetchProducts(): Promise<{
+function fetchProducts(): Promise<{
   provider: string;
   products: Product[];
 }> {
-  const response = await fetch(`${API_URL}/api/subscriptions/products`, {
-    credentials: "include",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to fetch products");
-  }
-  return response.json();
+  return requestJson("/api/subscriptions/products");
 }
 
-async function fetchSubscriptions(): Promise<{
+function fetchSubscriptions(organizationId?: string): Promise<{
   provider: string;
   subscriptions: Subscription[];
 }> {
-  const response = await fetch(`${API_URL}/api/subscriptions`, {
-    credentials: "include",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to fetch subscriptions");
-  }
-  return response.json();
+  const query = organizationId ? `?${new URLSearchParams({ organizationId }).toString()}` : "";
+  return requestJson(`/api/subscriptions${query}`);
 }
 
-async function createCheckout(productId: string): Promise<CheckoutResult> {
-  const response = await fetch(`${API_URL}/api/subscriptions/checkout`, {
+function createCheckout(productId: string): Promise<CheckoutResult> {
+  return requestJson("/api/subscriptions/checkout", {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ productId }),
   });
-  if (!response.ok) {
-    throw new Error("Failed to create checkout");
-  }
-  return response.json();
 }
 
 async function cancelSubscription(subscriptionId: string, immediately = false): Promise<void> {
-  const response = await fetch(
-    `${API_URL}/api/subscriptions/${subscriptionId}?immediately=${immediately}`,
-    {
-      method: "DELETE",
-      credentials: "include",
-    },
-  );
-  if (!response.ok) {
-    throw new Error("Failed to cancel subscription");
-  }
+  await requestJson(`/api/subscriptions/${subscriptionId}?immediately=${immediately}`, {
+    method: "DELETE",
+  });
 }
 
 async function updateSubscription(
   subscriptionId: string,
   updates: { status?: "pause" | "resume"; productId?: string },
 ): Promise<Subscription> {
-  const response = await fetch(`${API_URL}/api/subscriptions/${subscriptionId}`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updates),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to update subscription");
-  }
-  const data = await response.json();
+  const data = await requestJson<{ subscription: Subscription }>(
+    `/api/subscriptions/${subscriptionId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    },
+  );
   return data.subscription;
 }
 
 export function useProducts() {
   return useQuery({
-    queryKey: ["products"],
+    queryKey: queryKeys.products.all(),
     queryFn: fetchProducts,
   });
 }
 
-export function useSubscriptions() {
+/** `organizationId` is the Active organization in organization subscription
+ * mode; the list is keyed by it so organizations never share billing cache. */
+export function useSubscriptions(organizationId?: string) {
   return useQuery({
-    queryKey: ["subscriptions"],
-    queryFn: fetchSubscriptions,
+    queryKey: queryKeys.subscriptions.list(organizationId),
+    queryFn: () => fetchSubscriptions(organizationId),
   });
 }
 
@@ -121,7 +99,7 @@ export function useCheckout() {
   return useMutation({
     mutationFn: createCheckout,
     onSuccess: (data) => {
-      window.location.href = data.checkoutUrl;
+      redirectToExternalUrl(data.checkoutUrl);
     },
   });
 }
@@ -138,7 +116,7 @@ export function useCancelSubscription() {
       immediately?: boolean;
     }) => cancelSubscription(subscriptionId, immediately),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
   });
 }
@@ -155,7 +133,7 @@ export function useUpdateSubscription() {
       updates: { status?: "pause" | "resume"; productId?: string };
     }) => updateSubscription(subscriptionId, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
   });
 }

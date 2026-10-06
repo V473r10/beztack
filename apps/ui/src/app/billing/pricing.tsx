@@ -39,6 +39,7 @@ import { useMembership } from "@/contexts/membership-context";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
+import { queryKeys } from "@/lib/query-keys";
 
 const LOADING_SKELETON_COUNT = 3;
 
@@ -266,7 +267,7 @@ export default function Pricing() {
   const hasActiveSubscription = Boolean(activeSubscription);
 
   const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<PricingTier[]>({
-    queryKey: ["subscriptions", "products", "tiers"],
+    queryKey: queryKeys.subscriptions.productTiers(),
     queryFn: usePricingTiers,
   });
 
