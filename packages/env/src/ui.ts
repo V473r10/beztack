@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
+import { CURRENCY_CODE_SCHEMA, LOCALE_SCHEMA } from "./regional.js";
 
 /**
  * Environment configuration for UI (Vite) applications
@@ -22,6 +23,9 @@ export const env = createEnv({
     VITE_MERCADO_PAGO_PUBLIC_KEY: z.string().default(""),
     VITE_PAYMENT_PROVIDER: z.enum(["polar", "mercadopago"]).default("polar"),
     VITE_SUBSCRIPTION_MODE: z.enum(["user", "organization"]).default("organization"),
+    // Project regional defaults (required, no code default)
+    VITE_DEFAULT_CURRENCY: CURRENCY_CODE_SCHEMA,
+    VITE_DEFAULT_LOCALE: LOCALE_SCHEMA,
   },
 
   /**

@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
+import { CURRENCY_CODE_SCHEMA, LOCALE_SCHEMA } from "./regional.js";
 
 const URL_SCHEMA = z.string().url();
 const URL_LIST_SCHEMA = z.string().refine(
@@ -49,6 +50,10 @@ export const env = createEnv({
   server: {
     // Database
     DATABASE_URL: z.string().url(),
+
+    // Project regional defaults (required, no code default)
+    DEFAULT_CURRENCY: CURRENCY_CODE_SCHEMA,
+    DEFAULT_LOCALE: LOCALE_SCHEMA,
 
     // App admin
     APP_ADMIN_EMAILS: z.string().default(""),
