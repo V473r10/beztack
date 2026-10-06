@@ -41,6 +41,8 @@ export const organizationKeys = {
    * hold an invitation id. */
   allInvitations: () => ["organizationInvitations"] as const,
   userInvitations: () => ["userInvitations"] as const,
+  /** Public preview of one Invitation, for the acceptance page. */
+  invitationPreview: (invitationId?: string) => ["invitationPreview", invitationId] as const,
   teams: (organizationId?: string) => ["teams", organizationId] as const,
   teamMembers: (teamId?: string) => ["teamMembers", teamId] as const,
 } as const;

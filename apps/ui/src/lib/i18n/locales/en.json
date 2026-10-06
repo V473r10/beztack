@@ -472,5 +472,35 @@
     "name": {
       "length": "Name must be at least 2 characters."
     }
+  },
+  "invitation": {
+    "loading": "Loading invitation",
+    "title": "You're invited to {{organization}}",
+    "role": "You'll join as {{role}}.",
+    "expires": "This invitation expires on {{date}}.",
+    "roles": {
+      "member": "Member",
+      "admin": "Admin",
+      "owner": "Owner"
+    },
+    "signInPrompt": "Sign in or create an account to accept this invitation.",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "accept": "Accept invitation",
+    "decline": "Decline",
+    "accepted": "You joined {{organization}}.",
+    "declined": "Invitation declined.",
+    "actionFailed": "We couldn't update this invitation. It may be addressed to another account.",
+    "wrongAccount": "Signed in with the wrong account?",
+    "signOut": "Sign out and continue",
+    "unavailableTitle": "Invitation unavailable",
+    "notFound": "We couldn't find this invitation.",
+    "status": {
+      "accepted": "This invitation was already accepted.",
+      "rejected": "This invitation was declined.",
+      "canceled": "This invitation was canceled."
+    },
+    "expired": "This invitation has expired.",
+    "goHome": "Go to home"
   }
 }
