@@ -2,12 +2,7 @@ import { createError, defineEventHandler, getQuery } from "h3";
 import { env } from "@/env";
 import { clearAdminTierOverride } from "@/server/utils/admin-tier-override";
 import { requireAuth } from "@/server/utils/membership";
-
-function getAppAdminEmails(): string[] {
-  return env.APP_ADMIN_EMAILS.split(",")
-    .map((email: string) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
+import { getAppAdminEmails } from "@/server/utils/app-admin-emails";
 
 function getAuthRole(user: unknown): string | string[] | null {
   const role = (user as { role?: unknown }).role;

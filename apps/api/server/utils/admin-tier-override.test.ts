@@ -3,7 +3,6 @@ import {
   type AdminTierOverrideRecord,
   type AdminTierOverrideStore,
   applyAdminTierOverride,
-  isAppAdminActor,
   type OverrideAuditEntry,
   type OverrideCatalogPlan,
 } from "./admin-tier-override";
@@ -242,27 +241,5 @@ describe("applyAdminTierOverride", () => {
 
     expect(result.changed).toBe(false);
     expect(audits).toHaveLength(0);
-  });
-});
-
-describe("isAppAdminActor", () => {
-  const appAdminEmails = ["admin@example.com"];
-  const actor = (role: string | string[] | null) => ({
-    id: "user_1",
-    email: "Admin@Example.com",
-    role,
-  });
-
-  it("requires the exact sudo App role and an allowlisted email", () => {
-    expect(isAppAdminActor(actor("sudo"), appAdminEmails)).toBe(true);
-    expect(isAppAdminActor(actor(["user", "sudo"]), appAdminEmails)).toBe(true);
-    expect(isAppAdminActor(actor("sudo"), ["someone@example.com"])).toBe(false);
-  });
-
-  it('does not read "pseudo" or a role merely containing "sudo" as sudo', () => {
-    expect(isAppAdminActor(actor("pseudo"), appAdminEmails)).toBe(false);
-    expect(isAppAdminActor(actor("sudoer"), appAdminEmails)).toBe(false);
-    expect(isAppAdminActor(actor("user,revoked-sudo"), appAdminEmails)).toBe(false);
-    expect(isAppAdminActor(actor(null), appAdminEmails)).toBe(false);
   });
 });

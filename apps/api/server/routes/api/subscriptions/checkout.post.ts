@@ -11,9 +11,11 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { resolveProductByCanonicalPlan } from "@/lib/payments/catalog";
 import { enrichProductWithCatalog } from "@/lib/payments/catalog-mp";
 import type { Product } from "@/lib/payments/types";
-import { applyAdminTierOverride, isAppAdminActor } from "@/server/utils/admin-tier-override";
+import { applyAdminTierOverride } from "@/server/utils/admin-tier-override";
+import { isAppAdminActor } from "@/server/utils/app-admin";
 import { resolveCheckoutCallbackUrls } from "@/server/utils/checkout-callback-urls";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
+import { getAppAdminEmails } from "@/server/utils/app-admin-emails";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 
@@ -29,12 +31,6 @@ const checkoutSchema = z.object({
 });
 
 type CheckoutInput = z.infer<typeof checkoutSchema>;
-
-function getAppAdminEmails(): string[] {
-  return env.APP_ADMIN_EMAILS.split(",")
-    .map((email: string) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
 
 function getAuthRole(auth: AuthenticatedUser): string | string[] | null {
   const role = (auth.user as { role?: unknown }).role;
