@@ -90,6 +90,8 @@ export type StoredProjectionPayment = {
 
 export type MembershipCacheUpdates = {
   subscriptionTier: string | null;
+  /** `monthly | yearly`; null when the provider reports another cadence. */
+  subscriptionBillingCadence: PlanChangeBillingCadence | null;
   subscriptionStatus: string;
   subscriptionId: string;
   subscriptionValidUntil: Date | null;
@@ -526,6 +528,7 @@ async function projectMembershipCache(options: {
 
   const updates = {
     subscriptionTier: options.tier,
+    subscriptionBillingCadence: readPlanChangeBillingCadence(options.subscription.metadata) ?? null,
     subscriptionStatus: deriveMembershipStatus(
       options.subscription.rawStatus,
       options.subscription.currentPeriodEnd ?? null,
@@ -1093,6 +1096,7 @@ export async function createDbPendingPlanChangeActivationStore(): Promise<PlanCh
     async moveMembershipToPlan(input) {
       const updates = {
         subscriptionTier: input.targetPlan.canonicalTierId,
+        subscriptionBillingCadence: input.targetPlan.billingCadence,
         subscriptionStatus: "active",
         subscriptionId: input.subscriptionId,
       };

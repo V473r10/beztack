@@ -92,7 +92,10 @@ export function PricingCard({
 }: PricingCardProps) {
   const { t } = useTranslation();
   const Icon = tierIcons[tier.id as keyof typeof tierIcons] || Sparkles;
-  const isCurrentTier = currentTier === tier.id;
+  // The current tier on another Billing cadence is still a Plan change
+  // ("Switch billing"), offered only when the provider can do it.
+  const isCadenceSwitch = currentTier === tier.id && changeType === "period_change";
+  const isCurrentTier = currentTier === tier.id && !isCadenceSwitch;
   const price = tier.price[billingPeriod];
   const yearlyPrice = tier.price.yearly;
   const monthlyPrice = tier.price.monthly;
@@ -135,6 +138,9 @@ export function PricingCard({
       return t("pricing.contactSales", "Contact Sales");
     }
     if (hasActiveSubscription) {
+      if (isCadenceSwitch) {
+        return t("pricing.switchBilling", "Switch billing");
+      }
       if (changeType === "downgrade") {
         return t("pricing.downgrade", "Downgrade");
       }

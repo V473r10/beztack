@@ -121,7 +121,8 @@
       "support": "Support",
       "features": "Features"
     },
-    "unlimited": "Unlimited"
+    "unlimited": "Unlimited",
+    "switchBilling": "Switch billing"
   },
   "billing": {
     "monthly": "Monthly",

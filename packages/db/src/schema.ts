@@ -33,6 +33,8 @@ export const user = pgTable("user", {
   subscriptionStatus: text("subscription_status"),
   subscriptionId: text("subscription_id"),
   subscriptionValidUntil: timestamp("subscription_valid_until", { withTimezone: true }),
+  /** `monthly | yearly`; the Billing cadence of the cached Membership. */
+  subscriptionBillingCadence: text("subscription_billing_cadence"),
 });
 
 export const session = pgTable("session", {
@@ -136,6 +138,8 @@ export const organization = pgTable("organization", {
   subscriptionStatus: text("subscription_status"),
   subscriptionId: text("subscription_id"),
   subscriptionValidUntil: timestamp("subscription_valid_until", { withTimezone: true }),
+  /** `monthly | yearly`; the Billing cadence of the cached Membership. */
+  subscriptionBillingCadence: text("subscription_billing_cadence"),
   paymentCustomerId: text("payment_customer_id"),
   usageMetrics: text("usage_metrics"),
   // Role required to manage billing (default: "owner")

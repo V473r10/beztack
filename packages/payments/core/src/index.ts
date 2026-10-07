@@ -22,6 +22,7 @@ export type {
   ListSubscriptionsOptions,
   MembershipUpdate,
   PaymentProviderAdapter,
+  PaymentProviderCapabilities,
   PaymentProviderName,
   Plan,
   PricingTier,

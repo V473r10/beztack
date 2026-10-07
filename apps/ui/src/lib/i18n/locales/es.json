@@ -121,7 +121,8 @@
       "support": "Soporte",
       "features": "Características"
     },
-    "unlimited": "Ilimitado"
+    "unlimited": "Ilimitado",
+    "switchBilling": "Cambiar facturación"
   },
   "billing": {
     "monthly": "Mensual",

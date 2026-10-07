@@ -36,6 +36,8 @@ type MembershipStatusResponse = {
     isAppAdmin?: boolean;
     organizationRole?: string | null;
     canManageBilling?: boolean;
+    billingCadence?: "monthly" | "yearly" | null;
+    paymentCapabilities?: { cadenceChange?: boolean };
     adminTierOverride?: AdminTierOverrideResponse;
   };
 };
@@ -134,7 +136,18 @@ export type MembershipContextValue = {
   hasPermission: (permission: string) => boolean;
   isWithinLimit: (limitKey: string, currentUsage: number) => boolean;
   canUpgrade: boolean;
-  getPlanChangeType: (targetTierId: string) => PlanChangeType;
+  /**
+   * `period_change` only when the target is the current tier on another
+   * Billing cadence and the Payment provider can change cadence.
+   */
+  getPlanChangeType: (
+    targetTierId: string,
+    targetBillingCadence?: "monthly" | "yearly",
+  ) => PlanChangeType;
+  /** The Membership's Billing cadence; null for the free tier or when unknown. */
+  billingCadence: "monthly" | "yearly" | null;
+  /** The Payment provider can move an existing Subscription to another cadence. */
+  canChangeBillingCadence: boolean;
   adminTierOverride: AdminTierOverrideStatus | null;
   isAppAdmin: boolean;
   /** The caller's Organization role in the Active organization, if a member. */
@@ -440,6 +453,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   const isAppAdmin = membershipStatusQuery.data?.data.isAppAdmin === true;
   const organizationRole = membershipStatusQuery.data?.data.organizationRole ?? null;
+  const billingCadence = membershipStatusQuery.data?.data.billingCadence ?? null;
+  const canChangeBillingCadence =
+    membershipStatusQuery.data?.data.paymentCapabilities?.cadenceChange === true;
   const isAccessLoading = membershipStatusQuery.isLoading;
 
   const isLoading =
@@ -567,7 +583,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const canUpgrade = currentTier !== "ultimate";
 
   const getPlanChangeType = useCallback(
-    (targetTierId: string): PlanChangeType => {
+    (targetTierId: string, targetBillingCadence?: "monthly" | "yearly"): PlanChangeType => {
       const tierHierarchy: Record<string, number> = {
         free: 0,
         basic: 1,
@@ -584,9 +600,17 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       if (targetLevel < currentLevel) {
         return "downgrade";
       }
+      if (
+        canChangeBillingCadence &&
+        billingCadence &&
+        targetBillingCadence &&
+        targetBillingCadence !== billingCadence
+      ) {
+        return "period_change";
+      }
       return "same";
     },
-    [currentTier],
+    [currentTier, billingCadence, canChangeBillingCadence],
   );
 
   const value = useMemo<MembershipContextValue>(
@@ -610,6 +634,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       isWithinLimit,
       canUpgrade,
       getPlanChangeType,
+      billingCadence,
+      canChangeBillingCadence,
       adminTierOverride,
       isAppAdmin,
       organizationRole,
@@ -634,6 +660,8 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       isWithinLimit,
       canUpgrade,
       getPlanChangeType,
+      billingCadence,
+      canChangeBillingCadence,
       adminTierOverride,
       isAppAdmin,
       organizationRole,

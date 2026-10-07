@@ -135,6 +135,34 @@ describe("MembershipProvider", () => {
     expect(value?.activeSubscription).toBeNull();
   });
 
+  it("offers a Cadence change only when the Payment provider supports it", () => {
+    const status = (cadenceChange: boolean) => ({
+      data: {
+        benefits: [],
+        billingCadence: "monthly",
+        hasActiveSubscription: true,
+        organizationId: "org_1",
+        paymentCapabilities: { cadenceChange },
+        tier: "pro",
+        userId: "user_1",
+      },
+      success: true,
+    });
+
+    mocks.membershipStatus = status(true);
+    let value = renderMembershipProvider();
+    expect(value?.billingCadence).toBe("monthly");
+    expect(value?.canChangeBillingCadence).toBe(true);
+    expect(value?.getPlanChangeType("pro", "yearly")).toBe("period_change");
+    expect(value?.getPlanChangeType("pro", "monthly")).toBe("same");
+    expect(value?.getPlanChangeType("ultimate", "yearly")).toBe("upgrade");
+
+    mocks.membershipStatus = status(false);
+    value = renderMembershipProvider();
+    expect(value?.canChangeBillingCadence).toBe(false);
+    expect(value?.getPlanChangeType("pro", "yearly")).toBe("same");
+  });
+
   it("exposes App-admin-only Admin tier override details", () => {
     mocks.membershipStatus = {
       data: {

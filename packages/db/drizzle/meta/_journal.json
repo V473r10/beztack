@@ -36,6 +36,13 @@
       "when": 1791330895148,
       "tag": "0004_pending_plan_change_history",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791368512038,
+      "tag": "0005_membership_billing_cadence",
+      "breakpoints": true
     }
   ]
 }
