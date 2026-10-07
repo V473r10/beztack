@@ -1,5 +1,5 @@
 import { db, plan } from "@beztack/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { CatalogPlan } from "./catalog";
 import type { Product } from "./types";
 
@@ -33,6 +33,48 @@ export async function getCatalogPlans(): Promise<CatalogPlan[]> {
     visible: p.visible ?? true,
     displayOrder: p.displayOrder,
   }));
+}
+
+/**
+ * The active visible Pricing catalog plans of a Payment provider, shaped like
+ * the provider's own products (same id, price and interval) so the pricing
+ * page and checkout treat them the same. Used when the provider is down.
+ */
+export async function getCatalogProducts(paymentProvider: string): Promise<Product[]> {
+  const rows = await db
+    .select()
+    .from(plan)
+    .where(
+      and(eq(plan.provider, paymentProvider), eq(plan.visible, true), eq(plan.status, "active")),
+    )
+    .orderBy(plan.displayOrder);
+
+  return rows.flatMap((row): Product[] => {
+    if (!(row.interval === "month" || row.interval === "year")) {
+      return [];
+    }
+
+    return [
+      {
+        id: row.providerPlanId ?? row.id,
+        name: row.displayName,
+        description: row.description ?? undefined,
+        type: "plan",
+        price: { amount: Number(row.price), currency: row.currency },
+        interval: row.interval,
+        intervalCount: row.intervalCount ?? 1,
+        metadata: {
+          planId: row.canonicalTierId,
+          tier: row.canonicalTierId,
+          features: (row.features as string[] | null) ?? [],
+          limits: (row.limits as Record<string, number> | null) ?? {},
+          permissions: (row.permissions as string[] | null) ?? [],
+          displayOrder: row.displayOrder,
+          soon: row.soon,
+        },
+      },
+    ];
+  });
 }
 
 /**
