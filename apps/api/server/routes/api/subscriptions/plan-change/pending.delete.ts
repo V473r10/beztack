@@ -1,4 +1,5 @@
 import type { PaymentProviderAdapter, Subscription } from "@beztack/payments";
+import { isCurrentSubscription } from "@beztack/payments/subscription";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { env } from "@/env";
@@ -52,15 +53,6 @@ function readString(source: Record<string, unknown> | undefined, key: string): s
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function isCurrentSubscription(subscription: Subscription): boolean {
-  return Boolean(
-    subscription.status === "active" ||
-    (subscription.status === "canceled" &&
-      subscription.currentPeriodEnd &&
-      subscription.currentPeriodEnd > new Date()),
-  );
-}
-
 function readMembershipTargetId(
   subscription: Subscription,
   targetType: "user" | "organization",
@@ -107,7 +99,7 @@ function createPlanChangeStore(options: {
       }
 
       const currentSubscription = subscriptions
-        .filter(isCurrentSubscription)
+        .filter((subscription) => isCurrentSubscription(subscription))
         .find((subscription) => subscriptionMatchesTarget(subscription, input.membershipTarget));
       if (!currentSubscription) {
         return null;

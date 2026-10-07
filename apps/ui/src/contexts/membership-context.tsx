@@ -1,3 +1,4 @@
+import { isCurrentSubscription } from "@beztack/payments/subscription";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { createContext, useCallback, useContext, useMemo, useRef } from "react";
@@ -415,13 +416,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const subscriptions = subscriptionsQuery.data?.subscriptions ?? EMPTY_SUBSCRIPTIONS;
 
   const activeSubscription = (() => {
-    const isValidSub = (sub: Subscription) =>
-      sub.status === "active" ||
-      (sub.status === "canceled" &&
-        sub.currentPeriodEnd !== undefined &&
-        new Date(sub.currentPeriodEnd) > new Date());
-
-    const validSubs = subscriptions.filter(isValidSub);
+    const validSubs = subscriptions.filter((sub) => isCurrentSubscription(sub));
 
     return validSubs.at(0) ?? null;
   })();

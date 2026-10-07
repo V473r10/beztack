@@ -1,3 +1,4 @@
+import { isCurrentSubscription } from "@beztack/payments/subscription";
 import {
   AlertCircle,
   ArrowUpRight,
@@ -262,13 +263,7 @@ export function BillingDashboard({
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const activeSubscription = (() => {
-    const isValidSub = (sub: Subscription) =>
-      sub.status === "active" ||
-      (sub.status === "canceled" &&
-        sub.currentPeriodEnd &&
-        new Date(sub.currentPeriodEnd) > new Date());
-
-    const validSubs = subscriptions.filter(isValidSub);
+    const validSubs = subscriptions.filter((sub) => isCurrentSubscription(sub));
 
     return validSubs.at(0);
   })();
