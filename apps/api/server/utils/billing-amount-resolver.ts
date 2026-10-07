@@ -27,6 +27,16 @@ export function estimatePeriodEnd(activeSub: Subscription, interval: string): Da
 }
 
 /**
+ * What the provider actually charges the Subscription per period
+ * (`metadata.billingAmount`, set by the adapter from MP's
+ * `auto_recurring.transaction_amount`). Null when it is not reported.
+ */
+export function readChargedAmount(subscription: Subscription): number | null {
+  const amount = subscription.metadata?.billingAmount;
+  return typeof amount === "number" && amount > 0 ? amount : null;
+}
+
+/**
  * Resolve the current billing amount for a subscription.
  *
  * Fallback chain:

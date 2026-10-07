@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Building2, Clock, Loader2, TrendingDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,40 +13,16 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMembership } from "@/contexts/membership-context";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
-import { estimateProration, type ProrationEstimate } from "@/lib/proration";
+import { type PlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
 import type { PricingTier } from "@/types/pricing";
 import { MembershipBadge } from "./membership-badge";
 import { formatCurrency, PricingCard } from "./pricing-card";
-import { requestJson } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
 // Constants
 const MIN_TIERS_FOR_THREE_COLUMN = 3;
-
-type PlanChangePreviewResponse = {
-  planChangePreview: {
-    direction: "upgrade" | "downgrade" | "cadence_change";
-    currentPlan: {
-      price: {
-        amount: number;
-        currency: string;
-      };
-    };
-    targetPlan: {
-      price: {
-        amount: number;
-        currency: string;
-      };
-    };
-    firstPayment: {
-      amount: number;
-      currency: string;
-      fullAmount: number;
-    };
-  };
-};
 
 type PlanChangeDisplay =
   | {
@@ -58,16 +34,13 @@ type PlanChangeDisplay =
     }
   | {
       direction: "downgrade";
-      trialDays: number;
-      savings: number;
+      daysRemaining: number;
       newAmount: number;
     };
 
-function buildServerPlanChangeDisplay(
-  serverPreview: PlanChangePreviewResponse,
-  clientEstimate: ProrationEstimate | null,
-): PlanChangeDisplay | null {
-  const preview = serverPreview.planChangePreview;
+/** Shapes the server's Plan change preview for display, without recomputing it. */
+function buildPlanChangeDisplay(preview: PlanChangePreview): PlanChangeDisplay | null {
+  const daysRemaining = preview.currentPeriod?.daysRemaining ?? 0;
   if (preview.direction === "cadence_change") {
     return null;
   }
@@ -75,40 +48,17 @@ function buildServerPlanChangeDisplay(
   if (preview.direction === "downgrade") {
     return {
       direction: "downgrade",
-      newAmount: preview.targetPlan.price.amount,
-      savings: Math.max(preview.currentPlan.price.amount - preview.targetPlan.price.amount, 0),
-      trialDays: clientEstimate?.daysRemaining ?? 0,
+      daysRemaining,
+      newAmount: preview.firstPayment.fullAmount,
     };
   }
 
   return {
-    daysRemaining: clientEstimate?.daysRemaining ?? 0,
+    daysRemaining,
     direction: "upgrade",
     fullAmount: preview.firstPayment.fullAmount,
     proratedAmount: preview.firstPayment.amount,
-    unusedCredit: Math.max(preview.firstPayment.fullAmount - preview.firstPayment.amount, 0),
-  };
-}
-
-function buildClientPlanChangeDisplay(
-  clientEstimate: ProrationEstimate,
-  previewChangeType: string,
-): PlanChangeDisplay {
-  if (previewChangeType === "downgrade") {
-    return {
-      direction: "downgrade",
-      newAmount: clientEstimate.fullAmount,
-      savings: clientEstimate.unusedCredit,
-      trialDays: clientEstimate.daysRemaining,
-    };
-  }
-
-  return {
-    daysRemaining: clientEstimate.daysRemaining,
-    direction: "upgrade",
-    fullAmount: clientEstimate.fullAmount,
-    proratedAmount: clientEstimate.proratedAmount,
-    unusedCredit: clientEstimate.unusedCredit,
+    unusedCredit: preview.firstPayment.credit,
   };
 }
 
@@ -138,68 +88,17 @@ export function UpgradeDialog({
     queryFn: usePricingTiers,
   });
 
-  // Fetch server-side Plan change preview when a tier is hovered/selected
+  // Fetch the server's Plan change preview when a tier is hovered/selected
   const previewTargetId = hoveredTierId ?? selectedTier;
-  const previewChangeType = previewTargetId ? getPlanChangeType(previewTargetId) : "same";
 
-  const { data: serverPreview, isLoading: isPreviewLoading } = useQuery<PlanChangePreviewResponse>({
-    queryKey: queryKeys.subscriptions.planChangePreview(
-      activeSubscription?.id,
-      previewTargetId,
-      billingPeriod,
-    ),
-    queryFn: () =>
-      requestJson<PlanChangePreviewResponse>("/api/subscriptions/plan-change/preview", {
-        body: JSON.stringify({
-          targetBillingCadence: billingPeriod,
-          targetTierId: previewTargetId,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      }),
-    enabled: !!activeSubscription && !!previewTargetId,
-    staleTime: 30_000,
+  const { data: serverPreview, isLoading: isPreviewLoading } = usePlanChangePreview({
+    subscriptionId: activeSubscription?.id,
+    targetTierId: previewTargetId,
+    billingPeriod,
+    enabled: Boolean(activeSubscription),
   });
 
-  // Client-side estimate as instant placeholder
-  const clientEstimate = useMemo(() => {
-    if (!(activeSubscription && previewTargetId)) {
-      return null;
-    }
-
-    const targetTier = allTiersRaw.find((t) => t.id === previewTargetId);
-    if (!targetTier) {
-      return null;
-    }
-
-    const currentAmount =
-      typeof activeSubscription.metadata?.billingAmount === "number"
-        ? activeSubscription.metadata.billingAmount
-        : 0;
-    const newAmount = targetTier.price[billingPeriod];
-    const periodStart = activeSubscription.currentPeriodStart ?? new Date();
-    const periodEnd = activeSubscription.currentPeriodEnd ?? new Date();
-
-    return estimateProration({
-      currentAmount,
-      newAmount,
-      currentPeriodStart: periodStart instanceof Date ? periodStart : new Date(periodStart),
-      currentPeriodEnd: periodEnd instanceof Date ? periodEnd : new Date(periodEnd),
-    });
-  }, [activeSubscription, previewTargetId, allTiersRaw, billingPeriod]);
-
-  // Normalize server and client shapes into a common display type
-  const planChangeDisplay: PlanChangeDisplay | null = useMemo(() => {
-    if (serverPreview) {
-      return buildServerPlanChangeDisplay(serverPreview, clientEstimate);
-    }
-    if (clientEstimate) {
-      return buildClientPlanChangeDisplay(clientEstimate, previewChangeType);
-    }
-    return null;
-  }, [serverPreview, clientEstimate, previewChangeType]);
+  const planChangeDisplay = serverPreview ? buildPlanChangeDisplay(serverPreview) : null;
 
   // Sort tiers by displayOrder and filter to plan changes (upgrades + downgrades)
   const allTiers = [...allTiersRaw].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
@@ -348,19 +247,14 @@ export function UpgradeDialog({
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <Clock className="h-3 w-3" />
-                      <span>Current benefits kept for {planChangeDisplay.trialDays} more days</span>
+                      <span>
+                        Current benefits kept for {planChangeDisplay.daysRemaining} more days
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-lg">
                       {formatCurrency(planChangeDisplay.newAmount)}/mo
-                    </div>
-                    <div className="text-muted-foreground text-xs">
-                      Save{" "}
-                      <span className="font-medium text-green-600 dark:text-green-400">
-                        {formatCurrency(planChangeDisplay.savings)}
-                      </span>
-                      /mo
                     </div>
                   </div>
                 </div>

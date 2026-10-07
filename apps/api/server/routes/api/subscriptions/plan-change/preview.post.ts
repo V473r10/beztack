@@ -12,6 +12,7 @@ import {
   type PlanChangeStore,
   previewPlanChange,
 } from "@/server/utils/plan-change";
+import { readChargedAmount } from "@/server/utils/billing-amount-resolver";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { organizationAccess } from "@/server/domain/organization-access";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
@@ -187,6 +188,7 @@ function createPlanChangeStore(options: {
         subscriptionOwnerUserId: readMembershipTargetId(currentSubscription, "user"),
         currentPeriodStart: currentSubscription.currentPeriodStart,
         currentPeriodEnd: currentSubscription.currentPeriodEnd,
+        currentPeriodChargedAmount: readChargedAmount(currentSubscription),
       };
     },
     findPendingPlanChange() {

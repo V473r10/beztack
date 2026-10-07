@@ -34,9 +34,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
+import { type PlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { MembershipTier } from "@/types/membership";
 import type { PricingTier } from "@/types/pricing";
 import { formatCurrency } from "./pricing-card";
 import { queryKeys } from "@/lib/query-keys";
@@ -111,20 +112,129 @@ function getChangeTypeConfig(
   return configs[changeType];
 }
 
-function getPriceDiffClass(priceDiff: number): string {
-  if (priceDiff > 0) {
-    return "text-green-600 dark:text-green-400";
+type PlanChangePreviewSummaryProps = {
+  preview: PlanChangePreview | undefined;
+  isLoading: boolean;
+  error: Error | null;
+};
+
+function cadenceSuffix(cadence: "monthly" | "yearly"): string {
+  return cadence === "yearly" ? "year" : "month";
+}
+
+/**
+ * What the Plan change costs, exactly as the server's Plan change preview
+ * says. Nothing here is recomputed on the client.
+ */
+export function PlanChangePreviewSummary({
+  preview,
+  isLoading,
+  error,
+}: PlanChangePreviewSummaryProps) {
+  const { t } = useTranslation();
+
+  if (error) {
+    return (
+      <div
+        className="rounded-lg border border-destructive/50 p-4 text-destructive text-sm"
+        role="alert"
+      >
+        {t("billing.planChange.previewError", "We couldn't price this plan change.")}{" "}
+        {error.message}
+      </div>
+    );
   }
-  if (priceDiff < 0) {
-    return "text-amber-600 dark:text-amber-400";
+
+  if (isLoading || !preview) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border bg-muted/20 p-4 text-muted-foreground text-sm">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {t("billing.planChange.previewLoading", "Calculating your plan change...")}
+      </div>
+    );
   }
-  return "text-muted-foreground";
+
+  const { currentPlan, targetPlan, firstPayment } = preview;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
+            {t("billing.planChange.currentPlan", "Current Plan")}
+          </div>
+          <div className="font-semibold capitalize">{currentPlan.canonicalTierId}</div>
+          <div className="mt-1 text-muted-foreground text-sm">
+            {formatCurrency(currentPlan.price.amount, currentPlan.price.currency)}/
+            {cadenceSuffix(currentPlan.billingCadence)}
+          </div>
+        </div>
+        <div className="rounded-lg border p-4">
+          <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
+            {t("billing.planChange.newPlan", "New Plan")}
+          </div>
+          <div className="font-semibold capitalize">{targetPlan.canonicalTierId}</div>
+          <div className="mt-1 text-sm">
+            {formatCurrency(targetPlan.price.amount, targetPlan.price.currency)}/
+            {cadenceSuffix(targetPlan.billingCadence)}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-lg border bg-muted/20 p-4 text-sm">
+        {preview.direction === "upgrade" ? (
+          <>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {t("billing.planChange.credit", {
+                  defaultValue: "Credit for {{days}} unused days",
+                  days: preview.currentPeriod?.daysRemaining ?? 0,
+                })}
+              </span>
+              <span className="font-medium text-green-600 dark:text-green-400">
+                -{formatCurrency(firstPayment.credit, firstPayment.currency)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {t("billing.planChange.dueToday", "Due today")}
+              </span>
+              <span className="font-semibold">
+                {formatCurrency(firstPayment.amount, firstPayment.currency)}
+              </span>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              {t("billing.planChange.thenFullAmount", {
+                defaultValue: "Then {{price}} each period.",
+                price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
+              })}
+            </p>
+          </>
+        ) : (
+          <p className="text-muted-foreground">
+            {preview.effectiveAt
+              ? t("billing.planChange.startsOn", {
+                  defaultValue: "You keep your current plan until {{date}}, then pay {{price}}.",
+                  date: formatDate(preview.effectiveAt, { dateStyle: "long" }),
+                  price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
+                })
+              : t("billing.planChange.startsAtRenewal", {
+                  defaultValue:
+                    "You keep your current plan until the next renewal, then pay {{price}}.",
+                  price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
+                })}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export type PlanChangeDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentTier: MembershipTier;
+  /** The Current Subscription the preview is priced against. */
+  subscriptionId?: string;
   targetTier: PricingTier | null;
   changeType: PlanChangeType;
   billingPeriod: "monthly" | "yearly";
@@ -136,7 +246,7 @@ export type PlanChangeDialogProps = {
 export function PlanChangeDialog({
   open,
   onOpenChange,
-  currentTier,
+  subscriptionId,
   targetTier,
   changeType,
   billingPeriod,
@@ -153,23 +263,26 @@ export function PlanChangeDialog({
     queryFn: usePricingTiers,
   });
 
+  const previewQuery = usePlanChangePreview({
+    subscriptionId,
+    targetTierId: targetTier?.id,
+    billingPeriod,
+    enabled: open,
+  });
+
   const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
   const savingsPercent = Math.max(...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0), 0);
-
-  const currentTierData = allTiers.find((tier) => tier.id === currentTier);
 
   if (!targetTier) {
     return null;
   }
 
-  const targetPrice = targetTier.price[billingPeriod];
-  const currentPrice = currentTierData?.price[billingPeriod] ?? 0;
-  const priceDiff = targetPrice - currentPrice;
-
   const productId = billingPeriod === "yearly" ? targetTier.yearly?.id : targetTier.monthly?.id;
+  // Accepting is only offered for a change the server has priced.
+  const canConfirm = Boolean(productId && previewQuery.data) && !isLoading;
 
   const handleConfirm = async () => {
-    if (!productId) {
+    if (!(productId && canConfirm)) {
       return;
     }
 
@@ -253,7 +366,7 @@ export function PlanChangeDialog({
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-amber-600 hover:bg-amber-700"
-              disabled={!confirmDowngrade || isLoading}
+              disabled={!(confirmDowngrade && canConfirm)}
               onClick={handleConfirm}
             >
               {isLoading ? (
@@ -292,32 +405,11 @@ export function PlanChangeDialog({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Plan comparison */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Current Plan */}
-            <div className="rounded-lg border bg-muted/30 p-4">
-              <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
-                {t("billing.planChange.currentPlan", "Current Plan")}
-              </div>
-              <div className="font-semibold capitalize">{currentTier}</div>
-              <div className="mt-1 text-muted-foreground text-sm">
-                {formatCurrency(currentPrice)}/{billingPeriod === "yearly" ? "year" : "month"}
-              </div>
-            </div>
-
-            {/* Target Plan */}
-            <div
-              className={cn("rounded-lg border p-4", getChangeTypeConfig(changeType, t).cardClass)}
-            >
-              <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
-                {t("billing.planChange.newPlan", "New Plan")}
-              </div>
-              <div className="font-semibold">{targetTier.name}</div>
-              <div className="mt-1 text-sm">
-                {formatCurrency(targetPrice)}/{billingPeriod === "yearly" ? "year" : "month"}
-              </div>
-            </div>
-          </div>
+          <PlanChangePreviewSummary
+            error={previewQuery.error}
+            isLoading={previewQuery.isLoading}
+            preview={previewQuery.data}
+          />
 
           <Separator />
 
@@ -350,25 +442,6 @@ export function PlanChangeDialog({
             </div>
           )}
 
-          {/* Price difference info */}
-          <div className="rounded-lg border bg-muted/20 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">
-                {t("billing.planChange.priceChange", "Price Change")}
-              </span>
-              <span className={cn("font-semibold", getPriceDiffClass(priceDiff))}>
-                {priceDiff > 0 ? "+" : ""}
-                {formatCurrency(priceDiff)}/{billingPeriod === "yearly" ? "year" : "month"}
-              </span>
-            </div>
-            <p className="mt-2 text-muted-foreground text-xs">
-              {t(
-                "billing.planChange.prorationNote",
-                "Changes will be prorated and applied to your next billing cycle.",
-              )}
-            </p>
-          </div>
-
           {/* Features comparison for upgrade */}
           {changeType === "upgrade" && targetTier.features && (
             <div className="space-y-2">
@@ -396,7 +469,7 @@ export function PlanChangeDialog({
             return (
               <Button
                 className={cn(config.buttonClass)}
-                disabled={isLoading || !productId}
+                disabled={!canConfirm}
                 onClick={handleConfirm}
               >
                 {isLoading ? (

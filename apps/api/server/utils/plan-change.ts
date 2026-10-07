@@ -42,6 +42,12 @@ export type PlanChangeCurrentSubscription = {
   organizationId?: string | null;
   currentPeriodStart?: Date | null;
   currentPeriodEnd?: Date | null;
+  /**
+   * What the provider actually charged for the current period. It can differ
+   * from the catalog price after a prorated first Payment or a price edit, so
+   * an Upgrade credits this. Null when the provider does not report it.
+   */
+  currentPeriodChargedAmount?: number | null;
 };
 
 export type FindCurrentSubscriptionInput = {
@@ -119,8 +125,15 @@ export type PlanChangePreview = {
   effectiveAt: Date | null;
   targetPlan: PlanChangeCatalogPlan;
   effectiveTiming: "after_first_payment" | "next_renewal";
+  /** Null when the provider reports no current period bounds. */
+  currentPeriod: {
+    daysRemaining: number;
+    totalDays: number;
+  } | null;
   firstPayment: {
     amount: number;
+    /** Upgrade credit for the unused part of the current period; 0 otherwise. */
+    credit: number;
     currency: string;
     fullAmount: number;
   };
@@ -533,27 +546,47 @@ function classifyPlanChange(
   fail("not_a_plan_change", "Same-tier, same-Billing cadence request is not a Plan change");
 }
 
-function calculateProratedFirstPayment(input: {
-  currentAmount: number;
-  targetAmount: number;
-  currentPeriodStart?: Date | null;
-  currentPeriodEnd?: Date | null;
-  now: Date;
-}): number {
-  if (!(input.currentPeriodStart && input.currentPeriodEnd)) {
-    return input.targetAmount;
+function measureCurrentPeriod(
+  currentSubscription: PlanChangeCurrentSubscription,
+  now: Date,
+): PlanChangePreview["currentPeriod"] {
+  const { currentPeriodStart, currentPeriodEnd } = currentSubscription;
+  if (!(currentPeriodStart && currentPeriodEnd)) {
+    return null;
   }
 
   const totalMs = Math.max(
-    input.currentPeriodEnd.getTime() - input.currentPeriodStart.getTime(),
+    currentPeriodEnd.getTime() - currentPeriodStart.getTime(),
     MILLISECONDS_PER_DAY,
   );
-  const remainingMs = Math.max(input.currentPeriodEnd.getTime() - input.now.getTime(), 0);
-  const totalDays = Math.max(Math.ceil(totalMs / MILLISECONDS_PER_DAY), 1);
-  const daysRemaining = Math.max(Math.ceil(remainingMs / MILLISECONDS_PER_DAY), 0);
-  const unusedCredit = Math.round((input.currentAmount / totalDays) * daysRemaining);
+  const remainingMs = Math.max(currentPeriodEnd.getTime() - now.getTime(), 0);
 
-  return Math.max(input.targetAmount - unusedCredit, 0);
+  return {
+    daysRemaining: Math.max(Math.ceil(remainingMs / MILLISECONDS_PER_DAY), 0),
+    totalDays: Math.max(Math.ceil(totalMs / MILLISECONDS_PER_DAY), 1),
+  };
+}
+
+/**
+ * The value of the unused part of the current period. It is based on what was
+ * actually charged for the period, falling back to the catalog price only when
+ * the provider does not report the charge.
+ */
+function calculateUpgradeCredit(input: {
+  currentPeriod: PlanChangePreview["currentPeriod"];
+  currentPlan: PlanChangeCatalogPlan;
+  currentSubscription: PlanChangeCurrentSubscription;
+}): number {
+  if (!input.currentPeriod) {
+    return 0;
+  }
+
+  const charged = input.currentSubscription.currentPeriodChargedAmount;
+  const periodAmount =
+    typeof charged === "number" && charged > 0 ? charged : input.currentPlan.price.amount;
+  const { daysRemaining, totalDays } = input.currentPeriod;
+
+  return Math.round((periodAmount / totalDays) * daysRemaining);
 }
 
 export async function previewPlanChange(input: PreviewPlanChangeInput): Promise<PlanChangePreview> {
@@ -589,16 +622,15 @@ export async function previewPlanChange(input: PreviewPlanChangeInput): Promise<
   const currentPlan = resolveCurrentPlan(catalogPlans, currentSubscription);
   const targetPlan = resolveTargetPlan(catalogPlans, input.target);
   const direction = classifyPlanChange(currentPlan, targetPlan);
-  const firstPaymentAmount =
+  const currentPeriod = measureCurrentPeriod(currentSubscription, input.now?.() ?? new Date());
+  // The credit can never exceed the first Payment it discounts.
+  const credit =
     direction === "upgrade"
-      ? calculateProratedFirstPayment({
-          currentAmount: currentPlan.price.amount,
-          targetAmount: targetPlan.price.amount,
-          currentPeriodStart: currentSubscription.currentPeriodStart,
-          currentPeriodEnd: currentSubscription.currentPeriodEnd,
-          now: input.now?.() ?? new Date(),
-        })
-      : targetPlan.price.amount;
+      ? Math.min(
+          calculateUpgradeCredit({ currentPeriod, currentPlan, currentSubscription }),
+          targetPlan.price.amount,
+        )
+      : 0;
 
   return {
     kind: "plan-change-preview",
@@ -609,8 +641,10 @@ export async function previewPlanChange(input: PreviewPlanChangeInput): Promise<
     effectiveAt: currentSubscription.currentPeriodEnd ?? null,
     targetPlan,
     effectiveTiming: direction === "upgrade" ? "after_first_payment" : "next_renewal",
+    currentPeriod,
     firstPayment: {
-      amount: firstPaymentAmount,
+      amount: targetPlan.price.amount - credit,
+      credit,
       currency: targetPlan.price.currency,
       fullAmount: targetPlan.price.amount,
     },

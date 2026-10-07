@@ -137,12 +137,17 @@
       "currentPlan": "Current Plan",
       "newPlan": "New Plan",
       "billingPeriod": "Billing Period",
-      "priceChange": "Price Change",
-      "prorationNote": "Changes will be prorated and applied to your next billing cycle.",
       "newFeatures": "New Features You'll Get",
       "confirmUpgrade": "Confirm Upgrade",
       "confirmDowngrade": "Continue",
-      "confirmSwitch": "Switch Plan"
+      "confirmSwitch": "Switch Plan",
+      "previewLoading": "Calculating your plan change...",
+      "previewError": "We couldn't price this plan change.",
+      "credit": "Credit for {{days}} unused days",
+      "dueToday": "Due today",
+      "thenFullAmount": "Then {{price}} each period.",
+      "startsOn": "You keep your current plan until {{date}}, then pay {{price}}.",
+      "startsAtRenewal": "You keep your current plan until the next renewal, then pay {{price}}."
     },
     "downgradeWarning": {
       "title": "Confirm Downgrade",

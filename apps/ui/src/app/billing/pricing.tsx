@@ -600,12 +600,12 @@ export default function Pricing() {
       <PlanChangeDialog
         billingPeriod={billingPeriod}
         changeType={selectedTier ? getChangeTypeForTier(selectedTier.id) : "same"}
-        currentTier={currentTier}
         isLoading={isLoading}
         onBillingPeriodChange={setBillingPeriod}
         onConfirm={handleConfirmPlanChange}
         onOpenChange={setShowPlanChangeDialog}
         open={showPlanChangeDialog}
+        subscriptionId={activeSubscription?.id}
         targetTier={selectedTier}
       />
     </div>

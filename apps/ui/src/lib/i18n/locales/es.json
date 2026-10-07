@@ -137,12 +137,17 @@
       "currentPlan": "Plan Actual",
       "newPlan": "Nuevo Plan",
       "billingPeriod": "Período de Facturación",
-      "priceChange": "Cambio de Precio",
-      "prorationNote": "Los cambios se prorratearán y se aplicarán a tu próximo ciclo de facturación.",
       "newFeatures": "Nuevas Funciones que Obtendrás",
       "confirmUpgrade": "Confirmar Mejora",
       "confirmDowngrade": "Continuar",
-      "confirmSwitch": "Cambiar Plan"
+      "confirmSwitch": "Cambiar Plan",
+      "previewLoading": "Calculando el cambio de plan...",
+      "previewError": "No pudimos calcular el precio de este cambio de plan.",
+      "credit": "Crédito por {{days}} días sin usar",
+      "dueToday": "A pagar hoy",
+      "thenFullAmount": "Después {{price}} por período.",
+      "startsOn": "Mantienes tu plan actual hasta el {{date}} y después pagas {{price}}.",
+      "startsAtRenewal": "Mantienes tu plan actual hasta la próxima renovación y después pagas {{price}}."
     },
     "downgradeWarning": {
       "title": "Confirmar Reducción",
