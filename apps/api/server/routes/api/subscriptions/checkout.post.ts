@@ -202,6 +202,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // A "coming soon" plan is shown on the pricing page but cannot be bought.
+    if (selectedProduct.metadata?.soon === true) {
+      throw createError({
+        statusCode: 409,
+        message: "This plan is not available yet",
+      });
+    }
+
     const productTierId =
       typeof selectedProduct.metadata?.tier === "string"
         ? selectedProduct.metadata.tier

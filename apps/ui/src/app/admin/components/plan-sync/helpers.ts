@@ -10,6 +10,7 @@ export function planToEditState(plan: DbPlan): EditState {
     permissions: (plan.permissions ?? []).join("\n"),
     displayOrder: plan.displayOrder,
     highlighted: plan.highlighted ?? false,
+    soon: plan.soon,
     visible: plan.visible ?? true,
   };
 }

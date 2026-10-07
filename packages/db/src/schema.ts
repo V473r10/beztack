@@ -204,6 +204,8 @@ export const plan = pgTable(
     intervalCount: integer("interval_count").default(1),
     displayOrder: integer("display_order"),
     highlighted: boolean("highlighted").default(false),
+    /** Shown on the pricing page as "coming soon", but not purchasable. */
+    soon: boolean("soon").default(false).notNull(),
     visible: boolean("visible").default(true),
     status: text("status").default("active"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

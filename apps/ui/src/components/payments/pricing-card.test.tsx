@@ -43,6 +43,33 @@ function buttonFor(html: string, label: string): string {
   return match[0];
 }
 
+describe("Pricing card for a coming-soon plan", () => {
+  it("shows the plan with no way to buy it", () => {
+    const onSelect = vi.fn();
+    const html = renderToStaticMarkup(
+      <PricingCard
+        billingPeriod="monthly"
+        currentTier="free"
+        onSelect={onSelect}
+        tier={{ ...PRO, soon: true }}
+      />,
+    );
+
+    expect(html).toContain("Pro");
+    expect(buttonFor(html, "pricing.soon")).toContain('disabled=""');
+    expect(html).not.toContain("pricing.subscribe");
+  });
+
+  it("keeps the checkout action for a plan on sale", () => {
+    const html = renderToStaticMarkup(
+      <PricingCard billingPeriod="monthly" currentTier="free" onSelect={vi.fn()} tier={PRO} />,
+    );
+
+    expect(html).not.toContain("pricing.soon");
+    expect(buttonFor(html, "pricing.subscribe")).not.toContain('disabled=""');
+  });
+});
+
 describe("Pricing card for the current tier on another Billing cadence", () => {
   it("offers Switch billing when it is a Cadence change the provider supports", () => {
     const html = renderCurrentProCard("period_change");

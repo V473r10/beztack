@@ -96,6 +96,8 @@ export function PricingCard({
   // ("Switch billing"), offered only when the provider can do it.
   const isCadenceSwitch = currentTier === tier.id && changeType === "period_change";
   const isCurrentTier = currentTier === tier.id && !isCadenceSwitch;
+  // "Coming soon" plans are shown but cannot be bought or switched to.
+  const isSoon = tier.soon === true && !isCurrentTier;
   const price = tier.price[billingPeriod];
   const yearlyPrice = tier.price.yearly;
   const monthlyPrice = tier.price.monthly;
@@ -106,7 +108,7 @@ export function PricingCard({
       : null;
 
   const handleSelect = () => {
-    if (disabled || isLoading || isCurrentTier) {
+    if (disabled || isLoading || isCurrentTier || isSoon) {
       return;
     }
 
@@ -134,6 +136,9 @@ export function PricingCard({
     if (isCurrentTier) {
       return t("pricing.currentPlan", "Current Plan");
     }
+    if (isSoon) {
+      return t("pricing.soon", "Coming soon");
+    }
     if (tier.id === "ultimate") {
       return t("pricing.contactSales", "Contact Sales");
     }
@@ -153,7 +158,7 @@ export function PricingCard({
   };
 
   const getButtonIcon = () => {
-    if (isCurrentTier || !hasActiveSubscription) {
+    if (isCurrentTier || isSoon || !hasActiveSubscription) {
       return null;
     }
     if (changeType === "downgrade") {
@@ -208,7 +213,10 @@ export function PricingCard({
               <Icon className="h-6 w-6" />
             </div>
             <div>
-              <CardTitle className="font-bold text-xl tracking-tight">{tier.name}</CardTitle>
+              <CardTitle className="flex items-center gap-2 font-bold text-xl tracking-tight">
+                {tier.name}
+                {isSoon && <Badge variant="secondary">{t("pricing.soon", "Coming soon")}</Badge>}
+              </CardTitle>
               <CardDescription className="line-clamp-1 text-sm">{tier.description}</CardDescription>
             </div>
           </div>
@@ -314,7 +322,7 @@ export function PricingCard({
                 hasActiveSubscription &&
                 "bg-amber-600 text-white hover:bg-amber-700",
             )}
-            disabled={disabled || isLoading || isCurrentTier}
+            disabled={disabled || isLoading || isCurrentTier || isSoon}
             onClick={handleSelect}
             size="lg"
             variant={

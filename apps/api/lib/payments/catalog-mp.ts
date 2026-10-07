@@ -29,6 +29,7 @@ export async function getCatalogPlans(): Promise<CatalogPlan[]> {
     frequencyType: "months",
     initPoint: null,
     highlighted: p.highlighted ?? false,
+    soon: p.soon,
     visible: p.visible ?? true,
     displayOrder: p.displayOrder,
   }));
@@ -60,6 +61,7 @@ export async function getCatalogPlanById(planId: string): Promise<CatalogPlan | 
     frequencyType: "months",
     initPoint: null,
     highlighted: p.highlighted ?? false,
+    soon: p.soon,
     visible: p.visible ?? true,
     displayOrder: p.displayOrder,
   };
@@ -93,6 +95,7 @@ export async function getCatalogPlanByProviderPlanId(
     frequencyType: "months",
     initPoint: null,
     highlighted: p.highlighted ?? false,
+    soon: p.soon,
     visible: p.visible ?? true,
     displayOrder: p.displayOrder,
   };
@@ -129,6 +132,7 @@ export async function enrichProductWithCatalog(product: Product): Promise<Produc
       limits: catalogPlan.limits,
       permissions: catalogPlan.permissions,
       displayOrder: catalogPlan.displayOrder,
+      soon: catalogPlan.soon,
     },
   };
 }

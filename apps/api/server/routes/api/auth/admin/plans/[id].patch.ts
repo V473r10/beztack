@@ -19,6 +19,7 @@ const updateSchema = z.object({
   permissions: z.array(z.string()).optional(),
   displayOrder: z.number().nullable().optional(),
   highlighted: z.boolean().optional(),
+  soon: z.boolean().optional(),
   visible: z.boolean().optional(),
 });
 

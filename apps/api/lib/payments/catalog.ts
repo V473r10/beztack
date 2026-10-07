@@ -16,6 +16,7 @@ export type CatalogPlan = {
   frequencyType: string;
   initPoint: string | null;
   highlighted: boolean;
+  soon: boolean;
   visible: boolean;
   displayOrder: number | null;
 };
@@ -79,6 +80,7 @@ export function buildCatalogPlanFromProduct(product: Product): CatalogPlan {
     frequencyType: mapIntervalToFrequencyType(product.interval),
     initPoint: null,
     highlighted: metadata?.highlighted === true,
+    soon: metadata?.soon === true,
     visible: metadata?.visible !== false,
     displayOrder: typeof metadata?.displayOrder === "number" ? metadata.displayOrder : null,
   };

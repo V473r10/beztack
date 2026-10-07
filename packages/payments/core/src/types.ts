@@ -293,6 +293,8 @@ export type PricingTier = {
   readonly permissions?: Record<string, boolean>;
   readonly displayOrder?: number;
   readonly yearlySavingsPercent?: number;
+  /** Shown as "coming soon" and not purchasable (from the Pricing catalog). */
+  readonly soon?: boolean;
 };
 
 /**
