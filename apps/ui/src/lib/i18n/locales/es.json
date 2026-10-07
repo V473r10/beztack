@@ -123,7 +123,37 @@
     },
     "unlimited": "Ilimitado",
     "switchBilling": "Cambiar facturación",
-    "soon": "Próximamente"
+    "soon": "Próximamente",
+    "compare": {
+      "title": "Compara todas las características",
+      "description": "Mira exactamente qué incluye cada plan",
+      "feature": "Característica",
+      "core": "Características principales",
+      "usageLimits": "Límites de uso",
+      "permissions": "Permisos"
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "description": "Todo lo que necesitas saber sobre nuestros precios",
+      "changePlanQuestion": "¿Puedo cambiar de plan cuando quiera?",
+      "changePlanAnswer": "Sí. Las mejoras se aplican enseguida, con un crédito por la parte del período actual que no usaste. Los cambios a un plan menor se aplican en tu próxima renovación.",
+      "downgradeDataQuestion": "¿Qué pasa con mis datos si bajo de plan?",
+      "downgradeDataAnswer": "Tus datos están seguros. Si superas los límites de un plan menor, tendrás acceso de solo lectura a lo que exceda hasta que vuelvas a mejorar el plan o reduzcas el uso.",
+      "refundsQuestion": "¿Ofrecen reembolsos?",
+      "refundsAnswer": "Ofrecemos una garantía de devolución de 30 días en los planes anuales. Las suscripciones mensuales se pueden cancelar en cualquier momento sin penalización.",
+      "setupFeeQuestion": "¿Hay un costo de activación?",
+      "setupFeeAnswer": "No, no hay costos de activación ni cargos ocultos. Solo pagas el plan que elijas.",
+      "teamsQuestion": "¿Cómo funciona la facturación para equipos?",
+      "teamsAnswer": "Los planes de equipo se facturan por organización. Todos los miembros de la organización comparten los límites y las características del plan.",
+      "trialQuestion": "¿Puedo probar antes de comprar?",
+      "trialAnswer": "¡Sí! Empieza con el plan gratuito para conocer lo básico y mejora el plan cuando necesites características más avanzadas."
+    },
+    "cta": {
+      "title": "¿Listo para empezar?",
+      "description": "Únete a miles de equipos que ya usan Beztack para asegurar y escalar sus aplicaciones.",
+      "getStartedPro": "Empezar con Pro",
+      "viewDocs": "Ver documentación"
+    }
   },
   "billing": {
     "monthly": "Mensual",
@@ -189,6 +219,92 @@
       "choosePlan": "Elegir otro plan",
       "unavailableTitle": "Este plan no está disponible",
       "unavailableDescription": "El plan que elegiste ya no se ofrece o todavía no está a la venta. Elige otro en la página de precios."
+    },
+    "page": {
+      "title": "Facturación y suscripción",
+      "description": "Gestiona tu suscripción, revisa tu uso y consulta tu historial de facturación.",
+      "loadError": "No pudimos cargar la información de facturación. Intenta recargar la página."
+    },
+    "checkoutSuccess": {
+      "invalidTier": "La información del plan no es válida. Contacta a soporte.",
+      "title": "¡Pago exitoso!",
+      "welcome": "Te damos la bienvenida a tu nuevo plan {{plan}}. Tu mejora ya está activa.",
+      "planDetails": "Detalles del plan",
+      "activated": "Tu suscripción fue activada",
+      "plan": "Plan",
+      "price": "Precio",
+      "activeSubscription": "Suscripción activa",
+      "pricePerMonth": "{{price}} / mes",
+      "nextBilling": "Próximo cobro",
+      "notAvailable": "N/D",
+      "includedInPlan": "Qué incluye tu plan:",
+      "loadingFeatures": "Cargando las características del plan...",
+      "planLimits": "Límites del plan:",
+      "enjoy": "¡Disfruta todas las características de tu plan {{plan}}!",
+      "included": "Qué incluye:",
+      "moreFeatures": "Y {{count}} características más...",
+      "usageLimits": "Límites de uso:",
+      "perMonth": "{{value}}/mes",
+      "transactionDetails": "Detalles de la transacción",
+      "sessionId": "ID de sesión:",
+      "organization": "Organización:",
+      "goToDashboard": "Ir al panel",
+      "manageBilling": "Gestionar facturación",
+      "whatsNext": "¿Y ahora qué?",
+      "nextExplore": "Explora tus nuevas características en el panel",
+      "nextTeam": "Configura tu equipo y tu organización",
+      "nextApi": "Configura el acceso a la API y las integraciones",
+      "nextSecurity": "Descubre las funciones avanzadas de seguridad",
+      "supportPrefix": "¿Tienes preguntas? Consulta nuestra",
+      "documentation": "documentación",
+      "or": "o",
+      "contactSupport": "contacta a soporte"
+    },
+    "welcome": {
+      "loading": "Cargando la información de tu suscripción...",
+      "errors": {
+        "notFoundTitle": "Suscripción no encontrada",
+        "notFoundDescription": "No pudimos encontrar la suscripción. Verifica que el enlace sea correcto.",
+        "accessDeniedTitle": "Acceso denegado",
+        "accessDeniedDescription": "No tienes permisos para ver esta suscripción. Inicia sesión con la cuenta correcta.",
+        "idRequiredTitle": "Enlace incompleto",
+        "idRequiredDescription": "El enlace no contiene la información necesaria. Usa el enlace completo que recibiste.",
+        "fetchTitle": "Error de conexión",
+        "fetchDescription": "No pudimos conectar con el servidor. Intenta de nuevo.",
+        "unexpectedTitle": "Error inesperado",
+        "unexpectedDescription": "Ocurrió un error al cargar tu suscripción."
+      },
+      "retry": "Intentar de nuevo",
+      "goHome": "Ir al inicio",
+      "missingTitle": "Enlace incompleto",
+      "missingDescription": "Este enlace no contiene la información de tu suscripción. Si acabas de suscribirte, revisa el correo de confirmación o contacta a soporte.",
+      "greeting": "¡Hola, {{name}}!",
+      "success": "¡Suscripción exitosa!",
+      "activated": "Tu suscripción fue activada correctamente",
+      "planDetails": "Detalles del plan",
+      "planInfo": "Información de tu suscripción activa",
+      "yourPlan": "Tu plan",
+      "nextPayment": "Próximo cobro",
+      "paymentMethod": "Método de pago",
+      "goToDashboard": "Ir al panel",
+      "manageSubscription": "Gestionar suscripción",
+      "signIn": "Iniciar sesión",
+      "reference": "Referencia: {{id}}",
+      "status": {
+        "active": "Activa",
+        "authorized": "Autorizada",
+        "pending": "Pendiente",
+        "paused": "Pausada",
+        "cancelled": "Cancelada"
+      },
+      "frequency": {
+        "monthly": "mensual",
+        "yearly": "anual",
+        "everyMonths": "cada {{count}} meses",
+        "daily": "diario",
+        "weekly": "semanal",
+        "everyDays": "cada {{count}} días"
+      }
     }
   },
   "common": {
