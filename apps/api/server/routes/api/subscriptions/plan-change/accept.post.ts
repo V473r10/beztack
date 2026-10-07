@@ -5,6 +5,7 @@ import {
   user as userTable,
 } from "@beztack/db";
 import type { PaymentProviderAdapter, Subscription } from "@beztack/payments";
+import { isCurrentSubscription } from "@beztack/payments/subscription";
 import { and, eq } from "drizzle-orm";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
@@ -64,15 +65,6 @@ function resolveMembershipTarget(auth: AuthenticatedUser, body: PlanChangeAccept
 function readString(source: Record<string, unknown> | undefined, key: string): string | undefined {
   const value = source?.[key];
   return typeof value === "string" && value.length > 0 ? value : undefined;
-}
-
-function isCurrentSubscription(subscription: Subscription): boolean {
-  return Boolean(
-    subscription.status === "active" ||
-    (subscription.status === "canceled" &&
-      subscription.currentPeriodEnd &&
-      subscription.currentPeriodEnd > new Date()),
-  );
 }
 
 function readMembershipTargetId(
@@ -161,7 +153,7 @@ function createPlanChangeStore(options: {
       }
 
       const currentSubscription = subscriptions
-        .filter(isCurrentSubscription)
+        .filter((subscription) => isCurrentSubscription(subscription))
         .find((subscription) => subscriptionMatchesTarget(subscription, input.membershipTarget));
       if (!currentSubscription) {
         return null;

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import type { EventHandlerRequest, H3Event } from "h3";
 import { createError } from "h3";
 import { env } from "@/env";
+import { isCurrentSubscription } from "@beztack/payments/subscription";
 import { ensurePaymentProvider } from "@/lib/payments";
 import type { Subscription } from "@/lib/payments/types";
 import {
@@ -79,29 +80,7 @@ function mapTier(value: string | undefined): MembershipTier {
 }
 
 function isSubscriptionStatusActive(status: string | null, validUntil: Date | null): boolean {
-  if (status === "active") {
-    return true;
-  }
-  if (status === "canceled" && validUntil && validUntil > new Date()) {
-    return true;
-  }
-  return false;
-}
-
-function isSubscriptionActive(subscription: Subscription): boolean {
-  if (subscription.status === "active") {
-    return true;
-  }
-
-  if (
-    subscription.status === "canceled" &&
-    subscription.currentPeriodEnd &&
-    subscription.currentPeriodEnd > new Date()
-  ) {
-    return true;
-  }
-
-  return false;
+  return isCurrentSubscription({ status, currentPeriodEnd: validUntil });
 }
 
 function belongsToOrganization(
@@ -187,7 +166,7 @@ async function canUseCachedMembership(options: {
     }
 
     const subscription = await provider.getSubscription(options.cache.subscriptionId);
-    if (!(subscription && isSubscriptionActive(subscription))) {
+    if (!(subscription && isCurrentSubscription(subscription))) {
       return false;
     }
 
@@ -463,7 +442,9 @@ async function getMembershipInfoFromProvider(
       belongsToOrganization(subscription, organizationId, isOrgMode),
     );
 
-    const activeSubscriptions = scopedSubscriptions.filter(isSubscriptionActive);
+    const activeSubscriptions = scopedSubscriptions.filter((subscription) =>
+      isCurrentSubscription(subscription),
+    );
 
     if (activeSubscriptions.length === 0) {
       return {

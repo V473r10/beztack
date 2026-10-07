@@ -11,6 +11,8 @@ export {
   getRegisteredProviders,
   resetPaymentProvider,
 } from "./factory.js";
+// Current Subscription rule
+export { isCurrentSubscription } from "./subscription.js";
 // Types
 export type {
   BillingInterval,
