@@ -179,19 +179,20 @@ function processAllCategories({
   const grouped: GroupedFeatures = {};
 
   if (allFeatures.size > 0) {
-    grouped["Core Features"] = processFeatures(tierMap, allFeatures, featureId, t);
+    grouped.core = processFeatures(tierMap, allFeatures, featureId, t);
   }
   if (allLimits.size > 0) {
-    grouped["Usage Limits"] = processLimits(tierMap, allLimits, featureId, t);
+    grouped.usageLimits = processLimits(tierMap, allLimits, featureId, t);
   }
   if (allPermissions.size > 0) {
-    grouped.Permissions = processPermissions(tierMap, allPermissions, featureId, t);
+    grouped.permissions = processPermissions(tierMap, allPermissions, featureId, t);
   }
 
   return grouped;
 }
 
 function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
+  const { t } = useTranslation();
   const renderValue = (value: FeatureValue) => {
     if (typeof value === "boolean") {
       return value ? (
@@ -216,7 +217,7 @@ function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
       );
     }
     if (value === "Unlimited") {
-      return <span className="font-medium text-primary text-sm">Unlimited</span>;
+      return <span className="font-medium text-primary text-sm">{t("pricing.unlimited")}</span>;
     }
     return <span className="font-medium text-foreground text-sm">{value}</span>;
   };
@@ -225,7 +226,9 @@ function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
     <Table>
       <TableHeader>
         <TableRow className="border-border/50 border-b hover:bg-transparent">
-          <TableHead className="w-[40%] font-semibold text-foreground">Feature</TableHead>
+          <TableHead className="w-[40%] font-semibold text-foreground">
+            {t("pricing.compare.feature")}
+          </TableHead>
           <TableHead className="text-center font-semibold text-foreground">Basic</TableHead>
           <TableHead className="text-center font-semibold text-foreground">Pro</TableHead>
           <TableHead className="text-center font-semibold text-foreground">Ultimate</TableHead>
@@ -343,39 +346,33 @@ export default function Pricing() {
   const faqItems = [
     {
       id: "faq-1",
-      question: "Can I change my plan anytime?",
-      answer:
-        "Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate the billing accordingly.",
+      question: t("pricing.faq.changePlanQuestion"),
+      answer: t("pricing.faq.changePlanAnswer"),
     },
     {
       id: "faq-2",
-      question: "What happens to my data if I downgrade?",
-      answer:
-        "Your data remains safe. If you exceed the limits of a lower plan, you'll have read-only access to the excess data until you upgrade again or reduce usage.",
+      question: t("pricing.faq.downgradeDataQuestion"),
+      answer: t("pricing.faq.downgradeDataAnswer"),
     },
     {
       id: "faq-3",
-      question: "Do you offer refunds?",
-      answer:
-        "We offer a 30-day money-back guarantee for annual plans. Monthly subscriptions can be canceled anytime without penalty.",
+      question: t("pricing.faq.refundsQuestion"),
+      answer: t("pricing.faq.refundsAnswer"),
     },
     {
       id: "faq-4",
-      question: "Is there a setup fee?",
-      answer:
-        "No, there are no setup fees or hidden charges. You only pay for the plan you choose.",
+      question: t("pricing.faq.setupFeeQuestion"),
+      answer: t("pricing.faq.setupFeeAnswer"),
     },
     {
       id: "faq-5",
-      question: "How does billing work for teams?",
-      answer:
-        "Team plans are billed per organization. All members within the organization share the plan limits and features.",
+      question: t("pricing.faq.teamsQuestion"),
+      answer: t("pricing.faq.teamsAnswer"),
     },
     {
       id: "faq-6",
-      question: "Can I try before I buy?",
-      answer:
-        "Yes! Start with our free plan to explore the basics, then upgrade when you're ready for more advanced features.",
+      question: t("pricing.faq.trialQuestion"),
+      answer: t("pricing.faq.trialAnswer"),
     },
   ];
 
@@ -510,8 +507,8 @@ export default function Pricing() {
           whileInView={{ opacity: 1 }}
         >
           <div className="mb-10 text-center">
-            <h2 className="mb-3 font-bold text-3xl tracking-tight">Compare all features</h2>
-            <p className="text-muted-foreground">See exactly what's included in each plan</p>
+            <h2 className="mb-3 font-bold text-3xl tracking-tight">{t("pricing.compare.title")}</h2>
+            <p className="text-muted-foreground">{t("pricing.compare.description")}</p>
           </div>
 
           <div className="mx-auto max-w-5xl space-y-6">
@@ -519,10 +516,10 @@ export default function Pricing() {
               <Card className="overflow-hidden border-border/50" key={category}>
                 <div className="border-border/50 border-b bg-muted/30 px-6 py-4">
                   <h3 className="flex items-center gap-2 font-semibold text-lg">
-                    {category === "Core Features" && <Sparkles className="h-4 w-4 text-primary" />}
-                    {category === "Usage Limits" && <Zap className="h-4 w-4 text-blue-500" />}
-                    {category === "Permissions" && <Shield className="h-4 w-4 text-orange-500" />}
-                    {category}
+                    {category === "core" && <Sparkles className="h-4 w-4 text-primary" />}
+                    {category === "usageLimits" && <Zap className="h-4 w-4 text-blue-500" />}
+                    {category === "permissions" && <Shield className="h-4 w-4 text-orange-500" />}
+                    {t(`pricing.compare.${category}`)}
                   </h3>
                 </div>
                 <FeatureComparisonTable features={features} />
@@ -542,8 +539,8 @@ export default function Pricing() {
             <div className="mb-4 inline-flex items-center justify-center rounded-full bg-muted/50 p-3">
               <HelpCircle className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="mb-3 font-bold text-3xl tracking-tight">Frequently asked questions</h2>
-            <p className="text-muted-foreground">Everything you need to know about our pricing</p>
+            <h2 className="mb-3 font-bold text-3xl tracking-tight">{t("pricing.faq.title")}</h2>
+            <p className="text-muted-foreground">{t("pricing.faq.description")}</p>
           </div>
 
           <div className="mx-auto max-w-3xl">
@@ -580,12 +577,11 @@ export default function Pricing() {
               </div>
 
               <h2 className="mb-4 font-bold text-2xl tracking-tight md:text-3xl">
-                Ready to get started?
+                {t("pricing.cta.title")}
               </h2>
 
               <p className="mx-auto mb-8 max-w-xl text-muted-foreground">
-                Join thousands of teams already using Beztack to secure and scale their
-                applications.
+                {t("pricing.cta.description")}
               </p>
 
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
@@ -595,16 +591,16 @@ export default function Pricing() {
                   onClick={() => handleTierSelect("pro")}
                   size="lg"
                 >
-                  Get Started with Pro
+                  {t("pricing.cta.getStartedPro")}
                   <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Button>
                 <Button size="lg" variant="outline">
                   <Mail className="mr-2 h-4 w-4" />
-                  Contact Sales
+                  {t("pricing.contactSales")}
                 </Button>
                 <Button size="lg" variant="ghost">
                   <Book className="mr-2 h-4 w-4" />
-                  View Docs
+                  {t("pricing.cta.viewDocs")}
                 </Button>
               </div>
             </CardContent>

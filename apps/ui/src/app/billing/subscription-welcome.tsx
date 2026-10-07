@@ -15,6 +15,8 @@ import {
   RefreshCw,
   Sparkles,
 } from "lucide-react";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,23 +31,49 @@ import {
 import { Separator } from "@/components/ui/separator";
 import {
   formatAmount,
-  formatFrequency,
-  getStatusLabel,
+  type SubscriptionDetails,
   useSubscriptionDetails,
 } from "@/hooks/use-subscription-details";
 import { authClient } from "@/lib/auth-client";
 import { formatDate, formatRelativeFromNow } from "@/lib/format";
 
+const MONTHS_PER_YEAR = 12;
+const DAYS_PER_WEEK = 7;
+
+function frequencyLabel(
+  frequency: number,
+  frequencyType: SubscriptionDetails["price"]["frequencyType"],
+  t: TFunction,
+): string {
+  if (frequencyType === "months") {
+    if (frequency === 1) {
+      return t("billing.welcome.frequency.monthly");
+    }
+    if (frequency === MONTHS_PER_YEAR) {
+      return t("billing.welcome.frequency.yearly");
+    }
+    return t("billing.welcome.frequency.everyMonths", { count: frequency });
+  }
+  if (frequency === 1) {
+    return t("billing.welcome.frequency.daily");
+  }
+  if (frequency === DAYS_PER_WEEK) {
+    return t("billing.welcome.frequency.weekly");
+  }
+  return t("billing.welcome.frequency.everyDays", { count: frequency });
+}
+
 /**
  * Loading state component
  */
 function LoadingSkeleton() {
+  const { t } = useTranslation();
   return (
     <div className="container mx-auto flex min-h-[80vh] max-w-2xl items-center justify-center px-4 py-16">
       <Card className="w-full">
         <CardContent className="flex flex-col items-center gap-4 py-12">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Cargando informacion de tu suscripcion...</p>
+          <p className="text-muted-foreground">{t("billing.welcome.loading")}</p>
         </CardContent>
       </Card>
     </div>
@@ -64,30 +92,29 @@ function ErrorDisplay({
   onRetry: () => void;
   onGoHome: () => void;
 }) {
+  const { t } = useTranslation();
   const errorMessages: Record<string, { title: string; description: string }> = {
     SUBSCRIPTION_NOT_FOUND: {
-      title: "Suscripcion no encontrada",
-      description: "No pudimos encontrar la suscripcion. Verifica que el enlace sea correcto.",
+      title: t("billing.welcome.errors.notFoundTitle"),
+      description: t("billing.welcome.errors.notFoundDescription"),
     },
     SUBSCRIPTION_ACCESS_DENIED: {
-      title: "Acceso denegado",
-      description:
-        "No tienes permisos para ver esta suscripcion. Por favor inicia sesion con la cuenta correcta.",
+      title: t("billing.welcome.errors.accessDeniedTitle"),
+      description: t("billing.welcome.errors.accessDeniedDescription"),
     },
     SUBSCRIPTION_ID_REQUIRED: {
-      title: "Enlace incompleto",
-      description:
-        "El enlace no contiene la informacion necesaria. Por favor usa el enlace completo que recibiste.",
+      title: t("billing.welcome.errors.idRequiredTitle"),
+      description: t("billing.welcome.errors.idRequiredDescription"),
     },
     SUBSCRIPTION_FETCH_ERROR: {
-      title: "Error de conexion",
-      description: "No pudimos conectar con el servidor. Por favor intenta de nuevo.",
+      title: t("billing.welcome.errors.fetchTitle"),
+      description: t("billing.welcome.errors.fetchDescription"),
     },
   };
 
   const errorInfo = errorMessages[error.message] || {
-    title: "Error inesperado",
-    description: "Ocurrio un error al cargar tu suscripcion.",
+    title: t("billing.welcome.errors.unexpectedTitle"),
+    description: t("billing.welcome.errors.unexpectedDescription"),
   };
 
   return (
@@ -106,11 +133,11 @@ function ErrorDisplay({
           {error.message === "SUBSCRIPTION_FETCH_ERROR" && (
             <Button className="w-full gap-2" onClick={onRetry} variant="outline">
               <RefreshCw className="h-4 w-4" />
-              Intentar de nuevo
+              {t("billing.welcome.retry")}
             </Button>
           )}
           <Button className="w-full" onClick={onGoHome}>
-            Ir al inicio
+            {t("billing.welcome.goHome")}
           </Button>
         </CardFooter>
       </Card>
@@ -122,6 +149,7 @@ function ErrorDisplay({
  * Missing preapproval_id display
  */
 function MissingIdDisplay({ onGoHome }: { onGoHome: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="container mx-auto flex min-h-[80vh] max-w-md items-center justify-center px-4 py-16">
       <Card className="w-full">
@@ -131,15 +159,12 @@ function MissingIdDisplay({ onGoHome }: { onGoHome: () => void }) {
               <AlertCircle className="h-8 w-8 text-muted-foreground" />
             </div>
           </div>
-          <CardTitle>Enlace incompleto</CardTitle>
-          <CardDescription>
-            Este enlace no contiene la informacion de tu suscripcion. Si acabas de suscribirte,
-            revisa el correo de confirmacion o contacta a soporte.
-          </CardDescription>
+          <CardTitle>{t("billing.welcome.missingTitle")}</CardTitle>
+          <CardDescription>{t("billing.welcome.missingDescription")}</CardDescription>
         </CardHeader>
         <CardFooter>
           <Button className="w-full" onClick={onGoHome}>
-            Ir al inicio
+            {t("billing.welcome.goHome")}
           </Button>
         </CardFooter>
       </Card>
@@ -151,6 +176,7 @@ function MissingIdDisplay({ onGoHome }: { onGoHome: () => void }) {
  * Main subscription welcome page component
  */
 export default function SubscriptionWelcome() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -192,11 +218,12 @@ export default function SubscriptionWelcome() {
     return <LoadingSkeleton />;
   }
 
-  const statusInfo = getStatusLabel(subscription.status);
+  const statusLabel = t(`billing.welcome.status.${subscription.status}`, subscription.status);
   const formattedPrice = formatAmount(subscription.price.amount, subscription.price.currency);
-  const formattedFrequency = formatFrequency(
+  const formattedFrequency = frequencyLabel(
     subscription.price.frequency,
     subscription.price.frequencyType,
+    t,
   );
 
   return (
@@ -213,17 +240,15 @@ export default function SubscriptionWelcome() {
 
             <h1 className="mb-2 font-bold text-2xl">
               {isAuthenticated && userName
-                ? `Bienvenido, ${userName.split(" ")[0]}!`
-                : "Suscripcion exitosa!"}
+                ? t("billing.welcome.greeting", { name: userName.split(" ")[0] })
+                : t("billing.welcome.success")}
             </h1>
 
-            <p className="mb-4 text-muted-foreground">
-              Tu suscripcion ha sido activada correctamente
-            </p>
+            <p className="mb-4 text-muted-foreground">{t("billing.welcome.activated")}</p>
 
             <Badge className="gap-1">
               <Sparkles className="h-3 w-3" />
-              {statusInfo.label}
+              {statusLabel}
             </Badge>
           </CardContent>
         </Card>
@@ -233,15 +258,15 @@ export default function SubscriptionWelcome() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" />
-              Detalles del plan
+              {t("billing.welcome.planDetails")}
             </CardTitle>
-            <CardDescription>Informacion de tu suscripcion activa</CardDescription>
+            <CardDescription>{t("billing.welcome.planInfo")}</CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">
             {/* Plan name and price */}
             <div className="rounded-lg bg-muted/50 p-4 text-center">
-              <p className="mb-1 text-muted-foreground text-sm">Tu plan</p>
+              <p className="mb-1 text-muted-foreground text-sm">{t("billing.welcome.yourPlan")}</p>
               <h2 className="mb-2 font-semibold text-xl">{subscription.plan.name}</h2>
               <div className="flex items-baseline justify-center gap-1">
                 <span className="font-bold text-3xl text-primary">{formattedPrice}</span>
@@ -259,7 +284,9 @@ export default function SubscriptionWelcome() {
                     <Calendar className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-xs">Proximo cobro</p>
+                    <p className="text-muted-foreground text-xs">
+                      {t("billing.welcome.nextPayment")}
+                    </p>
                     <p className="font-medium">
                       {formatDate(subscription.dates.nextPayment, {
                         day: "numeric",
@@ -280,7 +307,9 @@ export default function SubscriptionWelcome() {
                     <CreditCard className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-xs">Metodo de pago</p>
+                    <p className="text-muted-foreground text-xs">
+                      {t("billing.welcome.paymentMethod")}
+                    </p>
                     <p className="font-medium capitalize">
                       {subscription.paymentMethod.replace(/_/g, " ")}
                     </p>
@@ -299,7 +328,7 @@ export default function SubscriptionWelcome() {
                   size="lg"
                 >
                   <Home className="h-4 w-4" />
-                  Ir al Dashboard
+                  {t("billing.welcome.goToDashboard")}
                 </Button>
                 <Button
                   className="w-full gap-2 sm:flex-1"
@@ -308,7 +337,7 @@ export default function SubscriptionWelcome() {
                   variant="outline"
                 >
                   <Receipt className="h-4 w-4" />
-                  Gestionar suscripcion
+                  {t("billing.welcome.manageSubscription")}
                 </Button>
               </>
             ) : (
@@ -319,7 +348,7 @@ export default function SubscriptionWelcome() {
                   size="lg"
                 >
                   <LogIn className="h-4 w-4" />
-                  Iniciar sesion
+                  {t("billing.welcome.signIn")}
                 </Button>
                 <Button
                   className="w-full gap-2 sm:flex-1"
@@ -328,7 +357,7 @@ export default function SubscriptionWelcome() {
                   variant="outline"
                 >
                   <Home className="h-4 w-4" />
-                  Ir al inicio
+                  {t("billing.welcome.goHome")}
                 </Button>
               </>
             )}
@@ -337,7 +366,9 @@ export default function SubscriptionWelcome() {
 
         {/* Reference ID */}
         <div className="text-center">
-          <p className="font-mono text-muted-foreground text-xs">Referencia: {subscription.id}</p>
+          <p className="font-mono text-muted-foreground text-xs">
+            {t("billing.welcome.reference", { id: subscription.id })}
+          </p>
         </div>
       </div>
     </div>

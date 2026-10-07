@@ -123,7 +123,37 @@
     },
     "unlimited": "Unlimited",
     "switchBilling": "Switch billing",
-    "soon": "Coming soon"
+    "soon": "Coming soon",
+    "compare": {
+      "title": "Compare all features",
+      "description": "See exactly what's included in each plan",
+      "feature": "Feature",
+      "core": "Core Features",
+      "usageLimits": "Usage Limits",
+      "permissions": "Permissions"
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "description": "Everything you need to know about our pricing",
+      "changePlanQuestion": "Can I change my plan anytime?",
+      "changePlanAnswer": "Yes. Upgrades take effect right away, with a credit for the unused part of your current period. Downgrades take effect at your next renewal.",
+      "downgradeDataQuestion": "What happens to my data if I downgrade?",
+      "downgradeDataAnswer": "Your data remains safe. If you exceed the limits of a lower plan, you'll have read-only access to the excess data until you upgrade again or reduce usage.",
+      "refundsQuestion": "Do you offer refunds?",
+      "refundsAnswer": "We offer a 30-day money-back guarantee for annual plans. Monthly subscriptions can be canceled anytime without penalty.",
+      "setupFeeQuestion": "Is there a setup fee?",
+      "setupFeeAnswer": "No, there are no setup fees or hidden charges. You only pay for the plan you choose.",
+      "teamsQuestion": "How does billing work for teams?",
+      "teamsAnswer": "Team plans are billed per organization. All members within the organization share the plan limits and features.",
+      "trialQuestion": "Can I try before I buy?",
+      "trialAnswer": "Yes! Start with our free plan to explore the basics, then upgrade when you're ready for more advanced features."
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "description": "Join thousands of teams already using Beztack to secure and scale their applications.",
+      "getStartedPro": "Get Started with Pro",
+      "viewDocs": "View Docs"
+    }
   },
   "billing": {
     "monthly": "Monthly",
@@ -189,6 +219,92 @@
       "choosePlan": "Choose another plan",
       "unavailableTitle": "This plan is not available",
       "unavailableDescription": "The plan you picked is no longer offered or is not on sale yet. Pick another one on the pricing page."
+    },
+    "page": {
+      "title": "Billing & Subscription",
+      "description": "Manage your subscription, view usage, and access billing history.",
+      "loadError": "Failed to load billing information. Please try refreshing the page."
+    },
+    "checkoutSuccess": {
+      "invalidTier": "Invalid tier information. Please contact support.",
+      "title": "Payment Successful!",
+      "welcome": "Welcome to your new {{plan}} plan. Your upgrade is now active.",
+      "planDetails": "Plan Details",
+      "activated": "Your subscription has been activated",
+      "plan": "Plan",
+      "price": "Price",
+      "activeSubscription": "Active subscription",
+      "pricePerMonth": "{{price}} / month",
+      "nextBilling": "Next billing",
+      "notAvailable": "N/A",
+      "includedInPlan": "What's included in your plan:",
+      "loadingFeatures": "Loading plan features...",
+      "planLimits": "Plan limits:",
+      "enjoy": "Enjoy all the features of your {{plan}} plan!",
+      "included": "What's included:",
+      "moreFeatures": "And {{count}} more features...",
+      "usageLimits": "Usage limits:",
+      "perMonth": "{{value}}/mo",
+      "transactionDetails": "Transaction Details",
+      "sessionId": "Session ID:",
+      "organization": "Organization:",
+      "goToDashboard": "Go to Dashboard",
+      "manageBilling": "Manage Billing",
+      "whatsNext": "What's next?",
+      "nextExplore": "Explore your new features in the dashboard",
+      "nextTeam": "Set up your team and organization settings",
+      "nextApi": "Configure API access and integrations",
+      "nextSecurity": "Check out the advanced security features",
+      "supportPrefix": "Have questions? Check out our",
+      "documentation": "documentation",
+      "or": "or",
+      "contactSupport": "contact support"
+    },
+    "welcome": {
+      "loading": "Loading your subscription details...",
+      "errors": {
+        "notFoundTitle": "Subscription not found",
+        "notFoundDescription": "We couldn't find the subscription. Check that the link is correct.",
+        "accessDeniedTitle": "Access denied",
+        "accessDeniedDescription": "You don't have permission to see this subscription. Please sign in with the right account.",
+        "idRequiredTitle": "Incomplete link",
+        "idRequiredDescription": "The link is missing the information we need. Please use the full link you received.",
+        "fetchTitle": "Connection error",
+        "fetchDescription": "We couldn't reach the server. Please try again.",
+        "unexpectedTitle": "Unexpected error",
+        "unexpectedDescription": "Something went wrong while loading your subscription."
+      },
+      "retry": "Try again",
+      "goHome": "Go home",
+      "missingTitle": "Incomplete link",
+      "missingDescription": "This link doesn't include your subscription details. If you just subscribed, check your confirmation email or contact support.",
+      "greeting": "Welcome, {{name}}!",
+      "success": "Subscription successful!",
+      "activated": "Your subscription is now active",
+      "planDetails": "Plan details",
+      "planInfo": "Your active subscription",
+      "yourPlan": "Your plan",
+      "nextPayment": "Next payment",
+      "paymentMethod": "Payment method",
+      "goToDashboard": "Go to Dashboard",
+      "manageSubscription": "Manage subscription",
+      "signIn": "Sign in",
+      "reference": "Reference: {{id}}",
+      "status": {
+        "active": "Active",
+        "authorized": "Authorized",
+        "pending": "Pending",
+        "paused": "Paused",
+        "cancelled": "Cancelled"
+      },
+      "frequency": {
+        "monthly": "monthly",
+        "yearly": "yearly",
+        "everyMonths": "every {{count}} months",
+        "daily": "daily",
+        "weekly": "weekly",
+        "everyDays": "every {{count}} days"
+      }
     }
   },
   "common": {

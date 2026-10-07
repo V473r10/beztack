@@ -1,4 +1,5 @@
 import { AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BillingDashboard } from "@/components/payments/billing-dashboard";
 import { PendingPlanChangeNotice } from "@/components/payments/pending-plan-change-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,6 +11,7 @@ const SKELETON_ITEMS = 3;
 const SKELETON_ITEMS_COUNT = Array.from({ length: SKELETON_ITEMS }, (_, i) => i + 1);
 
 export default function Billing() {
+  const { t } = useTranslation();
   const {
     subscriptions,
     orders,
@@ -27,9 +29,7 @@ export default function Billing() {
       <div className="container mx-auto px-4 py-8">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Failed to load billing information. Please try refreshing the page.
-          </AlertDescription>
+          <AlertDescription>{t("billing.page.loadError")}</AlertDescription>
         </Alert>
       </div>
     );
@@ -112,10 +112,8 @@ export default function Billing() {
     <div className="container mx-auto px-4 py-8">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="mb-2 font-bold text-3xl">Billing & Subscription</h1>
-        <p className="text-muted-foreground">
-          Manage your subscription, view usage, and access billing history.
-        </p>
+        <h1 className="mb-2 font-bold text-3xl">{t("billing.page.title")}</h1>
+        <p className="text-muted-foreground">{t("billing.page.description")}</p>
       </div>
 
       {/* What changes at renewal, with a way to keep the current terms */}
