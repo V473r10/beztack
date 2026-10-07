@@ -3,6 +3,8 @@ import {
   acceptPlanChange,
   activatePendingPlanChange,
   cancelPendingPlanChange,
+  type PendingPlanChangeCancellationInput,
+  type PendingPlanChangeRecord,
   type PlanChangeCatalogPlan,
   type PlanChangeCurrentSubscription,
   type PlanChangeError,
@@ -46,43 +48,66 @@ function catalogPlan(overrides: Partial<PlanChangeCatalogPlan> = {}): PlanChange
 
 function createStore(options: {
   currentSubscription?: PlanChangeCurrentSubscription | null;
-  existingPendingPlanChanges?: Array<
-    Parameters<PlanChangeStore["savePendingPlanChange"]>[0] & { id: string }
-  >;
+  existingPendingPlanChanges?: PendingPlanChangeRecord[];
+  failMoveMembership?: boolean;
   failSavePendingPlanChange?: boolean;
   operationLog?: string[];
   plans: PlanChangeCatalogPlan[];
 }): PlanChangeStore & {
+  /** Every row ever stored, oldest first; rows are never removed. */
+  ledger: PendingPlanChangeRecord[];
   membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][];
-  pendingPlanChanges: Map<string, Parameters<PlanChangeStore["savePendingPlanChange"]>[0]>;
+  /** The `pending` rows, by Subscription. */
+  readonly pendingPlanChanges: Map<string, PendingPlanChangeRecord>;
 } {
   const membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][] = [];
-  const pendingPlanChanges = new Map<
-    string,
-    Parameters<PlanChangeStore["savePendingPlanChange"]>[0]
-  >();
-  for (const existingPendingPlanChange of options.existingPendingPlanChanges ?? []) {
-    pendingPlanChanges.set(existingPendingPlanChange.subscriptionId, existingPendingPlanChange);
-  }
+  const ledger: PendingPlanChangeRecord[] = [...(options.existingPendingPlanChanges ?? [])];
+  const findPending = (subscriptionId: string) =>
+    ledger.find((row) => row.subscriptionId === subscriptionId && row.status === "pending") ?? null;
+  const cancel = (subscriptionId: string, cancellation: PendingPlanChangeCancellationInput) => {
+    const row = findPending(subscriptionId);
+    if (row) {
+      row.status = "canceled";
+      row.canceledByUserId = cancellation.canceledByUserId;
+      row.reason = cancellation.reason;
+    }
+    return row;
+  };
 
   return {
+    ledger,
     membershipMoves,
-    pendingPlanChanges,
+    get pendingPlanChanges() {
+      return new Map(
+        ledger.filter((row) => row.status === "pending").map((row) => [row.subscriptionId, row]),
+      );
+    },
     findCurrentSubscription() {
       return Promise.resolve(options.currentSubscription ?? null);
     },
-    cancelPendingPlanChange(subscriptionId) {
-      const canceledPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
-      pendingPlanChanges.delete(subscriptionId);
-      return Promise.resolve(canceledPendingPlanChange);
+    cancelPendingPlanChange(subscriptionId, cancellation) {
+      return Promise.resolve(cancel(subscriptionId, cancellation));
     },
-    clearPendingPlanChange(subscriptionId) {
-      const clearedPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
-      pendingPlanChanges.delete(subscriptionId);
-      return Promise.resolve(clearedPendingPlanChange);
+    markPendingPlanChangeActivated(subscriptionId) {
+      const row = findPending(subscriptionId);
+      if (row) {
+        row.status = "activated";
+      }
+      return Promise.resolve(row);
+    },
+    recordPendingPlanChangeActivationFailure(subscriptionId, failure) {
+      const row = findPending(subscriptionId);
+      if (row) {
+        row.activationAttempts += 1;
+        row.reason = failure.error;
+        if (row.activationAttempts >= failure.maxAttempts) {
+          row.status = "failed";
+        }
+      }
+      return Promise.resolve(row);
     },
     findPendingPlanChange(subscriptionId) {
-      return Promise.resolve(pendingPlanChanges.get(subscriptionId) ?? null);
+      return Promise.resolve(findPending(subscriptionId));
     },
     listActiveVisiblePricingCatalogPlans(paymentProvider) {
       return Promise.resolve(
@@ -90,6 +115,9 @@ function createStore(options: {
       );
     },
     moveMembershipToPlan(input) {
+      if (options.failMoveMembership) {
+        return Promise.reject(new Error("membership cache unavailable"));
+      }
       membershipMoves.push(input);
       return Promise.resolve();
     },
@@ -98,24 +126,35 @@ function createStore(options: {
       if (options.failSavePendingPlanChange) {
         throw new Error("database unavailable");
       }
-      pendingPlanChanges.set(input.subscriptionId, input);
-      return Promise.resolve({
-        id: `pending_${input.subscriptionId}`,
+      cancel(input.subscriptionId, { canceledByUserId: null, reason: "replaced" });
+      const row: PendingPlanChangeRecord = {
         ...input,
-      });
+        activationAttempts: 0,
+        canceledByUserId: null,
+        id: `pending_${ledger.length + 1}`,
+        reason: null,
+        status: "pending",
+      };
+      ledger.push(row);
+      return Promise.resolve(row);
     },
   };
 }
 
 function pendingPlanChange(
-  overrides: Partial<Parameters<PlanChangeStore["savePendingPlanChange"]>[0] & { id: string }> = {},
-): Parameters<PlanChangeStore["savePendingPlanChange"]>[0] & { id: string } {
+  overrides: Partial<PendingPlanChangeRecord> = {},
+): PendingPlanChangeRecord {
   return {
     id: "pending_sub_current",
+    acceptedByUserId: "user_1",
+    activationAttempts: 0,
+    canceledByUserId: null,
     direction: "downgrade",
     effectiveAt: PERIOD_END,
     membershipTarget: MEMBERSHIP_TARGET,
     providerConfirmedPlanChangeId: "provider_pending_change_1",
+    reason: null,
+    status: "pending",
     subscriptionId: "sub_current",
     targetPlanSnapshot: catalogPlan(),
     ...overrides,
@@ -768,10 +807,21 @@ describe("previewPlanChange", () => {
 
     expect([...store.pendingPlanChanges]).toHaveLength(1);
     expect(store.pendingPlanChanges.get("sub_current")).toMatchObject({
+      acceptedByUserId: "user_1",
       targetPlanSnapshot: {
         canonicalTierId: "basic",
       },
     });
+    // The replaced change is kept, not deleted.
+    expect(store.ledger).toEqual([
+      expect.objectContaining({
+        canceledByUserId: null,
+        reason: "replaced",
+        status: "canceled",
+        targetPlanSnapshot: expect.objectContaining({ canonicalTierId: "pro" }),
+      }),
+      expect.objectContaining({ status: "pending" }),
+    ]);
   });
 
   it("fails Cadence change acceptance clearly without provider or Pending Plan change state", async () => {
@@ -836,6 +886,13 @@ describe("previewPlanChange", () => {
     });
     expect(store.pendingPlanChanges).toEqual(new Map());
     expect(store.membershipMoves).toEqual([]);
+    expect(store.ledger).toEqual([
+      expect.objectContaining({
+        canceledByUserId: "user_1",
+        reason: "user",
+        status: "canceled",
+      }),
+    ]);
   });
 
   it("rejects Pending Plan change cancellation for an unauthorized actor", async () => {
@@ -908,6 +965,10 @@ describe("previewPlanChange", () => {
       subscriptionId: "sub_current",
     });
     expect(store.membershipMoves).toEqual([]);
+    expect(store.ledger.map((row) => [row.status, row.reason])).toEqual([
+      ["canceled", "user"],
+      ["pending", null],
+    ]);
   });
 
   it("activates a Pending Plan change at renewal using the accepted target snapshot", async () => {
@@ -954,6 +1015,9 @@ describe("previewPlanChange", () => {
       },
     ]);
     expect(store.pendingPlanChanges).toEqual(new Map());
+    expect(store.ledger).toEqual([
+      expect.objectContaining({ id: "pending_sub_current", status: "activated" }),
+    ]);
   });
 
   it("does not activate a Pending Plan change before its effective time", async () => {
@@ -1004,6 +1068,71 @@ describe("previewPlanChange", () => {
     });
     expect(store.membershipMoves).toEqual([]);
     expect(store.pendingPlanChanges).toEqual(new Map());
+    expect(store.ledger).toEqual([
+      expect.objectContaining({
+        canceledByUserId: null,
+        reason: "renewal_failed",
+        status: "canceled",
+      }),
+    ]);
+  });
+
+  it("answers activation failure with an error while retries remain", async () => {
+    const store = createStore({
+      currentSubscription: currentSubscription(),
+      existingPendingPlanChanges: [pendingPlanChange()],
+      failMoveMembership: true,
+      plans: [catalogPlan()],
+    });
+
+    await expect(
+      activatePendingPlanChange({
+        currentSubscriptionId: "sub_current",
+        maxActivationAttempts: 3,
+        renewalEvidence: { occurredAt: PERIOD_END, state: "renewed" },
+        store,
+      }),
+    ).rejects.toThrow("membership cache unavailable");
+
+    expect(store.pendingPlanChanges.get("sub_current")).toMatchObject({
+      activationAttempts: 1,
+      reason: "membership cache unavailable",
+      status: "pending",
+    });
+  });
+
+  it("marks a Pending Plan change failed with its reason once provider retries run out", async () => {
+    const store = createStore({
+      currentSubscription: currentSubscription(),
+      existingPendingPlanChanges: [pendingPlanChange()],
+      failMoveMembership: true,
+      plans: [catalogPlan()],
+    });
+    const activate = () =>
+      activatePendingPlanChange({
+        currentSubscriptionId: "sub_current",
+        maxActivationAttempts: 3,
+        renewalEvidence: { occurredAt: PERIOD_END, state: "renewed" },
+        store,
+      });
+
+    await expect(activate()).rejects.toThrow();
+    await expect(activate()).rejects.toThrow();
+    const lastDelivery = await activate();
+    const afterFailure = await activate();
+
+    expect(lastDelivery).toMatchObject({
+      action: "failed",
+      membershipMoved: false,
+      pendingPlanChange: {
+        activationAttempts: 3,
+        reason: "membership cache unavailable",
+        status: "failed",
+      },
+    });
+    // A failed row is no longer pending, so later deliveries do not retry it.
+    expect(afterFailure.action).toBe("skipped");
+    expect(store.ledger).toHaveLength(1);
   });
 
   it("stores a missing Pending Plan change from provider-confirmed reconciliation evidence", async () => {

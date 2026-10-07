@@ -164,6 +164,16 @@
       "reactivate": "Reactivate Subscription",
       "viewPlans": "View Plans",
       "contactSupport": "Contact Support"
+    },
+    "pendingPlanChange": {
+      "title": "Plan change scheduled",
+      "downgradeOn": "Your plan changes to {{tier}} ({{cadence}}, {{price}}) on {{date}}.",
+      "downgradeAtRenewal": "Your plan changes to {{tier}} ({{cadence}}, {{price}}) at the next renewal.",
+      "cadence_changeOn": "Your billing switches to {{tier}} {{cadence}} ({{price}}) on {{date}}.",
+      "cadence_changeAtRenewal": "Your billing switches to {{tier}} {{cadence}} ({{price}}) at the next renewal.",
+      "cancel": "Keep current plan",
+      "canceled": "Plan change canceled. Your current plan stays.",
+      "cancelFailed": "Could not cancel the plan change. Please try again."
     }
   },
   "common": {

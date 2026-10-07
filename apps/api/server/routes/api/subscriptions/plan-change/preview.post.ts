@@ -147,7 +147,10 @@ function createPlanChangeStore(options: {
     cancelPendingPlanChange() {
       return Promise.resolve(null);
     },
-    clearPendingPlanChange() {
+    markPendingPlanChangeActivated() {
+      return Promise.resolve(null);
+    },
+    recordPendingPlanChangeActivationFailure() {
       return Promise.resolve(null);
     },
     async findCurrentSubscription(input) {
@@ -236,11 +239,8 @@ function createPlanChangeStore(options: {
     moveMembershipToPlan() {
       return Promise.resolve();
     },
-    savePendingPlanChange(input) {
-      return Promise.resolve({
-        id: `pending_${input.subscriptionId}`,
-        ...input,
-      });
+    savePendingPlanChange() {
+      throw new Error("Plan change preview cannot save state");
     },
   };
 }

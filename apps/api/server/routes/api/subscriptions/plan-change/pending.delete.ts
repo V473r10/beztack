@@ -1,6 +1,4 @@
-import { db, pendingPlanChange as pendingPlanChangeTable } from "@beztack/db";
 import type { PaymentProviderAdapter, Subscription } from "@beztack/payments";
-import { and, eq } from "drizzle-orm";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { env } from "@/env";
@@ -8,12 +6,10 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import {
   cancelPendingPlanChange,
-  type PendingPlanChangeRecord,
-  type PlanChangeBillingCadence,
-  type PlanChangeCatalogPlan,
   PlanChangeError,
   type PlanChangeStore,
 } from "@/server/utils/plan-change";
+import { createDbPendingPlanChangeLedger } from "@/server/utils/pending-plan-change-ledger";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { organizationAccess } from "@/server/domain/organization-access";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
@@ -23,28 +19,6 @@ const planChangePendingCancellationSchema = z.object({
 });
 
 type PlanChangePendingCancellationRequest = z.infer<typeof planChangePendingCancellationSchema>;
-
-type PendingPlanChangeRow = {
-  direction: string;
-  effectiveAt: Date | null;
-  id: string;
-  membershipTargetId: string;
-  membershipTargetType: string;
-  providerConfirmedPlanChangeId: string;
-  subscriptionId: string;
-  targetPlanSnapshot: {
-    id: string;
-    paymentProvider: string;
-    providerPlanId: string | null;
-    canonicalTierId: string;
-    tierRank: number;
-    billingCadence: string;
-    price: {
-      amount: number;
-      currency: string;
-    };
-  } | null;
-};
 
 function resolvePaymentIntegrationId(providerName: string): string | undefined {
   if (providerName === "mercadopago") {
@@ -115,105 +89,12 @@ function subscriptionMatchesTarget(
   return readMembershipTargetId(subscription, target.type) === target.id;
 }
 
-function isPlanChangeBillingCadence(value: string): value is PlanChangeBillingCadence {
-  return value === "monthly" || value === "yearly";
-}
-
-function mapPendingDirection(direction: string): PendingPlanChangeRecord["direction"] {
-  if (direction === "downgrade" || direction === "cadence_change") {
-    return direction;
-  }
-
-  throw new Error("Stored Pending Plan change has an invalid direction");
-}
-
-function mapPendingMembershipTarget(input: {
-  id: string;
-  type: string;
-}): PendingPlanChangeRecord["membershipTarget"] {
-  if (input.type === "user" || input.type === "organization") {
-    return { type: input.type, id: input.id };
-  }
-
-  throw new Error("Stored Pending Plan change has an invalid Membership target");
-}
-
-function mapTargetPlanSnapshot(
-  snapshot: PendingPlanChangeRow["targetPlanSnapshot"],
-): PlanChangeCatalogPlan {
-  if (!snapshot) {
-    throw new Error("Stored Pending Plan change is missing its target Plan");
-  }
-
-  if (!isPlanChangeBillingCadence(snapshot.billingCadence)) {
-    throw new Error("Stored Pending Plan change target Plan has an invalid Billing cadence");
-  }
-
-  return {
-    ...snapshot,
-    billingCadence: snapshot.billingCadence,
-  };
-}
-
-function mapPendingPlanChangeRecord(row: PendingPlanChangeRow): PendingPlanChangeRecord {
-  return {
-    direction: mapPendingDirection(row.direction),
-    effectiveAt: row.effectiveAt,
-    id: row.id,
-    membershipTarget: mapPendingMembershipTarget({
-      id: row.membershipTargetId,
-      type: row.membershipTargetType,
-    }),
-    providerConfirmedPlanChangeId: row.providerConfirmedPlanChangeId,
-    subscriptionId: row.subscriptionId,
-    targetPlanSnapshot: mapTargetPlanSnapshot(row.targetPlanSnapshot),
-  };
-}
-
-function selectPendingPlanChangeFields() {
-  return {
-    direction: pendingPlanChangeTable.direction,
-    effectiveAt: pendingPlanChangeTable.effectiveAt,
-    id: pendingPlanChangeTable.id,
-    membershipTargetId: pendingPlanChangeTable.membershipTargetId,
-    membershipTargetType: pendingPlanChangeTable.membershipTargetType,
-    providerConfirmedPlanChangeId: pendingPlanChangeTable.providerConfirmedPlanChangeId,
-    subscriptionId: pendingPlanChangeTable.subscriptionId,
-    targetPlanSnapshot: pendingPlanChangeTable.targetPlanSnapshot,
-  };
-}
-
 function createPlanChangeStore(options: {
   auth: AuthenticatedUser;
   provider: PaymentProviderAdapter;
 }): PlanChangeStore {
   return {
-    async cancelPendingPlanChange(subscriptionId) {
-      const [deletedPendingPlanChange] = await db
-        .delete(pendingPlanChangeTable)
-        .where(
-          and(
-            eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending"),
-          ),
-        )
-        .returning(selectPendingPlanChangeFields());
-
-      return deletedPendingPlanChange ? mapPendingPlanChangeRecord(deletedPendingPlanChange) : null;
-    },
-    async clearPendingPlanChange(subscriptionId) {
-      const [deletedPendingPlanChange] = await db
-        .delete(pendingPlanChangeTable)
-        .where(
-          and(
-            eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending"),
-          ),
-        )
-        .returning(selectPendingPlanChangeFields());
-
-      return deletedPendingPlanChange ? mapPendingPlanChangeRecord(deletedPendingPlanChange) : null;
-    },
+    ...createDbPendingPlanChangeLedger(),
     async findCurrentSubscription(input) {
       let subscriptions = await options.provider.listSubscriptions({
         customerEmail: options.auth.user.email,
@@ -240,28 +121,11 @@ function createPlanChangeStore(options: {
         subscriptionOwnerUserId: readMembershipTargetId(currentSubscription, "user"),
       };
     },
-    async findPendingPlanChange(subscriptionId) {
-      const [pendingPlanChange] = await db
-        .select(selectPendingPlanChangeFields())
-        .from(pendingPlanChangeTable)
-        .where(
-          and(
-            eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending"),
-          ),
-        )
-        .limit(1);
-
-      return pendingPlanChange ? mapPendingPlanChangeRecord(pendingPlanChange) : null;
-    },
     listActiveVisiblePricingCatalogPlans() {
       return Promise.resolve([]);
     },
     moveMembershipToPlan() {
       return Promise.resolve();
-    },
-    savePendingPlanChange() {
-      throw new Error("Pending Plan change cancellation cannot save state");
     },
   };
 }

@@ -1,5 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import { BillingDashboard } from "@/components/payments/billing-dashboard";
+import { PendingPlanChangeNotice } from "@/components/payments/pending-plan-change-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -116,6 +117,9 @@ export default function Billing() {
           Manage your subscription, view usage, and access billing history.
         </p>
       </div>
+
+      {/* What changes at renewal, with a way to keep the current terms */}
+      <PendingPlanChangeNotice />
 
       {/* Main Dashboard */}
       <BillingDashboard

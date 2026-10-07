@@ -1,7 +1,6 @@
 import {
   db,
   organization as organizationTable,
-  pendingPlanChange as pendingPlanChangeTable,
   plan as planTable,
   user as userTable,
 } from "@beztack/db";
@@ -14,13 +13,12 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import {
   acceptPlanChange,
-  type PendingPlanChangeRecord,
   type PlanChangeBillingCadence,
-  type PlanChangeCatalogPlan,
   PlanChangeError,
   type PlanChangePaymentAdapter,
   type PlanChangeStore,
 } from "@/server/utils/plan-change";
+import { createDbPendingPlanChangeLedger } from "@/server/utils/pending-plan-change-ledger";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { organizationAccess } from "@/server/domain/organization-access";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
@@ -137,83 +135,6 @@ function mapPlanBillingCadence(input: {
   return null;
 }
 
-type PendingPlanChangeRow = {
-  direction: string;
-  effectiveAt: Date | null;
-  id: string;
-  membershipTargetId: string;
-  membershipTargetType: string;
-  providerConfirmedPlanChangeId: string;
-  subscriptionId: string;
-  targetPlanSnapshot: {
-    id: string;
-    paymentProvider: string;
-    providerPlanId: string | null;
-    canonicalTierId: string;
-    tierRank: number;
-    billingCadence: string;
-    price: {
-      amount: number;
-      currency: string;
-    };
-  } | null;
-};
-
-function isPlanChangeBillingCadence(value: string): value is PlanChangeBillingCadence {
-  return value === "monthly" || value === "yearly";
-}
-
-function mapPendingDirection(direction: string): PendingPlanChangeRecord["direction"] {
-  if (direction === "downgrade" || direction === "cadence_change") {
-    return direction;
-  }
-
-  throw new Error("Stored Pending Plan change has an invalid direction");
-}
-
-function mapPendingMembershipTarget(input: {
-  id: string;
-  type: string;
-}): PendingPlanChangeRecord["membershipTarget"] {
-  if (input.type === "user" || input.type === "organization") {
-    return { type: input.type, id: input.id };
-  }
-
-  throw new Error("Stored Pending Plan change has an invalid Membership target");
-}
-
-function mapTargetPlanSnapshot(
-  snapshot: PendingPlanChangeRow["targetPlanSnapshot"],
-): PlanChangeCatalogPlan {
-  if (!snapshot) {
-    throw new Error("Stored Pending Plan change is missing its target Plan");
-  }
-
-  if (!isPlanChangeBillingCadence(snapshot.billingCadence)) {
-    throw new Error("Stored Pending Plan change target Plan has an invalid Billing cadence");
-  }
-
-  return {
-    ...snapshot,
-    billingCadence: snapshot.billingCadence,
-  };
-}
-
-function mapPendingPlanChangeRecord(row: PendingPlanChangeRow): PendingPlanChangeRecord {
-  return {
-    direction: mapPendingDirection(row.direction),
-    effectiveAt: row.effectiveAt,
-    id: row.id,
-    membershipTarget: mapPendingMembershipTarget({
-      id: row.membershipTargetId,
-      type: row.membershipTargetType,
-    }),
-    providerConfirmedPlanChangeId: row.providerConfirmedPlanChangeId,
-    subscriptionId: row.subscriptionId,
-    targetPlanSnapshot: mapTargetPlanSnapshot(row.targetPlanSnapshot),
-  };
-}
-
 function subscriptionMatchesTarget(
   subscription: Subscription,
   target: ReturnType<typeof resolveMembershipTarget>,
@@ -226,50 +147,7 @@ function createPlanChangeStore(options: {
   provider: PaymentProviderAdapter;
 }): PlanChangeStore {
   return {
-    async cancelPendingPlanChange(subscriptionId) {
-      const [deletedPendingPlanChange] = await db
-        .delete(pendingPlanChangeTable)
-        .where(
-          and(
-            eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending"),
-          ),
-        )
-        .returning({
-          direction: pendingPlanChangeTable.direction,
-          effectiveAt: pendingPlanChangeTable.effectiveAt,
-          id: pendingPlanChangeTable.id,
-          membershipTargetId: pendingPlanChangeTable.membershipTargetId,
-          membershipTargetType: pendingPlanChangeTable.membershipTargetType,
-          providerConfirmedPlanChangeId: pendingPlanChangeTable.providerConfirmedPlanChangeId,
-          subscriptionId: pendingPlanChangeTable.subscriptionId,
-          targetPlanSnapshot: pendingPlanChangeTable.targetPlanSnapshot,
-        });
-
-      return deletedPendingPlanChange ? mapPendingPlanChangeRecord(deletedPendingPlanChange) : null;
-    },
-    async clearPendingPlanChange(subscriptionId) {
-      const [deletedPendingPlanChange] = await db
-        .delete(pendingPlanChangeTable)
-        .where(
-          and(
-            eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending"),
-          ),
-        )
-        .returning({
-          direction: pendingPlanChangeTable.direction,
-          effectiveAt: pendingPlanChangeTable.effectiveAt,
-          id: pendingPlanChangeTable.id,
-          membershipTargetId: pendingPlanChangeTable.membershipTargetId,
-          membershipTargetType: pendingPlanChangeTable.membershipTargetType,
-          providerConfirmedPlanChangeId: pendingPlanChangeTable.providerConfirmedPlanChangeId,
-          subscriptionId: pendingPlanChangeTable.subscriptionId,
-          targetPlanSnapshot: pendingPlanChangeTable.targetPlanSnapshot,
-        });
-
-      return deletedPendingPlanChange ? mapPendingPlanChangeRecord(deletedPendingPlanChange) : null;
-    },
+    ...createDbPendingPlanChangeLedger(),
     async findCurrentSubscription(input) {
       let subscriptions = await options.provider.listSubscriptions({
         customerEmail: options.auth.user.email,
@@ -302,29 +180,6 @@ function createPlanChangeStore(options: {
         currentPeriodStart: currentSubscription.currentPeriodStart,
         currentPeriodEnd: currentSubscription.currentPeriodEnd,
       };
-    },
-    async findPendingPlanChange(subscriptionId) {
-      const [pendingPlanChange] = await db
-        .select({
-          direction: pendingPlanChangeTable.direction,
-          effectiveAt: pendingPlanChangeTable.effectiveAt,
-          id: pendingPlanChangeTable.id,
-          membershipTargetId: pendingPlanChangeTable.membershipTargetId,
-          membershipTargetType: pendingPlanChangeTable.membershipTargetType,
-          providerConfirmedPlanChangeId: pendingPlanChangeTable.providerConfirmedPlanChangeId,
-          subscriptionId: pendingPlanChangeTable.subscriptionId,
-          targetPlanSnapshot: pendingPlanChangeTable.targetPlanSnapshot,
-        })
-        .from(pendingPlanChangeTable)
-        .where(
-          and(
-            eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
-            eq(pendingPlanChangeTable.status, "pending"),
-          ),
-        )
-        .limit(1);
-
-      return pendingPlanChange ? mapPendingPlanChangeRecord(pendingPlanChange) : null;
     },
     async listActiveVisiblePricingCatalogPlans(paymentProvider) {
       const rows = await db
@@ -386,33 +241,6 @@ function createPlanChangeStore(options: {
       }
 
       await db.update(userTable).set(updates).where(eq(userTable.id, input.membershipTarget.id));
-    },
-    savePendingPlanChange(input) {
-      const id = `pending_${input.subscriptionId}`;
-      const values = {
-        direction: input.direction,
-        effectiveAt: input.effectiveAt,
-        id,
-        membershipTargetId: input.membershipTarget.id,
-        membershipTargetType: input.membershipTarget.type,
-        providerConfirmedPlanChangeId: input.providerConfirmedPlanChangeId,
-        status: "pending",
-        subscriptionId: input.subscriptionId,
-        targetPlanSnapshot: input.targetPlanSnapshot,
-        updatedAt: new Date(),
-      };
-
-      return db
-        .insert(pendingPlanChangeTable)
-        .values(values)
-        .onConflictDoUpdate({
-          set: values,
-          target: pendingPlanChangeTable.subscriptionId,
-        })
-        .then(() => ({
-          id,
-          ...input,
-        }));
     },
   };
 }

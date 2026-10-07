@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -325,21 +326,38 @@ export const pendingPlanChange = pgTable(
     direction: text("direction").notNull(),
     membershipTargetType: text("membership_target_type").notNull(),
     membershipTargetId: text("membership_target_id").notNull(),
-    targetPlanSnapshot: jsonb("target_plan_snapshot").$type<{
-      id: string;
-      paymentProvider: string;
-      providerPlanId: string | null;
-      canonicalTierId: string;
-      tierRank: number;
-      billingCadence: string;
-      price: {
-        amount: number;
-        currency: string;
-      };
-    }>(),
+    targetPlanSnapshot: jsonb("target_plan_snapshot")
+      .$type<{
+        id: string;
+        paymentProvider: string;
+        providerPlanId: string | null;
+        canonicalTierId: string;
+        tierRank: number;
+        billingCadence: string;
+        price: {
+          amount: number;
+          currency: string;
+        };
+      }>()
+      .notNull(),
     providerConfirmedPlanChangeId: text("provider_confirmed_plan_change_id").notNull(),
     effectiveAt: timestamp("effective_at", { withTimezone: true }),
+    /** `pending | activated | canceled | failed`. Rows are never deleted. */
     status: text("status").default("pending").notNull(),
+    /** Null when reconciled from provider evidence instead of accepted in Beztack. */
+    acceptedByUserId: text("accepted_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    /** Null when the system canceled it (replacement or renewal evidence). */
+    canceledByUserId: text("canceled_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    /** Cancel reason, or the last activation error while `pending`/`failed`. */
+    reason: text("reason"),
+    activationAttempts: integer("activation_attempts").default(0).notNull(),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    canceledAt: timestamp("canceled_at", { withTimezone: true }),
+    failedAt: timestamp("failed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
@@ -347,7 +365,11 @@ export const pendingPlanChange = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("pending_plan_change_subscription_uidx").on(table.subscriptionId),
+    // One `pending` row per Subscription; history rows are unconstrained.
+    uniqueIndex("pending_plan_change_subscription_pending_uidx")
+      .on(table.subscriptionId)
+      .where(sql`${table.status} = 'pending'`),
+    index("pending_plan_change_subscription_idx").on(table.subscriptionId),
     index("pending_plan_change_status_idx").on(table.status),
     index("pending_plan_change_effective_at_idx").on(table.effectiveAt),
   ],

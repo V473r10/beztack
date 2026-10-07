@@ -50,9 +50,28 @@ export type FindCurrentSubscriptionInput = {
   paymentIntegrationId?: string;
 };
 
+/**
+ * The Pending Plan change ledger. Rows are never deleted: every transition
+ * moves `status` and records who and why, so billing history stays traceable.
+ * At most one row per Subscription is `pending` at a time.
+ */
 export type PlanChangeStore = {
-  cancelPendingPlanChange(subscriptionId: string): Promise<PendingPlanChangeRecord | null>;
-  clearPendingPlanChange(subscriptionId: string): Promise<PendingPlanChangeRecord | null>;
+  /** Moves the Subscription's `pending` row to `canceled`; null when none. */
+  cancelPendingPlanChange(
+    subscriptionId: string,
+    cancellation: PendingPlanChangeCancellationInput,
+  ): Promise<PendingPlanChangeRecord | null>;
+  /** Moves the Subscription's `pending` row to `activated`; null when none. */
+  markPendingPlanChangeActivated(subscriptionId: string): Promise<PendingPlanChangeRecord | null>;
+  /**
+   * Counts one failed activation attempt on the Subscription's `pending` row
+   * and keeps `error` as its reason. Once the count reaches `maxAttempts` the
+   * row moves to `failed`. Returns the row after the update; null when none.
+   */
+  recordPendingPlanChangeActivationFailure(
+    subscriptionId: string,
+    failure: { error: string; maxAttempts: number },
+  ): Promise<PendingPlanChangeRecord | null>;
   findCurrentSubscription(
     input: FindCurrentSubscriptionInput,
   ): Promise<PlanChangeCurrentSubscription | null>;
@@ -64,9 +83,11 @@ export type PlanChangeStore = {
     subscriptionId: string;
     targetPlan: PlanChangeCatalogPlan;
   }): Promise<void>;
-  savePendingPlanChange(
-    input: Omit<PendingPlanChangeRecord, "id">,
-  ): Promise<PendingPlanChangeRecord>;
+  /**
+   * Stores a new `pending` row. An existing `pending` row for the same
+   * Subscription is moved to `canceled` with reason `replaced` first.
+   */
+  savePendingPlanChange(input: NewPendingPlanChange): Promise<PendingPlanChangeRecord>;
 };
 
 export type PreviewPlanChangeInput = {
@@ -105,15 +126,61 @@ export type PlanChangePreview = {
   };
 };
 
+export type PendingPlanChangeStatus = "pending" | "activated" | "canceled" | "failed";
+
+/**
+ * Why a Pending Plan change was canceled:
+ * - `user`: a Billing manager, Subscription owner or App admin canceled it.
+ * - `replaced`: a newer accepted Plan change took its place.
+ * - `current_subscription_canceled`: the Current Subscription ended instead of renewing.
+ * - `renewal_failed`: the renewal payment failed, so there was nothing to activate on.
+ */
+export type PendingPlanChangeCancelReason =
+  | "user"
+  | "replaced"
+  | "current_subscription_canceled"
+  | "renewal_failed";
+
+export type PendingPlanChangeCancellationInput = {
+  /** Null when the system canceled it (replacement or renewal evidence). */
+  canceledByUserId: string | null;
+  reason: PendingPlanChangeCancelReason;
+};
+
 export type PendingPlanChangeRecord = {
   id: string;
+  /** Who accepted it; null when it was reconciled from provider evidence. */
+  acceptedByUserId: string | null;
+  activationAttempts: number;
+  canceledByUserId: string | null;
   direction: Exclude<PlanChangeDirection, "upgrade">;
   effectiveAt: Date | null;
   membershipTarget: PlanChangeMembershipTarget;
   providerConfirmedPlanChangeId: string;
+  /** A cancel reason, or the last activation error for `pending`/`failed`. */
+  reason: string | null;
+  status: PendingPlanChangeStatus;
   subscriptionId: string;
   targetPlanSnapshot: PlanChangeCatalogPlan;
 };
+
+export type NewPendingPlanChange = Pick<
+  PendingPlanChangeRecord,
+  | "acceptedByUserId"
+  | "direction"
+  | "effectiveAt"
+  | "membershipTarget"
+  | "providerConfirmedPlanChangeId"
+  | "subscriptionId"
+  | "targetPlanSnapshot"
+>;
+
+/**
+ * How many webhook deliveries may fail to activate a Pending Plan change
+ * before it is marked `failed`. Each failure answers the webhook with an
+ * error so the provider retries; there is no separate retry worker.
+ */
+export const MAX_PENDING_PLAN_CHANGE_ACTIVATION_ATTEMPTS = 5;
 
 export type PlanChangePaymentStatus = "pending" | "confirmed";
 
@@ -183,9 +250,10 @@ export type PendingPlanChangeRenewalEvidence = {
 export type PendingPlanChangeActivationStore = Pick<
   PlanChangeStore,
   | "cancelPendingPlanChange"
-  | "clearPendingPlanChange"
   | "findPendingPlanChange"
+  | "markPendingPlanChangeActivated"
   | "moveMembershipToPlan"
+  | "recordPendingPlanChangeActivationFailure"
 >;
 
 export type ProviderConfirmedPlanChangeEvidence = {
@@ -217,7 +285,8 @@ export type PlanChangeReconciliation = {
 
 export type PendingPlanChangeActivation = {
   kind: "pending-plan-change-activation";
-  action: "activated" | "canceled" | "skipped";
+  /** `failed`: activation kept failing and the row was marked `failed`. */
+  action: "activated" | "canceled" | "failed" | "skipped";
   currentSubscriptionId: string;
   membershipMoved: boolean;
   pendingPlanChange: PendingPlanChangeRecord | null;
@@ -637,6 +706,7 @@ export async function acceptPlanChange(
 
   try {
     pendingPlanChange = await input.store.savePendingPlanChange({
+      acceptedByUserId: input.actor.userId,
       direction: preview.direction,
       effectiveAt: preview.effectiveAt,
       membershipTarget: preview.membershipTarget,
@@ -690,6 +760,8 @@ export async function reconcileProviderConfirmedPlanChange(input: {
       input.evidence.target,
     );
     const pendingPlanChange = await input.store.savePendingPlanChange({
+      // Reconciled from provider evidence: no Beztack actor accepted it here.
+      acceptedByUserId: null,
       direction: input.evidence.direction,
       effectiveAt: input.evidence.effectiveAt,
       membershipTarget: input.evidence.membershipTarget,
@@ -755,6 +827,7 @@ export async function cancelPendingPlanChange(input: {
 
   const canceledPendingPlanChange = await input.store.cancelPendingPlanChange(
     currentSubscription.id,
+    { canceledByUserId: input.actor.userId, reason: "user" },
   );
 
   return {
@@ -767,6 +840,8 @@ export async function cancelPendingPlanChange(input: {
 
 export async function activatePendingPlanChange(input: {
   currentSubscriptionId: string;
+  /** Defaults to MAX_PENDING_PLAN_CHANGE_ACTIVATION_ATTEMPTS. */
+  maxActivationAttempts?: number;
   renewalEvidence: PendingPlanChangeRenewalEvidence;
   store: PendingPlanChangeActivationStore;
 }): Promise<PendingPlanChangeActivation> {
@@ -784,6 +859,13 @@ export async function activatePendingPlanChange(input: {
   if (input.renewalEvidence.state === "canceled" || input.renewalEvidence.state === "failed") {
     const canceledPendingPlanChange = await input.store.cancelPendingPlanChange(
       input.currentSubscriptionId,
+      {
+        canceledByUserId: null,
+        reason:
+          input.renewalEvidence.state === "canceled"
+            ? "current_subscription_canceled"
+            : "renewal_failed",
+      },
     );
 
     return {
@@ -818,13 +900,36 @@ export async function activatePendingPlanChange(input: {
     };
   }
 
-  await input.store.moveMembershipToPlan({
-    membershipTarget: pendingPlanChange.membershipTarget,
-    paymentId: input.renewalEvidence.paymentId ?? `renewal:${input.currentSubscriptionId}`,
-    subscriptionId: input.currentSubscriptionId,
-    targetPlan: pendingPlanChange.targetPlanSnapshot,
-  });
-  const clearedPendingPlanChange = await input.store.clearPendingPlanChange(
+  try {
+    await input.store.moveMembershipToPlan({
+      membershipTarget: pendingPlanChange.membershipTarget,
+      paymentId: input.renewalEvidence.paymentId ?? `renewal:${input.currentSubscriptionId}`,
+      subscriptionId: input.currentSubscriptionId,
+      targetPlan: pendingPlanChange.targetPlanSnapshot,
+    });
+  } catch (error) {
+    const failedAttempt = await input.store.recordPendingPlanChangeActivationFailure(
+      input.currentSubscriptionId,
+      {
+        error: error instanceof Error ? error.message : "Pending Plan change activation failed",
+        maxAttempts: input.maxActivationAttempts ?? MAX_PENDING_PLAN_CHANGE_ACTIVATION_ATTEMPTS,
+      },
+    );
+    if (failedAttempt?.status !== "failed") {
+      // Still retryable: the caller answers the webhook with an error so the
+      // provider delivers it again.
+      throw error;
+    }
+
+    return {
+      kind: "pending-plan-change-activation",
+      action: "failed",
+      currentSubscriptionId: input.currentSubscriptionId,
+      membershipMoved: false,
+      pendingPlanChange: failedAttempt,
+    };
+  }
+  const activatedPendingPlanChange = await input.store.markPendingPlanChangeActivated(
     input.currentSubscriptionId,
   );
 
@@ -833,6 +938,6 @@ export async function activatePendingPlanChange(input: {
     action: "activated",
     currentSubscriptionId: input.currentSubscriptionId,
     membershipMoved: true,
-    pendingPlanChange: clearedPendingPlanChange ?? pendingPlanChange,
+    pendingPlanChange: activatedPendingPlanChange ?? pendingPlanChange,
   };
 }
