@@ -173,4 +173,27 @@ describe("Plan change dialog", () => {
     expect(html).toContain("billing.planChange.previewLoading");
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*>billing\.planChange\.confirmUpgrade/);
   });
+
+  it("shows an Admin tier override with no amount due", () => {
+    mocks.preview = {
+      data: {
+        kind: "admin-tier-override-preview",
+        targetPlan: UPGRADE.targetPlan,
+        effectiveTiming: "immediately",
+        paymentDue: null,
+      },
+      isLoading: false,
+      error: null,
+    };
+
+    const html = renderDialog();
+
+    expect(html).toContain("billing.planChange.adminTierOverride");
+    expect(html).toContain("billing.planChange.adminTierOverrideNoPayment");
+    expect(html).not.toContain("billing.planChange.dueToday");
+    expect(html).not.toContain("billing.planChange.credit");
+    expect(html).not.toContain("UYU 6000");
+    // The override can still be applied.
+    expect(html).not.toMatch(/<button[^>]*disabled=""[^>]*>billing\.planChange\.confirmUpgrade/);
+  });
 });

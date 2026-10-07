@@ -22,8 +22,20 @@ import {
 import { createDbPendingPlanChangeLedger } from "@/server/utils/pending-plan-change-ledger";
 import { readChargedAmount } from "@/server/utils/billing-amount-resolver";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
-import { organizationAccess } from "@/server/domain/organization-access";
+import { organizationAccess, getAppAdminEmails } from "@/server/domain/organization-access";
+import { applyAdminTierOverride } from "@/server/utils/admin-tier-override";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
+
+function readAuthRole(auth: AuthenticatedUser): string | string[] | null {
+  const role = (auth.user as { role?: unknown }).role;
+  if (typeof role === "string") {
+    return role;
+  }
+  if (Array.isArray(role) && role.every((entry) => typeof entry === "string")) {
+    return role;
+  }
+  return null;
+}
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 const SINGLE_INTERVAL_COUNT = 1;
@@ -345,16 +357,50 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const provider = await ensurePaymentProvider();
-    const paymentIntegrationId = resolvePaymentIntegrationId(provider.provider);
     const membershipTarget = resolveMembershipTarget(auth, body);
     if (membershipTarget.type === "organization") {
       await requireOrganizationBillingManagerAccess(auth, membershipTarget.id);
     }
+
+    // An App admin's Plan change is an Admin tier override, as its preview
+    // said: Beztack-owned, immediate, no Payment, no provider call.
+    if (organizationAccess.isAppAdmin(auth.user)) {
+      const result = await applyAdminTierOverride({
+        actor: {
+          id: auth.user.id,
+          email: auth.user.email,
+          role: readAuthRole(auth),
+        },
+        appAdminEmails: getAppAdminEmails(),
+        billingPeriod: body.targetBillingCadence,
+        organizationId: membershipTarget.type === "organization" ? membershipTarget.id : undefined,
+        planId: body.targetTierId,
+        productId: body.targetPricingCatalogPlanId,
+        provider: env.PAYMENT_PROVIDER,
+        sourceAction: "plan_change",
+        subscriptionMode: membershipTarget.type,
+        userId: auth.user.id,
+      });
+
+      return {
+        provider: "beztack",
+        planChangeAcceptance: {
+          kind: "admin-tier-override",
+          changed: result.changed,
+          target: result.target,
+          tier: result.override.tier,
+          billingCadence: result.override.billingCadence,
+          realSubscriptionsUnchanged: true,
+        },
+      };
+    }
+
+    const provider = await ensurePaymentProvider();
+    const paymentIntegrationId = resolvePaymentIntegrationId(provider.provider);
     const acceptance = await acceptPlanChange({
       actor: {
         email: auth.user.email,
-        isAppAdmin: organizationAccess.isAppAdmin(auth.user),
+        isAppAdmin: false,
         // The gate above refused everyone else for an organization target.
         isBillingManager: membershipTarget.type === "organization",
         userId: auth.user.id,

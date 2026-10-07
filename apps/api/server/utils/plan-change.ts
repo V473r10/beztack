@@ -139,6 +139,19 @@ export type PlanChangePreview = {
   };
 };
 
+/**
+ * What an App admin's Plan change does: an Admin tier override. It takes
+ * effect immediately, charges nothing and leaves real Subscriptions untouched,
+ * so there is no Current Subscription to price against and no proration.
+ */
+export type AdminTierOverridePlanChangePreview = {
+  kind: "admin-tier-override-preview";
+  membershipTarget: PlanChangeMembershipTarget;
+  targetPlan: PlanChangeCatalogPlan;
+  effectiveTiming: "immediately";
+  paymentDue: null;
+};
+
 export type PendingPlanChangeStatus = "pending" | "activated" | "canceled" | "failed";
 
 /**
@@ -593,7 +606,34 @@ function calculateUpgradeCredit(input: {
   return Math.round((periodAmount / totalDays) * daysRemaining);
 }
 
-export async function previewPlanChange(input: PreviewPlanChangeInput): Promise<PlanChangePreview> {
+/**
+ * Plan change preview. For an App admin this is an Admin tier override
+ * preview; everyone else gets the real change priced against their Current
+ * Subscription.
+ */
+export async function previewPlanChange(
+  input: PreviewPlanChangeInput,
+): Promise<PlanChangePreview | AdminTierOverridePlanChangePreview> {
+  if (input.actor.isAppAdmin) {
+    const catalogPlans = await input.store.listActiveVisiblePricingCatalogPlans(
+      input.paymentProvider,
+    );
+    return {
+      kind: "admin-tier-override-preview",
+      membershipTarget: input.membershipTarget,
+      targetPlan: resolveTargetPlan(catalogPlans, input.target),
+      effectiveTiming: "immediately",
+      paymentDue: null,
+    };
+  }
+
+  return priceSubscriptionPlanChange(input);
+}
+
+/** Prices a real Plan change against the Current Subscription. */
+async function priceSubscriptionPlanChange(
+  input: PreviewPlanChangeInput,
+): Promise<PlanChangePreview> {
   const [currentSubscription, catalogPlans] = await Promise.all([
     input.store.findCurrentSubscription({
       membershipTarget: input.membershipTarget,
@@ -686,7 +726,9 @@ export async function acceptPlanChange(
     paymentProvider: input.paymentProvider,
   });
 
-  const preview = await previewPlanChange(input);
+  // Accepting always changes the real Subscription. App admins reach the
+  // Admin tier override through the route, never through this function.
+  const preview = await priceSubscriptionPlanChange(input);
   if (preview.direction === "upgrade") {
     const confirmation = await input.paymentAdapter.confirmUpgrade({
       actor: input.actor,

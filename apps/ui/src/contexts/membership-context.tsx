@@ -344,12 +344,22 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       };
     },
     onSuccess: (data) => {
-      const acceptance = data.planChangeAcceptance as { reconciliationStatus?: string } | undefined;
-      toast.success(
-        acceptance?.reconciliationStatus === "reconciling"
-          ? "Payment confirmed. Plan change is still reconciling."
-          : "Plan change accepted successfully!",
-      );
+      const acceptance = data.planChangeAcceptance as
+        | { changed?: boolean; kind?: string; reconciliationStatus?: string }
+        | undefined;
+      if (acceptance?.kind === "admin-tier-override") {
+        toast.success(
+          acceptance.changed
+            ? "Admin tier override applied."
+            : "Admin tier override already active.",
+        );
+      } else {
+        toast.success(
+          acceptance?.reconciliationStatus === "reconciling"
+            ? "Payment confirmed. Plan change is still reconciling."
+            : "Plan change accepted successfully!",
+        );
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
     onError: (mutationError: Error) => {

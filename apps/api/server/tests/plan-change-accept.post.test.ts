@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => {
 
   return {
     acceptPlanChange: vi.fn(),
+    applyAdminTierOverride: vi.fn(),
     ensurePaymentProvider: vi.fn(),
     PlanChangeError: MockPlanChangeError,
     readBody: vi.fn(),
@@ -24,6 +25,7 @@ const mocks = vi.hoisted(() => {
     env: {
       APP_ADMIN_EMAILS: "admin@example.com",
       MERCADO_PAGO_APPLICATION_ID: "mp_app_1",
+      PAYMENT_PROVIDER: "mercadopago",
       SUBSCRIPTION_MODE: "user" as "user" | "organization",
     },
   };
@@ -61,6 +63,9 @@ vi.mock("@/server/utils/membership", () => ({
 vi.mock("@/server/utils/plan-change", () => ({
   acceptPlanChange: mocks.acceptPlanChange,
   PlanChangeError: mocks.PlanChangeError,
+}));
+vi.mock("@/server/utils/admin-tier-override", () => ({
+  applyAdminTierOverride: mocks.applyAdminTierOverride,
 }));
 vi.mock("@/server/utils/subscription-discovery", () => ({
   discoverSubscriptionsFromDb: vi.fn(),
@@ -121,6 +126,54 @@ describe("POST /api/subscriptions/plan-change/accept", () => {
     expect(response).toEqual({
       provider: "mercadopago",
       planChangeAcceptance: expectedAcceptance,
+    });
+  });
+
+  it("applies an App admin's Plan change as an Admin tier override, without the Payment provider", async () => {
+    mocks.requireAuth.mockResolvedValue({
+      user: { id: "admin_1", email: "admin@example.com", role: "sudo" },
+      session: {},
+    });
+    mocks.ensurePaymentProvider.mockRejectedValue(new Error("provider down"));
+    mocks.readBody.mockResolvedValue({
+      targetBillingCadence: "monthly",
+      targetPricingCatalogPlanId: "mercadopago_pro_month",
+    });
+    const target = { type: "user", id: "admin_1" };
+    const override = { tier: "pro", billingCadence: "monthly" };
+    mocks.applyAdminTierOverride.mockResolvedValue({
+      kind: "admin-tier-override",
+      changed: true,
+      override,
+      target,
+    });
+    const handler = (await import("../routes/api/subscriptions/plan-change/accept.post"))
+      .default as (event: unknown) => Promise<unknown>;
+
+    const response = await handler({});
+
+    expect(mocks.ensurePaymentProvider).not.toHaveBeenCalled();
+    expect(mocks.acceptPlanChange).not.toHaveBeenCalled();
+    expect(mocks.applyAdminTierOverride).toHaveBeenCalledWith(
+      expect.objectContaining({
+        billingPeriod: "monthly",
+        productId: "mercadopago_pro_month",
+        provider: "mercadopago",
+        sourceAction: "plan_change",
+        subscriptionMode: "user",
+        userId: "admin_1",
+      }),
+    );
+    expect(response).toEqual({
+      provider: "beztack",
+      planChangeAcceptance: {
+        kind: "admin-tier-override",
+        changed: true,
+        target,
+        tier: "pro",
+        billingCadence: "monthly",
+        realSubscriptionsUnchanged: true,
+      },
     });
   });
 });
