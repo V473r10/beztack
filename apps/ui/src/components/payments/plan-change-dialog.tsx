@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
-import { type PlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
+import { type AnyPlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -113,7 +113,7 @@ function getChangeTypeConfig(
 }
 
 type PlanChangePreviewSummaryProps = {
-  preview: PlanChangePreview | undefined;
+  preview: AnyPlanChangePreview | undefined;
   isLoading: boolean;
   error: Error | null;
 };
@@ -150,6 +150,26 @@ export function PlanChangePreviewSummary({
       <div className="flex items-center gap-2 rounded-lg border bg-muted/20 p-4 text-muted-foreground text-sm">
         <Loader2 className="h-4 w-4 animate-spin" />
         {t("billing.planChange.previewLoading", "Calculating your plan change...")}
+      </div>
+    );
+  }
+
+  if (preview.kind === "admin-tier-override-preview") {
+    const { targetPlan } = preview;
+    return (
+      <div className="space-y-2 rounded-lg border p-4 text-sm">
+        <div className="text-muted-foreground text-xs uppercase tracking-wide">
+          {t("billing.planChange.adminTierOverride", "Admin tier override")}
+        </div>
+        <div className="font-semibold capitalize">
+          {targetPlan.canonicalTierId} · {cadenceSuffix(targetPlan.billingCadence)}
+        </div>
+        <p className="text-muted-foreground">
+          {t(
+            "billing.planChange.adminTierOverrideNoPayment",
+            "Takes effect immediately. No payment is charged and real subscriptions are unchanged.",
+          )}
+        </p>
       </div>
     );
   }

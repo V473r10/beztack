@@ -9,6 +9,7 @@ import {
   type PlanChangeCurrentSubscription,
   type PlanChangeError,
   type PlanChangePaymentAdapter,
+  type PlanChangePreview,
   type PlanChangeStore,
   previewPlanChange,
   reconcileProviderConfirmedPlanChange,
@@ -32,6 +33,12 @@ const AUTHORIZED_ACTOR = {
 
 /** An actor that passed the route's Billing manager gate for the organization. */
 const BILLING_MANAGER_ACTOR = { ...AUTHORIZED_ACTOR, isBillingManager: true };
+const APP_ADMIN_ACTOR = {
+  email: "admin@example.com",
+  isAppAdmin: true,
+  isBillingManager: false,
+  userId: "admin_1",
+};
 
 function catalogPlan(overrides: Partial<PlanChangeCatalogPlan> = {}): PlanChangeCatalogPlan {
   return {
@@ -44,6 +51,24 @@ function catalogPlan(overrides: Partial<PlanChangeCatalogPlan> = {}): PlanChange
     price: { amount: 2900, currency: "UYU" },
     ...overrides,
   };
+}
+
+const PRO_MONTHLY_PLAN = catalogPlan({
+  id: "mercadopago_pro_month",
+  providerPlanId: "provider_pro_month",
+  canonicalTierId: "pro",
+  tierRank: 2,
+});
+
+/** A non-App-admin preview: the real Plan change, priced. */
+async function previewPricedPlanChange(
+  input: Parameters<typeof previewPlanChange>[0],
+): Promise<PlanChangePreview> {
+  const preview = await previewPlanChange(input);
+  if (preview.kind !== "plan-change-preview") {
+    throw new Error(`Expected a priced Plan change preview, got ${preview.kind}`);
+  }
+  return preview;
 }
 
 function createStore(options: {
@@ -244,7 +269,7 @@ describe("previewPlanChange", () => {
       ],
     });
 
-    const preview = await previewPlanChange({
+    const preview = await previewPricedPlanChange({
       actor: AUTHORIZED_ACTOR,
       membershipTarget: MEMBERSHIP_TARGET,
       paymentProvider: PAYMENT_PROVIDER,
@@ -288,7 +313,7 @@ describe("previewPlanChange", () => {
       ],
     });
 
-    const preview = await previewPlanChange({
+    const preview = await previewPricedPlanChange({
       actor: AUTHORIZED_ACTOR,
       membershipTarget: MEMBERSHIP_TARGET,
       paymentProvider: PAYMENT_PROVIDER,
@@ -322,7 +347,7 @@ describe("previewPlanChange", () => {
       ],
     });
 
-    const preview = await previewPlanChange({
+    const preview = await previewPricedPlanChange({
       actor: AUTHORIZED_ACTOR,
       membershipTarget: MEMBERSHIP_TARGET,
       paymentProvider: PAYMENT_PROVIDER,
@@ -354,7 +379,7 @@ describe("previewPlanChange", () => {
       ],
     });
 
-    const preview = await previewPlanChange({
+    const preview = await previewPricedPlanChange({
       actor: AUTHORIZED_ACTOR,
       membershipTarget: MEMBERSHIP_TARGET,
       paymentProvider: PAYMENT_PROVIDER,
@@ -391,7 +416,7 @@ describe("previewPlanChange", () => {
       ],
     });
 
-    const preview = await previewPlanChange({
+    const preview = await previewPricedPlanChange({
       actor: AUTHORIZED_ACTOR,
       membershipTarget: MEMBERSHIP_TARGET,
       paymentProvider: PAYMENT_PROVIDER,
@@ -427,7 +452,7 @@ describe("previewPlanChange", () => {
       ],
     });
 
-    const preview = await previewPlanChange({
+    const preview = await previewPricedPlanChange({
       actor: AUTHORIZED_ACTOR,
       membershipTarget: MEMBERSHIP_TARGET,
       paymentProvider: PAYMENT_PROVIDER,
@@ -614,7 +639,7 @@ describe("previewPlanChange", () => {
       ],
     });
 
-    const preview = await previewPlanChange({
+    const preview = await previewPricedPlanChange({
       actor: BILLING_MANAGER_ACTOR,
       membershipTarget: ORGANIZATION_MEMBERSHIP_TARGET,
       paymentProvider: PAYMENT_PROVIDER,
@@ -682,14 +707,10 @@ describe("previewPlanChange", () => {
       ],
     });
 
-    const preview = await previewPlanChange({
-      actor: {
-        email: "admin@example.com",
-        isAppAdmin: true,
-        isBillingManager: false,
-        userId: "admin_1",
-      },
+    const acceptance = await acceptPlanChange({
+      actor: APP_ADMIN_ACTOR,
       membershipTarget: MEMBERSHIP_TARGET,
+      paymentAdapter: createPaymentAdapter(),
       paymentProvider: PAYMENT_PROVIDER,
       paymentIntegrationId: PAYMENT_INTEGRATION_ID,
       target: {
@@ -699,7 +720,67 @@ describe("previewPlanChange", () => {
       store,
     });
 
-    expect(preview.direction).toBe("upgrade");
+    expect(acceptance.direction).toBe("upgrade");
+  });
+
+  it("previews an Admin tier override for an App admin with no Current Subscription", async () => {
+    const store = createStore({
+      currentSubscription: null,
+      plans: [catalogPlan(), PRO_MONTHLY_PLAN],
+    });
+
+    const preview = await previewPlanChange({
+      actor: APP_ADMIN_ACTOR,
+      membershipTarget: MEMBERSHIP_TARGET,
+      paymentProvider: PAYMENT_PROVIDER,
+      paymentIntegrationId: PAYMENT_INTEGRATION_ID,
+      target: { tierId: "pro", billingCadence: "monthly" },
+      store,
+    });
+
+    expect(preview).toEqual({
+      kind: "admin-tier-override-preview",
+      membershipTarget: MEMBERSHIP_TARGET,
+      targetPlan: PRO_MONTHLY_PLAN,
+      effectiveTiming: "immediately",
+      paymentDue: null,
+    });
+  });
+
+  it("previews an Admin tier override instead of proration when the App admin has a Current Subscription", async () => {
+    const store = createStore({
+      currentSubscription: currentSubscription(),
+      plans: [catalogPlan(), PRO_MONTHLY_PLAN],
+    });
+
+    const preview = await previewPlanChange({
+      actor: APP_ADMIN_ACTOR,
+      membershipTarget: MEMBERSHIP_TARGET,
+      paymentProvider: PAYMENT_PROVIDER,
+      paymentIntegrationId: PAYMENT_INTEGRATION_ID,
+      target: { tierId: "pro", billingCadence: "monthly" },
+      store,
+    });
+
+    expect(preview.kind).toBe("admin-tier-override-preview");
+    expect(preview).not.toHaveProperty("firstPayment");
+  });
+
+  it("rejects an Admin tier override preview for a target outside the Pricing catalog", async () => {
+    const store = createStore({ currentSubscription: null, plans: [catalogPlan()] });
+
+    await expect(
+      readRejectedPlanChangeError(
+        previewPlanChange({
+          actor: APP_ADMIN_ACTOR,
+          membershipTarget: MEMBERSHIP_TARGET,
+          paymentProvider: PAYMENT_PROVIDER,
+          paymentIntegrationId: PAYMENT_INTEGRATION_ID,
+          target: { tierId: "pro", billingCadence: "monthly" },
+          store,
+        }),
+      ),
+    ).resolves.toMatchObject({ code: "invalid_target" satisfies PlanChangeError["code"] });
   });
 
   it("accepts an Upgrade through a narrow Payment Adapter without moving Membership before Payment confirmation", async () => {

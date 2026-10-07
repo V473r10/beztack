@@ -98,7 +98,11 @@ export function UpgradeDialog({
     enabled: Boolean(activeSubscription),
   });
 
-  const planChangeDisplay = serverPreview ? buildPlanChangeDisplay(serverPreview) : null;
+  // An Admin tier override preview carries no amounts, so it has nothing to show here.
+  const planChangeDisplay =
+    serverPreview && serverPreview.kind !== "admin-tier-override-preview"
+      ? buildPlanChangeDisplay(serverPreview)
+      : null;
 
   // Sort tiers by displayOrder and filter to plan changes (upgrades + downgrades)
   const allTiers = [...allTiersRaw].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));

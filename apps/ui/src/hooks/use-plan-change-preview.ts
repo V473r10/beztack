@@ -18,6 +18,7 @@ type PreviewPlan = {
  * numbers as they come and never recomputes them.
  */
 export type PlanChangePreview = {
+  kind?: "plan-change-preview";
   direction: "upgrade" | "downgrade" | "cadence_change";
   currentPlan: PreviewPlan;
   targetPlan: PreviewPlan;
@@ -37,8 +38,21 @@ export type PlanChangePreview = {
   };
 };
 
+/**
+ * An App admin's Plan change preview: an Admin tier override. It takes effect
+ * immediately and charges nothing, so it carries no amounts.
+ */
+export type AdminTierOverridePlanChangePreview = {
+  kind: "admin-tier-override-preview";
+  targetPlan: PreviewPlan;
+  effectiveTiming: "immediately";
+  paymentDue: null;
+};
+
+export type AnyPlanChangePreview = PlanChangePreview | AdminTierOverridePlanChangePreview;
+
 type PlanChangePreviewResponse = {
-  planChangePreview: PlanChangePreview;
+  planChangePreview: AnyPlanChangePreview;
 };
 
 export function usePlanChangePreview(input: {
@@ -47,7 +61,7 @@ export function usePlanChangePreview(input: {
   billingPeriod: "monthly" | "yearly";
   enabled: boolean;
 }) {
-  return useQuery<PlanChangePreview>({
+  return useQuery<AnyPlanChangePreview>({
     queryKey: queryKeys.subscriptions.planChangePreview(
       input.subscriptionId,
       input.targetTierId,

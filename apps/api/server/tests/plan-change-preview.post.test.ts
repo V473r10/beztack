@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => {
     env: {
       APP_ADMIN_EMAILS: "admin@example.com",
       MERCADO_PAGO_APPLICATION_ID: "mp_app_1",
+      PAYMENT_PROVIDER: "mercadopago",
       SUBSCRIPTION_MODE: "user" as "user" | "organization",
     },
   };
@@ -145,5 +146,29 @@ describe("POST /api/subscriptions/plan-change/preview", () => {
         actor: expect.objectContaining({ isAppAdmin }),
       }),
     );
+  });
+
+  it("previews an App admin's Admin tier override without the Payment provider", async () => {
+    mocks.requireAuth.mockResolvedValue({
+      user: { id: "admin_1", email: "admin@example.com", role: "sudo" },
+      session: {},
+    });
+    mocks.ensurePaymentProvider.mockRejectedValue(new Error("provider down"));
+    mocks.readBody.mockResolvedValue({ targetTierId: "pro", targetBillingCadence: "monthly" });
+    const overridePreview = { kind: "admin-tier-override-preview" };
+    mocks.previewPlanChange.mockResolvedValue(overridePreview);
+    const handler = (await import("../routes/api/subscriptions/plan-change/preview.post"))
+      .default as (event: unknown) => Promise<unknown>;
+
+    const response = await handler({});
+
+    expect(mocks.ensurePaymentProvider).not.toHaveBeenCalled();
+    expect(mocks.previewPlanChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: expect.objectContaining({ isAppAdmin: true }),
+        paymentProvider: "mercadopago",
+      }),
+    );
+    expect(response).toEqual({ provider: "mercadopago", planChangePreview: overridePreview });
   });
 });

@@ -131,8 +131,10 @@ function mapPlanBillingCadence(input: {
 
 function createPlanChangeStore(options: {
   auth: AuthenticatedUser;
-  provider: PaymentProviderAdapter;
+  /** Null for an App admin, whose Admin tier override preview reads no Subscription. */
+  provider: PaymentProviderAdapter | null;
 }): PlanChangeStore {
+  const { provider } = options;
   return {
     cancelPendingPlanChange() {
       return Promise.resolve(null);
@@ -144,14 +146,17 @@ function createPlanChangeStore(options: {
       return Promise.resolve(null);
     },
     async findCurrentSubscription(input) {
-      let subscriptions = await options.provider.listSubscriptions({
+      if (!provider) {
+        return null;
+      }
+      let subscriptions = await provider.listSubscriptions({
         customerEmail: options.auth.user.email,
         customerId: options.auth.user.id,
         limit: 100,
       });
 
       if (subscriptions.length === 0) {
-        subscriptions = await discoverSubscriptionsFromDb(options.auth.user.id, options.provider);
+        subscriptions = await discoverSubscriptionsFromDb(options.auth.user.id, provider);
       }
 
       const currentSubscription = subscriptions
@@ -166,7 +171,7 @@ function createPlanChangeStore(options: {
 
       return {
         id: currentSubscription.id,
-        paymentProvider: options.provider.provider,
+        paymentProvider: provider.provider,
         paymentIntegrationId: readString(currentSubscription.metadata, "providerIntegrationId"),
         providerPlanId: currentSubscription.productId,
         canonicalTierId:
@@ -279,22 +284,26 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const provider = await ensurePaymentProvider();
     const membershipTarget = resolveMembershipTarget(auth, body);
     if (membershipTarget.type === "organization") {
       await requireOrganizationBillingManagerAccess(auth, membershipTarget.id);
     }
+    const isAppAdmin = organizationAccess.isAppAdmin(auth.user);
+    // An App admin's preview is an Admin tier override, priced from the
+    // Pricing catalog alone, so a Payment provider outage does not block it.
+    const provider = isAppAdmin ? null : await ensurePaymentProvider();
+    const paymentProvider = provider?.provider ?? env.PAYMENT_PROVIDER;
     const preview = await previewPlanChange({
       actor: {
         email: auth.user.email,
-        isAppAdmin: organizationAccess.isAppAdmin(auth.user),
+        isAppAdmin,
         // The gate above refused everyone else for an organization target.
         isBillingManager: membershipTarget.type === "organization",
         userId: auth.user.id,
       },
       membershipTarget,
-      paymentProvider: provider.provider,
-      paymentIntegrationId: resolvePaymentIntegrationId(provider.provider),
+      paymentProvider,
+      paymentIntegrationId: resolvePaymentIntegrationId(paymentProvider),
       target: {
         planId: body.targetPricingCatalogPlanId,
         tierId: body.targetTierId,
@@ -304,7 +313,7 @@ export default defineEventHandler(async (event) => {
     });
 
     return {
-      provider: provider.provider,
+      provider: paymentProvider,
       planChangePreview: preview,
     };
   } catch (error) {
