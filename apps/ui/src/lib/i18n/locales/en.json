@@ -181,6 +181,14 @@
       "cancel": "Keep current plan",
       "canceled": "Plan change canceled. Your current plan stays.",
       "cancelFailed": "Could not cancel the plan change. Please try again."
+    },
+    "checkoutConfirm": {
+      "title": "Confirm your plan",
+      "description": "You picked this plan before creating your account. Continue to checkout to subscribe.",
+      "continue": "Continue to checkout",
+      "choosePlan": "Choose another plan",
+      "unavailableTitle": "This plan is not available",
+      "unavailableDescription": "The plan you picked is no longer offered or is not on sale yet. Pick another one on the pricing page."
     }
   },
   "common": {
