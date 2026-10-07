@@ -14,6 +14,7 @@ import {
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { PlanChangeDialog } from "@/components/payments/plan-change-dialog";
 import { PricingCard } from "@/components/payments/pricing-card";
 import {
@@ -37,6 +38,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { useMembership } from "@/contexts/membership-context";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { authClient } from "@/lib/auth-client";
+import { getSignUpPathForCheckout } from "@/lib/checkout-resume";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
 import { queryKeys } from "@/lib/query-keys";
@@ -263,6 +266,8 @@ export default function Pricing() {
     isLoading,
   } = useMembership();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
 
   const hasActiveSubscription = Boolean(activeSubscription);
 
@@ -293,6 +298,17 @@ export default function Pricing() {
   }, [allTiers, t]);
 
   const handleTierSelect = async (productId: string) => {
+    // A visitor without an account signs up first, then resumes this checkout.
+    if (!session) {
+      const tier = allTiers.find(
+        (candidate) => candidate.monthly?.id === productId || candidate.yearly?.id === productId,
+      );
+      if (tier) {
+        navigate(getSignUpPathForCheckout({ tierId: tier.id, billingPeriod }));
+        return;
+      }
+    }
+
     try {
       await upgradeToTier(productId, billingPeriod);
     } catch {

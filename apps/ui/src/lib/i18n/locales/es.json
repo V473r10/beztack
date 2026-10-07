@@ -181,6 +181,14 @@
       "cancel": "Mantener el plan actual",
       "canceled": "Cancelaste el cambio de plan. Sigue tu plan actual.",
       "cancelFailed": "No se pudo cancelar el cambio de plan. Inténtalo de nuevo."
+    },
+    "checkoutConfirm": {
+      "title": "Confirma tu plan",
+      "description": "Elegiste este plan antes de crear tu cuenta. Continúa al pago para suscribirte.",
+      "continue": "Continuar al pago",
+      "choosePlan": "Elegir otro plan",
+      "unavailableTitle": "Este plan no está disponible",
+      "unavailableDescription": "El plan que elegiste ya no se ofrece o todavía no está a la venta. Elige otro en la página de precios."
     }
   },
   "common": {

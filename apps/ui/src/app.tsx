@@ -12,6 +12,7 @@ import SignIn from "./app/auth/sign-in/sign-in.tsx";
 import TwoFactor from "./app/auth/sign-in/two-factor/two-factor.tsx";
 import SignUp from "./app/auth/sign-up/sign-up.tsx";
 import Billing from "./app/billing/billing.tsx";
+import CheckoutConfirm from "./app/billing/checkout-confirm.tsx";
 import CheckoutSuccess from "./app/billing/checkout-success.tsx";
 import Pricing from "./app/billing/pricing.tsx";
 import SubscriptionWelcome from "./app/billing/subscription-welcome.tsx";
@@ -103,6 +104,7 @@ function App() {
                       >
                         <Route element={<Home />} index />
                         <Route element={<Settings />} path="settings" />
+                        <Route element={<CheckoutConfirm />} path="checkout-confirm" />
                         <Route
                           element={
                             <OrgAdminRoute>
