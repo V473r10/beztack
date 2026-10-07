@@ -164,6 +164,16 @@
       "reactivate": "Reactivar Suscripción",
       "viewPlans": "Ver Planes",
       "contactSupport": "Contactar Soporte"
+    },
+    "pendingPlanChange": {
+      "title": "Cambio de plan programado",
+      "downgradeOn": "Tu plan pasa a {{tier}} ({{cadence}}, {{price}}) el {{date}}.",
+      "downgradeAtRenewal": "Tu plan pasa a {{tier}} ({{cadence}}, {{price}}) en la próxima renovación.",
+      "cadence_changeOn": "Tu facturación pasa a {{tier}} {{cadence}} ({{price}}) el {{date}}.",
+      "cadence_changeAtRenewal": "Tu facturación pasa a {{tier}} {{cadence}} ({{price}}) en la próxima renovación.",
+      "cancel": "Mantener el plan actual",
+      "canceled": "Cancelaste el cambio de plan. Sigue tu plan actual.",
+      "cancelFailed": "No se pudo cancelar el cambio de plan. Inténtalo de nuevo."
     }
   },
   "common": {

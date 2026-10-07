@@ -71,6 +71,10 @@ export const subscriptionKeys = {
       targetTierId,
       billingPeriod,
     ] as const,
+  /** The Membership target's Pending Plan change; `organizationId` is absent
+   * in user subscription mode. */
+  pendingPlanChange: (organizationId?: string) =>
+    [...SUBSCRIPTIONS_ROOT, "pending-plan-change", organizationId] as const,
   /** Own root (`subscription-details`), keyed by the provider preapproval id,
    * which a caller may still hold as `null` before one is resolved. */
   details: (preapprovalId?: string | null) => ["subscription-details", preapprovalId] as const,

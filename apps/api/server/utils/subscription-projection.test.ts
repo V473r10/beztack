@@ -40,10 +40,15 @@ function pendingPlanChange(
 ): PendingPlanChangeRecord {
   return {
     id: "pending_sub_1",
+    acceptedByUserId: "user_1",
+    activationAttempts: 0,
+    canceledByUserId: null,
     direction: "downgrade",
     effectiveAt: PLAN_CHANGE_EFFECTIVE_AT,
     membershipTarget: { type: "user", id: "user_1" },
     providerConfirmedPlanChangeId: "provider_pending_change_1",
+    reason: null,
+    status: "pending",
     subscriptionId: "sub_1",
     targetPlanSnapshot: catalogPlan(),
     ...overrides,
@@ -92,15 +97,40 @@ function createStore(options?: {
     webhookLogs,
     pendingPlanChanges,
     planChangeMembershipMoves,
-    cancelPendingPlanChange(subscriptionId) {
+    cancelPendingPlanChange(subscriptionId, cancellation) {
       const canceledPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
       pendingPlanChanges.delete(subscriptionId);
-      return Promise.resolve(canceledPendingPlanChange);
+      return Promise.resolve(
+        canceledPendingPlanChange && {
+          ...canceledPendingPlanChange,
+          canceledByUserId: cancellation.canceledByUserId,
+          reason: cancellation.reason,
+          status: "canceled" as const,
+        },
+      );
     },
-    clearPendingPlanChange(subscriptionId) {
-      const clearedPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
+    markPendingPlanChangeActivated(subscriptionId) {
+      const activatedPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
       pendingPlanChanges.delete(subscriptionId);
-      return Promise.resolve(clearedPendingPlanChange);
+      return Promise.resolve(
+        activatedPendingPlanChange && {
+          ...activatedPendingPlanChange,
+          status: "activated" as const,
+        },
+      );
+    },
+    recordPendingPlanChangeActivationFailure(subscriptionId, failure) {
+      const row = pendingPlanChanges.get(subscriptionId);
+      if (!row) {
+        return Promise.resolve(null);
+      }
+      row.activationAttempts += 1;
+      row.reason = failure.error;
+      if (row.activationAttempts >= failure.maxAttempts) {
+        row.status = "failed";
+        pendingPlanChanges.delete(subscriptionId);
+      }
+      return Promise.resolve(row);
     },
     findPendingPlanChange(subscriptionId) {
       return Promise.resolve(pendingPlanChanges.get(subscriptionId) ?? null);
@@ -198,9 +228,13 @@ function createStore(options?: {
         throw new Error("database unavailable");
       }
 
-      const savedPendingPlanChange = {
-        id: `pending_${input.subscriptionId}`,
+      const savedPendingPlanChange: PendingPlanChangeRecord = {
         ...input,
+        activationAttempts: 0,
+        canceledByUserId: null,
+        id: `pending_${input.subscriptionId}`,
+        reason: null,
+        status: "pending",
       };
       pendingPlanChanges.set(input.subscriptionId, savedPendingPlanChange);
       return Promise.resolve(savedPendingPlanChange);
@@ -725,6 +759,53 @@ describe("projectSubscriptionProviderEvent", () => {
         targetPlan: acceptedTargetSnapshot,
       },
     ]);
+    expect(store.pendingPlanChanges).toEqual(new Map());
+  });
+
+  it("answers a failed activation with a failed outcome so the provider retries", async () => {
+    const store = createStore({
+      users: ["user_1"],
+      pendingPlanChanges: [pendingPlanChange()],
+    });
+    store.moveMembershipToPlan = () => Promise.reject(new Error("membership cache unavailable"));
+    const provider = createProvider({
+      subscriptions: {
+        sub_1: {
+          id: "sub_1",
+          rawStatus: "authorized",
+          productId: "provider_pro_month",
+          customerEmail: "user@example.com",
+          currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+          metadata: { userId: "user_1", tier: "pro" },
+        },
+      },
+    });
+    const dependencies = {
+      store,
+      provider,
+      subscriptionMode: "user" as const,
+      planChangeStore: store,
+      now: () => PLAN_CHANGE_EFFECTIVE_AT,
+    };
+
+    const first = await projectSubscriptionProviderEvent(subscriptionEnvelope(), dependencies);
+
+    expect(first.status).toBe("failed");
+    expect(store.pendingPlanChanges.get("sub_1")).toMatchObject({
+      activationAttempts: 1,
+      status: "pending",
+    });
+
+    // The same delivery is retried until the attempts run out.
+    let last = first;
+    for (let attempt = 2; attempt <= 5; attempt += 1) {
+      last = await projectSubscriptionProviderEvent(subscriptionEnvelope(), dependencies);
+    }
+
+    expect(last.status).toBe("processed");
+    expect(last.warnings).toContain(
+      "Pending Plan change pending_sub_1 failed to activate after 5 attempts: membership cache unavailable",
+    );
     expect(store.pendingPlanChanges).toEqual(new Map());
   });
 
