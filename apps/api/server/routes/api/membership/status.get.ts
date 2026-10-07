@@ -1,5 +1,6 @@
 import { createError, defineEventHandler, getQuery } from "h3";
 import { env } from "@/env";
+import { ensurePaymentProvider } from "@/lib/payments";
 import { organizationAccess } from "@/server/domain/organization-access";
 import { getUserMembershipStatus, requireAuth } from "@/server/utils/membership";
 import { toOrganizationAccessActor } from "@/server/utils/organization-access";
@@ -42,6 +43,10 @@ export default defineEventHandler(async (event) => {
         ? await organizationAccess.canManageBilling(actor, organizationId)
         : true;
 
+    // What the configured Payment provider supports, so the UI offers only
+    // what will be accepted, without naming the provider.
+    const provider = await ensurePaymentProvider();
+
     return {
       success: true,
       data: {
@@ -49,6 +54,7 @@ export default defineEventHandler(async (event) => {
         ...membershipStatus,
         organizationRole: membership?.role ?? null,
         canManageBilling,
+        paymentCapabilities: provider.capabilities,
       },
     };
   } catch (_error) {

@@ -140,6 +140,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
 
   return {
     provider: "polar",
+    capabilities: { cadenceChange: true },
 
     async listProducts(): Promise<Product[]> {
       const response = await client.products.list({

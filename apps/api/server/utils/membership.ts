@@ -19,8 +19,12 @@ export type Benefit = {
 
 export type MembershipTier = "free" | "basic" | "pro" | "ultimate" | "enterprise";
 
+export type MembershipBillingCadence = "monthly" | "yearly";
+
 export type MembershipInfo = {
   tier: MembershipTier;
+  /** Null for the free tier, or when the provider reports another cadence. */
+  billingCadence: MembershipBillingCadence | null;
   hasActiveSubscription: boolean;
   subscriptionId?: string;
   benefits: Benefit[];
@@ -254,9 +258,37 @@ export async function requireAuth(event: H3Event<EventHandlerRequest>): Promise<
   };
 }
 
+const SINGLE_INTERVAL_COUNT = 1;
+const MONTHS_PER_YEAR = 12;
+
+function toBillingCadence(value: unknown): MembershipBillingCadence | null {
+  return value === "monthly" || value === "yearly" ? value : null;
+}
+
+/** A provider Subscription's Billing cadence, from its billing metadata. */
+function readSubscriptionBillingCadence(
+  subscription: Subscription,
+): MembershipBillingCadence | null {
+  const interval = subscription.metadata?.billingInterval;
+  const frequency = subscription.metadata?.billingFrequency;
+  const intervalCount = typeof frequency === "number" ? frequency : SINGLE_INTERVAL_COUNT;
+
+  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
+    return "monthly";
+  }
+  if (
+    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
+    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
+  ) {
+    return "yearly";
+  }
+  return null;
+}
+
 function membershipInfoFromAdminTierOverride(override: AdminTierOverrideRecord): MembershipInfo {
   return {
     tier: override.tier,
+    billingCadence: toBillingCadence(override.billingCadence),
     hasActiveSubscription: false,
     benefits: [],
     organizationId: override.targetType === "organization" ? override.targetId : undefined,
@@ -283,6 +315,7 @@ async function getCachedOrganizationMembershipInfo(
       subscriptionStatus: orgTable.subscriptionStatus,
       subscriptionId: orgTable.subscriptionId,
       subscriptionValidUntil: orgTable.subscriptionValidUntil,
+      subscriptionBillingCadence: orgTable.subscriptionBillingCadence,
     })
     .from(orgTable)
     .where(eq(orgTable.id, organizationId))
@@ -305,6 +338,7 @@ async function getCachedOrganizationMembershipInfo(
   const isActive = isSubscriptionStatusActive(org.subscriptionStatus, org.subscriptionValidUntil);
   return {
     tier: mapTier(org.subscriptionTier),
+    billingCadence: toBillingCadence(org.subscriptionBillingCadence),
     hasActiveSubscription: isActive,
     subscriptionId: org.subscriptionId ?? undefined,
     benefits: [],
@@ -321,6 +355,7 @@ async function getCachedUserMembershipInfo(userId: string): Promise<MembershipIn
       subscriptionStatus: userTable.subscriptionStatus,
       subscriptionId: userTable.subscriptionId,
       subscriptionValidUntil: userTable.subscriptionValidUntil,
+      subscriptionBillingCadence: userTable.subscriptionBillingCadence,
       email: userTable.email,
     })
     .from(userTable)
@@ -347,6 +382,7 @@ async function getCachedUserMembershipInfo(userId: string): Promise<MembershipIn
   );
   return {
     tier: mapTier(dbUser.subscriptionTier),
+    billingCadence: toBillingCadence(dbUser.subscriptionBillingCadence),
     hasActiveSubscription: isActive,
     subscriptionId: dbUser.subscriptionId ?? undefined,
     benefits: [],
@@ -404,6 +440,7 @@ async function getMembershipInfoFromProvider(
   if (!dbUser?.email) {
     return {
       tier: "free",
+      billingCadence: null,
       hasActiveSubscription: false,
       benefits: [],
     };
@@ -431,6 +468,7 @@ async function getMembershipInfoFromProvider(
     if (activeSubscriptions.length === 0) {
       return {
         tier: "free",
+        billingCadence: null,
         hasActiveSubscription: false,
         benefits: [],
         organizationId,
@@ -445,6 +483,7 @@ async function getMembershipInfoFromProvider(
 
     return {
       tier: getTierFromSubscription(selectedSubscription),
+      billingCadence: readSubscriptionBillingCadence(selectedSubscription),
       hasActiveSubscription: true,
       subscriptionId: selectedSubscription.id,
       benefits: getBenefits(selectedSubscription),
@@ -454,6 +493,7 @@ async function getMembershipInfoFromProvider(
   } catch {
     return {
       tier: "free",
+      billingCadence: null,
       hasActiveSubscription: false,
       benefits: [],
       organizationId,
@@ -545,6 +585,7 @@ export async function getUserMembershipStatus(
 
   return {
     tier: membership.tier,
+    billingCadence: membership.billingCadence,
     hasActiveSubscription: membership.hasActiveSubscription,
     benefits: membership.benefits,
     expiresAt: membership.expiresAt?.toISOString(),

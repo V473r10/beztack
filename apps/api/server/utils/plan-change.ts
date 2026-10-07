@@ -200,6 +200,10 @@ export type PlanChangePaymentStatus = "pending" | "confirmed";
 export type PlanChangePaymentAdapter = {
   paymentProvider: string;
   paymentIntegrationId?: string;
+  /** The Payment provider's capabilities; see `PaymentProviderCapabilities`. */
+  capabilities: {
+    cadenceChange: boolean;
+  };
   confirmUpgrade(input: {
     actor: PlanChangeActor;
     currentPlan: PlanChangeCatalogPlan;
@@ -311,7 +315,7 @@ export type PlanChangeErrorCode =
   | "missing_current_subscription"
   | "not_a_plan_change"
   | "payment_integration_mismatch"
-  | "unsupported_plan_change_acceptance"
+  | "unsupported_cadence_change"
   | "unauthorized_plan_change";
 
 export class PlanChangeError extends Error {
@@ -718,13 +722,15 @@ export async function acceptPlanChange(
     };
   }
 
-  if (preview.direction !== "downgrade") {
+  if (preview.direction === "cadence_change" && !input.paymentAdapter.capabilities.cadenceChange) {
     fail(
-      "unsupported_plan_change_acceptance",
-      "Only Upgrade and Downgrade acceptance are supported in this Plan change slice",
+      "unsupported_cadence_change",
+      "The Payment provider cannot change the Billing cadence of an existing Subscription",
+      HTTP_CONFLICT,
     );
   }
 
+  // A Downgrade or Cadence change waits for the renewal, as a Pending Plan change.
   const confirmation = await input.paymentAdapter.confirmPendingPlanChange({
     actor: input.actor,
     currentPlan: preview.currentPlan,

@@ -300,6 +300,8 @@ describe("projectSubscriptionProviderEvent", () => {
           metadata: {
             userId: "user_1",
             tier: "pro",
+            billingInterval: "month",
+            billingFrequency: 12,
           },
         },
       },
@@ -322,6 +324,7 @@ describe("projectSubscriptionProviderEvent", () => {
     });
     expect(store.userMemberships.get("user_1")).toMatchObject({
       subscriptionId: "sub_1",
+      subscriptionBillingCadence: "yearly",
       subscriptionStatus: "active",
       subscriptionTier: "pro",
       subscriptionValidUntil: new Date("2026-06-01T00:00:00.000Z"),

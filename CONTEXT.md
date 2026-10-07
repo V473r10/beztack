@@ -171,7 +171,7 @@ How often a Subscription renews or charges, such as weekly, bi-weekly, monthly, 
 _Avoid_: billing period, recurring interval
 
 **Cadence change**:
-A Plan change where the Subscription tier stays the same and only the Billing cadence changes. A Cadence change is not an upgrade or downgrade, even if the charge amount changes, and the new Billing cadence starts at the next renewal.
+A Plan change where the Subscription tier stays the same and only the Billing cadence changes. A Cadence change is not an upgrade or downgrade, even if the charge amount changes, and the new Billing cadence starts at the next renewal. It is only possible when the Payment provider can change the Billing cadence of an existing Subscription.
 _Avoid_: period change, same-plan upgrade, same-plan downgrade
 
 **Pricing catalog**:

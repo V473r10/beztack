@@ -230,6 +230,7 @@ function createPlanChangeStore(options: {
     async moveMembershipToPlan(input) {
       const updates = {
         subscriptionTier: input.targetPlan.canonicalTierId,
+        subscriptionBillingCadence: input.targetPlan.billingCadence,
         subscriptionStatus: "active",
         subscriptionId: input.subscriptionId,
       };
@@ -258,6 +259,7 @@ function createPaymentAdapter(
   return {
     paymentProvider: provider.provider,
     paymentIntegrationId,
+    capabilities: provider.capabilities,
     async confirmUpgrade(input) {
       const subscription = await provider.createSubscription({
         customerEmail: input.actor.email,

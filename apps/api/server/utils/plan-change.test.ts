@@ -165,6 +165,7 @@ function createPaymentAdapter(
   firstPaymentStatus: "pending" | "confirmed" = "pending",
   operationLog?: string[],
   pendingPlanChangeId = "provider_pending_change_1",
+  capabilities: PlanChangePaymentAdapter["capabilities"] = { cadenceChange: false },
 ): PlanChangePaymentAdapter & {
   pendingConfirmations: Parameters<PlanChangePaymentAdapter["confirmPendingPlanChange"]>[0][];
   upgradeConfirmations: Parameters<PlanChangePaymentAdapter["confirmUpgrade"]>[0][];
@@ -175,6 +176,7 @@ function createPaymentAdapter(
   const upgradeConfirmations: Parameters<PlanChangePaymentAdapter["confirmUpgrade"]>[0][] = [];
 
   return {
+    capabilities,
     paymentIntegrationId: PAYMENT_INTEGRATION_ID,
     paymentProvider: PAYMENT_PROVIDER,
     pendingConfirmations,
@@ -926,7 +928,7 @@ describe("previewPlanChange", () => {
     ]);
   });
 
-  it("fails Cadence change acceptance clearly without provider or Pending Plan change state", async () => {
+  it("rejects Cadence change acceptance when the provider cannot change cadence", async () => {
     const store = createStore({
       currentSubscription: currentSubscription(),
       plans: [
@@ -939,7 +941,9 @@ describe("previewPlanChange", () => {
         }),
       ],
     });
-    const paymentAdapter = createPaymentAdapter();
+    const paymentAdapter = createPaymentAdapter("pending", undefined, undefined, {
+      cadenceChange: false,
+    });
 
     await expect(
       readRejectedPlanChangeError(
@@ -957,12 +961,53 @@ describe("previewPlanChange", () => {
         }),
       ),
     ).resolves.toMatchObject({
-      code: "unsupported_plan_change_acceptance" satisfies PlanChangeError["code"],
+      code: "unsupported_cadence_change" satisfies PlanChangeError["code"],
       name: "PlanChangeError",
+      statusCode: 409,
     });
     expect(paymentAdapter.pendingConfirmations).toEqual([]);
     expect(paymentAdapter.upgradeConfirmations).toEqual([]);
     expect(store.pendingPlanChanges).toEqual(new Map());
+  });
+
+  it("accepts a Cadence change for the next renewal when the provider can change cadence", async () => {
+    const yearlyPlan = catalogPlan({
+      id: "polar_basic_year",
+      providerPlanId: "provider_basic_year",
+      billingCadence: "yearly",
+      price: { amount: 29_000, currency: "UYU" },
+    });
+    const store = createStore({
+      currentSubscription: currentSubscription(),
+      plans: [catalogPlan(), yearlyPlan],
+    });
+    const paymentAdapter = createPaymentAdapter("pending", undefined, undefined, {
+      cadenceChange: true,
+    });
+
+    const acceptance = await acceptPlanChange({
+      actor: AUTHORIZED_ACTOR,
+      membershipTarget: MEMBERSHIP_TARGET,
+      paymentAdapter,
+      paymentProvider: PAYMENT_PROVIDER,
+      paymentIntegrationId: PAYMENT_INTEGRATION_ID,
+      target: { tierId: "basic", billingCadence: "yearly" },
+      store,
+    });
+
+    expect(acceptance).toMatchObject({
+      direction: "cadence_change",
+      membershipMoved: false,
+      reconciliationStatus: "settled",
+    });
+    expect(paymentAdapter.upgradeConfirmations).toEqual([]);
+    expect(paymentAdapter.pendingConfirmations).toHaveLength(1);
+    expect(store.pendingPlanChanges.get("sub_current")).toMatchObject({
+      direction: "cadence_change",
+      effectiveAt: PERIOD_END,
+      status: "pending",
+      targetPlanSnapshot: yearlyPlan,
+    });
   });
 
   it("cancels an existing Pending Plan change for an authorized actor", async () => {

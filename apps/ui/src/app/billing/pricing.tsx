@@ -319,9 +319,9 @@ export default function Pricing() {
 
   const getChangeTypeForTier = useCallback(
     (tierId: string): PlanChangeType => {
-      return getPlanChangeType(tierId);
+      return getPlanChangeType(tierId, billingPeriod);
     },
-    [getPlanChangeType],
+    [getPlanChangeType, billingPeriod],
   );
 
   const faqItems = [

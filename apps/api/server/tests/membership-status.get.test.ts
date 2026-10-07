@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   requireAuth: vi.fn(),
   env: { SUBSCRIPTION_MODE: "organization" as "user" | "organization" },
   access: { current: undefined as unknown },
+  capabilities: { cadenceChange: false },
 }));
 
 vi.mock("h3", () => ({
@@ -18,10 +19,14 @@ vi.mock("h3", () => ({
   getQuery: mocks.getQuery,
 }));
 vi.mock("@/env", () => ({ env: mocks.env }));
+vi.mock("@/lib/payments", () => ({
+  ensurePaymentProvider: async () => ({ capabilities: mocks.capabilities }),
+}));
 vi.mock("@/server/utils/membership", () => ({
   requireAuth: mocks.requireAuth,
   getUserMembershipStatus: vi.fn(async (_userId: string, organizationId?: string) => ({
-    tier: "free",
+    tier: "basic",
+    billingCadence: "monthly",
     organizationId,
   })),
 }));
@@ -59,6 +64,7 @@ describe("GET /api/membership/status access fields", () => {
     vi.clearAllMocks();
     mocks.env.SUBSCRIPTION_MODE = "organization";
     mocks.getQuery.mockReturnValue({});
+    mocks.capabilities = { cadenceChange: false };
     mocks.access.current = createOrganizationAccessTestModule({
       appAdminEmails: "user_operator@example.com",
       memberships: [
@@ -100,5 +106,17 @@ describe("GET /api/membership/status access fields", () => {
     signIn("user_member");
 
     await expect(handler({})).resolves.toMatchObject({ data: { canManageBilling: true } });
+  });
+
+  it("reports the Billing cadence and what the Payment provider can do", async () => {
+    signIn("user_owner");
+    await expect(handler({})).resolves.toMatchObject({
+      data: { billingCadence: "monthly", paymentCapabilities: { cadenceChange: false } },
+    });
+
+    mocks.capabilities = { cadenceChange: true };
+    await expect(handler({})).resolves.toMatchObject({
+      data: { paymentCapabilities: { cadenceChange: true } },
+    });
   });
 });

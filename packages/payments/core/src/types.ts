@@ -223,11 +223,25 @@ export type MembershipUpdate = {
 };
 
 /**
+ * What a provider can do beyond the required operations. Callers branch on
+ * these flags, never on the provider's name.
+ */
+export type PaymentProviderCapabilities = {
+  /**
+   * Whether an existing Subscription can move to another Billing cadence
+   * (e.g. monthly to yearly). Mercado Pago cannot change a preapproval's
+   * frequency; Polar can.
+   */
+  readonly cadenceChange: boolean;
+};
+
+/**
  * Payment Provider Interface
  * All payment providers must implement this interface
  */
 export type PaymentProviderAdapter = {
   readonly provider: PaymentProviderName;
+  readonly capabilities: PaymentProviderCapabilities;
 
   // Products/Plans
   listProducts(): Promise<Product[]>;

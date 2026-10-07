@@ -400,6 +400,8 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
 
   return {
     provider: "mercadopago",
+    // A preapproval's frequency cannot be changed (verified in the sandbox, #48).
+    capabilities: { cadenceChange: false },
 
     async listProducts(status = "active"): Promise<Product[]> {
       const plans = await scanApplicationPages({
