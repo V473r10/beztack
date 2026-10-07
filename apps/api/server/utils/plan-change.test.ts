@@ -269,6 +269,108 @@ describe("previewPlanChange", () => {
     });
   });
 
+  it("credits an Upgrade from the amount actually charged for the current period", async () => {
+    // Catalog says Basic costs 2900, but this period was charged 1500 (e.g. a
+    // prorated first Payment or a later price edit). Half the period is left.
+    const store = createStore({
+      currentSubscription: currentSubscription({ currentPeriodChargedAmount: 1500 }),
+      plans: [
+        catalogPlan(),
+        catalogPlan({
+          id: "mercadopago_pro_month",
+          providerPlanId: "provider_pro_month",
+          canonicalTierId: "pro",
+          tierRank: 2,
+          price: { amount: 6000, currency: "UYU" },
+        }),
+      ],
+    });
+
+    const preview = await previewPlanChange({
+      actor: AUTHORIZED_ACTOR,
+      membershipTarget: MEMBERSHIP_TARGET,
+      paymentProvider: PAYMENT_PROVIDER,
+      paymentIntegrationId: PAYMENT_INTEGRATION_ID,
+      target: { tierId: "pro", billingCadence: "monthly" },
+      store,
+      now: () => new Date("2026-06-16T00:00:00.000Z"),
+    });
+
+    expect(preview.firstPayment).toEqual({
+      amount: 5250,
+      credit: 750,
+      currency: "UYU",
+      fullAmount: 6000,
+    });
+    expect(preview.currentPeriod).toEqual({ daysRemaining: 15, totalDays: 30 });
+  });
+
+  it("falls back to the catalog price when the charged amount is unknown", async () => {
+    const store = createStore({
+      currentSubscription: currentSubscription({ currentPeriodChargedAmount: null }),
+      plans: [
+        catalogPlan(),
+        catalogPlan({
+          id: "mercadopago_pro_month",
+          providerPlanId: "provider_pro_month",
+          canonicalTierId: "pro",
+          tierRank: 2,
+          price: { amount: 6000, currency: "UYU" },
+        }),
+      ],
+    });
+
+    const preview = await previewPlanChange({
+      actor: AUTHORIZED_ACTOR,
+      membershipTarget: MEMBERSHIP_TARGET,
+      paymentProvider: PAYMENT_PROVIDER,
+      paymentIntegrationId: PAYMENT_INTEGRATION_ID,
+      target: { tierId: "pro", billingCadence: "monthly" },
+      store,
+      now: () => new Date("2026-06-16T00:00:00.000Z"),
+    });
+
+    expect(preview.firstPayment).toMatchObject({ amount: 4550, credit: 1450 });
+  });
+
+  it("gives no credit outside an Upgrade", async () => {
+    const store = createStore({
+      currentSubscription: currentSubscription({
+        currentPeriodChargedAmount: 6000,
+        planId: "mercadopago_pro_month",
+        providerPlanId: "provider_pro_month",
+      }),
+      plans: [
+        catalogPlan(),
+        catalogPlan({
+          id: "mercadopago_pro_month",
+          providerPlanId: "provider_pro_month",
+          canonicalTierId: "pro",
+          tierRank: 2,
+          price: { amount: 6000, currency: "UYU" },
+        }),
+      ],
+    });
+
+    const preview = await previewPlanChange({
+      actor: AUTHORIZED_ACTOR,
+      membershipTarget: MEMBERSHIP_TARGET,
+      paymentProvider: PAYMENT_PROVIDER,
+      paymentIntegrationId: PAYMENT_INTEGRATION_ID,
+      target: { tierId: "basic", billingCadence: "monthly" },
+      store,
+      now: () => new Date("2026-06-16T00:00:00.000Z"),
+    });
+
+    expect(preview.firstPayment).toEqual({
+      amount: 2900,
+      credit: 0,
+      currency: "UYU",
+      fullAmount: 2900,
+    });
+    expect(preview.currentPeriod).toEqual({ daysRemaining: 15, totalDays: 30 });
+  });
+
   it("classifies a Downgrade from Pricing catalog tier rank instead of provider price", async () => {
     const store = createStore({
       currentSubscription: currentSubscription({
