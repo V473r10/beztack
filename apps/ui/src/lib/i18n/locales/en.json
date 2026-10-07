@@ -122,7 +122,8 @@
       "features": "Features"
     },
     "unlimited": "Unlimited",
-    "switchBilling": "Switch billing"
+    "switchBilling": "Switch billing",
+    "soon": "Coming soon"
   },
   "billing": {
     "monthly": "Monthly",

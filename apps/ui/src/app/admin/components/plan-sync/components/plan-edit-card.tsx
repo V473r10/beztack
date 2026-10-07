@@ -72,6 +72,7 @@ export function PlanEditCard({
         .filter(Boolean),
       displayOrder: editState.displayOrder,
       highlighted: editState.highlighted,
+      soon: editState.soon,
       visible: editState.visible,
     };
 
@@ -283,6 +284,18 @@ export function PlanEditCard({
                   </span>
                 </div>
               </div>
+              <div className="flex flex-col justify-center space-y-3">
+                <Label>Availability</Label>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editState.soon}
+                    onCheckedChange={(v) => setEditState((s) => ({ ...s, soon: v }))}
+                  />
+                  <span className="text-muted-foreground text-sm">
+                    {editState.soon ? "Coming soon" : "For sale"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -322,6 +335,11 @@ export function PlanEditCard({
                     variant="secondary"
                   >
                     Featured
+                  </Badge>
+                )}
+                {plan.soon && (
+                  <Badge className="px-2 py-0.5 text-[10px]" variant="secondary">
+                    Coming soon
                   </Badge>
                 )}
               </div>

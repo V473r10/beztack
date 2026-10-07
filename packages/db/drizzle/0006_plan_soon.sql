@@ -1,0 +1,1 @@
+ALTER TABLE "plan" ADD COLUMN "soon" boolean DEFAULT false NOT NULL;

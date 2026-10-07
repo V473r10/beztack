@@ -35,5 +35,6 @@ export const INITIAL_CREATE_STATE: CreatePlanState = {
   permissions: "",
   displayOrder: "",
   highlighted: false,
+  soon: false,
   visible: true,
 };

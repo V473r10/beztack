@@ -33,6 +33,7 @@ export type DbPlan = {
   intervalCount: number | null;
   displayOrder: number | null;
   highlighted: boolean | null;
+  soon: boolean;
   visible: boolean | null;
   status: string | null;
   createdAt: string;
@@ -55,6 +56,7 @@ export type EditState = {
   permissions: string;
   displayOrder: number | null;
   highlighted: boolean;
+  soon: boolean;
   visible: boolean;
 };
 
@@ -71,5 +73,6 @@ export type CreatePlanState = {
   permissions: string;
   displayOrder: string;
   highlighted: boolean;
+  soon: boolean;
   visible: boolean;
 };

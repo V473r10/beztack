@@ -122,7 +122,8 @@
       "features": "Características"
     },
     "unlimited": "Ilimitado",
-    "switchBilling": "Cambiar facturación"
+    "switchBilling": "Cambiar facturación",
+    "soon": "Próximamente"
   },
   "billing": {
     "monthly": "Mensual",

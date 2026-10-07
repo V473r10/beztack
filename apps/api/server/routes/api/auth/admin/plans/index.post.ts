@@ -24,6 +24,7 @@ const createSchema = z.object({
   permissions: z.array(z.string()).optional(),
   displayOrder: z.number().nullable().optional(),
   highlighted: z.boolean().optional(),
+  soon: z.boolean().optional(),
   visible: z.boolean().optional(),
 });
 
@@ -81,6 +82,7 @@ export default defineEventHandler(async (event) => {
       permissions: data.permissions ?? [],
       displayOrder: data.displayOrder ?? null,
       highlighted: data.highlighted ?? false,
+      soon: data.soon ?? false,
       visible: data.visible ?? true,
       status: "active",
     })

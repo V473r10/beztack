@@ -96,6 +96,7 @@ function buildBaseTier(product: Product, tierId: string, displayOrder: number): 
     limits,
     permissions,
     displayOrder,
+    soon: metadata?.soon === true,
   };
 }
 

@@ -82,6 +82,7 @@ export function CreatePlanSheet({
         .filter(Boolean),
       displayOrder: form.displayOrder ? Number(form.displayOrder) : null,
       highlighted: form.highlighted,
+      soon: form.soon,
       visible: form.visible,
     };
 
@@ -252,6 +253,17 @@ export function CreatePlanSheet({
             <Switch
               checked={form.highlighted}
               onCheckedChange={(v) => setForm((s) => ({ ...s, highlighted: v }))}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+            <div className="space-y-0.5">
+              <Label>Coming soon</Label>
+              <p className="text-muted-foreground text-xs">Show it, but do not sell it yet</p>
+            </div>
+            <Switch
+              checked={form.soon}
+              onCheckedChange={(v) => setForm((s) => ({ ...s, soon: v }))}
             />
           </div>
 

@@ -57,6 +57,7 @@ export type CatalogPlan = {
   frequencyType: string;
   initPoint: string | null;
   highlighted: boolean;
+  soon: boolean;
   visible: boolean;
   displayOrder: number | null;
 };
