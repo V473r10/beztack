@@ -185,6 +185,9 @@ export type PendingPlanChangeRecord = {
   providerConfirmedPlanChangeId: string;
   /** A cancel reason, or the last activation error for `pending`/`failed`. */
   reason: string | null;
+  /** The App admin who last retried it after it failed; null if never retried. */
+  retriedByUserId: string | null;
+  retriedAt: Date | null;
   status: PendingPlanChangeStatus;
   subscriptionId: string;
   targetPlanSnapshot: PlanChangeCatalogPlan;
@@ -294,6 +297,7 @@ export type PendingPlanChangeRetryStore = PendingPlanChangeActivationStore & {
    */
   requeueFailedPendingPlanChange(
     pendingPlanChangeId: string,
+    retry: { retriedAt: Date; retriedByUserId: string },
   ): Promise<PendingPlanChangeRecord | null>;
 };
 
@@ -1195,7 +1199,11 @@ export async function retryFailedPendingPlanChange(input: {
     );
   }
 
-  const requeued = await input.store.requeueFailedPendingPlanChange(input.pendingPlanChangeId);
+  const retriedAt = (input.now ?? (() => new Date()))();
+  const requeued = await input.store.requeueFailedPendingPlanChange(input.pendingPlanChangeId, {
+    retriedAt,
+    retriedByUserId: input.actor.userId,
+  });
   if (!requeued) {
     fail(
       "not_retryable",
@@ -1210,7 +1218,7 @@ export async function retryFailedPendingPlanChange(input: {
     maxActivationAttempts: requeued.activationAttempts + 1,
     provider: input.provider,
     renewalEvidence: {
-      occurredAt: (input.now ?? (() => new Date()))(),
+      occurredAt: retriedAt,
       paymentId: `admin-retry:${requeued.id}`,
       state: "renewed",
     },

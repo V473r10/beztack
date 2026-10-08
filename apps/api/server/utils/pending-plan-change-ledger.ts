@@ -93,6 +93,8 @@ export function mapPendingPlanChangeRow(row: PendingPlanChangeRow): PendingPlanC
     membershipTarget: mapMembershipTarget(row),
     providerConfirmedPlanChangeId: row.providerConfirmedPlanChangeId,
     reason: row.reason,
+    retriedAt: row.retriedAt,
+    retriedByUserId: row.retriedByUserId,
     status: mapStatus(row.status),
     subscriptionId: row.subscriptionId,
     targetPlanSnapshot: mapTargetPlanSnapshot(row.targetPlanSnapshot),
@@ -171,13 +173,17 @@ export function createDbPendingPlanChangeLedger(): PendingPlanChangeLedger {
 
       return row ? mapPendingPlanChangeRow(row) : null;
     },
-    async requeueFailedPendingPlanChange(pendingPlanChangeId) {
+    async requeueFailedPendingPlanChange(pendingPlanChangeId, retry) {
       // One statement: the NOT EXISTS and the partial unique index together
       // keep a concurrent retry or a newer request from making two `pending`.
       const newerPending = alias(pendingPlanChangeTable, "newer_pending");
       const [row] = await db
         .update(pendingPlanChangeTable)
-        .set({ status: "pending" })
+        .set({
+          retriedAt: retry.retriedAt,
+          retriedByUserId: retry.retriedByUserId,
+          status: "pending",
+        })
         .where(
           and(
             eq(pendingPlanChangeTable.id, pendingPlanChangeId),
@@ -260,6 +266,8 @@ export type FailedPendingPlanChange = PendingPlanChangeRecord & {
   membershipTargetName: string | null;
   /** Null when reconciled from provider evidence or the user was deleted. */
   acceptedByEmail: string | null;
+  /** The App admin who last retried it; null if never retried or deleted. */
+  retriedByEmail: string | null;
 };
 
 /** Every `failed` change, newest first, for App admins to resolve. */
@@ -268,12 +276,14 @@ export async function listFailedPendingPlanChanges(): Promise<FailedPendingPlanC
   // without `user` can still import this module.
   const targetUserTable = alias(userTable, "target_user");
   const acceptedByUserTable = alias(userTable, "accepted_by_user");
+  const retriedByUserTable = alias(userTable, "retried_by_user");
   const rows = await db
     .select({
       change: pendingPlanChangeTable,
       targetUserEmail: targetUserTable.email,
       targetOrganizationName: organizationTable.name,
       acceptedByEmail: acceptedByUserTable.email,
+      retriedByEmail: retriedByUserTable.email,
     })
     .from(pendingPlanChangeTable)
     .leftJoin(
@@ -294,14 +304,32 @@ export async function listFailedPendingPlanChanges(): Promise<FailedPendingPlanC
       acceptedByUserTable,
       eq(acceptedByUserTable.id, pendingPlanChangeTable.acceptedByUserId),
     )
+    .leftJoin(retriedByUserTable, eq(retriedByUserTable.id, pendingPlanChangeTable.retriedByUserId))
     .where(eq(pendingPlanChangeTable.status, "failed"))
     .orderBy(desc(pendingPlanChangeTable.failedAt));
 
-  return rows.map(({ change, targetUserEmail, targetOrganizationName, acceptedByEmail }) => ({
+  return rows.map(toFailedPendingPlanChange);
+}
+
+function toFailedPendingPlanChange({
+  change,
+  targetUserEmail,
+  targetOrganizationName,
+  acceptedByEmail,
+  retriedByEmail,
+}: {
+  change: PendingPlanChangeRow;
+  targetUserEmail: string | null;
+  targetOrganizationName: string | null;
+  acceptedByEmail: string | null;
+  retriedByEmail: string | null;
+}): FailedPendingPlanChange {
+  return {
     ...mapPendingPlanChangeRow(change),
     createdAt: change.createdAt,
     failedAt: change.failedAt,
     membershipTargetName: targetUserEmail ?? targetOrganizationName ?? null,
     acceptedByEmail: acceptedByEmail ?? null,
-  }));
+    retriedByEmail: retriedByEmail ?? null,
+  };
 }
