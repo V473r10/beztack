@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
+import type { PaymentProviderAdapter } from "@beztack/payments";
+import { createPendingPlanChangeProviderPort } from "./pending-plan-change-provider";
 import {
   activatePendingPlanChange,
   classifyBillingCadence,
+  type PendingPlanChangeProviderPort,
   type PendingPlanChangeRenewalEvidence,
   type PlanChangeBillingCadence,
   type PlanChangeProjectionStore,
@@ -49,7 +52,11 @@ export type ProjectionPayment = {
   metadata?: Record<string, unknown> | null;
 };
 
-export type SubscriptionProjectionProviderAdapter = {
+/**
+ * `applyPlanChange` makes the provider charge an activated Pending Plan
+ * change's target plan from the next charge.
+ */
+export type SubscriptionProjectionProviderAdapter = PendingPlanChangeProviderPort & {
   provider: string;
   getSubscription(subscriptionId: string): Promise<ProjectionSubscription | null>;
   getPayment(paymentId: string): Promise<ProjectionPayment | null>;
@@ -464,6 +471,7 @@ function reconcilePendingPlanChangeFromProjection(options: {
 async function activatePendingPlanChangeFromProjection(options: {
   now: Date;
   planChangeStore?: PlanChangeProjectionStore;
+  provider: PendingPlanChangeProviderPort;
   subscription: ProjectionSubscription;
 }): Promise<{ pendingPlanChangeId?: string; warning?: string }> {
   if (!options.planChangeStore) {
@@ -474,6 +482,7 @@ async function activatePendingPlanChangeFromProjection(options: {
   // with an error and the provider retries the delivery.
   const activation = await activatePendingPlanChange({
     currentSubscriptionId: options.subscription.id,
+    provider: options.provider,
     renewalEvidence: {
       occurredAt: options.now,
       state: resolvePendingPlanChangeRenewalState(options.subscription.rawStatus),
@@ -585,6 +594,7 @@ async function projectSubscriptionResource(options: {
   const activation = await activatePendingPlanChangeFromProjection({
     now: options.now,
     planChangeStore: options.planChangeStore,
+    provider: options.provider,
     subscription,
   });
   if (activation.warning) {
@@ -1276,9 +1286,14 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
     integratorId: env.MERCADO_PAGO_INTEGRATOR_ID,
   });
   const applicationId = requireMercadoPagoApplicationId(env.MERCADO_PAGO_APPLICATION_ID);
+  const planChangeProvider = createPendingPlanChangeProviderPort(async () => {
+    const { ensurePaymentProvider } = await import("@/lib/payments");
+    return ensurePaymentProvider();
+  });
 
   return {
     provider: "mercadopago",
+    applyPlanChange: planChangeProvider.applyPlanChange,
     async getSubscription(subscriptionId) {
       const subscription = await client.subscriptions.get(subscriptionId);
       if (!(subscription.id && belongsToMercadoPagoApplication(subscription, applicationId))) {
@@ -1365,9 +1380,12 @@ export function createPaymentProviderSubscriptionProjectionProvider(provider: {
     metadata?: Record<string, unknown>;
   } | null>;
   cancelSubscription(subscriptionId: string, immediately?: boolean): Promise<unknown>;
+  updateSubscription: PaymentProviderAdapter["updateSubscription"];
 }): SubscriptionProjectionProviderAdapter {
   return {
     provider: provider.provider,
+    applyPlanChange: createPendingPlanChangeProviderPort(() => Promise.resolve(provider))
+      .applyPlanChange,
     async getSubscription(subscriptionId) {
       const subscription = await provider.getSubscription(subscriptionId);
       if (!subscription) {
@@ -1412,6 +1430,7 @@ export async function getDefaultSubscriptionProjectionDependencies(provider?: {
     metadata?: Record<string, unknown>;
   } | null>;
   cancelSubscription(subscriptionId: string, immediately?: boolean): Promise<unknown>;
+  updateSubscription: PaymentProviderAdapter["updateSubscription"];
 }): Promise<SubscriptionProjectionDependencies> {
   const [{ env }, store, planChangeStore] = await Promise.all([
     import("@/env"),
