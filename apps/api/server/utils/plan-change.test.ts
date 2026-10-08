@@ -3,6 +3,7 @@ import {
   acceptPlanChange,
   activatePendingPlanChange,
   cancelPendingPlanChange,
+  classifyBillingCadence,
   type PendingPlanChangeCancellationInput,
   type PendingPlanChangeRecord,
   type PlanChangeCatalogPlan,
@@ -13,6 +14,7 @@ import {
   type PlanChangeStore,
   previewPlanChange,
   reconcileProviderConfirmedPlanChange,
+  requireSubscriptionBillingCadence,
 } from "./plan-change";
 
 const MEMBERSHIP_TARGET = { type: "user", id: "user_1" } as const;
@@ -252,6 +254,58 @@ async function readRejectedPlanChangeError(promise: Promise<unknown>): Promise<u
 
   throw new Error("Expected Plan change preview to fail");
 }
+
+describe("classifyBillingCadence", () => {
+  it.each([
+    { interval: "month", intervalCount: 1, cadence: "monthly" },
+    { interval: "month", intervalCount: null, cadence: "monthly" },
+    { interval: " Month ", intervalCount: 1, cadence: "monthly" },
+    { interval: "year", intervalCount: 1, cadence: "yearly" },
+    { interval: "month", intervalCount: 12, cadence: "yearly" },
+  ])("classifies $interval x$intervalCount as $cadence", ({ interval, intervalCount, cadence }) => {
+    expect(classifyBillingCadence({ interval, intervalCount })).toBe(cadence);
+  });
+
+  it.each([
+    { interval: "week", intervalCount: 1 },
+    { interval: "day", intervalCount: 1 },
+    { interval: "month", intervalCount: 2 },
+    { interval: "year", intervalCount: 2 },
+    { interval: null, intervalCount: 1 },
+  ])("rejects the unsupported cadence $interval x$intervalCount", ({ interval, intervalCount }) => {
+    expect(classifyBillingCadence({ interval, intervalCount })).toBeNull();
+  });
+});
+
+describe("requireSubscriptionBillingCadence", () => {
+  it("reads the Billing cadence the Payment provider reported", () => {
+    expect(
+      requireSubscriptionBillingCadence({ billingInterval: "month", billingFrequency: 12 }),
+    ).toBe("yearly");
+    expect(
+      requireSubscriptionBillingCadence({ billingInterval: "month", billingFrequency: "1" }),
+    ).toBe("monthly");
+  });
+
+  it("returns undefined when the Payment provider reports no cadence", () => {
+    expect(requireSubscriptionBillingCadence({})).toBeUndefined();
+    expect(requireSubscriptionBillingCadence(undefined)).toBeUndefined();
+  });
+
+  it("rejects an unsupported reported cadence with 409 unsupported_billing_cadence", () => {
+    let caught: unknown;
+    try {
+      requireSubscriptionBillingCadence({ billingInterval: "week", billingFrequency: 1 });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toMatchObject({
+      code: "unsupported_billing_cadence" satisfies PlanChangeError["code"],
+      statusCode: 409,
+    });
+  });
+});
 
 describe("previewPlanChange", () => {
   it("classifies an Upgrade from Pricing catalog tier rank instead of provider price", async () => {

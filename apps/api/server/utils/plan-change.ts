@@ -328,6 +328,7 @@ export type PlanChangeErrorCode =
   | "missing_current_subscription"
   | "not_a_plan_change"
   | "payment_integration_mismatch"
+  | "unsupported_billing_cadence"
   | "unsupported_cadence_change"
   | "unauthorized_plan_change";
 
@@ -352,6 +353,91 @@ const MILLISECONDS_PER_DAY = 86_400_000;
 
 function fail(code: PlanChangeErrorCode, message: string, statusCode = HTTP_BAD_REQUEST): never {
   throw new PlanChangeError(code, message, statusCode);
+}
+
+const SINGLE_INTERVAL_COUNT = 1;
+const MONTHS_PER_YEAR = 12;
+
+export type BillingCadenceInterval = {
+  interval: string | null | undefined;
+  intervalCount: number | null | undefined;
+};
+
+/**
+ * The single mapping from a provider interval to a Billing cadence. Beztack
+ * supports a subset of Billing cadence: monthly and yearly. Any other cadence
+ * (weekly, every 2 months, ...) is unsupported and returns null, so callers
+ * decide explicitly how to reject it instead of collapsing it silently.
+ */
+export function classifyBillingCadence(
+  input: BillingCadenceInterval,
+): PlanChangeBillingCadence | null {
+  const interval = input.interval?.trim().toLowerCase();
+  const intervalCount = input.intervalCount ?? SINGLE_INTERVAL_COUNT;
+
+  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
+    return "monthly";
+  }
+
+  if (
+    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
+    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
+  ) {
+    return "yearly";
+  }
+
+  return null;
+}
+
+function readReportedBillingInterval(
+  metadata: Record<string, unknown> | null | undefined,
+): BillingCadenceInterval | null {
+  const interval = metadata?.billingInterval;
+  if (typeof interval !== "string" || interval.trim().length === 0) {
+    return null;
+  }
+
+  const frequency = metadata?.billingFrequency;
+  let intervalCount: number | undefined;
+  if (typeof frequency === "number" && Number.isFinite(frequency)) {
+    intervalCount = frequency;
+  } else if (typeof frequency === "string" && frequency.trim().length > 0) {
+    const parsed = Number(frequency);
+    intervalCount = Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return { interval, intervalCount };
+}
+
+/**
+ * Billing cadence a Subscription's provider metadata reports
+ * (`billingInterval` / `billingFrequency`). Undefined when the provider reports
+ * none; null when it reports a cadence Beztack does not support.
+ */
+export function readSubscriptionBillingCadence(
+  metadata: Record<string, unknown> | null | undefined,
+): PlanChangeBillingCadence | null | undefined {
+  const reported = readReportedBillingInterval(metadata);
+  return reported ? classifyBillingCadence(reported) : undefined;
+}
+
+/**
+ * Like `readSubscriptionBillingCadence`, for a Plan change request: an
+ * unsupported reported cadence is refused with `409 unsupported_billing_cadence`.
+ */
+export function requireSubscriptionBillingCadence(
+  metadata: Record<string, unknown> | null | undefined,
+): PlanChangeBillingCadence | undefined {
+  const cadence = readSubscriptionBillingCadence(metadata);
+  if (cadence === null) {
+    fail(
+      "unsupported_billing_cadence",
+      "Current Subscription has a Billing cadence Beztack does not support",
+      HTTP_CONFLICT,
+    );
+  }
+
+  return cadence;
 }
 
 function sameBillingCadence(

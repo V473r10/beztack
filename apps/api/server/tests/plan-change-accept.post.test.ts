@@ -1,35 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => {
-  class MockPlanChangeError extends Error {
-    code: string;
-    statusCode: number;
-    statusMessage: string;
-
-    constructor(code: string, message: string, statusCode = 400) {
-      super(message);
-      this.name = "PlanChangeError";
-      this.code = code;
-      this.statusCode = statusCode;
-      this.statusMessage = message;
-    }
-  }
-
-  return {
-    acceptPlanChange: vi.fn(),
-    applyAdminTierOverride: vi.fn(),
-    ensurePaymentProvider: vi.fn(),
-    PlanChangeError: MockPlanChangeError,
-    readBody: vi.fn(),
-    requireAuth: vi.fn(),
-    env: {
-      APP_ADMIN_EMAILS: "admin@example.com",
-      MERCADO_PAGO_APPLICATION_ID: "mp_app_1",
-      PAYMENT_PROVIDER: "mercadopago",
-      SUBSCRIPTION_MODE: "user" as "user" | "organization",
-    },
-  };
-});
+const mocks = vi.hoisted(() => ({
+  acceptPlanChange: vi.fn(),
+  applyAdminTierOverride: vi.fn(),
+  ensurePaymentProvider: vi.fn(),
+  readBody: vi.fn(),
+  requireAuth: vi.fn(),
+  env: {
+    APP_ADMIN_EMAILS: "admin@example.com",
+    MERCADO_PAGO_APPLICATION_ID: "mp_app_1",
+    PAYMENT_PROVIDER: "mercadopago",
+    SUBSCRIPTION_MODE: "user" as "user" | "organization",
+  },
+}));
 
 vi.mock("h3", () => ({
   createError(input: {
@@ -60,10 +43,17 @@ vi.mock("@/lib/payments", () => ({
 vi.mock("@/server/utils/membership", () => ({
   requireAuth: mocks.requireAuth,
 }));
-vi.mock("@/server/utils/plan-change", () => ({
-  acceptPlanChange: mocks.acceptPlanChange,
-  PlanChangeError: mocks.PlanChangeError,
-}));
+vi.mock("@/server/utils/plan-change", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/utils/plan-change")>();
+  // The real Billing cadence classifier and its error, so a route test sees
+  // the same rejection a request would.
+  return {
+    acceptPlanChange: mocks.acceptPlanChange,
+    classifyBillingCadence: actual.classifyBillingCadence,
+    PlanChangeError: actual.PlanChangeError,
+    requireSubscriptionBillingCadence: actual.requireSubscriptionBillingCadence,
+  };
+});
 vi.mock("@/server/utils/admin-tier-override", () => ({
   applyAdminTierOverride: mocks.applyAdminTierOverride,
 }));
@@ -174,6 +164,48 @@ describe("POST /api/subscriptions/plan-change/accept", () => {
         billingCadence: "monthly",
         realSubscriptionsUnchanged: true,
       },
+    });
+  });
+
+  it("refuses a Current Subscription with an unsupported Billing cadence with 409", async () => {
+    mocks.ensurePaymentProvider.mockResolvedValue({
+      createSubscription: vi.fn(),
+      provider: "mercadopago",
+      listSubscriptions: vi.fn().mockResolvedValue([
+        {
+          id: "sub_weekly",
+          customerId: "user_1",
+          productId: "prod_weekly",
+          status: "active",
+          metadata: { billingInterval: "week", billingFrequency: 1, userId: "user_1" },
+        },
+      ]),
+    });
+    mocks.readBody.mockResolvedValue({ targetTierId: "pro", targetBillingCadence: "monthly" });
+    mocks.acceptPlanChange.mockImplementation(
+      (input: {
+        membershipTarget: unknown;
+        paymentProvider: string;
+        store: { findCurrentSubscription(input: unknown): Promise<unknown> };
+      }) =>
+        input.store.findCurrentSubscription({
+          membershipTarget: input.membershipTarget,
+          paymentProvider: input.paymentProvider,
+        }),
+    );
+    const handler = (await import("../routes/api/subscriptions/plan-change/accept.post"))
+      .default as (event: unknown) => Promise<unknown>;
+
+    let caught: unknown;
+    try {
+      await handler({});
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toMatchObject({
+      statusCode: 409,
+      data: { code: "unsupported_billing_cadence" },
     });
   });
 });

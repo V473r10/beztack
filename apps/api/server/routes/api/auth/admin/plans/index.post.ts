@@ -8,6 +8,7 @@ import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
+import { classifyBillingCadence } from "@/server/utils/plan-change";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const createSchema = z.object({
@@ -35,6 +36,16 @@ export default defineEventHandler(async (event) => {
 
   const rawBody = await readBody(event);
   const data = createSchema.parse(rawBody);
+
+  // Beztack supports monthly and yearly Billing cadences only, on every
+  // Payment provider; anything else would be misread downstream.
+  if (!classifyBillingCadence(data)) {
+    throw createError({
+      statusCode: 400,
+      message: "Only monthly or yearly Billing cadences are supported",
+      data: { code: "unsupported_billing_cadence" },
+    });
+  }
 
   if (adapter.provider === "mercadopago") {
     if (data.interval !== "month") {

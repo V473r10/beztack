@@ -1,12 +1,14 @@
 import { createHash } from "node:crypto";
 import {
   activatePendingPlanChange,
+  classifyBillingCadence,
   type PendingPlanChangeRenewalEvidence,
   type PlanChangeBillingCadence,
   type PlanChangeProjectionStore,
   type PlanChangeReconciliation,
   type ProviderConfirmedPlanChangeEvidence,
   reconcileProviderConfirmedPlanChange,
+  readSubscriptionBillingCadence,
 } from "./plan-change";
 
 type MembershipTargetType = "user" | "organization";
@@ -163,8 +165,6 @@ type ProjectionWorkResult = {
 const ACTIVE_PROVIDER_STATUSES = new Set(["active", "authorized", "trialing"]);
 const PAST_DUE_PROVIDER_STATUSES = new Set(["past_due", "unpaid"]);
 const CANCELED_PROVIDER_STATUSES = new Set(["canceled", "cancelled"]);
-const SINGLE_INTERVAL_COUNT = 1;
-const MONTHS_PER_YEAR = 12;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -390,26 +390,6 @@ function resolvePendingPlanChangeRenewalState(
   return "failed";
 }
 
-function readPlanChangeBillingCadence(
-  metadata: Record<string, unknown> | null | undefined,
-): PlanChangeBillingCadence | undefined {
-  const interval = readString(metadata, "billingInterval");
-  const intervalCount = readNumber(metadata, "billingFrequency") ?? 1;
-
-  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
-    return "monthly";
-  }
-
-  if (
-    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
-    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
-  ) {
-    return "yearly";
-  }
-
-  return;
-}
-
 function readProviderConfirmedPlanChangeEvidence(input: {
   provider: string;
   subscription: ProjectionSubscription;
@@ -451,7 +431,7 @@ function readProviderConfirmedPlanChangeEvidence(input: {
     target: {
       planId: targetPlanId ?? input.subscription.productId ?? undefined,
       tierId: readString(metadata, "tier"),
-      billingCadence: readPlanChangeBillingCadence(metadata),
+      billingCadence: readSubscriptionBillingCadence(metadata) ?? undefined,
     },
   };
 }
@@ -528,7 +508,8 @@ async function projectMembershipCache(options: {
 
   const updates = {
     subscriptionTier: options.tier,
-    subscriptionBillingCadence: readPlanChangeBillingCadence(options.subscription.metadata) ?? null,
+    subscriptionBillingCadence:
+      readSubscriptionBillingCadence(options.subscription.metadata) ?? null,
     subscriptionStatus: deriveMembershipStatus(
       options.subscription.rawStatus,
       options.subscription.currentPeriodEnd ?? null,
@@ -1019,27 +1000,6 @@ export function createProjectionEventEnvelopeFromWebhookPayload(input: {
   };
 }
 
-function mapPlanBillingCadence(input: {
-  interval: string | null;
-  intervalCount: number | null;
-}): PlanChangeBillingCadence | null {
-  const interval = input.interval?.trim().toLowerCase();
-  const intervalCount = input.intervalCount ?? SINGLE_INTERVAL_COUNT;
-
-  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
-    return "monthly";
-  }
-
-  if (
-    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
-    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
-  ) {
-    return "yearly";
-  }
-
-  return null;
-}
-
 export async function createDbPendingPlanChangeActivationStore(): Promise<PlanChangeProjectionStore> {
   const [{ db, schema }, { and, eq }, { createDbPendingPlanChangeLedger }] = await Promise.all([
     import("@beztack/db"),
@@ -1072,7 +1032,7 @@ export async function createDbPendingPlanChangeActivationStore(): Promise<PlanCh
         );
 
       return rows.flatMap((row) => {
-        const billingCadence = mapPlanBillingCadence(row);
+        const billingCadence = classifyBillingCadence(row);
         if (!billingCadence) {
           return [];
         }

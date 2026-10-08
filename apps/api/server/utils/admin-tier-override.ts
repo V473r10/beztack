@@ -7,6 +7,7 @@ import {
 } from "@beztack/db";
 import { and, eq } from "drizzle-orm";
 import { isAppAdminActor } from "../domain/organization-access/implementation";
+import { classifyBillingCadence } from "./plan-change";
 
 export type AdminTierOverrideTargetType = "user" | "organization";
 export type AdminTierOverrideBillingCadence = "monthly" | "yearly";
@@ -119,8 +120,6 @@ const VALID_TIERS = new Set<AdminTierOverrideTier>([
 const HTTP_BAD_REQUEST = 400;
 const HTTP_FORBIDDEN = 403;
 const HTTP_CONFLICT = 409;
-const SINGLE_INTERVAL_COUNT = 1;
-const MONTHS_PER_YEAR = 12;
 
 function parseTier(value: string): AdminTierOverrideTier {
   const normalized = value.trim().toLowerCase();
@@ -136,18 +135,9 @@ function resolvePlanCadence(plan: OverrideCatalogPlan): AdminTierOverrideBilling
     return null;
   }
 
-  const interval = plan.interval?.trim().toLowerCase();
-  const intervalCount = plan.intervalCount ?? SINGLE_INTERVAL_COUNT;
-
-  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
-    return "monthly";
-  }
-
-  if (
-    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
-    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
-  ) {
-    return "yearly";
+  const cadence = classifyBillingCadence(plan);
+  if (cadence) {
+    return cadence;
   }
 
   throw new AdminTierOverrideError(
