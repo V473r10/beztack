@@ -59,6 +59,22 @@ describe("Failed plan changes page", () => {
     expect(html).toContain("Reconciled from the provider");
   });
 
+  it("offers a retry per row, and shows which one is in flight", () => {
+    const second = { ...FAILED, id: "ppc_2" };
+    const idle = render({ changes: [FAILED, second], onRetry: () => undefined });
+    expect(idle.match(/Retry now/g)).toHaveLength(2);
+    expect(idle).not.toContain('disabled=""');
+
+    const busy = render({
+      changes: [FAILED, second],
+      onRetry: () => undefined,
+      retryingId: "ppc_1",
+    });
+    expect(busy).toContain("Retrying…");
+    // One retry at a time: every button is disabled while one runs.
+    expect(busy.match(/disabled=""/g)).toHaveLength(2);
+  });
+
   it("says when there is nothing to resolve", () => {
     expect(render({ changes: [] })).toContain("No failed plan changes");
   });
