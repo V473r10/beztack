@@ -7,7 +7,11 @@
   },
   "nxCloudId": "68b65b3d5e52195fddab755b",
   "sync": {
-    "disabledTaskSyncGenerators": ["@nx/js:typescript-sync"]
+    "generatorOptions": {
+      "@nx/js:typescript-sync": {
+        "runtimeTsConfigFileNames": ["tsconfig.build-deps.json"]
+      }
+    }
   },
   "plugins": [
     {
