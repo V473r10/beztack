@@ -23,16 +23,21 @@ import type {
   PlanChangeMembershipTarget,
   PlanChangeProjectionStore,
   PlanChangeStore,
+  PendingPlanChangeRetryStore,
 } from "@/server/utils/plan-change";
 
 export type PendingPlanChangeLedger = Pick<
-  PlanChangeStore,
-  | "cancelPendingPlanChange"
-  | "findPendingPlanChange"
-  | "markPendingPlanChangeActivated"
-  | "recordPendingPlanChangeActivationFailure"
-  | "savePendingPlanChange"
+  PendingPlanChangeRetryStore,
+  "requeueFailedPendingPlanChange"
 > &
+  Pick<
+    PlanChangeStore,
+    | "cancelPendingPlanChange"
+    | "findPendingPlanChange"
+    | "markPendingPlanChangeActivated"
+    | "recordPendingPlanChangeActivationFailure"
+    | "savePendingPlanChange"
+  > &
   Pick<PlanChangeProjectionStore, "findLatestActivatedPlanChange">;
 
 type PendingPlanChangeRow = typeof pendingPlanChangeTable.$inferSelect;
@@ -162,6 +167,32 @@ export function createDbPendingPlanChangeLedger(): PendingPlanChangeLedger {
           status: sql`CASE WHEN ${reachesLimit} THEN 'failed' ELSE 'pending' END`,
         })
         .where(isPendingFor(subscriptionId))
+        .returning();
+
+      return row ? mapPendingPlanChangeRow(row) : null;
+    },
+    async requeueFailedPendingPlanChange(pendingPlanChangeId) {
+      // One statement: the NOT EXISTS and the partial unique index together
+      // keep a concurrent retry or a newer request from making two `pending`.
+      const newerPending = alias(pendingPlanChangeTable, "newer_pending");
+      const [row] = await db
+        .update(pendingPlanChangeTable)
+        .set({ status: "pending" })
+        .where(
+          and(
+            eq(pendingPlanChangeTable.id, pendingPlanChangeId),
+            eq(pendingPlanChangeTable.status, "failed"),
+            sql`NOT EXISTS (${db
+              .select({ id: newerPending.id })
+              .from(newerPending)
+              .where(
+                and(
+                  eq(newerPending.subscriptionId, pendingPlanChangeTable.subscriptionId),
+                  eq(newerPending.status, "pending"),
+                ),
+              )})`,
+          ),
+        )
         .returning();
 
       return row ? mapPendingPlanChangeRow(row) : null;

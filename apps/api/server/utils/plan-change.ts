@@ -286,6 +286,17 @@ export type PendingPlanChangeActivationStore = Pick<
   | "recordPendingPlanChangeActivationFailure"
 >;
 
+export type PendingPlanChangeRetryStore = PendingPlanChangeActivationStore & {
+  /**
+   * Moves a `failed` row back to `pending`, keeping its attempt count and
+   * reason. Null when the row is not `failed` or its Subscription already has
+   * a `pending` row (a newer request replaced it).
+   */
+  requeueFailedPendingPlanChange(
+    pendingPlanChangeId: string,
+  ): Promise<PendingPlanChangeRecord | null>;
+};
+
 /**
  * `applied: false` means the provider accepted the request but did not
  * apply it (it would keep charging the old terms). Retrying does not help.
@@ -355,6 +366,7 @@ export type PlanChangeErrorCode =
   | "invalid_target"
   | "missing_current_subscription"
   | "not_a_plan_change"
+  | "not_retryable"
   | "payment_integration_mismatch"
   | "unsupported_billing_cadence"
   | "unsupported_cadence_change"
@@ -1159,4 +1171,49 @@ export async function activatePendingPlanChange(input: {
     membershipMoved: true,
     pendingPlanChange: activatedPendingPlanChange ?? pendingPlanChange,
   };
+}
+
+/**
+ * An App admin retries a `failed` Pending Plan change after fixing its cause:
+ * it goes back to `pending` and is activated now, through the same path as a
+ * renewal (provider first, then the Membership). Any failure puts it back to
+ * `failed` with the new reason and one more attempt counted; this never
+ * answers with a retryable error, because no webhook delivery is behind it.
+ */
+export async function retryFailedPendingPlanChange(input: {
+  actor: PlanChangeActor;
+  now?: () => Date;
+  pendingPlanChangeId: string;
+  provider: PendingPlanChangeProviderPort;
+  store: PendingPlanChangeRetryStore;
+}): Promise<PendingPlanChangeActivation> {
+  if (!input.actor.isAppAdmin) {
+    fail(
+      "unauthorized_plan_change",
+      "Only an App admin can retry a failed Pending Plan change",
+      HTTP_FORBIDDEN,
+    );
+  }
+
+  const requeued = await input.store.requeueFailedPendingPlanChange(input.pendingPlanChangeId);
+  if (!requeued) {
+    fail(
+      "not_retryable",
+      "Only a failed Pending Plan change that no newer request replaced can be retried",
+      HTTP_CONFLICT,
+    );
+  }
+
+  return activatePendingPlanChange({
+    currentSubscriptionId: requeued.subscriptionId,
+    // The next failure, whatever it is, ends it as `failed` again.
+    maxActivationAttempts: requeued.activationAttempts + 1,
+    provider: input.provider,
+    renewalEvidence: {
+      occurredAt: (input.now ?? (() => new Date()))(),
+      paymentId: `admin-retry:${requeued.id}`,
+      state: "renewed",
+    },
+    store: input.store,
+  });
 }

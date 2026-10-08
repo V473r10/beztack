@@ -201,6 +201,34 @@ describe.skipIf(!TEST_DATABASE_URL)("Pending Plan change ledger on Postgres", ()
     expect(failed.failedAt).toBeInstanceOf(Date);
   });
 
+  it("requeues a failed change only while no newer one is pending", async () => {
+    const ledger = modules.ledgerModule.createDbPendingPlanChangeLedger();
+    const saved = await ledger.savePendingPlanChange(change());
+    await ledger.recordPendingPlanChangeActivationFailure("sub_1", {
+      error: "boom",
+      maxAttempts: 1,
+    });
+
+    await expect(ledger.requeueFailedPendingPlanChange(saved.id)).resolves.toMatchObject({
+      activationAttempts: 1,
+      reason: "boom",
+      status: "pending",
+    });
+    // Already pending again: a second retry has nothing to requeue.
+    await expect(ledger.requeueFailedPendingPlanChange(saved.id)).resolves.toBeNull();
+
+    await ledger.recordPendingPlanChangeActivationFailure("sub_1", {
+      error: "boom again",
+      maxAttempts: 2,
+    });
+    await ledger.savePendingPlanChange(change());
+    await expect(ledger.requeueFailedPendingPlanChange(saved.id)).resolves.toBeNull();
+    expect(await statuses("sub_1")).toEqual([
+      ["failed", "boom again"],
+      ["pending", null],
+    ]);
+  });
+
   it("names who each failed change belongs to and who accepted it", async () => {
     const { db, organization } = modules.dbModule;
     await db.insert(organization).values({ id: "org_1", name: "Acme", slug: "acme" });
