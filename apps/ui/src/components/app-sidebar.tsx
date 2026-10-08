@@ -1,4 +1,5 @@
 import {
+  IconAlertTriangle,
   IconBrain,
   IconBuilding,
   IconChartBar,
@@ -71,6 +72,12 @@ const NAV_PLATFORM: SidebarNavItem[] = [
   { title: "User Management", url: "/admin/users", icon: IconUserCog, requires: "app-admin" },
   { title: "Analytics", url: "/admin/analytics", icon: IconChartBar, requires: "app-admin" },
   { title: "Plan Sync", url: "/admin/plans", icon: IconListDetails, requires: "app-admin" },
+  {
+    title: "Failed Plan Changes",
+    url: "/admin/plan-changes",
+    icon: IconAlertTriangle,
+    requires: "app-admin",
+  },
 ];
 
 const NAV_SECONDARY: SidebarNavItem[] = [

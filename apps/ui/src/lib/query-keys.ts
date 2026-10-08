@@ -111,6 +111,8 @@ export const adminKeys = {
   userSessions: (userId: string) => [...ADMIN_ROOT, "user", userId, "sessions"] as const,
   /** Own root (`admin-plans-sync`), not matched by `adminKeys.all()`. */
   plansSync: () => ["admin-plans-sync"] as const,
+  /** Pending Plan changes whose activation kept failing. */
+  failedPlanChanges: () => [...ADMIN_ROOT, "plan-changes", "failed"] as const,
 } as const;
 
 // =============================================================================
