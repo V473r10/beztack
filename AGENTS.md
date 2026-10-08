@@ -12,6 +12,10 @@ The repo uses the canonical triage label vocabulary: `needs-triage`, `needs-info
 
 Single-context layout: use root `CONTEXT.md` and root `docs/adr/` when present. See `docs/agents/domain.md`.
 
+## Fresh checkout or worktree
+
+Run `pnpm install && pnpm build:packages` before any test or typecheck: apps and packages resolve workspace packages through their gitignored `dist`, so without it tests fail to load and `tsc` reports TS6305 noise instead of real errors.
+
 ## Module shape (opt-in)
 
 Behaviour that several call sites share, and that has two real implementations, can live behind a module interface under `apps/api/server/domain/<name>/` instead of another flat file in `apps/api/server/utils/`. `apps/api/server/domain/organization-access/` is the reference implementation:
