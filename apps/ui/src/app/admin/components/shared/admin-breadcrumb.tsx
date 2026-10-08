@@ -36,6 +36,7 @@ export function AdminBreadcrumb() {
       const segmentLabels: Record<string, string> = {
         users: "User Management",
         analytics: "Analytics",
+        "plan-changes": "Failed Plan Changes",
         settings: "Settings",
       };
 

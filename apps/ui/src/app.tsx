@@ -5,6 +5,7 @@ import AdminDashboard from "./app/admin/admin.tsx";
 import AdminAnalytics from "./app/admin/analytics.tsx";
 // import { AdminLayout } from "./app/admin/components/admin-layout.tsx";
 import { PlanSyncScreen } from "./app/admin/components/plan-sync/plan-sync-screen.tsx";
+import FailedPlanChangesPage from "./app/admin/plan-changes.tsx";
 import UsersPage from "./app/admin/users.tsx";
 import { AI } from "./app/ai/ai.tsx";
 import AuthLayout from "./app/auth/auth-layout.tsx";
@@ -145,6 +146,7 @@ function App() {
                         <Route element={<AdminDashboard />} index />
                         <Route element={<AdminAnalytics />} path="analytics" />
                         <Route element={<PlanSyncScreen />} path="plans" />
+                        <Route element={<FailedPlanChangesPage />} path="plan-changes" />
                       </Route>
 
                       <Route element={<Pricing />} path="pricing" />

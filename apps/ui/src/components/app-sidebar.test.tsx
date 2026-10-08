@@ -107,6 +107,7 @@ describe("AppSidebar by role", () => {
       "/admin/users",
       "/admin/analytics",
       "/admin/plans",
+      "/admin/plan-changes",
     ]);
   });
 

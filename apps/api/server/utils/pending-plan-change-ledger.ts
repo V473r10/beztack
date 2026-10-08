@@ -7,8 +7,14 @@
  * `pending` row per Subscription.
  */
 import { randomUUID } from "node:crypto";
-import { db, pendingPlanChange as pendingPlanChangeTable } from "@beztack/db";
+import {
+  db,
+  organization as organizationTable,
+  pendingPlanChange as pendingPlanChangeTable,
+  user as userTable,
+} from "@beztack/db";
 import { and, desc, eq, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import type {
   PendingPlanChangeRecord,
   PendingPlanChangeStatus,
@@ -219,19 +225,52 @@ export async function findPendingPlanChangeForMembershipTarget(
 export type FailedPendingPlanChange = PendingPlanChangeRecord & {
   createdAt: Date;
   failedAt: Date | null;
+  /** The user's email or the organization's name; null if it was deleted. */
+  membershipTargetName: string | null;
+  /** Null when reconciled from provider evidence or the user was deleted. */
+  acceptedByEmail: string | null;
 };
 
 /** Every `failed` change, newest first, for App admins to resolve. */
 export async function listFailedPendingPlanChanges(): Promise<FailedPendingPlanChange[]> {
+  // Aliased here, not at module load, so routes that mock `@beztack/db`
+  // without `user` can still import this module.
+  const targetUserTable = alias(userTable, "target_user");
+  const acceptedByUserTable = alias(userTable, "accepted_by_user");
   const rows = await db
-    .select()
+    .select({
+      change: pendingPlanChangeTable,
+      targetUserEmail: targetUserTable.email,
+      targetOrganizationName: organizationTable.name,
+      acceptedByEmail: acceptedByUserTable.email,
+    })
     .from(pendingPlanChangeTable)
+    .leftJoin(
+      targetUserTable,
+      and(
+        eq(pendingPlanChangeTable.membershipTargetType, "user"),
+        eq(targetUserTable.id, pendingPlanChangeTable.membershipTargetId),
+      ),
+    )
+    .leftJoin(
+      organizationTable,
+      and(
+        eq(pendingPlanChangeTable.membershipTargetType, "organization"),
+        eq(organizationTable.id, pendingPlanChangeTable.membershipTargetId),
+      ),
+    )
+    .leftJoin(
+      acceptedByUserTable,
+      eq(acceptedByUserTable.id, pendingPlanChangeTable.acceptedByUserId),
+    )
     .where(eq(pendingPlanChangeTable.status, "failed"))
     .orderBy(desc(pendingPlanChangeTable.failedAt));
 
-  return rows.map((row) => ({
-    ...mapPendingPlanChangeRow(row),
-    createdAt: row.createdAt,
-    failedAt: row.failedAt,
+  return rows.map(({ change, targetUserEmail, targetOrganizationName, acceptedByEmail }) => ({
+    ...mapPendingPlanChangeRow(change),
+    createdAt: change.createdAt,
+    failedAt: change.failedAt,
+    membershipTargetName: targetUserEmail ?? targetOrganizationName ?? null,
+    acceptedByEmail: acceptedByEmail ?? null,
   }));
 }

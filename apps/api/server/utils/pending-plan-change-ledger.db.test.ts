@@ -69,9 +69,10 @@ describe.skipIf(!TEST_DATABASE_URL)("Pending Plan change ledger on Postgres", ()
   });
 
   beforeEach(async () => {
-    const { db, pendingPlanChange, subscription, user } = modules.dbModule;
+    const { db, organization, pendingPlanChange, subscription, user } = modules.dbModule;
     await db.delete(pendingPlanChange);
     await db.delete(subscription);
+    await db.delete(organization);
     await db.delete(user);
     await db.insert(user).values({ id: "user_1", name: "User", email: "user@example.com" });
     await db.insert(subscription).values([
@@ -198,6 +199,38 @@ describe.skipIf(!TEST_DATABASE_URL)("Pending Plan change ledger on Postgres", ()
     const [failed] = await ledgerModule.listFailedPendingPlanChanges();
     expect(failed).toMatchObject({ subscriptionId: "sub_1", reason: "kept charging 1000" });
     expect(failed.failedAt).toBeInstanceOf(Date);
+  });
+
+  it("names who each failed change belongs to and who accepted it", async () => {
+    const { db, organization } = modules.dbModule;
+    await db.insert(organization).values({ id: "org_1", name: "Acme", slug: "acme" });
+    const ledger = modules.ledgerModule.createDbPendingPlanChangeLedger();
+    await ledger.savePendingPlanChange(change());
+    await ledger.savePendingPlanChange(
+      change({
+        acceptedByUserId: null,
+        membershipTarget: { type: "organization", id: "org_1" },
+        subscriptionId: "sub_2",
+      }),
+    );
+    for (const subscriptionId of ["sub_1", "sub_2"]) {
+      await ledger.recordPendingPlanChangeActivationFailure(subscriptionId, {
+        error: "boom",
+        maxAttempts: 1,
+      });
+    }
+
+    const failed = await modules.ledgerModule.listFailedPendingPlanChanges();
+    const bySubscription = Object.fromEntries(failed.map((item) => [item.subscriptionId, item]));
+
+    expect(bySubscription.sub_1).toMatchObject({
+      membershipTargetName: "user@example.com",
+      acceptedByEmail: "user@example.com",
+    });
+    expect(bySubscription.sub_2).toMatchObject({
+      membershipTargetName: "Acme",
+      acceptedByEmail: null,
+    });
   });
 
   it("finds the latest activated change of a Subscription", async () => {
