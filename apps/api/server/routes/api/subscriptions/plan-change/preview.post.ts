@@ -8,10 +8,11 @@ import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import {
-  type PlanChangeBillingCadence,
   PlanChangeError,
   type PlanChangeStore,
   previewPlanChange,
+  classifyBillingCadence,
+  requireSubscriptionBillingCadence,
 } from "@/server/utils/plan-change";
 import { readChargedAmount } from "@/server/utils/billing-amount-resolver";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
@@ -19,8 +20,6 @@ import { organizationAccess } from "@/server/domain/organization-access";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
-const SINGLE_INTERVAL_COUNT = 1;
-const MONTHS_PER_YEAR = 12;
 
 const planChangePreviewSchema = z.object({
   targetPricingCatalogPlanId: z.string().min(1).optional(),
@@ -60,25 +59,6 @@ function readString(source: Record<string, unknown> | undefined, key: string): s
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function readBillingCadence(subscription: Subscription): PlanChangeBillingCadence | undefined {
-  const interval = readString(subscription.metadata, "billingInterval");
-  const frequency = subscription.metadata?.billingFrequency;
-  const intervalCount = typeof frequency === "number" ? frequency : SINGLE_INTERVAL_COUNT;
-
-  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
-    return "monthly";
-  }
-
-  if (
-    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
-    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
-  ) {
-    return "yearly";
-  }
-
-  return;
-}
-
 function readMembershipTargetId(
   subscription: Subscription,
   targetType: "user" | "organization",
@@ -105,28 +85,6 @@ function subscriptionMatchesMembershipTarget(
   target: ReturnType<typeof resolveMembershipTarget>,
 ): boolean {
   return readMembershipTargetId(subscription, target.type) === target.id;
-}
-
-function mapPlanBillingCadence(input: {
-  id: string;
-  interval: string | null;
-  intervalCount: number | null;
-}): PlanChangeBillingCadence | null {
-  const interval = input.interval?.trim().toLowerCase();
-  const intervalCount = input.intervalCount ?? SINGLE_INTERVAL_COUNT;
-
-  if (interval === "month" && intervalCount === SINGLE_INTERVAL_COUNT) {
-    return "monthly";
-  }
-
-  if (
-    (interval === "year" && intervalCount === SINGLE_INTERVAL_COUNT) ||
-    (interval === "month" && intervalCount === MONTHS_PER_YEAR)
-  ) {
-    return "yearly";
-  }
-
-  return null;
 }
 
 function createPlanChangeStore(options: {
@@ -177,7 +135,7 @@ function createPlanChangeStore(options: {
         canonicalTierId:
           readString(currentSubscription.metadata, "tier") ??
           readString(currentSubscription.metadata, "planId"),
-        billingCadence: readBillingCadence(currentSubscription),
+        billingCadence: requireSubscriptionBillingCadence(currentSubscription.metadata),
         organizationId: readMembershipTargetId(currentSubscription, "organization"),
         subscriptionOwnerUserId: readMembershipTargetId(currentSubscription, "user"),
         currentPeriodStart: currentSubscription.currentPeriodStart,
@@ -211,7 +169,7 @@ function createPlanChangeStore(options: {
         );
 
       return rows.flatMap((row) => {
-        const billingCadence = mapPlanBillingCadence(row);
+        const billingCadence = classifyBillingCadence(row);
         if (!billingCadence) {
           return [];
         }
