@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { requestJson } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -34,5 +34,26 @@ export function useFailedPlanChanges() {
     queryFn: async () =>
       (await requestJson<FailedPlanChangesResponse>("/api/auth/admin/plan-changes/failed"))
         .failedPlanChanges,
+  });
+}
+
+/** What `POST /api/auth/admin/plan-changes/:id/retry` returns. */
+export type PlanChangeRetryResult = {
+  action: "activated" | "failed" | "canceled" | "skipped";
+  pendingPlanChange: { id: string; reason: string | null } | null;
+};
+
+/** Activates a failed change now; refreshes the list whatever the outcome. */
+export function useRetryFailedPlanChange() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (pendingPlanChangeId: string) =>
+      requestJson<PlanChangeRetryResult>(
+        `/api/auth/admin/plan-changes/${encodeURIComponent(pendingPlanChangeId)}/retry`,
+        { method: "POST" },
+      ),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.failedPlanChanges() }),
   });
 }

@@ -1,4 +1,16 @@
 import { IconRefresh } from "@tabler/icons-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +22,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type FailedPlanChange, useFailedPlanChanges } from "@/hooks/use-failed-plan-changes";
+import {
+  type FailedPlanChange,
+  useFailedPlanChanges,
+  useRetryFailedPlanChange,
+} from "@/hooks/use-failed-plan-changes";
 import { formatDate, formatPrice } from "@/lib/format";
 import { AdminHeader } from "./components/shared/admin-header";
 
@@ -25,10 +41,20 @@ type FailedPlanChangesViewProps = {
   changes: FailedPlanChange[] | undefined;
   isLoading: boolean;
   error: Error | null;
+  /** Asks to retry one change; the page confirms before calling the API. */
+  onRetry?: (change: FailedPlanChange) => void;
+  /** The change whose retry is in flight, so its button shows it. */
+  retryingId?: string | null;
 };
 
 /** The table on its own, so tests render it without a query client. */
-export function FailedPlanChangesView({ changes, isLoading, error }: FailedPlanChangesViewProps) {
+export function FailedPlanChangesView({
+  changes,
+  isLoading,
+  error,
+  onRetry,
+  retryingId,
+}: FailedPlanChangesViewProps) {
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">Loading failed plan changes…</p>;
   }
@@ -57,6 +83,9 @@ export function FailedPlanChangesView({ changes, isLoading, error }: FailedPlanC
           <TableHead className="text-right">Attempts</TableHead>
           <TableHead>Failed</TableHead>
           <TableHead>Accepted by</TableHead>
+          <TableHead>
+            <span className="sr-only">Actions</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -90,6 +119,16 @@ export function FailedPlanChangesView({ changes, isLoading, error }: FailedPlanC
               <TableCell className="text-sm">
                 {change.acceptedByEmail ?? "Reconciled from the provider"}
               </TableCell>
+              <TableCell className="text-right">
+                <Button
+                  disabled={!onRetry || Boolean(retryingId)}
+                  onClick={() => onRetry?.(change)}
+                  size="sm"
+                  variant="outline"
+                >
+                  {retryingId === change.id ? "Retrying…" : "Retry now"}
+                </Button>
+              </TableCell>
             </TableRow>
           );
         })}
@@ -100,6 +139,24 @@ export function FailedPlanChangesView({ changes, isLoading, error }: FailedPlanC
 
 export default function FailedPlanChangesPage() {
   const { data, isLoading, error, refetch, isFetching } = useFailedPlanChanges();
+  const retry = useRetryFailedPlanChange();
+  const [confirming, setConfirming] = useState<FailedPlanChange | null>(null);
+
+  const runRetry = (change: FailedPlanChange) => {
+    setConfirming(null);
+    retry.mutate(change.id, {
+      onSuccess: (result) => {
+        if (result.action === "activated") {
+          toast.success("Plan change activated");
+          return;
+        }
+        toast.error(
+          `Plan change still failed: ${result.pendingPlanChange?.reason ?? "unknown error"}`,
+        );
+      },
+      onError: (retryError) => toast.error(`Could not retry: ${retryError.message}`),
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -118,14 +175,40 @@ export default function FailedPlanChangesPage() {
           <CardTitle>Needs attention</CardTitle>
           <CardDescription>
             After repeated failed webhook deliveries a change stops retrying and the Membership
-            keeps its current plan. Fix the cause with the payment provider, then the Billing
-            manager can request the change again.
+            keeps its current plan. Fix the cause with the payment provider, then retry it here: the
+            provider is told to charge the target plan from the next charge and the Membership moves
+            to it right away.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <FailedPlanChangesView changes={data} error={error} isLoading={isLoading} />
+          <FailedPlanChangesView
+            changes={data}
+            error={error}
+            isLoading={isLoading}
+            onRetry={setConfirming}
+            retryingId={retry.isPending ? retry.variables : null}
+          />
         </CardContent>
       </Card>
+      <AlertDialog onOpenChange={(open) => !open && setConfirming(null)} open={Boolean(confirming)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retry this plan change now?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirming?.membershipTargetName ?? confirming?.membershipTarget.id} moves to{" "}
+              {confirming?.targetPlanSnapshot.canonicalTierId} immediately, and{" "}
+              {confirming?.targetPlanSnapshot.paymentProvider} charges that plan from the next
+              charge. If it fails again it stays in this list with the new error.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirming && runRetry(confirming)}>
+              Retry now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
