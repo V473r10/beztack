@@ -11,6 +11,9 @@ export type FailedPlanChange = {
   /** The user's email or the organization's name; null if it was deleted. */
   membershipTargetName: string | null;
   acceptedByEmail: string | null;
+  /** The App admin who last retried it; null if never retried. */
+  retriedByEmail: string | null;
+  retriedAt: string | null;
   /** The last activation error. */
   reason: string | null;
   activationAttempts: number;

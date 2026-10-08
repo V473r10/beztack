@@ -17,6 +17,8 @@ const FAILED: FailedPlanChange = {
   membershipTarget: { type: "organization", id: "org_1" },
   membershipTargetName: "Acme",
   acceptedByEmail: "owner@example.com",
+  retriedByEmail: null,
+  retriedAt: null,
   reason: "provider kept charging 1000",
   activationAttempts: 5,
   effectiveAt: "2026-11-01T00:00:00.000Z",
@@ -73,6 +75,17 @@ describe("Failed plan changes page", () => {
     expect(busy).toContain("Retrying…");
     // One retry at a time: every button is disabled while one runs.
     expect(busy.match(/disabled=""/g)).toHaveLength(2);
+  });
+
+  it("shows who retried it last, only once someone did", () => {
+    expect(render({ changes: [FAILED] })).not.toContain("Last retried");
+
+    const html = render({
+      changes: [
+        { ...FAILED, retriedByEmail: "admin@example.com", retriedAt: "2026-10-08T05:00:00.000Z" },
+      ],
+    });
+    expect(html).toContain("Last retried by admin@example.com on Oct 8, 2026, 1:00 AM");
   });
 
   it("says when there is nothing to resolve", () => {

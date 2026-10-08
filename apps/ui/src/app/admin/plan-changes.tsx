@@ -112,7 +112,15 @@ export function FailedPlanChangesView({
               <TableCell className="max-w-xs whitespace-normal break-words text-sm">
                 {change.reason ?? "No error recorded"}
               </TableCell>
-              <TableCell className="text-right">{change.activationAttempts}</TableCell>
+              <TableCell className="text-right">
+                {change.activationAttempts}
+                {change.retriedAt && (
+                  <div className="text-muted-foreground text-xs">
+                    Last retried by {change.retriedByEmail ?? "a deleted admin"} on{" "}
+                    {formatDate(change.retriedAt, DATE_TIME)}
+                  </div>
+                )}
+              </TableCell>
               <TableCell className="text-sm">
                 {change.failedAt ? formatDate(change.failedAt, DATE_TIME) : "—"}
               </TableCell>
