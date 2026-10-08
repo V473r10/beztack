@@ -286,6 +286,26 @@ export type PendingPlanChangeActivationStore = Pick<
   | "recordPendingPlanChangeActivationFailure"
 >;
 
+/**
+ * `applied: false` means the provider accepted the request but did not
+ * apply it (it would keep charging the old terms). Retrying does not help.
+ */
+export type PendingPlanChangeProviderOutcome =
+  | { applied: true }
+  | { applied: false; reason: string };
+
+/**
+ * The Payment provider side of activating a Pending Plan change: make the
+ * Subscription charge `targetPlan`'s terms from the next charge. A thrown
+ * error is transient and retried like any other activation failure.
+ */
+export type PendingPlanChangeProviderPort = {
+  applyPlanChange(input: {
+    subscriptionId: string;
+    targetPlan: PlanChangeCatalogPlan;
+  }): Promise<PendingPlanChangeProviderOutcome>;
+};
+
 export type ProviderConfirmedPlanChangeEvidence = {
   currentSubscriptionId: string;
   direction: Exclude<PlanChangeDirection, "upgrade">;
@@ -1010,6 +1030,8 @@ export async function activatePendingPlanChange(input: {
   currentSubscriptionId: string;
   /** Defaults to MAX_PENDING_PLAN_CHANGE_ACTIVATION_ATTEMPTS. */
   maxActivationAttempts?: number;
+  /** Required: activating without telling the provider leaves it charging the old plan. */
+  provider: PendingPlanChangeProviderPort;
   renewalEvidence: PendingPlanChangeRenewalEvidence;
   store: PendingPlanChangeActivationStore;
 }): Promise<PendingPlanChangeActivation> {
@@ -1069,6 +1091,27 @@ export async function activatePendingPlanChange(input: {
   }
 
   try {
+    // Provider first: if the Membership move then fails, the retry applies
+    // the same terms again, which is harmless.
+    const outcome = await input.provider.applyPlanChange({
+      subscriptionId: input.currentSubscriptionId,
+      targetPlan: pendingPlanChange.targetPlanSnapshot,
+    });
+    if (!outcome.applied) {
+      const failed = await input.store.recordPendingPlanChangeActivationFailure(
+        input.currentSubscriptionId,
+        { error: outcome.reason, maxAttempts: 1 },
+      );
+
+      return {
+        kind: "pending-plan-change-activation",
+        action: "failed",
+        currentSubscriptionId: input.currentSubscriptionId,
+        membershipMoved: false,
+        pendingPlanChange: failed ?? pendingPlanChange,
+      };
+    }
+
     await input.store.moveMembershipToPlan({
       membershipTarget: pendingPlanChange.membershipTarget,
       paymentId: input.renewalEvidence.paymentId ?? `renewal:${input.currentSubscriptionId}`,

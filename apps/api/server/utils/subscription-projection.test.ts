@@ -251,6 +251,7 @@ function createProvider(options: {
     getSubscription: vi.fn((id) => Promise.resolve(options.subscriptions?.[id] ?? null)),
     getPayment: vi.fn((id) => Promise.resolve(options.payments?.[id] ?? null)),
     adjustSubscriptionAmount: vi.fn(() => Promise.resolve()),
+    applyPlanChange: vi.fn(() => Promise.resolve({ applied: true as const })),
     cancelSubscription: vi.fn(() => Promise.resolve()),
   };
 }
@@ -762,7 +763,48 @@ describe("projectSubscriptionProviderEvent", () => {
         targetPlan: acceptedTargetSnapshot,
       },
     ]);
+    expect(provider.applyPlanChange).toHaveBeenCalledWith({
+      subscriptionId: "sub_1",
+      targetPlan: acceptedTargetSnapshot,
+    });
     expect(store.pendingPlanChanges).toEqual(new Map());
+  });
+
+  it("marks the Pending Plan change failed when the provider ignores the change", async () => {
+    const store = createStore({
+      users: ["user_1"],
+      pendingPlanChanges: [pendingPlanChange()],
+    });
+    const provider = createProvider({
+      subscriptions: {
+        sub_1: {
+          id: "sub_1",
+          rawStatus: "authorized",
+          productId: "provider_pro_month",
+          customerEmail: "user@example.com",
+          currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+          metadata: { userId: "user_1", tier: "pro" },
+        },
+      },
+    });
+    vi.mocked(provider.applyPlanChange).mockResolvedValueOnce({
+      applied: false,
+      reason: "Mercado Pago kept charging 1000 instead of 500",
+    });
+
+    const outcome = await projectSubscriptionProviderEvent(subscriptionEnvelope(), {
+      store,
+      provider,
+      subscriptionMode: "user",
+      planChangeStore: store,
+      now: () => PLAN_CHANGE_EFFECTIVE_AT,
+    });
+
+    expect(outcome.status).toBe("processed");
+    expect(store.planChangeMembershipMoves).toEqual([]);
+    expect(outcome.warnings).toContain(
+      "Pending Plan change pending_sub_1 failed to activate after 1 attempts: Mercado Pago kept charging 1000 instead of 500",
+    );
   });
 
   it("answers a failed activation with a failed outcome so the provider retries", async () => {

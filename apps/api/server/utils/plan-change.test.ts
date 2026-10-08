@@ -5,6 +5,8 @@ import {
   cancelPendingPlanChange,
   classifyBillingCadence,
   type PendingPlanChangeCancellationInput,
+  type PendingPlanChangeProviderOutcome,
+  type PendingPlanChangeProviderPort,
   type PendingPlanChangeRecord,
   type PlanChangeCatalogPlan,
   type PlanChangeCurrentSubscription,
@@ -71,6 +73,23 @@ async function previewPricedPlanChange(
     throw new Error(`Expected a priced Plan change preview, got ${preview.kind}`);
   }
   return preview;
+}
+
+type ProviderPortCall = Parameters<PendingPlanChangeProviderPort["applyPlanChange"]>[0];
+
+function createProviderPort(
+  outcome: (() => Promise<PendingPlanChangeProviderOutcome>) | PendingPlanChangeProviderOutcome = {
+    applied: true,
+  },
+): PendingPlanChangeProviderPort & { calls: ProviderPortCall[] } {
+  const calls: ProviderPortCall[] = [];
+  return {
+    calls,
+    applyPlanChange(input) {
+      calls.push(input);
+      return typeof outcome === "function" ? outcome() : Promise.resolve(outcome);
+    },
+  };
 }
 
 function createStore(options: {
@@ -146,6 +165,7 @@ function createStore(options: {
         return Promise.reject(new Error("membership cache unavailable"));
       }
       membershipMoves.push(input);
+      options.operationLog?.push("moveMembershipToPlan");
       return Promise.resolve();
     },
     savePendingPlanChange(input) {
@@ -1279,6 +1299,7 @@ describe("previewPlanChange", () => {
         paymentId: "pay_renewal_1",
         state: "renewed",
       },
+      provider: createProviderPort(),
       store,
     });
 
@@ -1302,6 +1323,91 @@ describe("previewPlanChange", () => {
     ]);
   });
 
+  it("makes the Payment provider charge the target plan before moving the Membership", async () => {
+    const targetPlan = catalogPlan({
+      canonicalTierId: "basic",
+      id: "mercadopago_basic_month",
+      providerPlanId: "provider_basic_month",
+      price: { amount: 500, currency: "UYU" },
+    });
+    const operationLog: string[] = [];
+    const store = createStore({
+      currentSubscription: currentSubscription(),
+      existingPendingPlanChanges: [pendingPlanChange({ targetPlanSnapshot: targetPlan })],
+      operationLog,
+      plans: [catalogPlan()],
+    });
+    const provider = createProviderPort(() => {
+      operationLog.push("provider:applyPlanChange");
+      return Promise.resolve({ applied: true });
+    });
+
+    const activation = await activatePendingPlanChange({
+      currentSubscriptionId: "sub_current",
+      renewalEvidence: { occurredAt: PERIOD_END, state: "renewed" },
+      provider,
+      store,
+    });
+
+    expect(activation.action).toBe("activated");
+    expect(provider.calls).toEqual([{ subscriptionId: "sub_current", targetPlan }]);
+    expect(operationLog.indexOf("provider:applyPlanChange")).toBeLessThan(
+      operationLog.indexOf("moveMembershipToPlan"),
+    );
+  });
+
+  it("marks a Pending Plan change failed at once when the provider ignores the change", async () => {
+    const store = createStore({
+      currentSubscription: currentSubscription(),
+      existingPendingPlanChanges: [pendingPlanChange()],
+      plans: [catalogPlan()],
+    });
+
+    const activation = await activatePendingPlanChange({
+      currentSubscriptionId: "sub_current",
+      renewalEvidence: { occurredAt: PERIOD_END, state: "renewed" },
+      provider: createProviderPort({
+        applied: false,
+        reason: "Mercado Pago kept charging 1000 instead of 500",
+      }),
+      store,
+    });
+
+    expect(activation).toMatchObject({
+      action: "failed",
+      membershipMoved: false,
+      pendingPlanChange: {
+        reason: "Mercado Pago kept charging 1000 instead of 500",
+        status: "failed",
+      },
+    });
+    expect(store.membershipMoves).toEqual([]);
+  });
+
+  it("retries a provider error like any other activation failure", async () => {
+    const store = createStore({
+      currentSubscription: currentSubscription(),
+      existingPendingPlanChanges: [pendingPlanChange()],
+      plans: [catalogPlan()],
+    });
+
+    await expect(
+      activatePendingPlanChange({
+        currentSubscriptionId: "sub_current",
+        renewalEvidence: { occurredAt: PERIOD_END, state: "renewed" },
+        provider: createProviderPort(() => Promise.reject(new Error("provider timeout"))),
+        store,
+      }),
+    ).rejects.toThrow("provider timeout");
+
+    expect(store.pendingPlanChanges.get("sub_current")).toMatchObject({
+      activationAttempts: 1,
+      reason: "provider timeout",
+      status: "pending",
+    });
+    expect(store.membershipMoves).toEqual([]);
+  });
+
   it("does not activate a Pending Plan change before its effective time", async () => {
     const store = createStore({
       currentSubscription: currentSubscription(),
@@ -1315,6 +1421,7 @@ describe("previewPlanChange", () => {
         occurredAt: new Date("2026-06-15T00:00:00.000Z"),
         state: "renewed",
       },
+      provider: createProviderPort(),
       store,
     });
 
@@ -1341,6 +1448,7 @@ describe("previewPlanChange", () => {
         occurredAt: new Date("2026-07-01T00:00:00.000Z"),
         state: "failed",
       },
+      provider: createProviderPort(),
       store,
     });
 
@@ -1372,6 +1480,7 @@ describe("previewPlanChange", () => {
         currentSubscriptionId: "sub_current",
         maxActivationAttempts: 3,
         renewalEvidence: { occurredAt: PERIOD_END, state: "renewed" },
+        provider: createProviderPort(),
         store,
       }),
     ).rejects.toThrow("membership cache unavailable");
@@ -1395,6 +1504,7 @@ describe("previewPlanChange", () => {
         currentSubscriptionId: "sub_current",
         maxActivationAttempts: 3,
         renewalEvidence: { occurredAt: PERIOD_END, state: "renewed" },
+        provider: createProviderPort(),
         store,
       });
 
