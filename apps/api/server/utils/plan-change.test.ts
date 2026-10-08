@@ -8,6 +8,7 @@ import {
   type PendingPlanChangeProviderOutcome,
   type PendingPlanChangeProviderPort,
   type PendingPlanChangeRecord,
+  type PendingPlanChangeRetryStore,
   type PlanChangeCatalogPlan,
   type PlanChangeCurrentSubscription,
   type PlanChangeError,
@@ -17,6 +18,7 @@ import {
   previewPlanChange,
   reconcileProviderConfirmedPlanChange,
   requireSubscriptionBillingCadence,
+  retryFailedPendingPlanChange,
 } from "./plan-change";
 
 const MEMBERSHIP_TARGET = { type: "user", id: "user_1" } as const;
@@ -99,13 +101,14 @@ function createStore(options: {
   failSavePendingPlanChange?: boolean;
   operationLog?: string[];
   plans: PlanChangeCatalogPlan[];
-}): PlanChangeStore & {
-  /** Every row ever stored, oldest first; rows are never removed. */
-  ledger: PendingPlanChangeRecord[];
-  membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][];
-  /** The `pending` rows, by Subscription. */
-  readonly pendingPlanChanges: Map<string, PendingPlanChangeRecord>;
-} {
+}): PlanChangeStore &
+  Pick<PendingPlanChangeRetryStore, "requeueFailedPendingPlanChange"> & {
+    /** Every row ever stored, oldest first; rows are never removed. */
+    ledger: PendingPlanChangeRecord[];
+    membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][];
+    /** The `pending` rows, by Subscription. */
+    readonly pendingPlanChanges: Map<string, PendingPlanChangeRecord>;
+  } {
   const membershipMoves: Parameters<PlanChangeStore["moveMembershipToPlan"]>[0][] = [];
   const ledger: PendingPlanChangeRecord[] = [...(options.existingPendingPlanChanges ?? [])];
   const findPending = (subscriptionId: string) =>
@@ -154,6 +157,14 @@ function createStore(options: {
     },
     findPendingPlanChange(subscriptionId) {
       return Promise.resolve(findPending(subscriptionId));
+    },
+    requeueFailedPendingPlanChange(pendingPlanChangeId) {
+      const row = ledger.find((item) => item.id === pendingPlanChangeId);
+      if (!row || row.status !== "failed" || findPending(row.subscriptionId)) {
+        return Promise.resolve(null);
+      }
+      row.status = "pending";
+      return Promise.resolve(row);
     },
     listActiveVisiblePricingCatalogPlans(paymentProvider) {
       return Promise.resolve(
@@ -1635,5 +1646,116 @@ describe("previewPlanChange", () => {
       reconciliationStatus: "reconciling",
     });
     expect(acceptance.pendingPlanChange).toBeUndefined();
+  });
+});
+
+describe("retryFailedPendingPlanChange", () => {
+  const RETRIED_AT = new Date("2026-07-03T12:00:00.000Z");
+
+  function failedChange(overrides: Partial<PendingPlanChangeRecord> = {}) {
+    return pendingPlanChange({
+      activationAttempts: 5,
+      reason: "provider timeout",
+      status: "failed",
+      ...overrides,
+    });
+  }
+
+  function retry(
+    store: ReturnType<typeof createStore>,
+    provider = createProviderPort(),
+    actor = APP_ADMIN_ACTOR,
+  ) {
+    return retryFailedPendingPlanChange({
+      actor,
+      now: () => RETRIED_AT,
+      pendingPlanChangeId: "pending_sub_current",
+      provider,
+      store,
+    });
+  }
+
+  it("activates a failed change now: provider first, then the Membership", async () => {
+    const store = createStore({ existingPendingPlanChanges: [failedChange()], plans: [] });
+    const provider = createProviderPort();
+
+    const activation = await retry(store, provider);
+
+    expect(activation).toMatchObject({ action: "activated", membershipMoved: true });
+    expect(provider.calls).toEqual([{ subscriptionId: "sub_current", targetPlan: catalogPlan() }]);
+    expect(store.membershipMoves).toEqual([
+      {
+        membershipTarget: MEMBERSHIP_TARGET,
+        paymentId: "admin-retry:pending_sub_current",
+        subscriptionId: "sub_current",
+        targetPlan: catalogPlan(),
+      },
+    ]);
+    expect(store.ledger).toEqual([
+      expect.objectContaining({ id: "pending_sub_current", status: "activated" }),
+    ]);
+  });
+
+  it("puts it back to failed with the new reason, counting the attempt", async () => {
+    const store = createStore({ existingPendingPlanChanges: [failedChange()], plans: [] });
+
+    const activation = await retry(
+      store,
+      createProviderPort(() => Promise.reject(new Error("provider still down"))),
+    );
+
+    expect(activation).toMatchObject({
+      action: "failed",
+      membershipMoved: false,
+      pendingPlanChange: {
+        activationAttempts: 6,
+        reason: "provider still down",
+        status: "failed",
+      },
+    });
+    expect(store.membershipMoves).toEqual([]);
+  });
+
+  it("keeps it failed when the provider ignores the change again", async () => {
+    const store = createStore({ existingPendingPlanChanges: [failedChange()], plans: [] });
+
+    const activation = await retry(
+      store,
+      createProviderPort({ applied: false, reason: "kept charging 1000" }),
+    );
+
+    expect(activation).toMatchObject({
+      action: "failed",
+      pendingPlanChange: { reason: "kept charging 1000", status: "failed" },
+    });
+  });
+
+  it("refuses anyone who is not an App admin", async () => {
+    const store = createStore({ existingPendingPlanChanges: [failedChange()], plans: [] });
+
+    const error = await readRejectedPlanChangeError(
+      retry(store, createProviderPort(), BILLING_MANAGER_ACTOR),
+    );
+
+    expect(error).toMatchObject({ code: "unauthorized_plan_change", statusCode: 403 });
+    expect(store.ledger[0]?.status).toBe("failed");
+  });
+
+  it("refuses a change that is not failed, or that a newer request replaced", async () => {
+    const notFailed = createStore({ existingPendingPlanChanges: [pendingPlanChange()], plans: [] });
+    await expect(readRejectedPlanChangeError(retry(notFailed))).resolves.toMatchObject({
+      code: "not_retryable",
+      statusCode: 409,
+    });
+
+    const superseded = createStore({
+      existingPendingPlanChanges: [failedChange(), pendingPlanChange({ id: "pending_newer" })],
+      plans: [],
+    });
+    const provider = createProviderPort();
+    await expect(readRejectedPlanChangeError(retry(superseded, provider))).resolves.toMatchObject({
+      code: "not_retryable",
+    });
+    expect(provider.calls).toEqual([]);
   });
 });
