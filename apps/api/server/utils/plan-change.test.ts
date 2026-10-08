@@ -158,12 +158,14 @@ function createStore(options: {
     findPendingPlanChange(subscriptionId) {
       return Promise.resolve(findPending(subscriptionId));
     },
-    requeueFailedPendingPlanChange(pendingPlanChangeId) {
+    requeueFailedPendingPlanChange(pendingPlanChangeId, retry) {
       const row = ledger.find((item) => item.id === pendingPlanChangeId);
       if (!row || row.status !== "failed" || findPending(row.subscriptionId)) {
         return Promise.resolve(null);
       }
       row.status = "pending";
+      row.retriedAt = retry.retriedAt;
+      row.retriedByUserId = retry.retriedByUserId;
       return Promise.resolve(row);
     },
     listActiveVisiblePricingCatalogPlans(paymentProvider) {
@@ -191,6 +193,8 @@ function createStore(options: {
         canceledByUserId: null,
         id: `pending_${ledger.length + 1}`,
         reason: null,
+        retriedAt: null,
+        retriedByUserId: null,
         status: "pending",
       };
       ledger.push(row);
@@ -212,6 +216,8 @@ function pendingPlanChange(
     membershipTarget: MEMBERSHIP_TARGET,
     providerConfirmedPlanChangeId: "provider_pending_change_1",
     reason: null,
+    retriedAt: null,
+    retriedByUserId: null,
     status: "pending",
     subscriptionId: "sub_current",
     targetPlanSnapshot: catalogPlan(),
@@ -1692,7 +1698,12 @@ describe("retryFailedPendingPlanChange", () => {
       },
     ]);
     expect(store.ledger).toEqual([
-      expect.objectContaining({ id: "pending_sub_current", status: "activated" }),
+      expect.objectContaining({
+        id: "pending_sub_current",
+        retriedAt: RETRIED_AT,
+        retriedByUserId: "admin_1",
+        status: "activated",
+      }),
     ]);
   });
 

@@ -48,6 +48,8 @@ function pendingPlanChange(
     membershipTarget: { type: "user", id: "user_1" },
     providerConfirmedPlanChangeId: "provider_pending_change_1",
     reason: null,
+    retriedAt: null,
+    retriedByUserId: null,
     status: "pending",
     subscriptionId: "sub_1",
     targetPlanSnapshot: catalogPlan(),
@@ -240,6 +242,8 @@ function createStore(options?: {
         canceledByUserId: null,
         id: `pending_${input.subscriptionId}`,
         reason: null,
+        retriedAt: null,
+        retriedByUserId: null,
         status: "pending",
       };
       pendingPlanChanges.set(input.subscriptionId, savedPendingPlanChange);

@@ -209,20 +209,29 @@ describe.skipIf(!TEST_DATABASE_URL)("Pending Plan change ledger on Postgres", ()
       maxAttempts: 1,
     });
 
-    await expect(ledger.requeueFailedPendingPlanChange(saved.id)).resolves.toMatchObject({
+    const retriedAt = new Date("2026-07-03T12:00:00.000Z");
+    const retry = () =>
+      ledger.requeueFailedPendingPlanChange(saved.id, { retriedAt, retriedByUserId: "user_1" });
+
+    await expect(retry()).resolves.toMatchObject({
       activationAttempts: 1,
       reason: "boom",
+      retriedAt,
+      retriedByUserId: "user_1",
       status: "pending",
     });
     // Already pending again: a second retry has nothing to requeue.
-    await expect(ledger.requeueFailedPendingPlanChange(saved.id)).resolves.toBeNull();
+    await expect(retry()).resolves.toBeNull();
 
     await ledger.recordPendingPlanChangeActivationFailure("sub_1", {
       error: "boom again",
       maxAttempts: 2,
     });
+    const [failedAgain] = await modules.ledgerModule.listFailedPendingPlanChanges();
+    expect(failedAgain).toMatchObject({ retriedByEmail: "user@example.com", retriedAt });
+
     await ledger.savePendingPlanChange(change());
-    await expect(ledger.requeueFailedPendingPlanChange(saved.id)).resolves.toBeNull();
+    await expect(retry()).resolves.toBeNull();
     expect(await statuses("sub_1")).toEqual([
       ["failed", "boom again"],
       ["pending", null],

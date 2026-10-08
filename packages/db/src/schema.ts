@@ -360,6 +360,11 @@ export const pendingPlanChange = pgTable(
     }),
     /** Cancel reason, or the last activation error while `pending`/`failed`. */
     reason: text("reason"),
+    /** The App admin who last retried it after it failed; null if never retried. */
+    retriedByUserId: text("retried_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    retriedAt: timestamp("retried_at", { withTimezone: true }),
     activationAttempts: integer("activation_attempts").default(0).notNull(),
     activatedAt: timestamp("activated_at", { withTimezone: true }),
     canceledAt: timestamp("canceled_at", { withTimezone: true }),

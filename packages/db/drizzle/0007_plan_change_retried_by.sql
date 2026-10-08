@@ -1,0 +1,3 @@
+ALTER TABLE "pending_plan_change" ADD COLUMN "retried_by_user_id" text;--> statement-breakpoint
+ALTER TABLE "pending_plan_change" ADD COLUMN "retried_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "pending_plan_change" ADD CONSTRAINT "pending_plan_change_retried_by_user_id_user_id_fk" FOREIGN KEY ("retried_by_user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
