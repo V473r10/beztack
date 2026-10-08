@@ -17,6 +17,7 @@ import type {
   UpdateSubscriptionOptions,
   WebhookPayload,
 } from "@beztack/payments";
+import { SubscriptionUpdateNotAppliedError } from "@beztack/payments";
 import { decodeExternalReference, encodeExternalReference } from "./helpers/external-reference.js";
 import { mapMPStatus } from "./helpers/status-mapping.js";
 import { createMercadoPagoClient } from "./server/client.js";
@@ -398,6 +399,37 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
     integratorId: config.integratorId,
   });
 
+  /**
+   * The amount a Subscription must charge to follow `productId`. Refuses a
+   * target Mercado Pago cannot apply to an existing preapproval: another
+   * frequency or another currency.
+   */
+  async function resolveTargetAmount(
+    subscriptionId: string,
+    current: MPSubscriptionResponse,
+    productId: string,
+  ): Promise<number> {
+    const target = await client.plans.get(productId);
+    assertBelongsToApplication(target, applicationId, "Plan");
+
+    const from = current.auto_recurring;
+    const to = target.auto_recurring;
+    if (from?.frequency !== to.frequency || from?.frequency_type !== to.frequency_type) {
+      throw new SubscriptionUpdateNotAppliedError(
+        subscriptionId,
+        "Mercado Pago cannot change the frequency of an existing subscription",
+      );
+    }
+    if (from?.currency_id !== to.currency_id) {
+      throw new SubscriptionUpdateNotAppliedError(
+        subscriptionId,
+        "Mercado Pago cannot change the currency of an existing subscription",
+      );
+    }
+
+    return to.transaction_amount;
+  }
+
   return {
     provider: "mercadopago",
     // A preapproval's frequency cannot be changed (verified in the sandbox, #48).
@@ -598,12 +630,32 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
         throw new Error("Subscription not found");
       }
 
+      // Mercado Pago cannot move a preapproval to another plan or frequency
+      // (it answers 200 and ignores both). It can change the amount, so a
+      // Product move becomes "charge the target plan's amount from the next
+      // charge", and the amount that comes back is verified.
+      let targetAmount: number | undefined;
+      if (options.productId) {
+        targetAmount = await resolveTargetAmount(subscriptionId, current, options.productId);
+        body.auto_recurring = { transaction_amount: targetAmount };
+      }
+
       await client.subscriptions.update(
         subscriptionId,
         body as Parameters<typeof client.subscriptions.update>[1],
       );
       const updated = await client.subscriptions.get(subscriptionId);
       assertBelongsToApplication(updated, applicationId, "Subscription");
+
+      if (
+        targetAmount !== undefined &&
+        updated.auto_recurring?.transaction_amount !== targetAmount
+      ) {
+        throw new SubscriptionUpdateNotAppliedError(
+          subscriptionId,
+          `Mercado Pago kept charging ${updated.auto_recurring?.transaction_amount} instead of ${targetAmount}`,
+        );
+      }
 
       return mapSubscriptionResource(updated, subscriptionId);
     },

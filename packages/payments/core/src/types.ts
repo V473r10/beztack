@@ -122,6 +122,12 @@ export type CreateSubscriptionOptions = {
  * Subscription update options
  */
 export type UpdateSubscriptionOptions = {
+  /**
+   * Move the Subscription to this Product: the provider charges the new
+   * Product's terms from the next charge. An adapter that cannot apply it
+   * throws `SubscriptionUpdateNotAppliedError` rather than returning the
+   * unchanged Subscription.
+   */
   productId?: string;
   cancelAtPeriodEnd?: boolean;
   status?: "pause" | "resume" | "cancel";

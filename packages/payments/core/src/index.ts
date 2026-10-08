@@ -13,6 +13,11 @@ export {
 } from "./factory.js";
 // Current Subscription rule
 export { isCurrentSubscription } from "./subscription.js";
+// Errors
+export {
+  isSubscriptionUpdateNotAppliedError,
+  SubscriptionUpdateNotAppliedError,
+} from "./errors.js";
 // Types
 export type {
   BillingInterval,

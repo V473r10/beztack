@@ -18,6 +18,7 @@ import type {
   UpdateSubscriptionOptions,
   WebhookPayload,
 } from "@beztack/payments";
+import { SubscriptionUpdateNotAppliedError } from "@beztack/payments";
 import { Polar } from "@polar-sh/sdk";
 import type { PresentmentCurrency } from "@polar-sh/sdk/models/components/presentmentcurrency.js";
 
@@ -300,6 +301,13 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
             options.prorationBehavior === "none" ? undefined : options.prorationBehavior,
         },
       });
+
+      if (options.productId && updated.productId !== options.productId) {
+        throw new SubscriptionUpdateNotAppliedError(
+          subscriptionId,
+          `Polar kept the Subscription on ${updated.productId} instead of ${options.productId}`,
+        );
+      }
 
       return {
         id: updated.id,
