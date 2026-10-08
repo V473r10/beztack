@@ -322,7 +322,15 @@ export type PlanChangeReconciliationStore = Pick<
 >;
 
 export type PlanChangeProjectionStore = PendingPlanChangeActivationStore &
-  PlanChangeReconciliationStore;
+  PlanChangeReconciliationStore & {
+    /**
+     * The most recently activated Plan change of a Subscription. Its target
+     * plan is the Membership's tier from then on, because provider metadata
+     * can keep naming the old plan (Mercado Pago's external reference, Polar's
+     * checkout metadata).
+     */
+    findLatestActivatedPlanChange(subscriptionId: string): Promise<PendingPlanChangeRecord | null>;
+  };
 
 export type PlanChangeReconciliation = {
   kind: "plan-change-reconciliation";

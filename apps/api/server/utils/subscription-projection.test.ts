@@ -82,6 +82,7 @@ function createStore(options?: {
   const organizationMemberships = new Map<string, Record<string, unknown>>();
   const webhookLogs = new Map<string, { id: number; status: string | null }>();
   const pendingPlanChanges = new Map<string, PendingPlanChangeRecord>();
+  const activatedPlanChanges = new Map<string, PendingPlanChangeRecord>();
   const planChangeMembershipMoves: Parameters<
     PlanChangeProjectionStore["moveMembershipToPlan"]
   >[0][] = [];
@@ -112,12 +113,17 @@ function createStore(options?: {
     markPendingPlanChangeActivated(subscriptionId) {
       const activatedPendingPlanChange = pendingPlanChanges.get(subscriptionId) ?? null;
       pendingPlanChanges.delete(subscriptionId);
-      return Promise.resolve(
-        activatedPendingPlanChange && {
-          ...activatedPendingPlanChange,
-          status: "activated" as const,
-        },
-      );
+      const activated = activatedPendingPlanChange && {
+        ...activatedPendingPlanChange,
+        status: "activated" as const,
+      };
+      if (activated) {
+        activatedPlanChanges.set(subscriptionId, activated);
+      }
+      return Promise.resolve(activated);
+    },
+    findLatestActivatedPlanChange(subscriptionId) {
+      return Promise.resolve(activatedPlanChanges.get(subscriptionId) ?? null);
     },
     recordPendingPlanChangeActivationFailure(subscriptionId, failure) {
       const row = pendingPlanChanges.get(subscriptionId);
@@ -805,6 +811,45 @@ describe("projectSubscriptionProviderEvent", () => {
     expect(outcome.warnings).toContain(
       "Pending Plan change pending_sub_1 failed to activate after 1 attempts: Mercado Pago kept charging 1000 instead of 500",
     );
+  });
+
+  it("keeps the activated tier on later webhooks while the provider still reports the old one", async () => {
+    const store = createStore({
+      users: ["user_1"],
+      pendingPlanChanges: [pendingPlanChange()],
+    });
+    // The provider charges the Basic amount but its `tier` metadata still says
+    // Pro: Mercado Pago cannot rewrite it with the amount change, and Polar
+    // keeps checkout metadata across a product change.
+    const provider = createProvider({
+      subscriptions: {
+        sub_1: {
+          id: "sub_1",
+          rawStatus: "authorized",
+          productId: "provider_pro_month",
+          productName: "Pro",
+          customerEmail: "user@example.com",
+          currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+          metadata: { userId: "user_1", tier: "pro" },
+        },
+      },
+    });
+    const dependencies = {
+      store,
+      provider,
+      subscriptionMode: "user" as const,
+      planChangeStore: store,
+      now: () => PLAN_CHANGE_EFFECTIVE_AT,
+    };
+
+    await projectSubscriptionProviderEvent(subscriptionEnvelope(), dependencies);
+    const nextRenewal = await projectSubscriptionProviderEvent(
+      subscriptionEnvelope({ eventId: "evt_sub_2", deliveryId: "delivery_2" }),
+      dependencies,
+    );
+
+    expect(nextRenewal.status).toBe("processed");
+    expect(store.userMemberships.get("user_1")).toMatchObject({ subscriptionTier: "basic" });
   });
 
   it("answers a failed activation with a failed outcome so the provider retries", async () => {
