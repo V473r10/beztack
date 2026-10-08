@@ -362,4 +362,79 @@ describe("createMercadoPagoAdapter", () => {
     );
     expect(client.subscriptions.cancel).not.toHaveBeenCalled();
   });
+
+  describe("updateSubscription({ productId })", () => {
+    function targetPlan(
+      amount: number,
+      overrides: Partial<MPPreapprovalPlan["auto_recurring"]> = {},
+    ) {
+      const result = plan("plan_basic");
+      result.auto_recurring = {
+        ...result.auto_recurring,
+        transaction_amount: amount,
+        ...overrides,
+      };
+      return result;
+    }
+
+    function withAmount(amount: number): MPPreapproval {
+      const result = subscription("sub_1");
+      result.auto_recurring = { ...result.auto_recurring, transaction_amount: amount };
+      return result;
+    }
+
+    it("changes the amount of the existing subscription to the target plan's", async () => {
+      client.plans.get.mockResolvedValueOnce(targetPlan(500));
+      client.subscriptions.get
+        .mockResolvedValueOnce(withAmount(1000))
+        .mockResolvedValueOnce(withAmount(500));
+
+      const updated = await createAdapter().updateSubscription("sub_1", {
+        productId: "plan_basic",
+      });
+
+      expect(client.plans.get).toHaveBeenCalledWith("plan_basic");
+      expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
+        auto_recurring: { transaction_amount: 500 },
+      });
+      expect(updated.metadata?.billingAmount).toBe(500);
+    });
+
+    it("refuses when Mercado Pago returns another amount", async () => {
+      client.plans.get.mockResolvedValueOnce(targetPlan(500));
+      client.subscriptions.get
+        .mockResolvedValueOnce(withAmount(1000))
+        .mockResolvedValueOnce(withAmount(1000));
+
+      await expect(
+        createAdapter().updateSubscription("sub_1", { productId: "plan_basic" }),
+      ).rejects.toMatchObject({ name: "SubscriptionUpdateNotAppliedError" });
+    });
+
+    it.each([
+      { label: "frequency", overrides: { frequency: 12 } },
+      { label: "currency", overrides: { currency_id: "USD" } },
+    ])(
+      "refuses a target plan with another $label without calling Mercado Pago",
+      async ({ overrides }) => {
+        client.plans.get.mockResolvedValueOnce(targetPlan(500, overrides));
+        client.subscriptions.get.mockResolvedValueOnce(withAmount(1000));
+
+        await expect(
+          createAdapter().updateSubscription("sub_1", { productId: "plan_basic" }),
+        ).rejects.toMatchObject({ name: "SubscriptionUpdateNotAppliedError" });
+        expect(client.subscriptions.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it("refuses a target plan from another Application", async () => {
+      client.plans.get.mockResolvedValueOnce(plan("plan_other", OTHER_APPLICATION_ID));
+      client.subscriptions.get.mockResolvedValueOnce(withAmount(1000));
+
+      await expect(
+        createAdapter().updateSubscription("sub_1", { productId: "plan_other" }),
+      ).rejects.toThrow("does not belong");
+      expect(client.subscriptions.update).not.toHaveBeenCalled();
+    });
+  });
 });
