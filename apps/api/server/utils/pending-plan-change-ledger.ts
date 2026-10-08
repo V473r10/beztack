@@ -15,6 +15,7 @@ import type {
   PlanChangeBillingCadence,
   PlanChangeCatalogPlan,
   PlanChangeMembershipTarget,
+  PlanChangeProjectionStore,
   PlanChangeStore,
 } from "@/server/utils/plan-change";
 
@@ -25,7 +26,8 @@ export type PendingPlanChangeLedger = Pick<
   | "markPendingPlanChangeActivated"
   | "recordPendingPlanChangeActivationFailure"
   | "savePendingPlanChange"
->;
+> &
+  Pick<PlanChangeProjectionStore, "findLatestActivatedPlanChange">;
 
 type PendingPlanChangeRow = typeof pendingPlanChangeTable.$inferSelect;
 
@@ -114,6 +116,21 @@ export function createDbPendingPlanChangeLedger(): PendingPlanChangeLedger {
         .select()
         .from(pendingPlanChangeTable)
         .where(isPendingFor(subscriptionId))
+        .limit(1);
+
+      return row ? mapPendingPlanChangeRow(row) : null;
+    },
+    async findLatestActivatedPlanChange(subscriptionId) {
+      const [row] = await db
+        .select()
+        .from(pendingPlanChangeTable)
+        .where(
+          and(
+            eq(pendingPlanChangeTable.subscriptionId, subscriptionId),
+            eq(pendingPlanChangeTable.status, "activated"),
+          ),
+        )
+        .orderBy(desc(pendingPlanChangeTable.activatedAt))
         .limit(1);
 
       return row ? mapPendingPlanChangeRow(row) : null;

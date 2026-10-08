@@ -575,10 +575,17 @@ async function projectSubscriptionResource(options: {
     target,
   });
 
-  const tier = resolveMembershipTier({
-    metadata: subscription.metadata,
-    productName: subscription.productName,
-  });
+  // An activated Plan change outranks provider metadata, which can keep
+  // naming the plan the Subscription was checked out on.
+  const activatedPlanChange = await options.planChangeStore?.findLatestActivatedPlanChange(
+    subscription.id,
+  );
+  const tier =
+    activatedPlanChange?.targetPlanSnapshot.canonicalTierId ??
+    resolveMembershipTier({
+      metadata: subscription.metadata,
+      productName: subscription.productName,
+    });
   const warnings = await projectMembershipCache({
     store: options.store,
     target,
