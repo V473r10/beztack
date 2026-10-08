@@ -47,6 +47,23 @@ jobs:
   test-api:
     name: Test apps/api
     runs-on: ubuntu-latest
+    # Throwaway Postgres for the database-backed tests (*.db.test.ts). The
+    # database name must end in _test: those tests drop and rebuild its schema.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: beztack_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/beztack_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
