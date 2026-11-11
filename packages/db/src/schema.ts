@@ -96,11 +96,15 @@ export const twoFactor = pgTable("two_factor", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  verified: boolean("verified").default(true),
+  failedVerificationCount: integer("failed_verification_count").default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
 });
 
 export const team = pgTable("team", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  memberCount: integer("member_count").default(0).notNull(),
   organizationId: text("organization_id")
     .notNull()
     .references(() => organization.id, { onDelete: "cascade" }),
@@ -119,6 +123,7 @@ export const teamMember = pgTable("team_member", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  membershipKey: text("membership_key").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }),
 });
 

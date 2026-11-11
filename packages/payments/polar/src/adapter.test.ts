@@ -12,8 +12,8 @@ const sdk = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@polar-sh/sdk", () => ({
-  Polar: vi.fn(() => sdk.client),
+vi.mock("@polar-sh/sdk/2026-10", () => ({
+  createPolar: vi.fn(() => sdk.client),
 }));
 
 const client = sdk.client;
@@ -32,13 +32,13 @@ function polarSubscription(overrides: Record<string, unknown> = {}) {
   return {
     id: "sub_1",
     status: "active",
-    productId: "prod_pro",
+    product_id: "prod_pro",
     product: { name: "Pro" },
-    customerId: "cus_1",
-    customer: { email: "user@example.com", externalId: "user_1" },
-    currentPeriodStart: "2026-06-01T00:00:00.000Z",
-    currentPeriodEnd: "2026-07-01T00:00:00.000Z",
-    cancelAtPeriodEnd: false,
+    customer_id: "cus_1",
+    customer: { email: "user@example.com", external_id: "user_1" },
+    current_period_start: "2026-06-01T00:00:00.000Z",
+    current_period_end: "2026-07-01T00:00:00.000Z",
+    cancel_at_period_end: false,
     metadata: { tier: "pro" },
     ...overrides,
   };
@@ -59,9 +59,9 @@ describe("createPolarAdapter", () => {
       client.products.get.mockResolvedValueOnce({
         id: "prod_pro",
         name: "Pro",
-        isRecurring: true,
-        recurringInterval: "year",
-        prices: [{ priceAmount: 2900, priceCurrency: "usd" }],
+        is_recurring: true,
+        recurring_interval: "year",
+        prices: [{ price_amount: 2900, price_currency: "usd" }],
         metadata: { tier: "pro" },
       });
 
@@ -96,8 +96,8 @@ describe("createPolarAdapter", () => {
 
       expect(client.products.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          recurringInterval: "month",
-          prices: [{ amountType: "fixed", priceAmount: 50, priceCurrency: "usd" }],
+          recurring_interval: "month",
+          prices: [{ amount_type: "fixed", price_amount: 50, price_currency: "usd" }],
         }),
       );
     });
@@ -107,10 +107,7 @@ describe("createPolarAdapter", () => {
 
       await createAdapter().deleteProduct("prod_pro");
 
-      expect(client.products.update).toHaveBeenCalledWith({
-        id: "prod_pro",
-        productUpdate: { isArchived: true },
-      });
+      expect(client.products.update).toHaveBeenCalledWith("prod_pro", { is_archived: true });
     });
   });
 
@@ -142,36 +139,35 @@ describe("createPolarAdapter", () => {
       const atPeriodEnd = await adapter.cancelSubscription("sub_1");
       const immediately = await adapter.cancelSubscription("sub_1", true);
 
-      expect(client.subscriptions.update).toHaveBeenNthCalledWith(1, {
-        id: "sub_1",
-        subscriptionUpdate: { cancelAtPeriodEnd: true },
+      expect(client.subscriptions.update).toHaveBeenNthCalledWith(1, "sub_1", {
+        cancel_at_period_end: true,
       });
       expect(atPeriodEnd).toMatchObject({ status: "active", cancelAtPeriodEnd: true });
       expect(immediately).toMatchObject({ status: "canceled", cancelAtPeriodEnd: false });
     });
 
     it("lists by Polar customer id when given a UUID, else by external id", async () => {
-      client.subscriptions.list.mockResolvedValue({ result: { items: [polarSubscription()] } });
+      client.subscriptions.list.mockResolvedValue({ items: [polarSubscription()] });
       const adapter = createAdapter();
 
       await adapter.listSubscriptions({ customerId: CUSTOMER_UUID });
       const [subscription] = await adapter.listSubscriptions({ customerId: "user_1" });
 
       expect(client.subscriptions.list).toHaveBeenNthCalledWith(1, {
-        customerId: CUSTOMER_UUID,
-        externalCustomerId: undefined,
+        customer_id: CUSTOMER_UUID,
+        external_customer_id: undefined,
         limit: 50,
       });
       expect(client.subscriptions.list).toHaveBeenNthCalledWith(2, {
-        customerId: undefined,
-        externalCustomerId: "user_1",
+        customer_id: undefined,
+        external_customer_id: "user_1",
         limit: 50,
       });
       expect(subscription.customerId).toBe("user_1");
     });
 
     it("lists nothing when the customer email is unknown", async () => {
-      client.customers.list.mockResolvedValueOnce({ result: { items: [] } });
+      client.customers.list.mockResolvedValueOnce({ items: [] });
 
       await expect(
         createAdapter().listSubscriptions({ customerEmail: "nobody@example.com" }),
@@ -183,7 +179,7 @@ describe("createPolarAdapter", () => {
   describe("updateSubscription({ productId })", () => {
     it("moves the Subscription with Polar's native product change", async () => {
       client.subscriptions.update.mockResolvedValueOnce(
-        polarSubscription({ productId: "prod_basic", product: { name: "Basic" } }),
+        polarSubscription({ product_id: "prod_basic", product: { name: "Basic" } }),
       );
 
       const updated = await createAdapter().updateSubscription("sub_1", {
@@ -191,16 +187,16 @@ describe("createPolarAdapter", () => {
         prorationBehavior: "prorate",
       });
 
-      expect(client.subscriptions.update).toHaveBeenCalledWith({
-        id: "sub_1",
-        subscriptionUpdate: { productId: "prod_basic", prorationBehavior: "prorate" },
+      expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
+        product_id: "prod_basic",
+        proration_behavior: "prorate",
       });
       expect(updated).toMatchObject({ productId: "prod_basic", productName: "Basic" });
     });
 
     it("sends no proration behavior for 'none'", async () => {
       client.subscriptions.update.mockResolvedValueOnce(
-        polarSubscription({ productId: "prod_basic" }),
+        polarSubscription({ product_id: "prod_basic" }),
       );
 
       await createAdapter().updateSubscription("sub_1", {
@@ -208,9 +204,9 @@ describe("createPolarAdapter", () => {
         prorationBehavior: "none",
       });
 
-      expect(client.subscriptions.update).toHaveBeenCalledWith({
-        id: "sub_1",
-        subscriptionUpdate: { productId: "prod_basic", prorationBehavior: undefined },
+      expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
+        product_id: "prod_basic",
+        proration_behavior: undefined,
       });
     });
 

@@ -4,7 +4,7 @@
  * Wraps @polar-sh/better-auth so that apps/api never imports Polar directly.
  */
 import { checkout, polar, portal, usage } from "@polar-sh/better-auth";
-import { Polar } from "@polar-sh/sdk";
+import { createPolarCore } from "@polar-sh/sdk/2026-10";
 
 export type PolarAuthPluginConfig = {
   accessToken: string;
@@ -25,9 +25,9 @@ export type PolarAuthPluginConfig = {
  * Returns null if config is missing or provider is not polar.
  */
 export function createPolarAuthPlugin(config: PolarAuthPluginConfig): ReturnType<typeof polar> {
-  const client = new Polar({
+  const client = createPolarCore({
     accessToken: config.accessToken,
-    server: config.server,
+    environment: config.server,
   });
 
   return polar({
