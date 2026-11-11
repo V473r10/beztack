@@ -57,6 +57,13 @@
       "when": 1791434102668,
       "tag": "0007_plan_change_retried_by",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794371021931,
+      "tag": "0008_better_auth_1_7",
+      "breakpoints": true
     }
   ]
 }
