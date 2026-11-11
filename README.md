@@ -206,7 +206,7 @@ Beztack is designed to deploy anywhere:
 
 ## License
 
-APGL-3.0
+[MIT](./LICENSE)
 
 ---
 
