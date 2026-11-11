@@ -16,5 +16,12 @@ allowBuilds:
   sharp: true
   tesseract.js: true
 
+# Security floors for transitive copies (pnpm audit, 2026-11).
+overrides:
+  next: ^16.4.6
+  undici@6: ^6.29.1
+  "@fastify/busboy": ^3.2.1
+  postcss: ^8.5.12
+
 autoInstallPeers: true
 strictPeerDependencies: false
