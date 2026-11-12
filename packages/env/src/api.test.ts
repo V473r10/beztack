@@ -83,3 +83,80 @@ describe("API env: project currency and locale", () => {
     await expect(loadApiEnv()).rejects.toThrow();
   });
 });
+
+const POLAR_ENV: Record<string, string> = {
+  PAYMENT_PROVIDER: "polar",
+  POLAR_ACCESS_TOKEN: "polar-test-token",
+  POLAR_WEBHOOK_SECRET: "polar-test-secret",
+  POLAR_ORGANIZATION_ID: "00000000-0000-4000-8000-000000000000",
+  POLAR_BASIC_MONTHLY_PRODUCT_ID: "00000000-0000-4000-8000-000000000001",
+  POLAR_BASIC_YEARLY_PRODUCT_ID: "00000000-0000-4000-8000-000000000002",
+  POLAR_PRO_MONTHLY_PRODUCT_ID: "00000000-0000-4000-8000-000000000003",
+  POLAR_PRO_YEARLY_PRODUCT_ID: "00000000-0000-4000-8000-000000000004",
+  POLAR_ULTIMATE_MONTHLY_PRODUCT_ID: "00000000-0000-4000-8000-000000000005",
+  POLAR_ULTIMATE_YEARLY_PRODUCT_ID: "00000000-0000-4000-8000-000000000006",
+};
+
+describe("API env: DEMO_MODE fails closed", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("is off by default", async () => {
+    stubApiEnv({});
+
+    const env = await loadApiEnv();
+
+    expect(env.DEMO_MODE).toBe(false);
+  });
+
+  it("does not check the provider when DEMO_MODE is off", async () => {
+    stubApiEnv({ ...POLAR_ENV, POLAR_SERVER: "production" });
+
+    await expect(loadApiEnv()).resolves.toMatchObject({ DEMO_MODE: false });
+  });
+
+  it("starts on the Polar sandbox", async () => {
+    stubApiEnv({ ...POLAR_ENV, DEMO_MODE: "true", POLAR_SERVER: "sandbox" });
+
+    await expect(loadApiEnv()).resolves.toMatchObject({ DEMO_MODE: true });
+  });
+
+  it("refuses to start on the Polar production server", async () => {
+    stubApiEnv({ ...POLAR_ENV, DEMO_MODE: "true", POLAR_SERVER: "production" });
+
+    await expect(loadApiEnv()).rejects.toThrow(/POLAR_SERVER must be "sandbox"/);
+  });
+
+  it("refuses to start on Mercado Pago without the sandbox confirmation", async () => {
+    stubApiEnv({ DEMO_MODE: "true" });
+
+    await expect(loadApiEnv()).rejects.toThrow(/DEMO_MERCADO_PAGO_SANDBOX_CONFIRMED/);
+  });
+
+  it("starts on Mercado Pago once the test credentials are confirmed", async () => {
+    stubApiEnv({ DEMO_MODE: "true", DEMO_MERCADO_PAGO_SANDBOX_CONFIRMED: "true" });
+
+    await expect(loadApiEnv()).resolves.toMatchObject({ DEMO_MODE: true });
+  });
+
+  it("does not leak the payment credentials in the error", async () => {
+    stubApiEnv({ DEMO_MODE: "true" });
+
+    const error = await loadApiEnv().catch((caught: unknown) => caught);
+
+    expect(String(error)).not.toContain(VALID_API_ENV.MERCADO_PAGO_ACCESS_TOKEN);
+  });
+
+  it("rejects a DEMO_MODE value that is not true or false", async () => {
+    stubApiEnv({ DEMO_MODE: "yes" });
+
+    await expect(loadApiEnv()).rejects.toThrow();
+  });
+});

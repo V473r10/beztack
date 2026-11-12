@@ -17,7 +17,9 @@
     "db:migrate": "pnpm --filter @beztack/db db:migrate",
     "db:push": "pnpm --filter @beztack/db db:push",
     "db:studio": "pnpm --filter @beztack/db db:studio",
-    "generate-auth-schema": "pnpm --filter @beztack/db generate-auth-schema"
+    "generate-auth-schema": "pnpm --filter @beztack/db generate-auth-schema",
+    "demo:seed": "pnpm --filter @beztack/api run demo:seed",
+    "demo:reset": "pnpm --filter @beztack/api run demo:reset"
   },
   "devDependencies": {
     "@nx/js": "21.4.1",

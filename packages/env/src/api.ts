@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
+import { assertDemoSandboxPayments } from "./demo.js";
 import { CURRENCY_CODE_SCHEMA, LOCALE_SCHEMA } from "./regional.js";
 
 const URL_SCHEMA = z.string().url();
@@ -13,6 +14,10 @@ const URL_LIST_SCHEMA = z.string().refine(
   "Must be a comma-separated list of valid URLs",
 );
 const UUID_SCHEMA = z.string().uuid();
+const BOOLEAN_FLAG_SCHEMA = z
+  .enum(["true", "false"])
+  .default("false")
+  .transform((value) => value === "true");
 
 const PAYMENT_PROVIDERS = ["polar", "mercadopago"] as const;
 
@@ -105,6 +110,16 @@ export const env = createEnv({
     // The origin of APP_URL is always allowed.
     CORS_ORIGINS: URL_LIST_SCHEMA.default(""),
 
+    // Public live demo (see docs/demo.md). DEMO_MODE refuses to start unless
+    // the active payment provider is in sandbox.
+    DEMO_MODE: BOOLEAN_FLAG_SCHEMA,
+    // Mercado Pago has no sandbox switch: test credentials look like live ones.
+    // The operator attests here that the credentials are the test ones.
+    DEMO_MERCADO_PAGO_SANDBOX_CONFIRMED: BOOLEAN_FLAG_SCHEMA,
+    // Read only by the demo seed script. The admin email must also be on APP_ADMIN_EMAILS.
+    DEMO_ADMIN_EMAIL: z.string().default(""),
+    DEMO_ADMIN_PASSWORD: z.string().default(""),
+
     // Node
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
@@ -170,4 +185,12 @@ if (activePaymentProvider === "polar") {
 if (activePaymentProvider === "mercadopago") {
   assertRequired("MERCADO_PAGO_ACCESS_TOKEN", env.MERCADO_PAGO_ACCESS_TOKEN);
   assertRequired("MERCADO_PAGO_APPLICATION_ID", env.MERCADO_PAGO_APPLICATION_ID);
+}
+
+if (env.DEMO_MODE) {
+  assertDemoSandboxPayments({
+    paymentProvider: env.PAYMENT_PROVIDER,
+    polarServer: env.POLAR_SERVER,
+    mercadoPagoSandboxConfirmed: env.DEMO_MERCADO_PAGO_SANDBOX_CONFIRMED,
+  });
 }

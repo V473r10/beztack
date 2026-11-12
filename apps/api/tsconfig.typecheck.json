@@ -13,6 +13,13 @@
   // in the API's production dependency graph) and are already covered by the
   // `vp test` run in CI. Production server code is what this gate protects.
   "extends": "./tsconfig.json",
-  "include": ["server/**/*.ts", "env.ts", "nitro.config.ts", "drizzle.config.ts", "lib/**/*.ts"],
+  "include": [
+    "server/**/*.ts",
+    "env.ts",
+    "nitro.config.ts",
+    "drizzle.config.ts",
+    "lib/**/*.ts",
+    "scripts/**/*.mts"
+  ],
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "node_modules", ".nitro", ".output"]
 }

@@ -24,6 +24,7 @@ import AcceptInvitation from "./app/invitations/accept-invitation.tsx";
 import OrganizationsPage from "./app/organizations/organizations.tsx";
 import { Settings } from "./app/settings/settings.tsx";
 import { AdminTierOverrideBanner } from "./components/admin-tier-override-banner.tsx";
+import { DemoBanner } from "./components/demo-banner.tsx";
 import { MainLayout } from "./components/main-layout.tsx";
 import { PaymentProviderWrapper } from "./components/payment-provider-wrapper.tsx";
 import {
@@ -169,6 +170,7 @@ function App() {
             />
           </Routes>
         </BrowserRouter>
+        <DemoBanner />
       </QueryClientProvider>
     </ThemeProvider>
   );

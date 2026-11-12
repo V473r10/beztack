@@ -6,6 +6,7 @@ import { env } from "@/env";
 import { getPolarProductMappings } from "@/lib/payments/config";
 import { getAppAdminEmails } from "../domain/organization-access";
 import { createAuth } from "./auth-config";
+import { guardEmailSender } from "./demo-guards";
 
 const isPolarProvider = env.PAYMENT_PROVIDER === "polar";
 const paymentsSuccessUrl = env.PAYMENTS_SUCCESS_URL || env.POLAR_SUCCESS_URL;
@@ -39,6 +40,6 @@ export const auth = createAuth({
   appUrl: env.APP_URL,
   corsOrigins: env.CORS_ORIGINS,
   appAdminEmails: getAppAdminEmails(),
-  sendEmail,
+  sendEmail: guardEmailSender(sendEmail, env.DEMO_MODE),
   plugins: polarPlugin ? [polarPlugin] : [],
 });
