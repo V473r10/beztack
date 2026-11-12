@@ -50,3 +50,37 @@ describe("UI env: project currency and locale", () => {
     await expect(loadUiEnv()).rejects.toThrow();
   });
 });
+
+describe("UI env: VITE_DEMO_MODE", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("is off by default", async () => {
+    stubUiEnv({});
+
+    const env = await loadUiEnv();
+
+    expect(env.VITE_DEMO_MODE).toBe(false);
+  });
+
+  it("turns on with VITE_DEMO_MODE=true", async () => {
+    stubUiEnv({ VITE_DEMO_MODE: "true" });
+
+    const env = await loadUiEnv();
+
+    expect(env.VITE_DEMO_MODE).toBe(true);
+  });
+
+  it("rejects a value that is not true or false", async () => {
+    stubUiEnv({ VITE_DEMO_MODE: "yes" });
+
+    await expect(loadUiEnv()).rejects.toThrow();
+  });
+});
