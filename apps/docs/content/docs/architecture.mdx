@@ -14,12 +14,13 @@ Beztack is structured as a monorepo using **Nx** with **pnpm**, which lets us ef
 │   ├── docs/                      # Landing & Documentation (Next.js + Fumadocs)
 │   └── ui/                        # Frontend (React + Vite)
 ├── packages/                      # Shared libraries
-│   ├── ai/                        # AI SDK (Vercel AI + Amazon Bedrock)
-│   ├── cli/                       # Project scaffolding + Template Sync CLI
+│   ├── ai/                        # Vercel AI SDK re-exports + Amazon Bedrock provider
+│   ├── auth/                      # Role and redirect helpers shared by API and UI
+│   ├── cli/                       # Project scaffolding CLI (+ experimental template commands)
 │   ├── db/                        # Database schema, client, migrations (Drizzle + PostgreSQL)
 │   ├── email/                     # Email templates (React Email + Resend)
 │   ├── env/                       # Centralized env validation (T3 Env + Zod)
-│   ├── ocr/                       # OCR utilities (Tesseract.js)
+│   ├── ocr/                       # OCR helper (Tesseract.js)
 │   ├── payments/
 │   │   ├── core/                  # Provider-agnostic types and PaymentProviderAdapter interface
 │   │   ├── polar/                 # Polar payment provider
@@ -46,10 +47,10 @@ A **React 19** app built with **Vite**.
 A **Nitro** server (the engine behind Nuxt) that provides a fast and lightweight REST API.
 
 - **Routes:** File-based routing in `server/routes/`.
-- **Unified payment routes:** `/api/subscriptions/*` for all providers.
-- **Admin routes:** `/api/admin/plans/*` for plan management.
+- **Unified payment routes:** `/api/subscriptions/*` for all providers, including `/api/subscriptions/plan-change/*` (see [Plan changes](/docs/payments/plan-changes)).
+- **Admin routes:** `/api/auth/admin/plans/*` for plan management and `/api/auth/admin/plan-changes/*` for failed plan changes.
 - **Database:** Drizzle ORM with PostgreSQL via `@beztack/db`.
-- **Auth:** Better Auth server with admin, organization, twoFactor, and Polar plugins.
+- **Auth:** Better Auth server with admin, organization, twoFactor, and (when Polar is the active provider) the Polar plugin.
 - **Utilities:** Server utilities in `server/utils/` (auth, membership, payment provider).
 
 ### Docs (`apps/docs`)
@@ -60,18 +61,19 @@ A **Next.js** app with **Fumadocs** for the landing page and documentation.
 
 Reusable code lives in `packages/` to keep apps clean and DRY.
 
-| Package                   | Description                                                                                     |
-| ------------------------- | ----------------------------------------------------------------------------------------------- |
-| `@beztack/ai`             | AI SDK integration with Vercel AI and Amazon Bedrock                                            |
-| `@beztack/cli`            | Project scaffolding + Template Sync commands (`status`, `plan`, `apply`, `rollback`, `inspect`) |
-| `@beztack/db`             | Database schema, Drizzle ORM client, and migrations for PostgreSQL                              |
-| `@beztack/email`          | Email templates built with React Email, sent via Resend                                         |
-| `@beztack/env`            | Centralized environment variable validation using T3 Env + Zod                                  |
-| `@beztack/ocr`            | OCR utilities powered by Tesseract.js                                                           |
-| `@beztack/payments`       | Provider-agnostic payment types and `PaymentProviderAdapter` interface                          |
-| `@beztack/payments-polar` | Polar payment provider implementation                                                           |
-| `@beztack/mercadopago`    | MercadoPago payment provider implementation                                                     |
-| `@beztack/state`          | URL-based state management using nuqs                                                           |
+| Package                    | Description                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `@beztack/ai`              | Re-exports the Vercel AI SDK and configures an Amazon Bedrock provider (not used by the apps yet)            |
+| `@beztack/auth`            | Role parsing, organization role ranking and post-sign-in redirects shared by API and UI                      |
+| `beztack` (`packages/cli`) | Project scaffolding CLI; experimental `template` commands (see [Template Sync](/docs/tooling/template-sync)) |
+| `@beztack/db`              | Database schema, Drizzle ORM client, and migrations for PostgreSQL                                           |
+| `@beztack/email`           | Email templates built with React Email, sent via Resend                                                      |
+| `@beztack/env`             | Centralized environment variable validation using T3 Env + Zod                                               |
+| `@beztack/ocr`             | One text extraction helper built on Tesseract.js                                                             |
+| `@beztack/payments`        | Provider-agnostic payment types and `PaymentProviderAdapter` interface                                       |
+| `@beztack/payments-polar`  | Polar payment provider implementation                                                                        |
+| `@beztack/mercadopago`     | MercadoPago payment provider implementation                                                                  |
+| `@beztack/state`           | URL-based state management using nuqs                                                                        |
 
 ## Payments Architecture
 

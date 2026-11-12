@@ -1,13 +1,14 @@
 <div align="center">
   <h1>Beztack</h1>
-  <p><strong>You want to ship. You need this.</strong></p>
-  <p>Production-ready TypeScript monorepo starter with modern tools and best practices built-in.</p>
+  <p><strong>The TypeScript starter for B2B SaaS that charges in LatAm and worldwide.</strong></p>
+  <p>Mercado Pago and Polar billing, Better Auth organizations, a Vite + React app and a Nitro API, in one Nx monorepo.</p>
 
   <p>
     <a href="#quick-start">Quick Start</a> •
+    <a href="#payments">Payments</a> •
     <a href="#architecture">Architecture</a> •
     <a href="#tech-stack">Tech Stack</a> •
-    <a href="#packages">Packages</a> •
+    <a href="#roadmap">Roadmap</a> •
     <a href="#development">Development</a>
   </p>
 </div>
@@ -16,124 +17,177 @@
 
 ## Overview
 
-Beztack is a modern TypeScript monorepo starter designed to help you ship faster. Stop wasting time on boilerplate configuration and start building your product with enterprise-grade tooling from day one.
+Beztack is a monorepo starter for SaaS products that bill customers by subscription. It ships two payment providers behind one interface: [Mercado Pago](https://www.mercadopago.com) for local-currency billing in Latin America and [Polar](https://polar.sh) (a merchant of record) for selling worldwide. You pick the active provider with the `PAYMENT_PROVIDER` environment variable.
+
+On top of checkout and webhooks, the API implements the plan-change flows a B2B product needs: upgrades with a proration preview, downgrades that take effect at renewal, billing cadence changes, a ledger of pending changes, admin tier overrides and an admin retry for failed changes. Auth, organizations, an admin area, email and a docs site are included.
 
 ## Quick Start
 
+You need Node.js 22, pnpm 11 and a PostgreSQL database.
+
 ```bash
-# Clone and install
-pnpm create beztack my-app
+# Scaffold a project (asks for name, default currency and locale)
+pnpm create beztack
 cd my-app
 pnpm install
 
-# Set up environment variables
-cp .env.example .env
+# Set up environment variables (one file per app)
+cp apps/api/.env.example apps/api/.env
+cp apps/ui/.env.example apps/ui/.env
+cp apps/docs/.env.example apps/docs/.env
+# Edit them: at least DATABASE_URL, BETTER_AUTH_SECRET, APP_NAME, DEFAULT_CURRENCY,
+# DEFAULT_LOCALE and the credentials of your payment provider
 
-# Run database migrations
-pnpm migrate
+# Create the database tables
+pnpm db:migrate
 
-# Start development
+# Start the UI (5173), API (3000) and docs (3002)
 pnpm dev
 ```
 
+`pnpm create beztack` runs the `beztack` CLI, which clones this repository and applies your answers. Its closing "Next steps" message prints `pnpm run push`, which is not a script in this repo. Use `pnpm db:migrate`, or `pnpm db:push` to sync the schema without migration files.
+
+To work on Beztack itself, clone the repository and run `pnpm install && pnpm build:packages` before any test or typecheck. Apps and packages resolve workspace packages through their gitignored `dist` folders.
+
+## Payments
+
+Payments live in `packages/payments`:
+
+| Package                   | Path                             | Role                                                                    |
+| ------------------------- | -------------------------------- | ----------------------------------------------------------------------- |
+| `@beztack/payments`       | `packages/payments/core`         | Provider-neutral types, the `PaymentProviderAdapter` interface, factory |
+| `@beztack/mercadopago`    | `packages/payments/mercado-pago` | Mercado Pago adapter, React components and hooks (English, Spanish)     |
+| `@beztack/payments-polar` | `packages/payments/polar`        | Polar adapter on top of the Better Auth Polar plugin                    |
+
+The API (`apps/api`) calls the adapter interface, so routes do not branch on the provider name. Adapters declare capabilities instead. Polar can move a subscription to another billing cadence. Mercado Pago cannot (it cannot change a preapproval's frequency), and the API refuses that case.
+
+What the API implements today:
+
+- **Checkout, subscriptions and webhooks.** `POST /api/subscriptions/checkout`, `GET/PATCH/DELETE /api/subscriptions/:id`, `POST /api/subscriptions/webhooks` and, for Mercado Pago, `POST /api/payments/mercado-pago/webhook`.
+- **Plan changes.** Upgrades, downgrades and cadence changes (monthly and yearly) through `POST /api/subscriptions/plan-change/preview` and `.../accept`.
+- **Proration preview.** The preview returns the first payment, the credit for the unused part of the current period, and when the change takes effect (after the first payment for upgrades, at the next renewal for downgrades).
+- **Pending plan change ledger.** Downgrades and cadence changes are stored in the `pending_plan_change` table (statuses `pending`, `activated`, `canceled`, `failed`) and activated on renewal. Users can read and cancel their pending change (`plan-change/pending`).
+- **Failed-change retry.** After five failed activations a change is marked `failed`. App admins list failed changes and requeue them (`GET /api/auth/admin/plan-changes/failed`, `POST /api/auth/admin/plan-changes/:id/retry`), also from the admin page in `apps/ui`.
+- **Admin tier overrides.** An App admin can set a tier for a user or organization without charging anything or touching real subscriptions, and clear it (`DELETE /api/membership/admin-tier-override`).
+- **Billing target.** `SUBSCRIPTION_MODE` bills each user or each organization (default: organization).
+- **Plan catalog.** Admin routes under `/api/auth/admin/plans` create, import and sync plans between the provider and the local `plan` table.
+
+Not included: a Stripe adapter or any provider beyond these two (the core package is built to take more, see [Payments Core](apps/docs/content/docs/payments/payments-core.mdx)) and a hosted checkout demo.
+
 ## Architecture
 
-Three apps, one monorepo. Each optimized for its purpose.
+Three apps, one monorepo.
 
 ```
 apps/
-├── ui/          # Frontend SPA (Vite + React)
-├── api/         # Backend Server (Nitro)
-└── docs/        # Landing & Documentation (Next.js + Fumadocs)
+├── ui/          # Frontend SPA (Vite + React 19, React Router v7)
+├── api/         # Backend server (Nitro)
+└── docs/        # Landing & documentation (Next.js 16 + Fumadocs)
 
 packages/
-├── ai/          # AI SDK integration (Vercel AI + Amazon Bedrock)
-├── cli/         # CLI tools
-├── email/       # Email templates (React Email)
-├── env/         # Environment validation (T3 Env)
-├── ocr/         # OCR utilities
-└── state/       # URL state management (nuqs)
+├── ai/          # Re-exports the Vercel AI SDK and configures Amazon Bedrock
+├── auth/        # Role and redirect helpers shared by API and UI
+├── cli/         # `beztack` CLI: create, init, experimental template commands
+├── db/          # Drizzle schema, client and SQL migrations (PostgreSQL)
+├── email/       # React Email templates, sent with Resend
+├── env/         # Environment validation (T3 Env + Zod)
+├── ocr/         # Tesseract.js text extraction helper
+├── payments/    # core, mercado-pago, polar (see Payments)
+└── state/       # URL state parsers (nuqs)
 ```
 
-### `apps/ui` - Frontend SPA
+### `apps/ui`: frontend SPA
 
-- **Vite** for lightning-fast HMR and builds
-- **React 19** with modern patterns
-- **shadcn/ui** components with Tailwind CSS
-- **TanStack Router** for type-safe client-side routing
-- **TanStack Query** for server state management
+- **Vite**, **React 19**, **Tailwind CSS v4** and **shadcn/ui**
+- **React Router v7** for routing, **TanStack Query** for server state
+- **i18next** for translations
+- Pricing, billing, pending plan change notice and admin pages (users, analytics, plan changes)
 
-### `apps/api` - Backend Server
+### `apps/api`: backend server
 
-- **Nitro** (h3) for edge-ready, portable server
-- **better-auth** for authentication (2FA, Organizations, Admin roles)
-- **Drizzle ORM** for type-safe database queries
-- **Polar** integration for payments and subscriptions
-- File-based routing with auto-imports
+- **Nitro** (h3) with file-based routes
+- **Better Auth** with email and password, two-factor (TOTP), organizations with teams and invitations, and an admin role
+- **Drizzle ORM** on PostgreSQL through `@beztack/db`
+- Payments through `@beztack/payments` (see above)
 
-### `apps/docs` - Landing & Documentation
+### `apps/docs`: landing and documentation
 
-- **Next.js 15** with App Router
-- **Fumadocs** for beautiful MDX documentation
-- SSR and static generation optimized
-- SEO ready
+- **Next.js 16** (App Router) and **Fumadocs** with MDX content in `apps/docs/content/docs`
 
 ## Tech Stack
 
-| Category            | Technology                           |
-| ------------------- | ------------------------------------ |
-| **Monorepo**        | NX                                   |
-| **Package Manager** | pnpm                                 |
-| **Frontend**        | Vite, React, shadcn/ui, Tailwind CSS |
-| **Backend**         | Nitro (h3), Drizzle ORM              |
-| **Auth**            | better-auth                          |
-| **Payments**        | Polar                                |
-| **AI**              | Vercel AI SDK, Amazon Bedrock        |
-| **Docs**            | Next.js, Fumadocs                    |
-| **Validation**      | Zod, T3 Env                          |
-| **State**           | nuqs, TanStack Query                 |
-| **Code Quality**    | Biome, Ultracite, TypeScript         |
-| **Git Hooks**       | Lefthook                             |
+| Category         | Technology                                      |
+| ---------------- | ----------------------------------------------- |
+| **Monorepo**     | Nx, pnpm workspaces                             |
+| **Frontend**     | Vite, React 19, shadcn/ui, Tailwind CSS 4       |
+| **Backend**      | Nitro (h3), Drizzle ORM, PostgreSQL             |
+| **Auth**         | Better Auth                                     |
+| **Payments**     | Mercado Pago, Polar                             |
+| **Email**        | React Email, Resend                             |
+| **Docs**         | Next.js, Fumadocs                               |
+| **Validation**   | Zod, T3 Env                                     |
+| **State**        | nuqs, TanStack Query                            |
+| **Code quality** | Vite+ (`vp check`: format and lint), TypeScript |
+| **Git hooks**    | `vp staged` on pre-commit                       |
 
 ## Features
 
-- **Authentication Ready** - better-auth with 2FA, Organizations, Admin roles, and Polar integration
-- **Type-Safe Database** - Drizzle ORM with full TypeScript support
-- **Modern UI** - shadcn/ui components, customizable and accessible
-- **URL State** - nuqs for type-safe URL search params
-- **AI Ready** - Vercel AI SDK with streaming, tool calling, and structured output
-- **Environment Validation** - T3 Env for build-time env validation
-- **Code Quality** - Biome/Ultracite for fast linting and formatting
+- **Billing** - Mercado Pago and Polar adapters, plan changes with proration preview, pending change ledger, admin tier overrides and failed-change retry (see [Payments](#payments)).
+- **Auth** - Better Auth with email and password, two-factor, organizations with invitations, and an admin role.
+- **Database** - Drizzle ORM schema and SQL migrations in `packages/db`.
+- **Email** - Five React Email templates (welcome, password reset, organization invitation, subscription confirmation and a sample) sent through Resend.
+- **Environment validation** - T3 Env schemas for API, UI and docs in `packages/env`.
+- **Agent-friendly docs** - `AGENTS.md`, a domain glossary in `CONTEXT.md` and architecture decisions in `docs/adr`.
 
 ## Packages
 
-### `@beztack/ai`
+### `@beztack/payments`, `@beztack/mercadopago`, `@beztack/payments-polar`
 
-AI SDK integration with Amazon Bedrock provider. Supports streaming, tool calling, structured output, and multi-modal capabilities.
+Provider-neutral payment core plus the Mercado Pago and Polar adapters. See [Payments](#payments).
 
 ### `@beztack/env`
 
-Centralized environment variable validation using T3 Env and Zod schemas.
+Environment variable validation using T3 Env and Zod schemas.
 
-### `@beztack/state`
+### `@beztack/db`
 
-URL state management with nuqs. Type-safe parsers for synchronizing component state with URLs.
+Drizzle schema, PostgreSQL client and migrations. Scripts: `db:generate`, `db:migrate`, `db:push`, `db:studio`.
 
 ### `@beztack/email`
 
-Email templates built with React Email for transactional emails.
+React Email templates and a `sendEmail` helper that uses Resend.
 
-### `@beztack/cli`
+### `@beztack/state`
 
-Command-line tools for project scaffolding and development utilities.
+nuqs parsers for URL state. An example page in `apps/ui` uses them.
+
+### `@beztack/ai`
+
+A thin package: it re-exports the [Vercel AI SDK](https://ai-sdk.dev) and configures an Amazon Bedrock provider (region `us-east-1`, AWS credential chain). No app uses it yet, and the API has no AI routes. Treat it as a starting point.
+
+### `@beztack/ocr`
+
+One helper, `extractTextFromImage`, built on Tesseract.js. The OCR example page in `apps/ui` uses it.
+
+### `beztack` (`packages/cli`)
+
+The CLI behind `pnpm create beztack`: `create`, `init` (choose optional modules) and an experimental `template` command (see [Roadmap](#roadmap)).
+
+## Roadmap
+
+These are not implemented yet. Do not rely on them.
+
+- **Template sync.** Updating a project created from Beztack by receiving reviewed pull requests with template changes. The design is recorded in [ADR 0005](docs/adr/0005-template-sync-engine-requires-build-vs-adopt-gate.md) and [ADR 0006](docs/adr/0006-template-sync-uses-revisions-prs-and-trust-boundaries.md). The repo contains an untested prototype, `beztack template status|plan|apply|rollback|inspect`, that writes straight to your working tree. It is not the planned design.
+- **More sign-in methods.** OAuth providers, magic link, passkeys, multi-session, API keys and a breached-password check are not configured (`socialProviders` is empty in `apps/api/server/utils/auth-config.ts`).
+- **More payment providers.** Stripe and others.
 
 ## Development
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 9+
-- PostgreSQL (or compatible database)
+- Node.js 22 (what CI runs)
+- pnpm 11
+- PostgreSQL
 
 ### Commands
 
@@ -144,17 +198,20 @@ pnpm dev
 # Build all apps
 pnpm build
 
-# Run linting
-pnpm lint
+# Check formatting and lint (Vite+)
+pnpm check
 
-# Run database migrations
-pnpm migrate
-
-# Push schema changes to database
-pnpm push
+# Type-check every project
+pnpm typecheck
 
 # Run tests
 pnpm test
+
+# Database: generate SQL from schema changes, apply migrations, push schema, open Studio
+pnpm db:generate
+pnpm db:migrate
+pnpm db:push
+pnpm db:studio
 ```
 
 ### NX Commands
@@ -168,41 +225,44 @@ npx nx graph
 
 # Run affected tasks
 npx nx affected -t build
-
-# Release
-npx nx release
 ```
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and configure:
+Each app has its own `.env.example`: `apps/api/.env.example`, `apps/ui/.env.example` and `apps/docs/.env.example`. The API refuses to start without the required ones. The main ones:
 
 ```bash
-# Database
+# Database and auth
 DATABASE_URL="postgresql://..."
-
-# Auth
 BETTER_AUTH_SECRET="..."
 BETTER_AUTH_URL="http://localhost:3000"
+APP_NAME="my-app"
+APP_URL="http://localhost:5173"
 
-# Polar (Payments)
+# Regional defaults (required, no built-in default)
+DEFAULT_CURRENCY="USD"
+DEFAULT_LOCALE="en-US"
+
+# Payments: "polar" or "mercadopago"
+PAYMENT_PROVIDER="polar"
+
+# Polar
 POLAR_ACCESS_TOKEN="..."
 POLAR_WEBHOOK_SECRET="..."
+
+# Mercado Pago (required when PAYMENT_PROVIDER=mercadopago)
+MERCADO_PAGO_ACCESS_TOKEN="..."
+MERCADO_PAGO_APPLICATION_ID="..."
 
 # Email
 RESEND_API_KEY="..."
 ```
 
-See `apps/api/env.ts` for the complete schema.
+The complete schema is in `packages/env/src/api.ts`.
 
 ## Deployment
 
-Beztack is designed to deploy anywhere:
-
-- **Vercel** - Optimized for both frontend and serverless API
-- **Cloudflare** - Edge deployment ready
-- **Node.js** - Traditional server deployment
-- **Docker** - Containerized deployment
+The API builds with Nitro, which targets Node.js and several hosting presets. The UI is a static SPA, and `apps/ui/vercel.json` holds its Vercel rewrites. The repository does not ship a Dockerfile or Cloudflare configuration yet.
 
 ## License
 
@@ -211,7 +271,7 @@ Beztack is designed to deploy anywhere:
 ---
 
 <div align="center">
-  <p>Built with modern tools for developers who ship.</p>
+  <p>A TypeScript starter for SaaS products that bill in LatAm and worldwide.</p>
   <p>
     <a href="https://nx.dev"><img src="https://img.shields.io/badge/NX-143055?style=flat&logo=nx&logoColor=white" alt="NX"></a>
     <a href="https://vitejs.dev"><img src="https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white" alt="Vite"></a>

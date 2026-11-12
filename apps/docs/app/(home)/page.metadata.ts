@@ -1,31 +1,32 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Beztack - Ship Full-Stack Apps Faster",
+  title: "Beztack - TypeScript SaaS starter that charges in LatAm and worldwide",
   description:
-    "Production-ready TypeScript monorepo with React, Nitro, Better Auth, Polar and Mercado Pago payments, plus Template Sync workflows.",
+    "TypeScript monorepo starter for B2B SaaS: Mercado Pago and Polar billing with plan changes and proration preview, Better Auth organizations, a Vite + React app and a Nitro API.",
   keywords: [
-    "full-stack",
+    "saas starter",
     "monorepo",
-    "next.js",
     "nitro",
+    "vite",
     "typescript",
     "authentication",
     "payments",
     "mercado pago",
-    "template sync",
+    "polar",
+    "better-auth",
     "nx",
   ],
   openGraph: {
-    title: "Beztack - Ship Full-Stack Apps Faster",
+    title: "Beztack - TypeScript SaaS starter that charges in LatAm and worldwide",
     description:
-      "Production-ready TypeScript monorepo with modern apps, integrated payments, and Template Sync tooling.",
+      "Mercado Pago and Polar billing, Better Auth organizations, a Vite + React app and a Nitro API in one Nx monorepo.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Beztack - Ship Full-Stack Apps Faster",
+    title: "Beztack - TypeScript SaaS starter that charges in LatAm and worldwide",
     description:
-      "TypeScript monorepo starter with Polar + Mercado Pago support and Template Sync built in.",
+      "TypeScript monorepo starter for B2B SaaS with Mercado Pago and Polar billing, plan changes and proration preview.",
   },
 };

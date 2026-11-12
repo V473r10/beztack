@@ -1,0 +1,85 @@
+---
+title: Plan changes
+description: Upgrades, downgrades, cadence changes, proration preview and admin tools
+---
+
+Beyond checkout and webhooks, the API in `apps/api` implements how a subscriber
+moves between plans. The flows are provider-neutral: they run on the
+`PaymentProviderAdapter` interface from [Payments Core](/docs/payments/payments-core), so
+they work with [Mercado Pago](/docs/payments/mercado-pago) and [Polar](/docs/payments/polar).
+The one provider difference is billing cadence changes (see below).
+
+The logic lives in `apps/api/server/utils/plan-change.ts`, the ledger in
+`apps/api/server/utils/pending-plan-change-ledger.ts`, and the routes in
+`apps/api/server/routes/api/subscriptions/plan-change/`.
+
+## Direction
+
+Comparing the tier of the current plan with the target plan decides the direction:
+
+| Direction        | When                                 | Takes effect            |
+| ---------------- | ------------------------------------ | ----------------------- |
+| `upgrade`        | Target tier is higher                | After the first payment |
+| `downgrade`      | Target tier is lower                 | At the next renewal     |
+| `cadence_change` | Same tier, monthly to yearly or back | At the next renewal     |
+
+A request for the same tier and the same cadence is rejected as not a plan change.
+Beztack supports monthly and yearly cadences only.
+
+## Proration preview
+
+`POST /api/subscriptions/plan-change/preview` returns what accepting would do, without
+changing anything. The body takes `targetBillingCadence` (`monthly` or `yearly`), a target
+(`targetPricingCatalogPlanId` or `targetTierId`) and, in organization mode, `organizationId`.
+
+For an upgrade the response includes the days remaining in the current period, the credit for
+the unused part of the current period, the full price of the target plan, and the amount of the
+first payment. Downgrades and cadence changes report when they will take effect.
+
+## Accepting a change
+
+`POST /api/subscriptions/plan-change/accept` takes the same body.
+
+- An **upgrade** creates the first payment with the provider and moves the Membership once the
+  payment is confirmed.
+- A **downgrade** or **cadence change** is stored as a pending plan change and applied at renewal.
+- Mercado Pago cannot change the frequency of an existing subscription, so a `cadence_change`
+  is refused there. Polar supports it. The adapter exposes this as
+  `capabilities.cadenceChange` and the API checks the flag, not the provider name.
+
+## Pending plan change ledger
+
+Pending changes are rows in the `pending_plan_change` table. Rows are never deleted: each moves
+between the statuses `pending`, `activated`, `canceled` and `failed`, and records who acted, when
+and why. A partial unique index allows one `pending` row per subscription.
+
+- `GET /api/subscriptions/plan-change/pending` returns the pending change of the current
+  Membership target, or `null`.
+- `DELETE /api/subscriptions/plan-change/pending` cancels it.
+- A newer accepted change replaces the pending one. A pending change is also canceled when the
+  subscription ends instead of renewing or the renewal payment fails.
+- Activation happens when the renewal webhook arrives. If activation fails, the API answers the
+  webhook with an error so the provider retries. After five failed attempts the row becomes `failed`.
+
+## Retrying failed changes
+
+App admins can list changes that kept failing and requeue them:
+
+- `GET /api/auth/admin/plan-changes/failed`
+- `POST /api/auth/admin/plan-changes/:id/retry`
+
+A retry moves the row back to `pending`, keeps its attempt count and records the admin and the
+time. The `apps/ui` admin area has a page for this.
+
+## Admin tier overrides
+
+An App admin can set a tier for a user or organization as a plan change. It takes effect
+immediately, charges nothing and leaves real subscriptions untouched, so there is no proration.
+`DELETE /api/membership/admin-tier-override` clears it. Overrides and their changes are recorded
+in the `admin_tier_override` and `admin_tier_override_audit` tables, outside the payment providers.
+
+## Billing target
+
+The `SUBSCRIPTION_MODE` variable (`user` or `organization`, default `organization`) decides whether
+each user or each organization holds the subscription. In organization mode, plan change
+requests need an organization and a billing manager of that organization.

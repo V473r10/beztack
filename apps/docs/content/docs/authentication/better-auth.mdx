@@ -3,7 +3,14 @@ title: Better Auth
 description: Modern authentication system with Better Auth
 ---
 
-Beztack uses [Better Auth](https://www.better-auth.com/) as its authentication solution, providing a complete system with support for email/password, social auth, organizations, teams, and more.
+Beztack uses [Better Auth](https://www.better-auth.com/) as its authentication solution, configured with email/password sign-in, two-factor authentication (TOTP), organizations with teams and invitations, and an admin role.
+
+<Callout type="warn" title="Not configured yet">
+  `socialProviders` is empty, so OAuth sign-in is not set up. Magic link, passkeys, multi-session,
+  API keys and a breached-password check are not configured either. Better Auth has plugins for
+  them, and they are on the roadmap. Email verification is off by default
+  (`requireEmailVerification: false`).
+</Callout>
 
 ## Why Better Auth?
 
@@ -14,7 +21,7 @@ We chose Better Auth because:
 - **Modular**: Plugin system to extend functionality
 - **Developer Experience**: Intuitive and well-documented API
 - **Database**: Native integration with Drizzle ORM
-- **Security**: Built-in 2FA, email verification, and more
+- **Security**: 2FA (TOTP) is enabled in Beztack; email verification is supported but off by default
 - **Organizations**: Native support for multi-tenancy
 
 ## Configuration
@@ -311,7 +318,7 @@ export default defineEventHandler(async (event) => {
 
 ## Administration
 
-Better Auth includes an admin plugin to manage users.
+Better Auth includes an admin plugin to manage users. In Beztack the admin role is `sudo`, and `/admin/*` Better Auth endpoints also require the user's email to be on the App admin allowlist (`APP_ADMIN_EMAILS`).
 
 ### List Users (Admin)
 

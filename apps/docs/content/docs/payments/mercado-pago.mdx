@@ -5,7 +5,9 @@ description: Payment and subscription flows with Mercado Pago
 
 Beztack supports Mercado Pago as a first-class payment provider, including plan
 sync, subscriptions, checkout preference, direct payment processing, and
-webhook/event handling.
+webhook handling. Mercado Pago cannot change the billing cadence of an existing
+subscription, so cadence changes are refused with this provider (see
+[Plan changes](/docs/payments/plan-changes)).
 
 > For an overview of the provider-agnostic payment system, see [Payments Core](/docs/payments/payments-core).
 
@@ -16,7 +18,6 @@ Use Mercado Pago when you need:
 - Native Mercado Pago plans/subscriptions
 - Direct card payment processing
 - Mercado Pago webhook-driven state updates
-- Real-time payment events for frontend UX
 
 See also: [Polar](/docs/payments/polar)
 
@@ -88,13 +89,13 @@ These routes are provider-agnostic and work with whichever provider is active:
 
 ### Admin plan management routes
 
-- `GET /api/admin/plans` — List all plans from the local DB.
-- `POST /api/admin/plans` — Create a new plan.
-- `POST /api/admin/plans/import` — Import plans from the provider.
-- `POST /api/admin/plans/sync` — Sync all plans from the provider into the local DB.
-- `GET /api/admin/plans/sync-status` — Check the current sync status.
-- `PATCH /api/admin/plans/:id` — Update a plan.
-- `DELETE /api/admin/plans/:id` — Delete a plan.
+- `GET /api/auth/admin/plans` — List all plans from the local DB.
+- `POST /api/auth/admin/plans` — Create a new plan.
+- `POST /api/auth/admin/plans/import` — Import plans from the provider.
+- `POST /api/auth/admin/plans/sync` — Sync all plans from the provider into the local DB.
+- `GET /api/auth/admin/plans/sync-status` — Check the current sync status.
+- `PATCH /api/auth/admin/plans/:id` — Update a plan.
+- `DELETE /api/auth/admin/plans/:id` — Delete a plan.
 
 ## Plan sync flow
 
@@ -102,10 +103,10 @@ Beztack keeps a local plan mirror in the `plan` table (provider-agnostic, with a
 `providerPlanId` field linking to the remote product ID) to make plan selection
 and checkout flows predictable in the app.
 
-- `GET /api/admin/plans` reads local plans.
-- `POST /api/admin/plans/sync` performs an explicit admin-triggered sync from the provider.
-- `POST /api/admin/plans/import` imports plans from the provider into the local DB.
-- `GET /api/admin/plans/sync-status` reports the current sync state.
+- `GET /api/auth/admin/plans` reads local plans.
+- `POST /api/auth/admin/plans/sync` performs an explicit admin-triggered sync from the provider.
+- `POST /api/auth/admin/plans/import` imports plans from the provider into the local DB.
+- `GET /api/auth/admin/plans/sync-status` reports the current sync state.
 
 ## Client integration
 
@@ -128,11 +129,10 @@ The package `@beztack/mercadopago/react` exposes:
 
 1. Configure sandbox credentials and `VITE_MERCADO_PAGO_PUBLIC_KEY`.
 2. Configure `MERCADO_PAGO_APPLICATION_ID` for the Mercado Pago Application used by this integration.
-3. Validate plan sync via admin routes (`/api/admin/plans/sync`) and confirm only plans from that Application are visible.
+3. Validate plan sync via admin routes (`/api/auth/admin/plans/sync`) and confirm only plans from that Application are visible.
 4. Test checkout via `POST /api/subscriptions/checkout` and confirm the created subscription belongs to the configured Application.
 5. Sign in with a Mercado Pago payer email that has a subscription in another Application and confirm it is not listed.
 6. Trigger/receive webhook events and verify mismatched Application events are skipped while matching events update local DB state.
-7. Verify SSE events in the UI (if using the events endpoint).
 
 ## Troubleshooting
 

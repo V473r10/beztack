@@ -121,12 +121,12 @@ To apply migrations to the database:
 pnpm run db:migrate
 ```
 
-### Check Migration Status
+### Push the Schema Without Migrations
 
-To review which migrations have been applied:
+During early development you can sync the schema directly to the database:
 
 ```bash
-pnpm run db:status
+pnpm run db:push
 ```
 
 ### Open Drizzle Studio

@@ -28,9 +28,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Beztack - Ship Full-Stack Apps Faster",
+  title: "Beztack - TypeScript SaaS starter that charges in LatAm and worldwide",
   description:
-    "Production-ready TypeScript monorepo with React, Nitro, Better Auth, Polar and Mercado Pago payments, plus Template Sync workflows.",
+    "TypeScript monorepo starter for B2B SaaS: Mercado Pago and Polar billing with plan changes and proration preview, Better Auth organizations, a Vite + React app and a Nitro API.",
 };
 
 export default function Home() {
@@ -48,20 +48,21 @@ export default function Home() {
         <div className="relative mx-auto max-w-4xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-4 py-2">
             <Zap className="h-4 w-4 text-accent" />
-            <span className="font-medium text-accent text-sm">Modern TypeScript Monorepo</span>
+            <span className="font-medium text-accent text-sm">Mercado Pago + Polar</span>
           </div>
 
           <h1 className="mb-6 text-balance font-bold font-heading text-5xl text-foreground md:text-7xl">
-            You want to ship.
+            The TypeScript starter for B2B SaaS
             <br />
             <span className="bg-gradient-to-b from-accent via-accent to-accent/60 bg-clip-text text-transparent">
-              You need this.
+              that charges in LatAm and worldwide.
             </span>
           </h1>
 
           <p className="mx-auto mb-8 max-w-2xl text-pretty text-muted-foreground text-xl leading-relaxed">
-            Beztack is a production-ready monorepo starter built on modern TypeScript tools. Stop
-            configuring, start building.
+            Beztack is a monorepo starter with Mercado Pago and Polar billing, Better Auth
+            organizations, a Vite + React app and a Nitro API. Plan changes, proration preview and
+            admin retries are already built.
           </p>
 
           <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -259,7 +260,7 @@ export default function Home() {
                 <ul className="space-y-1.5 text-muted-foreground text-sm">
                   <li className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-amber-500" />
-                    <span>Edge-ready & portable</span>
+                    <span>Portable Nitro build</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-amber-500" />
@@ -267,7 +268,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-amber-500" />
-                    <span>Auto-imports & HMR</span>
+                    <span>Zod-validated handlers</span>
                   </li>
                 </ul>
               </div>
@@ -321,7 +322,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-foreground" />
-                    <span>SEO optimized</span>
+                    <span>Full-text docs search</span>
                   </li>
                 </ul>
               </div>
@@ -332,9 +333,11 @@ export default function Home() {
           <div className="mt-8 flex items-center justify-center gap-4">
             <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
               <Globe className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium text-muted-foreground text-sm">Deploy anywhere</span>
+              <span className="font-medium text-muted-foreground text-sm">Deployment</span>
               <span className="text-muted-foreground/50">•</span>
-              <span className="text-muted-foreground text-sm">Vercel, Cloudflare, Node.js</span>
+              <span className="text-muted-foreground text-sm">
+                Nitro API for Node.js and Vercel, static SPA for the UI
+              </span>
             </div>
           </div>
         </div>
@@ -379,9 +382,10 @@ export default function Home() {
                 </div>
 
                 <p className="mb-6 max-w-lg text-muted-foreground">
-                  Built-in auth with{" "}
-                  <span className="font-semibold text-foreground">better-auth</span>. Secure,
-                  flexible, and easy to customize for your needs.
+                  Email and password sign-in with{" "}
+                  <span className="font-semibold text-foreground">better-auth</span>, plus
+                  two-factor, organizations with invitations and an admin role. Other sign-in
+                  methods are not set up yet.
                 </p>
 
                 <div className="mt-auto grid gap-8 md:grid-cols-2">
@@ -412,7 +416,7 @@ export default function Home() {
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow-400 opacity-75" />
                         <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-500" />
                       </span>
-                      Coming Soon
+                      Roadmap (not implemented yet)
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {[
@@ -536,8 +540,10 @@ export default function Home() {
                 </div>
 
                 <p className="mb-6 max-w-2xl text-muted-foreground">
-                  Choose the payment stack that fits your market and rollout. Beztack supports both
-                  provider-native flows and centralized integration points.
+                  Two providers behind one adapter interface, selected with the{" "}
+                  <code className="font-mono text-foreground text-sm">PAYMENT_PROVIDER</code>{" "}
+                  environment variable. Charge in local currency with Mercado Pago, or sell
+                  worldwide through Polar.
                 </p>
 
                 <div className="grid gap-6 md:grid-cols-2">
@@ -547,8 +553,31 @@ export default function Home() {
                     </h4>
                     <ul className="space-y-2">
                       {[
-                        "Polar - SaaS and digital products only",
-                        "Mercado Pago - Physical and digital products, services, subscriptions",
+                        "Mercado Pago - local-currency subscriptions in Latin America",
+                        "Polar - merchant of record, SaaS and digital products only",
+                      ].map((item) => (
+                        <li
+                          className="flex items-center gap-2 text-muted-foreground text-sm"
+                          key={item}
+                        >
+                          <Check className="h-4 w-4 text-emerald-500" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="mb-3 font-semibold text-foreground text-sm">
+                      Billing flows in the API
+                    </h4>
+                    <ul className="space-y-2">
+                      {[
+                        "Upgrades, downgrades and cadence changes (Polar only for cadence)",
+                        "Proration preview before the customer accepts",
+                        "Pending plan change ledger, activated on renewal",
+                        "Admin tier overrides, no charge",
+                        "Admin retry for failed plan changes",
                       ].map((item) => (
                         <li
                           className="flex items-center gap-2 text-muted-foreground text-sm"
@@ -765,12 +794,14 @@ export default function Home() {
                   <div className="rounded-lg bg-violet-500/10 p-2 text-violet-500">
                     <Bot className="h-6 w-6" />
                   </div>
-                  <h3 className="font-bold font-heading text-2xl">AI Ready</h3>
+                  <h3 className="font-bold font-heading text-2xl">AI SDK Package</h3>
                 </div>
 
                 <p className="mb-6 max-w-2xl text-muted-foreground">
-                  Integrated <span className="font-semibold text-foreground">Vercel AI SDK</span>.
-                  Build AI-powered features with streaming, tool calling, and structured outputs.
+                  <code className="font-mono text-foreground text-sm">@beztack/ai</code> re-exports
+                  the <span className="font-semibold text-foreground">Vercel AI SDK</span> and
+                  configures an Amazon Bedrock provider. It is a starting point: no app uses it yet
+                  and the API has no AI routes.
                 </p>
 
                 <div className="grid gap-6 md:grid-cols-2">
@@ -803,7 +834,9 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <h4 className="mb-3 font-semibold text-foreground text-sm">Features</h4>
+                    <h4 className="mb-3 font-semibold text-foreground text-sm">
+                      Provided by the AI SDK
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {[
                         "Streaming",
@@ -811,7 +844,6 @@ export default function Home() {
                         "Structured Output",
                         "Multi-Modal",
                         "Embeddings",
-                        "React Hooks",
                       ].map((feature) => (
                         <span
                           className="inline-flex items-center rounded-md border border-secondary bg-secondary/50 px-2.5 py-1 text-secondary-foreground text-xs"
@@ -968,8 +1000,8 @@ export default function Home() {
                 <p className="mb-4 text-muted-foreground">
                   Powered by <span className="font-semibold text-foreground">pnpm workspaces</span>{" "}
                   and <span className="font-semibold text-foreground">NX</span>. Efficient
-                  dependency management, task orchestration, and repeatable template updates with
-                  Template Sync.
+                  dependency management and task orchestration. Template Sync, which delivers
+                  template updates as pull requests, is on the roadmap and not available yet.
                 </p>
                 <div className="mt-auto flex gap-3">
                   <div className="flex items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
@@ -1000,7 +1032,7 @@ export default function Home() {
                     NX
                   </div>
                   <div className="flex items-center gap-1.5 rounded-md border border-border bg-background/50 px-2 py-1 font-medium text-muted-foreground text-xs">
-                    Template Sync
+                    Template Sync (roadmap)
                   </div>
                 </div>
               </div>
@@ -1011,10 +1043,10 @@ export default function Home() {
       <section className="container mx-auto px-4 py-20 md:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="mb-6 text-balance font-bold font-heading text-4xl text-foreground md:text-5xl">
-            Ready to Build Something Amazing?
+            Start with billing already built
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-muted-foreground text-xl leading-relaxed">
-            Join developers who are shipping faster with Beztack
+            Scaffold a project, add your Mercado Pago or Polar credentials and run it locally.
           </p>
 
           <div className="mb-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -1043,7 +1075,9 @@ export default function Home() {
       <footer className="border-border border-t">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-muted-foreground text-sm">Beztack - Modern TypeScript Monorepo</p>
+            <p className="text-muted-foreground text-sm">
+              Beztack - MIT licensed TypeScript SaaS starter
+            </p>
             <div className="flex items-center gap-6">
               <Link
                 className="text-muted-foreground text-sm transition-colors hover:text-accent"

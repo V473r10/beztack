@@ -5,6 +5,12 @@ description: AI integration with Vercel AI SDK and Amazon Bedrock
 
 Beztack includes `@beztack/ai`, a lightweight wrapper package that provides pre-configured [Vercel AI SDK](https://sdk.vercel.ai/docs) integration with Amazon Bedrock support.
 
+<Callout type="warn" title="Starting point, not a feature">
+  No app in the monorepo imports `@beztack/ai` today, and `apps/api` has no AI routes. The package
+  gives you the AI SDK and a configured Bedrock provider (region `us-east-1`); you build the
+  features. The capabilities listed below come from the AI SDK itself.
+</Callout>
+
 ## Why Vercel AI SDK?
 
 We chose Vercel AI SDK because:
@@ -13,7 +19,7 @@ We chose Vercel AI SDK because:
 - **Streaming First**: Built-in support for streaming responses
 - **Type-Safe**: Fully typed with TypeScript
 - **Provider Abstraction**: Easy to switch between AI providers
-- **React Hooks**: Ready-to-use hooks for chat and completion UIs
+- **React Hooks**: Chat and completion hooks ship in the separate `@ai-sdk/react` package, which Beztack does not install
 - **Edge Ready**: Works in serverless and edge environments
 
 ## Package Overview
