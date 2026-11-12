@@ -93,8 +93,8 @@ importers:
         specifier: ^0.2.5
         version: 0.2.5
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -228,7 +228,7 @@ importers:
         version: 3.2.2(react@19.3.1)
       '@hookform/resolvers':
         specifier: ^5.9.2
-        version: 5.9.2(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.1))(zod@3.25.76)
+        version: 5.9.2(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
       '@mercadopago/sdk-react':
         specifier: ^1.0.7
         version: 1.0.7(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -401,8 +401,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^22.20.5
@@ -429,14 +429,14 @@ importers:
   packages/ai:
     dependencies:
       '@ai-sdk/amazon-bedrock':
-        specifier: ^3.0.145
-        version: 3.0.145(zod@4.6.7)
+        specifier: ^5.0.139
+        version: 5.0.139(zod@4.6.7)
       '@aws-sdk/credential-providers':
         specifier: ^3.1165.0
         version: 3.1165.0
       ai:
-        specifier: ^5.0.287
-        version: 5.0.287(zod@4.6.7)
+        specifier: ^7.0.170
+        version: 7.0.170(zod@4.6.7)
       typescript:
         specifier: ^5
         version: 5.8.3
@@ -545,13 +545,13 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.11(typescript@5.9.3)(zod@4.6.7)
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.11(typescript@5.9.3)(zod@4.6.7)
       zod:
-        specifier: ^3.23.0
-        version: 3.25.76
+        specifier: ^3.25.0 || ^4.0.0
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^24.19.2
@@ -601,8 +601,8 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/payments/mercado-pago:
     dependencies:
@@ -641,8 +641,8 @@ importers:
         specifier: ^3.2.7
         version: 3.2.7(@types/debug@4.1.13)(@types/node@24.19.2)(@vitest/ui@5.0.1)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@2.4.0)(supports-color@10.2.2))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/payments/polar:
     dependencies:
@@ -705,33 +705,39 @@ packages:
   '@acemir/cssom@0.9.32':
     resolution: {integrity: sha512-OijrAUu7rrJhSIoHNg6LMPS5e344nwUHA+1EFYYjrh64D+GmytUsfBQjci45TjT+rd5Spsp8B5xsZDT+TgyXXQ==}
 
-  '@ai-sdk/amazon-bedrock@3.0.145':
-    resolution: {integrity: sha512-zcl34YSeSuYkYx5IPs6fySbDyJDPtnvxOgcxWm7lQieTJVxqCVPLoGiuxDg8cukEpaws/KxQ+Kc+iCVLHHkQ9g==}
-    engines: {node: '>=18'}
+  '@ai-sdk/amazon-bedrock@5.0.139':
+    resolution: {integrity: sha512-33KveDxsdrnyKe3joryLY+Lx+yBNX8d655CZ61QiOPPcnA1MqYxQVNusnxQWYrO5HHaLwRdoASvRpPETrIc8Fg==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/anthropic@2.0.114':
-    resolution: {integrity: sha512-/rhs2PHYltDk6Jg18RmI9dFHvHk7HslUQ/OBmXHS81rW6SOtI6/7dh/oLSoxuXB4GQ0T9Zp5VLZRY+Qqt+9rVA==}
-    engines: {node: '>=18'}
+  '@ai-sdk/anthropic@4.0.102':
+    resolution: {integrity: sha512-uD7FjOP+f0/S5G38O1Qoi9SMKgHtcKXCLIqsQ5XIxZ8j9MCBRqUc0Rbyt6FZNqiu6r+M+whfunu4CvquE1hO2Q==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/gateway@2.0.178':
-    resolution: {integrity: sha512-Ehhbg+R894GKlKNMnzHrn4uO5fZlQsxZMBDTHnHz4Esr7PQWrf/KIA7Km354JQXUnUA7jfOlEM7GyEs4Ig0zEA==}
-    engines: {node: '>=18'}
+  '@ai-sdk/gateway@4.0.143':
+    resolution: {integrity: sha512-N+n+7oHGtx4PtetjcBSe48ANVrcHTVV3rJtEfrPMUJMtak2Iw3aDhDFf7nxfpqKVEPMf7XvQ1dJ9yexdMEJiSw==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider-utils@3.0.45':
-    resolution: {integrity: sha512-AfVd7CNBns6agdc9SWTr6kh8By45X48eenoyyYRUjX4we5rqoaowcff1L2U8sbYctxunKryiyBeNv005W60VDw==}
-    engines: {node: '>=18'}
+  '@ai-sdk/openai@4.0.115':
+    resolution: {integrity: sha512-q0tHPKxPLPwaTVY318Z/FvGWV98bnYrr2mqKz9qTtw4xwshykzkMZcxiSSv5K8y2152GSrB1ts9Up9l5J2w0qA==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider@2.0.5':
-    resolution: {integrity: sha512-cmG40u10QFEUrYXWYom6Lo6DLR+pND3wWABTTT9Nf7zg9F7BD46KNj+STekndp9Kg5ZAIPA0WxmTI0IwRvKvvQ==}
-    engines: {node: '>=18'}
+  '@ai-sdk/provider-utils@5.0.79':
+    resolution: {integrity: sha512-IYu6MT0NDE3JFWBWEJWAXjhskHTSj6NfRp9FuEAOcyS2Jrj3qBePu7OEoXVmoCWT3pYPgrF4DBKzjjjOMRyw9Q==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/provider@4.0.37':
+    resolution: {integrity: sha512-4uPgZ3qiX/JaQFr0dQoibUzHImZit9u05ro2BxGUnJwU4fV28BOAbKUa2OjQvqtM1tMac3bTKkaXdyzGovQXqg==}
+    engines: {node: '>=22'}
 
   '@alloc/quick-lru@5.3.0':
     resolution: {integrity: sha512-U4+70Pc5ZS9osnCBCE5Jha/ciHM+Yp+CNMNC/7HvYbNRk1Ldd+f7qO65W5qfhu/TCv+/ozljlXXe9Nj8419DMA==}
@@ -2138,9 +2144,6 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
-
-  '@fastify/busboy@3.2.5':
-    resolution: {integrity: sha512-y8MTAeBlEQUNVnskmZQwpseZN3EgCksQNOULlfxWY6o6VEqh01+oExMgbM7gN6YLQ8pNDYeweNPKJRt8jQm2ZQ==}
 
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
@@ -4678,8 +4681,8 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
-  '@vercel/oidc@3.1.0':
-    resolution: {integrity: sha512-Fw28YZpRnA3cAHHDlkt7xQHiJ0fcL+NRcIqsocZQUSmbzeIKRpwttJjik5ZGanXP+vlA4SbTg+AbA3bP363l+w==}
+  '@vercel/oidc@3.2.0':
+    resolution: {integrity: sha512-UycprH3T6n3jH0k44NHMa7pnFHGu/N05MjojYr+Mc6I7obkoLIJujSWwin1pCvdy/eOxrI/l3uDLQsmcrOb4ug==}
     engines: {node: '>= 20'}
 
   '@vitejs/plugin-react-swc@3.11.0':
@@ -4862,6 +4865,9 @@ packages:
     engines: {node: '>=20.0.0'}
     cpu: [x64]
     os: [win32]
+
+  '@workflow/serde@4.1.0':
+    resolution: {integrity: sha512-pav4F2BoirECWR7Nf1TKt+2eETcBj7jj4cBefQ8VXQCA6NPkaKeLfj/zMgi+3zYV5ZIBT4GuUiphsj0/b9hPQQ==}
 
   '@yarnpkg/lockfile@1.1.0':
     resolution: {integrity: sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==}
@@ -5072,9 +5078,9 @@ packages:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
 
-  ai@5.0.287:
-    resolution: {integrity: sha512-tmRlFCznkvNfiJBP/QQT0WirKETvvhfwqyVxUyhMrTqEQ2ReT9HKHGUVLuzbdzrOkxbj6v6GPSv3ouczy3REIQ==}
-    engines: {node: '>=18'}
+  ai@7.0.170:
+    resolution: {integrity: sha512-hvgFzDNuheJA+FEN0nieIvKgjriGBd5b1Z4ntvJ5fAQel9l4Og0aUVBuPH5hbk5sx1pomtbC92cy/Vj/QIU4ig==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
@@ -8523,9 +8529,9 @@ packages:
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
-  undici@5.29.0:
-    resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
-    engines: {node: '>=14.0'}
+  undici@7.30.2:
+    resolution: {integrity: sha512-mLyPQnHwUxaM/rideoK/+KL8DaAJLRl4aBCfmX444aCSLnIaomqPLtNRe2jdCYcsk5wZzXrDIQC8ZeYNRAYyIA==}
+    engines: {node: '>=20.18.1'}
 
   unenv@2.0.0-rc.24:
     resolution: {integrity: sha512-i7qRCmY42zmCwnYlh9H2SvLEypEFGye5iRmEMKjcGi7zk9UquigRjFtTLz0TYqr0ZGLZhaMHl/foy1bZR+Cwlw==}
@@ -9107,9 +9113,6 @@ packages:
   zlibjs@0.3.1:
     resolution: {integrity: sha512-+J9RrgTKOmlxFSDHo0pI1xM6BLVUv+o0ZT9ANtCxGkjIVCCUdx9alUF8Gm+dGLKbkkkidWIHFDZHDMpfITt4+w==}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
   zod@4.6.7:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
@@ -9120,38 +9123,46 @@ snapshots:
 
   '@acemir/cssom@0.9.32': {}
 
-  '@ai-sdk/amazon-bedrock@3.0.145(zod@4.6.7)':
+  '@ai-sdk/amazon-bedrock@5.0.139(zod@4.6.7)':
     dependencies:
-      '@ai-sdk/anthropic': 2.0.114(zod@4.6.7)
-      '@ai-sdk/provider': 2.0.5
-      '@ai-sdk/provider-utils': 3.0.45(zod@4.6.7)
+      '@ai-sdk/anthropic': 4.0.102(zod@4.6.7)
+      '@ai-sdk/openai': 4.0.115(zod@4.6.7)
+      '@ai-sdk/provider': 4.0.37
+      '@ai-sdk/provider-utils': 5.0.79(zod@4.6.7)
       '@smithy/eventstream-codec': 4.5.2
       '@smithy/util-utf8': 4.5.2
       aws4fetch: 1.0.20
       zod: 4.6.7
 
-  '@ai-sdk/anthropic@2.0.114(zod@4.6.7)':
+  '@ai-sdk/anthropic@4.0.102(zod@4.6.7)':
     dependencies:
-      '@ai-sdk/provider': 2.0.5
-      '@ai-sdk/provider-utils': 3.0.45(zod@4.6.7)
+      '@ai-sdk/provider': 4.0.37
+      '@ai-sdk/provider-utils': 5.0.79(zod@4.6.7)
       zod: 4.6.7
 
-  '@ai-sdk/gateway@2.0.178(zod@4.6.7)':
+  '@ai-sdk/gateway@4.0.143(zod@4.6.7)':
     dependencies:
-      '@ai-sdk/provider': 2.0.5
-      '@ai-sdk/provider-utils': 3.0.45(zod@4.6.7)
-      '@vercel/oidc': 3.1.0
+      '@ai-sdk/provider': 4.0.37
+      '@ai-sdk/provider-utils': 5.0.79(zod@4.6.7)
+      '@vercel/oidc': 3.2.0
       zod: 4.6.7
 
-  '@ai-sdk/provider-utils@3.0.45(zod@4.6.7)':
+  '@ai-sdk/openai@4.0.115(zod@4.6.7)':
     dependencies:
-      '@ai-sdk/provider': 2.0.5
+      '@ai-sdk/provider': 4.0.37
+      '@ai-sdk/provider-utils': 5.0.79(zod@4.6.7)
+      zod: 4.6.7
+
+  '@ai-sdk/provider-utils@5.0.79(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.37
       '@standard-schema/spec': 1.1.0
+      '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.1
-      undici: 5.29.0
+      undici: 7.30.2
       zod: 4.6.7
 
-  '@ai-sdk/provider@2.0.5':
+  '@ai-sdk/provider@4.0.37':
     dependencies:
       json-schema: 0.4.0
 
@@ -10511,8 +10522,6 @@ snapshots:
     optionalDependencies:
       '@noble/hashes': 2.4.0
 
-  '@fastify/busboy@3.2.5': {}
-
   '@floating-ui/core@1.8.0':
     dependencies:
       '@floating-ui/utils': 0.2.12
@@ -10534,7 +10543,7 @@ snapshots:
     dependencies:
       tslib: 2.9.1
 
-  '@hookform/resolvers@5.9.2(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.1))(zod@3.25.76)':
+  '@hookform/resolvers@5.9.2(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.91.0(@types/react@19.3.0)(react@19.3.1)
@@ -10542,7 +10551,7 @@ snapshots:
       '@sinclair/typebox': 0.34.52
       '@standard-schema/spec': 1.1.0
       ajv: 8.20.0
-      zod: 3.25.76
+      zod: 4.6.7
 
   '@img/colour@1.1.0':
     optional: true
@@ -10907,7 +10916,8 @@ snapshots:
       - debug
       - supports-color
 
-  '@opentelemetry/api@1.9.0': {}
+  '@opentelemetry/api@1.9.0':
+    optional: true
 
   '@orama/orama@3.1.18': {}
 
@@ -12367,17 +12377,17 @@ snapshots:
     dependencies:
       '@swc/counter': 0.1.3
 
-  '@t3-oss/env-core@0.13.11(typescript@5.9.3)(zod@3.25.76)':
+  '@t3-oss/env-core@0.13.11(typescript@5.9.3)(zod@4.6.7)':
     optionalDependencies:
       typescript: 5.9.3
-      zod: 3.25.76
+      zod: 4.6.7
 
-  '@t3-oss/env-nextjs@0.13.11(typescript@5.9.3)(zod@3.25.76)':
+  '@t3-oss/env-nextjs@0.13.11(typescript@5.9.3)(zod@4.6.7)':
     dependencies:
-      '@t3-oss/env-core': 0.13.11(typescript@5.9.3)(zod@3.25.76)
+      '@t3-oss/env-core': 0.13.11(typescript@5.9.3)(zod@4.6.7)
     optionalDependencies:
       typescript: 5.9.3
-      zod: 3.25.76
+      zod: 4.6.7
 
   '@tabler/icons-react@3.51.0(react@19.3.1)':
     dependencies:
@@ -12680,7 +12690,7 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vercel/oidc@3.1.0': {}
+  '@vercel/oidc@3.2.0': {}
 
   '@vitejs/plugin-react-swc@3.11.0(@swc/helpers@0.5.24)(vite@6.4.6(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
@@ -12908,6 +12918,8 @@ snapshots:
   '@voidzero-dev/vite-plus-win32-x64-msvc@1.0.0':
     optional: true
 
+  '@workflow/serde@4.1.0': {}
+
   '@yarnpkg/lockfile@1.1.0': {}
 
   '@yarnpkg/parsers@3.0.2':
@@ -13024,12 +13036,11 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ai@5.0.287(zod@4.6.7):
+  ai@7.0.170(zod@4.6.7):
     dependencies:
-      '@ai-sdk/gateway': 2.0.178(zod@4.6.7)
-      '@ai-sdk/provider': 2.0.5
-      '@ai-sdk/provider-utils': 3.0.45(zod@4.6.7)
-      '@opentelemetry/api': 1.9.0
+      '@ai-sdk/gateway': 4.0.143(zod@4.6.7)
+      '@ai-sdk/provider': 4.0.37
+      '@ai-sdk/provider-utils': 5.0.79(zod@4.6.7)
       zod: 4.6.7
 
   ajv-formats@3.0.1:
@@ -17232,9 +17243,7 @@ snapshots:
 
   undici-types@8.9.0: {}
 
-  undici@5.29.0:
-    dependencies:
-      '@fastify/busboy': 3.2.5
+  undici@7.30.2: {}
 
   unenv@2.0.0-rc.24:
     dependencies:
@@ -17993,8 +18002,6 @@ snapshots:
       readable-stream: 4.8.0
 
   zlibjs@0.3.1: {}
-
-  zod@3.25.76: {}
 
   zod@4.6.7: {}
 
