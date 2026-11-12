@@ -3,37 +3,56 @@ title: Introduction
 description: Official Beztack Documentation
 ---
 
-Welcome to the **Beztack** docs. This project is a production-ready
-TypeScript monorepo focused on fast delivery, clear architecture, and
-maintainable defaults.
+Welcome to the **Beztack** docs. Beztack is a TypeScript monorepo starter for
+B2B SaaS that charges in Latin America and worldwide, with
+[Mercado Pago](/docs/payments/mercado-pago) and [Polar](/docs/payments/polar)
+behind one payment interface.
+
+## What is built today
+
+- **Billing:** checkout, subscriptions and webhooks for both providers, plus
+  [plan changes](/docs/payments/plan-changes): upgrades with a proration preview,
+  downgrades at renewal, billing cadence changes, a pending plan change ledger,
+  admin tier overrides and an admin retry for failed changes.
+- **Auth:** email and password, two-factor, organizations with teams and
+  invitations, and an admin role.
+- **App and API:** a Vite + React SPA and a Nitro API, with PostgreSQL through Drizzle.
+- **Email, docs and env validation:** React Email templates sent through Resend,
+  this Fumadocs site, and T3 Env schemas.
+
+## Not built yet
+
+- **Template Sync** (receiving template updates as pull requests). See
+  [Template Sync](/docs/tooling/template-sync) for the plan and for the
+  experimental prototype that exists.
+- **More sign-in methods:** OAuth providers, magic link, passkeys, multi-session,
+  API keys and a breached-password check.
+- **More payment providers**, for example Stripe.
 
 ## Tech Stack
 
-We're using cutting-edge technologies to deliver the best developer and user experience:
-
-- **Monorepo:** [Nx](https://nx.dev) + [pnpm](https://pnpm.io) for efficient workspace management.
+- **Monorepo:** [Nx](https://nx.dev) + [pnpm](https://pnpm.io) for workspace management.
 - **Frontend:** [React 19](https://react.dev) + [Vite](https://vitejs.dev) + [Tailwind CSS v4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) in `apps/ui`.
 - **Backend:** [Nitro](https://nitro.unjs.io) with file-based routing in `apps/api`.
 - **Landing + Docs:** [Next.js](https://nextjs.org) +
   [Fumadocs](https://fumadocs.dev) in `apps/docs`.
 - **Auth:** [Better Auth](https://better-auth.com) with admin, organization, and twoFactor plugins.
-- **Payments:** Provider-agnostic adapter pattern supporting [Polar](https://polar.sh) and [MercadoPago](https://www.mercadopago.com).
+- **Payments:** Provider-agnostic adapter pattern with [Polar](https://polar.sh) and [Mercado Pago](https://www.mercadopago.com) adapters in `packages/payments`.
 - **Database:** [Drizzle ORM](https://orm.drizzle.team) + PostgreSQL in `@beztack/db`.
 - **Email:** [React Email](https://react.email) + [Resend](https://resend.com) in `@beztack/email`.
 - **Environment:** [T3 Env](https://env.t3.gg) + [Zod](https://zod.dev) for centralized env validation in `@beztack/env`.
-- **AI:** [Vercel AI SDK](https://sdk.vercel.ai) + Amazon Bedrock in `@beztack/ai`.
-- **OCR:** [Tesseract.js](https://tesseract.projectnaptha.com) in `@beztack/ocr`.
+- **AI:** `@beztack/ai` re-exports the [Vercel AI SDK](https://ai-sdk.dev) and configures an Amazon Bedrock provider. No app uses it yet.
+- **OCR:** one [Tesseract.js](https://tesseract.projectnaptha.com) helper in `@beztack/ocr`, used by an example page.
 - **URL State:** [nuqs](https://nuqs.47ng.com) in `@beztack/state`.
-- **CLI Tooling:** Template Sync commands to plan, inspect, apply, and
-  rollback template updates.
+- **CLI:** `beztack` (`packages/cli`) scaffolds projects with `pnpm create beztack`.
 
 ## Project Structure
 
 The repo is organized into apps and shared packages:
 
-- **`apps/ui`** — React 19 SPA with TanStack Query, React Router v7, and i18next.
-- **`apps/api`** — Nitro REST API with unified payment routes (`/api/subscriptions/*`) and admin routes (`/api/admin/plans/*`).
-- **`apps/docs`** — Next.js landing page and documentation with Fumadocs.
-- **`packages/`** — 10 shared packages covering database, payments, email, env validation, AI, OCR, state management, and CLI tooling.
+- **`apps/ui`**: React 19 SPA with TanStack Query, React Router v7, and i18next.
+- **`apps/api`**: Nitro REST API with unified payment routes (`/api/subscriptions/*`) and admin routes (`/api/auth/admin/*`).
+- **`apps/docs`**: Next.js landing page and documentation with Fumadocs.
+- **`packages/`**: shared packages for auth helpers, database, payments (core, Mercado Pago, Polar), email, env validation, AI, OCR, state management, and the CLI.
 
 Check out the sidebar sections to dive deeper into each aspect of Beztack development.

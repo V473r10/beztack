@@ -9,8 +9,9 @@ This guide helps you bootstrap a Beztack project locally.
 
 Make sure you have installed:
 
-- [Node.js](https://nodejs.org/) (LTS version recommended)
-- [pnpm](https://pnpm.io/) (package manager)
+- [Node.js](https://nodejs.org/) 22 (the version CI runs)
+- [pnpm](https://pnpm.io/) 11
+- [PostgreSQL](https://www.postgresql.org/) with an empty database
 - [Git](https://git-scm.com/)
 
 ## Create a New Project
@@ -25,22 +26,19 @@ The CLI will walk you through:
 
 - **Project name**: The name for your new project (lowercase with dashes)
 - **Project description**: A short description of your project
+- **Default currency and locale**: An ISO 4217 code (for example `USD`) and a BCP 47 tag (for example `en-US`), written to the `.env.example` files. Beztack has no built-in default and the apps refuse to start without them.
 - **Initialize Git repo?**: Choose if you want to set up a new Git repository
 - **Install dependencies?**: Choose if you want to automatically install dependencies using `pnpm install`
+- **Modules**: Optional modules (payments, email, AI, OCR, state management) and, when payments is selected, the payment provider
 
-## Useful CLI Commands
+The CLI copies this repository into your new folder. Its closing "Next steps"
+message prints `pnpm run push`, which is not a script in the project. Use the
+database commands below instead.
 
-After project creation, you can use the Beztack CLI for updates and tooling:
+## Template updates
 
-```bash
-pnpm dlx beztack init
-pnpm dlx beztack template status
-pnpm dlx beztack template plan --to 1.2.0
-pnpm dlx beztack template apply --dry-run
-```
-
-Template Sync is useful when you want to preview and apply template changes
-without manually diffing your project.
+Receiving later template changes as pull requests (Template Sync) is on the
+roadmap and not available yet. See [Template Sync](/docs/tooling/template-sync).
 
 ## Initial Setup
 
@@ -48,28 +46,32 @@ Once the project is created, navigate to the directory and set up your environme
 
 ### 1. Set Up Environment Variables
 
-Copy the `.env.example` file to `.env`:
+Copy the `.env.example` file of each app to `.env`:
 
 ```bash
 cd your-project
-cp  apps/api/.env.example apps/api/.env
-cp  apps/ui/.env.example apps/ui/.env
-cp  apps/docs/.env.example apps/docs/.env
+cp apps/api/.env.example apps/api/.env
+cp apps/ui/.env.example apps/ui/.env
+cp apps/docs/.env.example apps/docs/.env
 ```
 
 ### 2. Configure Required Variables
 
 Open the `.env` files in each app directory and set the required variables.
-At minimum, configure your database/auth variables and the payment provider you
-plan to use (Polar or Mercado Pago).
+At minimum, configure the database, `BETTER_AUTH_SECRET`, `APP_NAME`,
+`DEFAULT_CURRENCY`, `DEFAULT_LOCALE`, the Resend settings, and the credentials
+of the payment provider you plan to use (Polar or Mercado Pago, selected with
+`PAYMENT_PROVIDER`).
 
 ### 3. Initialize the Database
 
-Run database migrations:
+Apply the migrations:
 
 ```bash
-pnpm run push
+pnpm db:migrate
 ```
+
+To sync the schema without migration files during early development, use `pnpm db:push`.
 
 ## Development
 

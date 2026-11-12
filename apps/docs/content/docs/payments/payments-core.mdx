@@ -36,6 +36,7 @@ Every provider must implement this interface (defined in `packages/payments/core
 | `getCustomerByEmail(email)`            | Look up a customer by email                    |
 | `parseWebhook(rawBody, signature)`     | Parse and validate a webhook payload           |
 | `createPortalSession?(id, returnUrl)`  | Create a customer portal session (optional)    |
+| `capabilities.cadenceChange`           | Whether a subscription can change billing cadence (Polar: yes, Mercado Pago: no) |
 
 ## Core types
 
@@ -95,5 +96,6 @@ Defined in `packages/payments/core/src/webhooks.ts`:
 
 ## Provider-specific docs
 
+- [Plan changes](/docs/payments/plan-changes) — Upgrades, downgrades, cadence changes, proration preview, pending plan change ledger, admin tools.
 - [Polar](/docs/payments/polar) — Better Auth integration, portal sessions, usage tracking.
-- [Mercado Pago](/docs/payments/mercado-pago) — Plan sync, card processing, SSE events.
+- [Mercado Pago](/docs/payments/mercado-pago) — Plan sync, card processing, webhooks.
