@@ -61,19 +61,19 @@ A **Next.js** app with **Fumadocs** for the landing page and documentation.
 
 Reusable code lives in `packages/` to keep apps clean and DRY.
 
-| Package                   | Description                                                                                     |
-| ------------------------- | ----------------------------------------------------------------------------------------------- |
-| `@beztack/ai`             | Re-exports the Vercel AI SDK and configures an Amazon Bedrock provider (not used by the apps yet) |
-| `@beztack/auth`           | Role parsing, organization role ranking and post-sign-in redirects shared by API and UI         |
+| Package                    | Description                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `@beztack/ai`              | Re-exports the Vercel AI SDK and configures an Amazon Bedrock provider (not used by the apps yet)            |
+| `@beztack/auth`            | Role parsing, organization role ranking and post-sign-in redirects shared by API and UI                      |
 | `beztack` (`packages/cli`) | Project scaffolding CLI; experimental `template` commands (see [Template Sync](/docs/tooling/template-sync)) |
-| `@beztack/db`             | Database schema, Drizzle ORM client, and migrations for PostgreSQL                              |
-| `@beztack/email`          | Email templates built with React Email, sent via Resend                                         |
-| `@beztack/env`            | Centralized environment variable validation using T3 Env + Zod                                  |
-| `@beztack/ocr`            | One text extraction helper built on Tesseract.js                                                |
-| `@beztack/payments`       | Provider-agnostic payment types and `PaymentProviderAdapter` interface                          |
-| `@beztack/payments-polar` | Polar payment provider implementation                                                           |
-| `@beztack/mercadopago`    | MercadoPago payment provider implementation                                                     |
-| `@beztack/state`          | URL-based state management using nuqs                                                           |
+| `@beztack/db`              | Database schema, Drizzle ORM client, and migrations for PostgreSQL                                           |
+| `@beztack/email`           | Email templates built with React Email, sent via Resend                                                      |
+| `@beztack/env`             | Centralized environment variable validation using T3 Env + Zod                                               |
+| `@beztack/ocr`             | One text extraction helper built on Tesseract.js                                                             |
+| `@beztack/payments`        | Provider-agnostic payment types and `PaymentProviderAdapter` interface                                       |
+| `@beztack/payments-polar`  | Polar payment provider implementation                                                                        |
+| `@beztack/mercadopago`     | MercadoPago payment provider implementation                                                                  |
+| `@beztack/state`           | URL-based state management using nuqs                                                                        |
 
 ## Payments Architecture
 

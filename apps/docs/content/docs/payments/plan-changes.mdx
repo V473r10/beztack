@@ -17,11 +17,11 @@ The logic lives in `apps/api/server/utils/plan-change.ts`, the ledger in
 
 Comparing the tier of the current plan with the target plan decides the direction:
 
-| Direction        | When                                  | Takes effect                  |
-| ---------------- | ------------------------------------- | ----------------------------- |
-| `upgrade`        | Target tier is higher                 | After the first payment       |
-| `downgrade`      | Target tier is lower                  | At the next renewal           |
-| `cadence_change` | Same tier, monthly to yearly or back  | At the next renewal           |
+| Direction        | When                                 | Takes effect            |
+| ---------------- | ------------------------------------ | ----------------------- |
+| `upgrade`        | Target tier is higher                | After the first payment |
+| `downgrade`      | Target tier is lower                 | At the next renewal     |
+| `cadence_change` | Same tier, monthly to yearly or back | At the next renewal     |
 
 A request for the same tier and the same cadence is rejected as not a plan change.
 Beztack supports monthly and yearly cadences only.

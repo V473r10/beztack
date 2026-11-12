@@ -1075,7 +1075,9 @@ export default function Home() {
       <footer className="border-border border-t">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-muted-foreground text-sm">Beztack - MIT licensed TypeScript SaaS starter</p>
+            <p className="text-muted-foreground text-sm">
+              Beztack - MIT licensed TypeScript SaaS starter
+            </p>
             <div className="flex items-center gap-6">
               <Link
                 className="text-muted-foreground text-sm transition-colors hover:text-accent"
