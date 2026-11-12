@@ -15,7 +15,7 @@ const updateSchema = z.object({
   displayName: z.string().optional(),
   description: z.string().nullable().optional(),
   features: z.array(z.string()).optional(),
-  limits: z.record(z.number()).optional(),
+  limits: z.record(z.string(), z.number()).optional(),
   permissions: z.array(z.string()).optional(),
   displayOrder: z.number().nullable().optional(),
   highlighted: z.boolean().optional(),

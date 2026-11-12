@@ -21,7 +21,7 @@ const createSchema = z.object({
   interval: z.string().default("month"),
   intervalCount: z.number().int().positive().default(1),
   features: z.array(z.string()).optional(),
-  limits: z.record(z.number()).optional(),
+  limits: z.record(z.string(), z.number()).optional(),
   permissions: z.array(z.string()).optional(),
   displayOrder: z.number().nullable().optional(),
   highlighted: z.boolean().optional(),
