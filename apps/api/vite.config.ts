@@ -33,5 +33,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["server/**/*.test.ts", "server/**/*.test.tsx"],
+    // The *.db.test.ts files each drop and rebuild the one TEST_DATABASE_URL
+    // schema, so two of them running in parallel destroy each other's tables.
+    fileParallelism: false,
   },
 });
