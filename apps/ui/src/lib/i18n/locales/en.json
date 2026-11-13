@@ -255,7 +255,10 @@
       "dueToday": "Due today",
       "thenFullAmount": "Then {{price}} each period.",
       "startsOn": "You keep your current plan until {{date}}, then pay {{price}}.",
-      "startsAtRenewal": "You keep your current plan until the next renewal, then pay {{price}}."
+      "startsAtRenewal": "You keep your current plan until the next renewal, then pay {{price}}.",
+      "pendingTitle": "Pending plan change",
+      "pendingNotice": "It activates at your next renewal. Nothing is charged today.",
+      "scheduledToast": "Plan change scheduled. It takes effect at your next renewal."
     },
     "downgradeWarning": {
       "title": "Confirm Downgrade",
@@ -385,7 +388,8 @@
     "errors": {
       "customer_email_rejected": "The payment provider rejected your email address. Use a different email.",
       "payment_provider_unavailable": "The payment provider is unavailable. Try again in a moment.",
-      "organization_required": "Create an organization first: this action bills an organization."
+      "organization_required": "Create an organization first: this action bills an organization.",
+      "provider_did_not_apply": "The payment provider did not apply the plan change. Nothing was charged. Try again in a moment."
     },
     "checkoutFailed": "Failed to start checkout process"
   },

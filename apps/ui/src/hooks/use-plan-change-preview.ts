@@ -56,6 +56,11 @@ type PlanChangePreviewResponse = {
 };
 
 export function usePlanChangePreview(input: {
+  /**
+   * Only keys the cached quote. The server finds the Current Subscription
+   * itself, so a quote never waits for the client to know the id (a
+   * subscriber can be known from Membership status alone).
+   */
   subscriptionId?: string;
   targetTierId?: string;
   billingPeriod: "monthly" | "yearly";
@@ -81,7 +86,7 @@ export function usePlanChangePreview(input: {
       );
       return response.planChangePreview;
     },
-    enabled: input.enabled && Boolean(input.subscriptionId && input.targetTierId),
+    enabled: input.enabled && Boolean(input.targetTierId),
     // A preview is a quote: a failed one is shown, not silently retried.
     retry: false,
     staleTime: 30_000,
