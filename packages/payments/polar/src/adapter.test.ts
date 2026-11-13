@@ -77,6 +77,44 @@ describe("createPolarAdapter", () => {
       });
     });
 
+    it("lists every product of the catalog, not only the first page", async () => {
+      const item = (id: string) => ({
+        id,
+        name: id,
+        is_recurring: true,
+        recurring_interval: "month",
+        prices: [{ price_amount: 900, price_currency: "usd" }],
+      });
+      client.products.list
+        .mockResolvedValueOnce({
+          items: [item("prod_1"), item("prod_2")],
+          pagination: { total_count: 5, max_page: 3 },
+        })
+        .mockResolvedValueOnce({
+          items: [item("prod_3"), item("prod_4")],
+          pagination: { total_count: 5, max_page: 3 },
+        })
+        .mockResolvedValueOnce({
+          items: [item("prod_5")],
+          pagination: { total_count: 5, max_page: 3 },
+        });
+
+      const products = await createAdapter().listProducts();
+
+      expect(products.map((product) => product.id)).toEqual([
+        "prod_1",
+        "prod_2",
+        "prod_3",
+        "prod_4",
+        "prod_5",
+      ]);
+      expect(client.products.list).toHaveBeenCalledTimes(3);
+      expect(client.products.list).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ organization_id: "org_1", is_archived: false, page: 2 }),
+      );
+    });
+
     it.each([
       ["USD", 900],
       ["UYU", 39_000],

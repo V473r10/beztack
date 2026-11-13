@@ -98,6 +98,7 @@ function buildBaseTier(product: Product, tierId: string, displayOrder: number): 
     permissions,
     displayOrder,
     soon: metadata?.soon === true,
+    ...(metadata?.catalogOnly === true ? { catalogOnly: true } : {}),
   };
 }
 
@@ -157,5 +158,6 @@ export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> 
     }
   }
 
-  return Array.from(tiers.values());
+  // Array.prototype.sort is stable, so equal displayOrder keeps the provider order.
+  return Array.from(tiers.values()).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
 }
