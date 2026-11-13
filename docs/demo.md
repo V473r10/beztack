@@ -9,7 +9,7 @@ Beztack can run as a public demo where a visitor sees the billing depth without 
 3. **Change plan** with the proration preview: upgrades charge the difference, downgrades and cadence changes become a Pending Plan change that activates at renewal. The proration shows for a visitor who paid in the sandbox, not for the seeded customer or the admin (see "What is fake, what is sandbox").
 4. **Open the admin pages** as the demo App admin: the Failed plan changes page lists one failed downgrade that the seed creates, with its Retry action.
 
-A banner pinned to the bottom of every page reads "Demo: sandbox payments, data resets daily".
+A banner pinned to the bottom of every page reads "Demo: sandbox payments, data resets daily". The sign-in and sign-up pages also show a "How to try the demo" panel with the test cards of the active sandbox (Polar or Mercado Pago, from `VITE_PAYMENT_PROVIDER`) and the daily wipe notice. On wide screens it sits in the brand column; on a phone it is a collapsed section under the form. It never shows the admin credentials.
 
 ## How visitors reach it
 
@@ -31,7 +31,7 @@ Names only. Values live in the hosting provider's secret store, never in the rep
 | Variable                              | Where | Purpose                                                                                                         |
 | ------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------- |
 | `DEMO_MODE`                           | api   | `true` turns on the demo guards below. Default `false`.                                                         |
-| `VITE_DEMO_MODE`                      | ui    | `true` shows the banner. Set it together with `DEMO_MODE`.                                                      |
+| `VITE_DEMO_MODE`                      | ui    | `true` shows the banner and the auth "How to try the demo" panel. Set it together with `DEMO_MODE`.             |
 | `DEMO_ADMIN_EMAIL`                    | api   | Email of the seeded App admin. Must also be listed in `APP_ADMIN_EMAILS`.                                       |
 | `DEMO_ADMIN_PASSWORD`                 | api   | Password of the seeded App admin. Read only by the seed.                                                        |
 | `DEMO_CUSTOMER_PASSWORD`              | api   | Password of the seeded customer. Read only by the seed. Never committed or logged.                              |
@@ -150,4 +150,4 @@ Add the `tier` key under the product's metadata; it is what ties a Polar product
 - Rate limits and the Mercado Pago `live_mode` webhook guard.
 - A real sandbox subscription behind the seeded fixture, to show proration for the seeded customer. Polar creates Subscriptions through the API only for free products, so it needs a checkout with a 100% discount; a spike first.
 - Re-run Plan sync automatically after a Mercado Pago reset.
-- A "how to try it" panel on the demo with the test cards and test buyers.
+- Test buyers for the Mercado Pago panel (the panel shows test cards only).

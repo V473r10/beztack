@@ -58,6 +58,23 @@
     }
   },
   "auth": {
+    "brand": {
+      "tagline": "Cobros para tu SaaS: suscripciones, cambios de plan con prorrateo y organizaciones, listos para usar."
+    },
+    "demo": {
+      "title": "Cómo probar la demo",
+      "intro": "Creá una cuenta con un email real, elegí un plan y pagá con una tarjeta de prueba del sandbox. No se cobra nada de verdad.",
+      "cardsTitle": "Tarjetas de prueba (sandbox de {{provider}})",
+      "cardDetails": "Vence {{expiry}} · CVC {{cvc}}",
+      "cardholder": "nombre {{holder}}",
+      "anyFutureDate": "cualquier fecha futura",
+      "anyCvc": "cualquier código de 3 dígitos",
+      "dataReset": "Los datos de la demo se borran todos los días.",
+      "outcome": {
+        "approved": "Pago aprobado",
+        "declined": "Pago rechazado"
+      }
+    },
     "signIn": {
       "backToSignIn": "Volver a Iniciar Sesión",
       "button": "Iniciar Sesión",
@@ -77,14 +94,16 @@
         "backupCodeDescription": "Ingresá uno de tus códigos de recuperación",
         "backupCodeWarning": "Cada código de recuperación se puede usar una sola vez",
         "verifyCode": "Verificar código",
-        "verifyBackupCode": "Verificar código de recuperación"
+        "verifyBackupCode": "Verificar código de recuperación",
+        "pageTitle": "Autenticación de dos factores - {{appName}}"
       },
       "form": {
         "email": "Correo Electrónico",
         "password": "Contraseña",
         "button": "Iniciar Sesión",
         "forgotPassword": "¿Olvidaste tu contraseña?"
-      }
+      },
+      "pageTitle": "Iniciar sesión - {{appName}}"
     },
     "signUp": {
       "button": "Registrarse",
@@ -92,7 +111,8 @@
       "demoEmailHint": "Usá un email con un dominio real (por ejemplo vos@gmail.com). El sandbox de pagos rechaza dominios inventados como .test.",
       "hasAccount": "¿Ya tienes una cuenta?",
       "signIn": "Iniciar sesión",
-      "title": "Crear una cuenta"
+      "title": "Creá tu cuenta",
+      "pageTitle": "Creá tu cuenta - {{appName}}"
     }
   },
   "pricing": {
@@ -328,7 +348,7 @@
     "checkoutFailed": "No se pudo iniciar el pago"
   },
   "common": {
-    "footer": "© {{year}} Tu Compañía. Todos los derechos reservados.",
+    "footer": "© {{year}} {{appName}}. Todos los derechos reservados.",
     "more": "Más",
     "workflowStreamline": "Optimiza tu flujo de trabajo con nuestra potente plataforma.",
     "yourLogo": "Tu Logo",
@@ -459,10 +479,6 @@
       "jamik": "Jamik Tashpulatov"
     },
     "selectAll": "Seleccionar todo",
-    "selectFocusDocuments": "Seleccionar documentos de enfoque",
-    "selectKeyPersonnel": "Seleccionar personal clave",
-    "selectOutline": "Seleccionar esquema",
-    "selectPastPerformance": "Seleccionar rendimiento pasado",
     "selectRow": "Seleccionar fila",
     "statuses": {
       "done": "Hecho",
@@ -501,11 +517,11 @@
       "toc": "Tabla de Contenidos"
     },
     "views": {
-      "focusDocuments": "Documentos de Enfoque",
-      "keyPersonnel": "Personal Clave",
+      "focusDocuments": "Documentos",
+      "keyPersonnel": "Personal clave",
       "label": "Ver",
       "outline": "Esquema",
-      "pastPerformance": "Rendimiento Pasado",
+      "pastPerformance": "Rendimiento",
       "placeholder": "Selecciona una vista"
     },
     "capabilities": "Capacidades",
@@ -557,7 +573,15 @@
         "number": "Al menos un número",
         "special": "Al menos un carácter especial",
         "uppercase": "Al menos una letra mayúscula"
-      }
+      },
+      "ruleMet": "Requisito cumplido",
+      "rulePending": "Requisito todavía sin cumplir",
+      "ruleUnmet": "Requisito no cumplido"
+    }
+  },
+  "header": {
+    "pageTitles": {
+      "checkoutConfirm": "Confirmar compra"
     }
   },
   "misc": {
@@ -627,7 +651,6 @@
       "account": "Cuenta",
       "billing": "Facturación",
       "language": "Idioma",
-      "notifications": "Notificaciones",
       "signOut": "Cerrar Sesión"
     },
     "nav": {
@@ -739,6 +762,18 @@
       "logo": "URL del logo (opcional)",
       "submit": "Crear organización",
       "cancel": "Cancelar"
+    }
+  },
+  "commandPalette": {
+    "title": "Paleta de comandos",
+    "description": "Buscá una página y andá directo a ella.",
+    "placeholder": "Buscar páginas...",
+    "empty": "No se encontraron páginas.",
+    "groups": {
+      "main": "Páginas",
+      "organization": "Organización",
+      "platform": "Plataforma",
+      "secondary": "Más"
     }
   }
 }

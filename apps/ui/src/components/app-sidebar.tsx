@@ -20,7 +20,7 @@ import { hasAuthRole } from "@beztack/auth";
 import type * as React from "react";
 import { Link } from "react-router";
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
+import { type NavAction, NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import type { RouteAccess } from "@/components/protected-route";
 import { OrganizationSwitcher } from "@/components/organizations";
@@ -33,7 +33,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useOptionalCommandPalette } from "@/contexts/command-palette-context";
 import { useOptionalMembership } from "@/contexts/membership-context";
+import { env } from "@/env";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 /** What a sidebar item may require of the caller; see {@link RouteAccess}. */
@@ -45,6 +47,10 @@ export type SidebarNavItem = {
   icon: Icon;
   id?: string;
   requires?: NavRequirement;
+  /** Opens outside the app (new tab) instead of through the router. */
+  external?: boolean;
+  /** Does something instead of going to a page; `url` is empty. */
+  action?: NavAction;
 };
 
 export type SidebarAccess = RouteAccess;
@@ -108,9 +114,17 @@ const NAV_SECONDARY: SidebarNavItem[] = [
     icon: IconSettings,
     id: TOUR_STEP_IDS.SETTINGS_BUTTON,
   },
-  { title: "sidebar.nav.getHelp", url: "#", icon: IconHelp },
-  { title: "sidebar.nav.search", url: "#", icon: IconSearch },
+  // "Search" and "Get Help" are added by getSidebarSections ("Get Help" only when
+  // VITE_DOCS_URL is set); a link that goes nowhere does not ship.
 ];
+
+/** Opens the command palette, which lists the pages of the other sections. */
+const SEARCH_ITEM: SidebarNavItem = {
+  title: "sidebar.nav.search",
+  url: "",
+  icon: IconSearch,
+  action: "open-command-palette",
+};
 
 function meets(requirement: NavRequirement | undefined, access: SidebarAccess): boolean {
   switch (requirement) {
@@ -128,17 +142,31 @@ function meets(requirement: NavRequirement | undefined, access: SidebarAccess): 
 }
 
 /** The sidebar sections and the items each caller may use. Same rules as the routes. */
-export function getSidebarSections(access: SidebarAccess) {
+export function getSidebarSections(access: SidebarAccess, docsUrl?: string) {
   const visible = (items: SidebarNavItem[]) => items.filter((item) => meets(item.requires, access));
+  const help: SidebarNavItem[] = docsUrl
+    ? [{ title: "sidebar.nav.getHelp", url: docsUrl, icon: IconHelp, external: true }]
+    : [];
   return {
     main: visible(NAV_MAIN),
     organization: visible(NAV_ORGANIZATION),
     platform: visible(NAV_PLATFORM),
-    secondary: visible(NAV_SECONDARY),
+    secondary: [SEARCH_ITEM, ...visible(NAV_SECONDARY), ...help],
   };
 }
 
-const NO_ACCESS: SidebarAccess = {
+/**
+ * The sidebar entry for a page, so the header can name the page the same way the menu does.
+ * The most specific URL wins (`/admin/users/1` is User Management, not Platform Admin).
+ */
+export function findNavItem(pathname: string): SidebarNavItem | undefined {
+  const matches = [...NAV_MAIN, ...NAV_ORGANIZATION, ...NAV_PLATFORM, ...NAV_SECONDARY].filter(
+    (item) => item.url === pathname || (item.url !== "/" && pathname.startsWith(`${item.url}/`)),
+  );
+  return matches.sort((a, b) => b.url.length - a.url.length)[0];
+}
+
+export const NO_ACCESS: SidebarAccess = {
   isAppAdmin: false,
   organizationRole: null,
   canManageBilling: false,
@@ -146,7 +174,12 @@ const NO_ACCESS: SidebarAccess = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const membership = useOptionalMembership();
-  const sections = getSidebarSections(membership ?? NO_ACCESS);
+  const palette = useOptionalCommandPalette();
+  const sections = getSidebarSections(membership ?? NO_ACCESS, env.VITE_DOCS_URL);
+  // Without a palette to open, Search would be a button that does nothing.
+  const secondary = palette
+    ? sections.secondary
+    : sections.secondary.filter((item) => !item.action);
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -178,7 +211,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {sections.platform.length > 0 && (
           <NavSecondary items={sections.platform} title="Platform" />
         )}
-        <NavSecondary className="mt-auto" items={sections.secondary} />
+        <NavSecondary
+          className="mt-auto"
+          items={secondary}
+          onAction={(action) => {
+            if (action === "open-command-palette") {
+              palette?.open();
+            }
+          }}
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
