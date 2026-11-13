@@ -93,6 +93,15 @@ export function formatDate(
   return new Intl.DateTimeFormat(locale, options).format(new Date(date));
 }
 
+/** Format a plain number (counts, limits) in the language the user chose. */
+export function formatNumber(
+  value: number,
+  options?: Intl.NumberFormatOptions,
+  locale: string = activeLocale(),
+): string {
+  return new Intl.NumberFormat(locale, options).format(value);
+}
+
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
 const SECONDS_PER_DAY = 86_400;
@@ -109,12 +118,13 @@ const RELATIVE_UNITS: ReadonlyArray<[Intl.RelativeTimeFormatUnit, number]> = [
 ];
 
 /**
- * Format a date relative to now in the project locale, e.g. "in 3 days" or
- * "2 hours ago", using the largest unit that fits.
+ * Format a date relative to now in the language the user chose (the project
+ * locale before one is set), e.g. "in 3 days" or "2 hours ago", using the
+ * largest unit that fits.
  */
 export function formatRelativeFromNow(
   date: Date | string | number,
-  locale: string = projectLocale(),
+  locale: string = activeLocale(),
 ): string {
   const diffSeconds = (new Date(date).getTime() - Date.now()) / MILLISECONDS_PER_SECOND;
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
