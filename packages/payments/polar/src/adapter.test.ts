@@ -54,8 +54,12 @@ describe("createPolarAdapter", () => {
     expect(createAdapter().capabilities.cadenceChange).toBe(true);
   });
 
+  it("declares that it can upgrade a Subscription in place with a prorated charge", () => {
+    expect(createAdapter().capabilities.proratedUpgrade).toBe(true);
+  });
+
   describe("products", () => {
-    it("maps a recurring Polar product from cents to the price amount", async () => {
+    it("maps a recurring Polar product keeping the minor-unit amount untouched", async () => {
       client.products.get.mockResolvedValueOnce({
         id: "prod_pro",
         name: "Pro",
@@ -70,11 +74,141 @@ describe("createPolarAdapter", () => {
         name: "Pro",
         description: undefined,
         type: "plan",
-        price: { amount: 29, currency: "USD" },
+        price: { amount: 2900, currency: "USD" },
         interval: "year",
         intervalCount: 1,
         metadata: { tier: "pro", isRecurring: true },
       });
+    });
+
+    it("lists every product of the catalog, not only the first page", async () => {
+      const item = (id: string) => ({
+        id,
+        name: id,
+        is_recurring: true,
+        recurring_interval: "month",
+        prices: [{ price_amount: 900, price_currency: "usd" }],
+      });
+      client.products.list
+        .mockResolvedValueOnce({
+          items: [item("prod_1"), item("prod_2")],
+          pagination: { total_count: 5, max_page: 3 },
+        })
+        .mockResolvedValueOnce({
+          items: [item("prod_3"), item("prod_4")],
+          pagination: { total_count: 5, max_page: 3 },
+        })
+        .mockResolvedValueOnce({
+          items: [item("prod_5")],
+          pagination: { total_count: 5, max_page: 3 },
+        });
+
+      const products = await createAdapter().listProducts();
+
+      expect(products.map((product) => product.id)).toEqual([
+        "prod_1",
+        "prod_2",
+        "prod_3",
+        "prod_4",
+        "prod_5",
+      ]);
+      expect(client.products.list).toHaveBeenCalledTimes(3);
+      expect(client.products.list).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ organization_id: "org_1", is_archived: false, page: 2 }),
+      );
+    });
+
+    it.each([
+      ["USD", 900],
+      ["UYU", 39_000],
+      ["JPY", 900],
+      ["KWD", 9000],
+    ])("reads a %s price from Polar without converting it", async (currency, amount) => {
+      client.products.list.mockResolvedValueOnce({
+        items: [
+          {
+            id: "prod_1",
+            name: "Basic",
+            is_recurring: true,
+            recurring_interval: "month",
+            prices: [{ price_amount: amount, price_currency: currency.toLowerCase() }],
+          },
+        ],
+      });
+
+      const [product] = await createAdapter().listProducts();
+
+      expect(product?.price).toEqual({ amount, currency });
+    });
+
+    it.each([
+      ["USD", 900],
+      ["UYU", 39_000],
+      ["JPY", 900],
+      ["KWD", 9000],
+    ])("sends a %s price to Polar without converting it", async (currency, amount) => {
+      client.products.create.mockResolvedValueOnce({ id: "prod_new", name: "Basic", prices: [] });
+
+      await createAdapter().createProduct({
+        name: "Basic",
+        type: "plan",
+        interval: "month",
+        intervalCount: 1,
+        price: { amount, currency },
+      });
+
+      expect(client.products.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prices: [
+            { amount_type: "fixed", price_amount: amount, price_currency: currency.toLowerCase() },
+          ],
+        }),
+      );
+    });
+
+    it("sends an updated price to Polar without converting it", async () => {
+      client.products.update.mockResolvedValueOnce({ id: "prod_pro", name: "Pro", prices: [] });
+
+      await createAdapter().updateProduct("prod_pro", { price: { amount: 2900, currency: "USD" } });
+
+      expect(client.products.update).toHaveBeenCalledWith("prod_pro", {
+        prices: [{ amount_type: "fixed", price_amount: 2900, price_currency: "usd" }],
+      });
+    });
+
+    it("round-trips a price through create and read without changing it", async () => {
+      client.products.create.mockImplementationOnce((request: { prices: unknown[] }) =>
+        Promise.resolve({
+          id: "prod_new",
+          name: "Basic",
+          is_recurring: true,
+          prices: request.prices,
+        }),
+      );
+
+      const product = await createAdapter().createProduct({
+        name: "Basic",
+        type: "plan",
+        interval: "month",
+        intervalCount: 1,
+        price: { amount: 900, currency: "USD" },
+      });
+
+      expect(product.price).toEqual({ amount: 900, currency: "USD" });
+    });
+
+    it("refuses a price that is not an integer amount of minor units", async () => {
+      await expect(
+        createAdapter().createProduct({
+          name: "Basic",
+          type: "plan",
+          interval: "month",
+          intervalCount: 1,
+          price: { amount: 9.5, currency: "USD" },
+        }),
+      ).rejects.toThrow(RangeError);
+      expect(client.products.create).not.toHaveBeenCalled();
     });
 
     it("treats a missing product as not found", async () => {
@@ -83,7 +217,23 @@ describe("createPolarAdapter", () => {
       await expect(createAdapter().getProduct("prod_missing")).resolves.toBeNull();
     });
 
-    it("creates a product in cents, raising it to Polar's minimum price", async () => {
+    it.each([0, 10, 49])(
+      "refuses a price of %i, below Polar's minimum, instead of raising it",
+      async (amount) => {
+        await expect(
+          createAdapter().createProduct({
+            name: "Tiny",
+            type: "plan",
+            interval: "month",
+            intervalCount: 1,
+            price: { amount, currency: "USD" },
+          }),
+        ).rejects.toThrow(RangeError);
+        expect(client.products.create).not.toHaveBeenCalled();
+      },
+    );
+
+    it("accepts a price at Polar's minimum", async () => {
       client.products.create.mockResolvedValueOnce({ id: "prod_new", name: "Tiny", prices: [] });
 
       await createAdapter().createProduct({
@@ -91,12 +241,11 @@ describe("createPolarAdapter", () => {
         type: "plan",
         interval: "month",
         intervalCount: 1,
-        price: { amount: 0.1, currency: "USD" },
+        price: { amount: 50, currency: "USD" },
       });
 
       expect(client.products.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          recurring_interval: "month",
           prices: [{ amount_type: "fixed", price_amount: 50, price_currency: "usd" }],
         }),
       );
@@ -194,6 +343,57 @@ describe("createPolarAdapter", () => {
       expect(updated).toMatchObject({ productId: "prod_basic", productName: "Basic" });
     });
 
+    // https://polar.sh/docs/features/subscriptions/proration: `invoice` updates
+    // the Subscription immediately and invoices the prorated difference right
+    // away (an Upgrade charges now); `prorate` carries it to the next invoice.
+    it("charges the prorated difference now when asked to invoice", async () => {
+      client.subscriptions.update.mockResolvedValueOnce(
+        polarSubscription({ product_id: "prod_ultimate", product: { name: "Ultimate" } }),
+      );
+
+      await createAdapter().updateSubscription("sub_1", {
+        productId: "prod_ultimate",
+        prorationBehavior: "invoice",
+      });
+
+      expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
+        product_id: "prod_ultimate",
+        proration_behavior: "invoice",
+      });
+    });
+
+    it("projects the tier of the product the Subscription is on now, not of its checkout", async () => {
+      // Polar keeps the checkout metadata (tier: basic) after a product change.
+      client.subscriptions.update.mockResolvedValueOnce(
+        polarSubscription({
+          product_id: "prod_pro",
+          product: { name: "Pro", metadata: { tier: "pro", planId: "pro_month" } },
+          metadata: { tier: "basic", planId: "basic_month", userId: "user_1" },
+        }),
+      );
+
+      const updated = await createAdapter().updateSubscription("sub_1", {
+        productId: "prod_pro",
+        prorationBehavior: "invoice",
+      });
+
+      expect(updated.metadata).toMatchObject({
+        tier: "pro",
+        planId: "pro_month",
+        userId: "user_1",
+      });
+    });
+
+    it("keeps the checkout metadata when the product carries none", async () => {
+      client.subscriptions.get.mockResolvedValueOnce(
+        polarSubscription({ product: { name: "Pro", metadata: {} } }),
+      );
+
+      const subscription = await createAdapter().getSubscription("sub_1");
+
+      expect(subscription?.metadata).toEqual({ tier: "pro" });
+    });
+
     it("sends no proration behavior for 'none'", async () => {
       client.subscriptions.update.mockResolvedValueOnce(
         polarSubscription({ product_id: "prod_basic" }),
@@ -236,6 +436,33 @@ describe("createPolarAdapter", () => {
       const payload = await createAdapter().parseWebhook(JSON.stringify({ type: polarType }), "");
 
       expect(payload).toMatchObject({ type, provider: "polar" });
+    });
+  });
+
+  describe("customers", () => {
+    it("links the customer to our user id and name when creating it", async () => {
+      client.customers.create.mockResolvedValueOnce({
+        id: CUSTOMER_UUID,
+        email: "user@example.com",
+        name: "User",
+        external_id: "user_1",
+        metadata: { source: "beztack-checkout" },
+      });
+
+      const customer = await createAdapter().createCustomer(
+        "user@example.com",
+        { source: "beztack-checkout" },
+        { externalId: "user_1", name: "User" },
+      );
+
+      expect(client.customers.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "user@example.com",
+          name: "User",
+          external_id: "user_1",
+        }),
+      );
+      expect(customer).toMatchObject({ id: CUSTOMER_UUID, externalId: "user_1" });
     });
   });
 });

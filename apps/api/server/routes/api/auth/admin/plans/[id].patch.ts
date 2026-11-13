@@ -1,5 +1,5 @@
 /**
- * PATCH /api/admin/plans/:id — Update a plan's catalog metadata
+ * PATCH /api/auth/admin/plans/:id — Update a plan's catalog metadata
  */
 import { db, plan } from "@beztack/db";
 import { eq } from "drizzle-orm";

@@ -188,7 +188,9 @@ export function SyncedPlanCard({
                 )}
               </div>
               <div className="shrink-0 text-right">
-                <div className="font-bold text-2xl tracking-tight">${view.localPlan.price}</div>
+                <div className="font-bold text-2xl tracking-tight">
+                  {formatPrice(view.localPlan.price, view.localPlan.currency)}
+                </div>
                 <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   {view.localPlan.currency} / {view.localPlan.interval ?? "month"}
                 </div>

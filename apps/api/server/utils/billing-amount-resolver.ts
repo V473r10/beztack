@@ -29,7 +29,8 @@ export function estimatePeriodEnd(activeSub: Subscription, interval: string): Da
 /**
  * What the provider actually charges the Subscription per period
  * (`metadata.billingAmount`, set by the adapter from MP's
- * `auto_recurring.transaction_amount`). Null when it is not reported.
+ * `auto_recurring.transaction_amount`, converted to integer minor units).
+ * Null when it is not reported.
  */
 export function readChargedAmount(subscription: Subscription): number | null {
   const amount = subscription.metadata?.billingAmount;
@@ -40,7 +41,7 @@ export function readChargedAmount(subscription: Subscription): number | null {
  * Resolve the current billing amount for a subscription.
  *
  * Fallback chain:
- * 1. metadata.billingAmount (set by adapter from auto_recurring.transaction_amount)
+ * 1. metadata.billingAmount (minor units; set by the adapter from auto_recurring.transaction_amount)
  * 2. provider.getProduct(productId) — resolves from MP plan when metadata is missing
  *    (common for just-created subscriptions where MP hasn't processed first payment)
  * 3. Returns 0 as last resort (caller should handle this edge case)

@@ -6,6 +6,7 @@ import type {
   BillingInterval,
   CheckoutResult,
   CreateCheckoutOptions,
+  CreateCustomerOptions,
   CreateProductOptions,
   CreateSubscriptionOptions,
   Customer,
@@ -32,9 +33,10 @@ type PresentmentCurrency = NonNullable<PolarFixedPriceCreate["price_currency"]>;
 type PolarProductUpdate = Parameters<PolarClient["products"]["update"]>[1];
 type PolarRecurringInterval = NonNullable<PolarProductUpdate["recurring_interval"]>;
 
-const CENTS_TO_DOLLARS = 100;
-const MIN_PRICE_CENTS = 50;
+/** Polar rejects fixed prices below 50 minor units (50 cents for USD). */
+const MIN_PRICE_MINOR_UNITS = 50;
 const DEFAULT_LIMIT = 50;
+const PRODUCTS_PAGE_LIMIT = 100;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function maskEmail(email?: string): string | undefined {
@@ -131,7 +133,8 @@ function mapPolarProduct(product: PolarProductResponse): Product {
     description: product.description ?? undefined,
     type: product.is_recurring ? "plan" : "product",
     price: {
-      amount: (price?.price_amount ?? 0) / CENTS_TO_DOLLARS,
+      // Polar already speaks integer minor units: no conversion (ADR 0007).
+      amount: price?.price_amount ?? 0,
       currency: (price?.price_currency ?? "usd").toUpperCase(),
     },
     interval: mapPolarInterval(interval),
@@ -141,6 +144,31 @@ function mapPolarProduct(product: PolarProductResponse): Product {
       isRecurring: product.is_recurring ?? false,
     },
   };
+}
+
+/** Product metadata keys that name the plan, and so outrank the checkout's. */
+const PRODUCT_PLAN_METADATA_KEYS = ["tier", "planId"] as const;
+
+/**
+ * A Polar Subscription keeps the metadata of the checkout that created it.
+ * After a product change (an in-place Upgrade, an activated Pending Plan
+ * change) that metadata still names the old plan, so the plan keys come from
+ * the Product the Subscription is on now. A Product without those keys leaves
+ * the checkout metadata alone.
+ */
+function mapPolarSubscriptionMetadata(sub: PolarSubscription): Record<string, unknown> | undefined {
+  const checkoutMetadata = sub.metadata as Record<string, unknown> | undefined;
+  const productMetadata = (sub.product?.metadata ?? {}) as Record<string, unknown>;
+  const planKeys: Record<string, unknown> = {};
+
+  for (const key of PRODUCT_PLAN_METADATA_KEYS) {
+    const value = productMetadata[key];
+    if (typeof value === "string" && value.length > 0) {
+      planKeys[key] = value;
+    }
+  }
+
+  return Object.keys(planKeys).length > 0 ? { ...checkoutMetadata, ...planKeys } : checkoutMetadata;
 }
 
 function mapPolarSubscription(sub: PolarSubscription): Subscription {
@@ -154,7 +182,7 @@ function mapPolarSubscription(sub: PolarSubscription): Subscription {
     currentPeriodStart: sub.current_period_start ? new Date(sub.current_period_start) : undefined,
     currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end) : undefined,
     cancelAtPeriodEnd: sub.cancel_at_period_end ?? undefined,
-    metadata: sub.metadata as Record<string, unknown> | undefined,
+    metadata: mapPolarSubscriptionMetadata(sub),
   };
 }
 
@@ -169,9 +197,23 @@ function mapPolarCustomer(customer: PolarCustomer): Customer {
 }
 
 function fixedPrice(price: { amount: number; currency: string }): PolarFixedPriceCreate {
+  // Polar takes integer minor units, the same contract as the domain (ADR 0007).
+  // A fractional amount is a caller still on major units: refuse it instead of
+  // sending a price off by a factor of 100.
+  if (!Number.isSafeInteger(price.amount)) {
+    throw new RangeError(
+      `Expected an integer amount in minor units, received ${price.amount} ${price.currency}`,
+    );
+  }
+  // Never raise the price silently: a Free plan (0) would become a paid product.
+  if (price.amount < MIN_PRICE_MINOR_UNITS) {
+    throw new RangeError(
+      `Polar does not accept a fixed price below ${MIN_PRICE_MINOR_UNITS} minor units, received ${price.amount} ${price.currency}. A free plan has no Polar product.`,
+    );
+  }
   return {
     amount_type: "fixed",
-    price_amount: Math.max(Math.round(price.amount * CENTS_TO_DOLLARS), MIN_PRICE_CENTS),
+    price_amount: price.amount,
     price_currency: price.currency.toLowerCase() as PresentmentCurrency,
   };
 }
@@ -184,15 +226,31 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
 
   return {
     provider: "polar",
-    capabilities: { cadenceChange: true },
+    capabilities: { cadenceChange: true, proratedUpgrade: true },
 
     async listProducts(): Promise<Product[]> {
-      const response = await client.products.list({
-        organization_id: config.organizationId,
-        is_archived: false,
-      });
+      // Polar answers 10 products per page by default: walk every page, or the
+      // catalog silently loses its tail.
+      const products: Product[] = [];
+      let page = 1;
+      let lastPage = 1;
 
-      return response.items.map((product) => mapPolarProduct(product as PolarProductResponse));
+      do {
+        const response = await client.products.list({
+          organization_id: config.organizationId,
+          is_archived: false,
+          page,
+          limit: PRODUCTS_PAGE_LIMIT,
+        });
+
+        for (const product of response.items) {
+          products.push(mapPolarProduct(product as PolarProductResponse));
+        }
+        lastPage = response.pagination?.max_page ?? 1;
+        page += 1;
+      } while (page <= lastPage);
+
+      return products;
     },
 
     async getProduct(productId: string): Promise<Product | null> {
@@ -299,6 +357,16 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
       subscriptionId: string,
       options: UpdateSubscriptionOptions,
     ): Promise<Subscription> {
+      // PATCH /v1/subscriptions/{id} with `product_id` is Polar's native plan
+      // change (https://polar.sh/docs/guides/subscription-upgrades). Its
+      // `proration_behavior` decides when money moves
+      // (https://polar.sh/docs/features/subscriptions/proration):
+      //  - `invoice`: new product now, prorated difference invoiced right away;
+      //  - `prorate`: new product now, difference carried to the next invoice;
+      //  - `next_period`: scheduled, applied at renewal (Beztack schedules its
+      //    own Pending Plan changes instead, ADR 0002).
+      // Polar prorates per second of the current period. The new product must
+      // share the Subscription's currency.
       const updated = await client.subscriptions.update(subscriptionId, {
         product_id: options.productId as string,
         proration_behavior:
@@ -418,9 +486,15 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
       return subscriptions;
     },
 
-    async createCustomer(email: string, metadata?: Record<string, unknown>): Promise<Customer> {
+    async createCustomer(
+      email: string,
+      metadata?: Record<string, unknown>,
+      options?: CreateCustomerOptions,
+    ): Promise<Customer> {
       const customer = await client.customers.create({
         email,
+        name: options?.name,
+        external_id: options?.externalId,
         metadata: metadata as Record<string, string | number | boolean> | undefined,
       });
 

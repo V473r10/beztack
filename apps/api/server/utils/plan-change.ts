@@ -1,3 +1,5 @@
+import { prorateMinorUnits } from "@beztack/payments/money";
+
 export type PlanChangeBillingCadence = "monthly" | "yearly";
 export type PlanChangeDirection = "upgrade" | "downgrade" | "cadence_change";
 export type PlanChangeMembershipTarget = {
@@ -24,6 +26,7 @@ export type PlanChangeCatalogPlan = {
   canonicalTierId: string;
   tierRank: number;
   billingCadence: PlanChangeBillingCadence;
+  /** `amount` is an integer in the currency's minor unit (ADR 0007). */
   price: {
     amount: number;
     currency: string;
@@ -45,7 +48,8 @@ export type PlanChangeCurrentSubscription = {
   /**
    * What the provider actually charged for the current period. It can differ
    * from the catalog price after a prorated first Payment or a price edit, so
-   * an Upgrade credits this. Null when the provider does not report it.
+   * an Upgrade credits this. Null when the provider does not report it. In
+   * integer minor units, like every amount here.
    */
   currentPeriodChargedAmount?: number | null;
 };
@@ -372,6 +376,7 @@ export type PlanChangeErrorCode =
   | "not_a_plan_change"
   | "not_retryable"
   | "payment_integration_mismatch"
+  | "provider_did_not_apply"
   | "unsupported_billing_cadence"
   | "unsupported_cadence_change"
   | "unauthorized_plan_change";
@@ -733,7 +738,22 @@ function calculateUpgradeCredit(input: {
     typeof charged === "number" && charged > 0 ? charged : input.currentPlan.price.amount;
   const { daysRemaining, totalDays } = input.currentPeriod;
 
-  return Math.round((periodAmount / totalDays) * daysRemaining);
+  // Integers only. Rounding: nearest minor unit, ties away from zero, the same
+  // rule the payment adapters and the preview share (ADR 0007).
+  return prorateMinorUnits(periodAmount, daysRemaining, totalDays);
+}
+
+/**
+ * Plan change amounts are integer minor units (ADR 0007). A fractional price
+ * means a catalog still on major units, which would charge 100 times too
+ * little, so it fails loudly instead of being rounded.
+ */
+function assertMinorUnitPrice(plan: PlanChangeCatalogPlan): void {
+  if (!Number.isSafeInteger(plan.price.amount)) {
+    throw new RangeError(
+      `Plan ${plan.id} has price ${plan.price.amount} ${plan.price.currency}: expected an integer amount in minor units`,
+    );
+  }
 }
 
 /**
@@ -795,6 +815,8 @@ async function priceSubscriptionPlanChange(
 
   const currentPlan = resolveCurrentPlan(catalogPlans, currentSubscription);
   const targetPlan = resolveTargetPlan(catalogPlans, input.target);
+  assertMinorUnitPrice(currentPlan);
+  assertMinorUnitPrice(targetPlan);
   const direction = classifyPlanChange(currentPlan, targetPlan);
   const currentPeriod = measureCurrentPeriod(currentSubscription, input.now?.() ?? new Date());
   // The credit can never exceed the first Payment it discounts.

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { TFunction } from "i18next";
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, ArrowDown, ArrowUp, Check, Loader2, RefreshCw } from "lucide-react";
 import { useState } from "react";
@@ -36,10 +37,9 @@ import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { type AnyPlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
-import { formatCurrency } from "./pricing-card";
 import { queryKeys } from "@/lib/query-keys";
 
 const MAX_FEATURES_TO_SHOW = 4;
@@ -118,8 +118,8 @@ type PlanChangePreviewSummaryProps = {
   error: Error | null;
 };
 
-function cadenceSuffix(cadence: "monthly" | "yearly"): string {
-  return cadence === "yearly" ? "year" : "month";
+function cadenceSuffix(cadence: "monthly" | "yearly", t: TFunction): string {
+  return t(`billing.cadenceUnit.${cadence}`);
 }
 
 /**
@@ -162,7 +162,10 @@ export function PlanChangePreviewSummary({
           {t("billing.planChange.adminTierOverride", "Admin tier override")}
         </div>
         <div className="font-semibold capitalize">
-          {targetPlan.canonicalTierId} · {cadenceSuffix(targetPlan.billingCadence)}
+          {t(`membership.tiers.${targetPlan.canonicalTierId}`, {
+            defaultValue: targetPlan.canonicalTierId,
+          })}{" "}
+          {"·"} {cadenceSuffix(targetPlan.billingCadence, t)}
         </div>
         <p className="text-muted-foreground">
           {t(
@@ -183,20 +186,32 @@ export function PlanChangePreviewSummary({
           <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
             {t("billing.planChange.currentPlan", "Current Plan")}
           </div>
-          <div className="font-semibold capitalize">{currentPlan.canonicalTierId}</div>
+          <div className="font-semibold capitalize">
+            {t(`membership.tiers.${currentPlan.canonicalTierId}`, {
+              defaultValue: currentPlan.canonicalTierId,
+            })}
+          </div>
           <div className="mt-1 text-muted-foreground text-sm">
-            {formatCurrency(currentPlan.price.amount, currentPlan.price.currency)}/
-            {cadenceSuffix(currentPlan.billingCadence)}
+            {t("billing.planChange.pricePerCadence", {
+              price: formatPrice(currentPlan.price.amount, currentPlan.price.currency),
+              cadence: cadenceSuffix(currentPlan.billingCadence, t),
+            })}
           </div>
         </div>
         <div className="rounded-lg border p-4">
           <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
             {t("billing.planChange.newPlan", "New Plan")}
           </div>
-          <div className="font-semibold capitalize">{targetPlan.canonicalTierId}</div>
+          <div className="font-semibold capitalize">
+            {t(`membership.tiers.${targetPlan.canonicalTierId}`, {
+              defaultValue: targetPlan.canonicalTierId,
+            })}
+          </div>
           <div className="mt-1 text-sm">
-            {formatCurrency(targetPlan.price.amount, targetPlan.price.currency)}/
-            {cadenceSuffix(targetPlan.billingCadence)}
+            {t("billing.planChange.pricePerCadence", {
+              price: formatPrice(targetPlan.price.amount, targetPlan.price.currency),
+              cadence: cadenceSuffix(targetPlan.billingCadence, t),
+            })}
           </div>
         </div>
       </div>
@@ -212,38 +227,57 @@ export function PlanChangePreviewSummary({
                 })}
               </span>
               <span className="font-medium text-green-600 dark:text-green-400">
-                -{formatCurrency(firstPayment.credit, firstPayment.currency)}
+                {`-${formatPrice(firstPayment.credit, firstPayment.currency)}`}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">
-                {t("billing.planChange.dueToday", "Due today")}
+                {t("billing.planChange.dueToday", "Due today (estimate)")}
               </span>
               <span className="font-semibold">
-                {formatCurrency(firstPayment.amount, firstPayment.currency)}
+                {formatPrice(firstPayment.amount, firstPayment.currency)}
               </span>
             </div>
             <p className="text-muted-foreground text-xs">
+              {t(
+                "billing.planChange.prorationEstimateNote",
+                "This is an estimate: your payment provider prorates by the second, so the final charge may differ slightly.",
+              )}
+            </p>
+            <p className="text-muted-foreground text-xs">
               {t("billing.planChange.thenFullAmount", {
                 defaultValue: "Then {{price}} each period.",
-                price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
+                price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
               })}
             </p>
           </>
         ) : (
-          <p className="text-muted-foreground">
-            {preview.effectiveAt
-              ? t("billing.planChange.startsOn", {
-                  defaultValue: "You keep your current plan until {{date}}, then pay {{price}}.",
-                  date: formatDate(preview.effectiveAt, { dateStyle: "long" }),
-                  price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
-                })
-              : t("billing.planChange.startsAtRenewal", {
-                  defaultValue:
-                    "You keep your current plan until the next renewal, then pay {{price}}.",
-                  price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
-                })}
-          </p>
+          <>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                {t("billing.planChange.pendingTitle", "Pending plan change")}
+              </Badge>
+              <span className="text-muted-foreground text-xs">
+                {t(
+                  "billing.planChange.pendingNotice",
+                  "It activates at your next renewal. Nothing is charged today.",
+                )}
+              </span>
+            </div>
+            <p className="text-muted-foreground">
+              {preview.effectiveAt
+                ? t("billing.planChange.startsOn", {
+                    defaultValue: "You keep your current plan until {{date}}, then pay {{price}}.",
+                    date: formatDate(preview.effectiveAt, { dateStyle: "long" }),
+                    price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
+                  })
+                : t("billing.planChange.startsAtRenewal", {
+                    defaultValue:
+                      "You keep your current plan until the next renewal, then pay {{price}}.",
+                    price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
+                  })}
+            </p>
+          </>
         )}
       </div>
     </div>
@@ -351,14 +385,18 @@ export function PlanChangeDialog({
               </h4>
               <ul className="space-y-1 text-amber-700 text-sm dark:text-amber-300">
                 <li>
-                  •{" "}
+                  {"•"}{" "}
                   {t(
                     "billing.downgradeWarning.loss1",
                     "Premium features exclusive to your current plan",
                   )}
                 </li>
-                <li>• {t("billing.downgradeWarning.loss2", "Higher usage limits")}</li>
-                <li>• {t("billing.downgradeWarning.loss3", "Priority support")}</li>
+                <li>
+                  {"•"} {t("billing.downgradeWarning.loss2", "Higher usage limits")}
+                </li>
+                <li>
+                  {"•"} {t("billing.downgradeWarning.loss3", "Priority support")}
+                </li>
               </ul>
             </div>
 

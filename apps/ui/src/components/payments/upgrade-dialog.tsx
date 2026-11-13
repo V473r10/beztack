@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Building2, Clock, Loader2, TrendingDown } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +15,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMembership } from "@/contexts/membership-context";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { type PlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
 import type { PricingTier } from "@/types/pricing";
 import { MembershipBadge } from "./membership-badge";
-import { formatCurrency, PricingCard } from "./pricing-card";
+import { PricingCard } from "./pricing-card";
 import { queryKeys } from "@/lib/query-keys";
 
 // Constants
@@ -30,12 +32,14 @@ type PlanChangeDisplay =
       unusedCredit: number;
       proratedAmount: number;
       fullAmount: number;
+      currency: string;
       daysRemaining: number;
     }
   | {
       direction: "downgrade";
       daysRemaining: number;
       newAmount: number;
+      currency: string;
     };
 
 /** Shapes the server's Plan change preview for display, without recomputing it. */
@@ -50,6 +54,7 @@ function buildPlanChangeDisplay(preview: PlanChangePreview): PlanChangeDisplay |
       direction: "downgrade",
       daysRemaining,
       newAmount: preview.firstPayment.fullAmount,
+      currency: preview.firstPayment.currency,
     };
   }
 
@@ -57,6 +62,7 @@ function buildPlanChangeDisplay(preview: PlanChangePreview): PlanChangeDisplay |
     daysRemaining,
     direction: "upgrade",
     fullAmount: preview.firstPayment.fullAmount,
+    currency: preview.firstPayment.currency,
     proratedAmount: preview.firstPayment.amount,
     unusedCredit: preview.firstPayment.credit,
   };
@@ -77,6 +83,7 @@ export function UpgradeDialog({
   onUpgrade,
   isLoading = false,
 }: UpgradeDialogProps) {
+  const { t } = useTranslation();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const [selectedTier, setSelectedTier] = useState<string>();
 
@@ -137,16 +144,13 @@ export function UpgradeDialog({
       <Dialog onOpenChange={onOpenChange} open={open}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>No Plan Changes Available</DialogTitle>
-            <DialogDescription>
-              There are no other plans available. Contact our sales team for custom enterprise
-              solutions.
-            </DialogDescription>
+            <DialogTitle>{t("billing.upgradeDialog.noChangesTitle")}</DialogTitle>
+            <DialogDescription>{t("billing.upgradeDialog.noChangesDescription")}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 pt-4">
             <MembershipBadge size="lg" tier={currentTier} />
             <Button className="w-full" onClick={() => onOpenChange(false)}>
-              Contact Sales
+              {t("billing.upgradeDialog.contactSales")}
             </Button>
           </div>
         </DialogContent>
@@ -159,14 +163,16 @@ export function UpgradeDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader className="space-y-4">
           <div className="space-y-2">
-            <DialogTitle className="text-2xl">Change Your Plan</DialogTitle>
+            <DialogTitle className="text-2xl">{t("billing.upgradeDialog.title")}</DialogTitle>
             <DialogDescription className="text-base">
-              Choose a plan that fits your needs
+              {t("billing.upgradeDialog.subtitle")}
             </DialogDescription>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">Currently on:</span>
+            <span className="text-muted-foreground text-sm">
+              {t("billing.upgradeDialog.currentlyOn")}
+            </span>
             <MembershipBadge tier={currentTier} />
           </div>
         </DialogHeader>
@@ -181,12 +187,12 @@ export function UpgradeDialog({
                 value={billingPeriod}
               >
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                  <TabsTrigger value="monthly">{t("billing.monthly")}</TabsTrigger>
                   <TabsTrigger className="relative" value="yearly">
-                    Yearly
+                    {t("billing.yearly")}
                     {savingsPercent > 0 && (
                       <Badge className="ml-2 h-5 px-1.5 text-xs" variant="secondary">
-                        -{savingsPercent}%
+                        {`-${savingsPercent}%`}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -204,31 +210,42 @@ export function UpgradeDialog({
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">Upgrade Preview</span>
+                      <span className="font-medium text-sm">
+                        {t("billing.upgradeDialog.upgradePreview")}
+                      </span>
                       {isPreviewLoading && (
                         <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <span>
-                        Credit from current plan:{" "}
+                        {t("billing.upgradeDialog.creditFromCurrent")}{" "}
                         <span className="font-medium text-green-600 dark:text-green-400">
-                          -{formatCurrency(planChangeDisplay.unusedCredit)}
+                          {`-${formatPrice(planChangeDisplay.unusedCredit, planChangeDisplay.currency)}`}
                         </span>
                       </span>
                       <ArrowRight className="h-3 w-3" />
-                      <span>{planChangeDisplay.daysRemaining} days remaining</span>
+                      <span>
+                        {t("billing.upgradeDialog.daysRemaining", {
+                          count: planChangeDisplay.daysRemaining,
+                        })}
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-muted-foreground text-xs line-through">
-                      {formatCurrency(planChangeDisplay.fullAmount)}
+                      {formatPrice(planChangeDisplay.fullAmount, planChangeDisplay.currency)}
                     </div>
                     <div className="font-bold text-lg">
-                      {formatCurrency(planChangeDisplay.proratedAmount)}
+                      {formatPrice(planChangeDisplay.proratedAmount, planChangeDisplay.currency)}
                     </div>
                     <div className="text-muted-foreground text-xs">
-                      then {formatCurrency(planChangeDisplay.fullAmount)}/mo
+                      {t("billing.upgradeDialog.thenPerMonth", {
+                        price: formatPrice(
+                          planChangeDisplay.fullAmount,
+                          planChangeDisplay.currency,
+                        ),
+                      })}
                     </div>
                   </div>
                 </div>
@@ -244,7 +261,9 @@ export function UpgradeDialog({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <TrendingDown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      <span className="font-medium text-sm">Downgrade Preview</span>
+                      <span className="font-medium text-sm">
+                        {t("billing.upgradeDialog.downgradePreview")}
+                      </span>
                       {isPreviewLoading && (
                         <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                       )}
@@ -252,13 +271,17 @@ export function UpgradeDialog({
                     <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <Clock className="h-3 w-3" />
                       <span>
-                        Current benefits kept for {planChangeDisplay.daysRemaining} more days
+                        {t("billing.upgradeDialog.benefitsKept", {
+                          count: planChangeDisplay.daysRemaining,
+                        })}
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-lg">
-                      {formatCurrency(planChangeDisplay.newAmount)}/mo
+                      {t("billing.upgradeDialog.perMonth", {
+                        price: formatPrice(planChangeDisplay.newAmount, planChangeDisplay.currency),
+                      })}
                     </div>
                   </div>
                 </div>
@@ -301,15 +324,16 @@ export function UpgradeDialog({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4" />
-                    <span className="font-medium text-sm">Need Enterprise Features?</span>
+                    <span className="font-medium text-sm">
+                      {t("billing.upgradeDialog.enterpriseTitle")}
+                    </span>
                   </div>
                   <div className="text-muted-foreground text-sm">
-                    Custom solutions, dedicated support, and unlimited usage for large
-                    organizations.
+                    {t("billing.upgradeDialog.enterpriseDescription")}
                   </div>
                 </div>
                 <Button size="sm" variant="outline">
-                  Contact Sales
+                  {t("billing.upgradeDialog.contactSales")}
                 </Button>
               </div>
             </div>

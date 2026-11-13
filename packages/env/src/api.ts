@@ -19,6 +19,11 @@ const BOOLEAN_FLAG_SCHEMA = z
   .default("false")
   .transform((value) => value === "true");
 
+const BOOLEAN_FLAG_DEFAULT_TRUE_SCHEMA = z
+  .enum(["true", "false"])
+  .default("true")
+  .transform((value) => value === "true");
+
 const PAYMENT_PROVIDERS = ["polar", "mercadopago"] as const;
 
 function assertRequired(name: string, value: string): void {
@@ -103,6 +108,10 @@ export const env = createEnv({
     // Subscription Mode
     SUBSCRIPTION_MODE: z.enum(["user", "organization"]).default("organization"),
 
+    // Create a Personal organization for every new user at sign-up. Turn off
+    // for projects that want users to create organizations explicitly.
+    PERSONAL_ORGANIZATION_ON_SIGNUP: BOOLEAN_FLAG_DEFAULT_TRUE_SCHEMA,
+
     // UI URL
     APP_URL: z.string().url(),
 
@@ -119,6 +128,8 @@ export const env = createEnv({
     // Read only by the demo seed script. The admin email must also be on APP_ADMIN_EMAILS.
     DEMO_ADMIN_EMAIL: z.string().default(""),
     DEMO_ADMIN_PASSWORD: z.string().default(""),
+    // Password of the seeded customer, read only by the demo seed script, to record the walkthrough.
+    DEMO_CUSTOMER_PASSWORD: z.string().default(""),
 
     // Node
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

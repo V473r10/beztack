@@ -234,6 +234,15 @@ export type MembershipUpdate = {
  */
 export type PaymentProviderCapabilities = {
   /**
+   * Whether an Upgrade can be applied to the existing Subscription itself:
+   * `updateSubscription({ productId, prorationBehavior: "invoice" })` moves it
+   * to the higher Product now and the provider charges the prorated difference
+   * on its own. Polar does (https://polar.sh/docs/features/subscriptions/proration).
+   * Mercado Pago cannot reprice a preapproval mid-period, so its Upgrade is a
+   * new Subscription the customer pays at a redirect.
+   */
+  readonly proratedUpgrade: boolean;
+  /**
    * Whether an existing Subscription can move to another Billing cadence
    * (e.g. monthly to yearly). Mercado Pago cannot change a preapproval's
    * frequency; Polar can.
@@ -245,6 +254,13 @@ export type PaymentProviderCapabilities = {
  * Payment Provider Interface
  * All payment providers must implement this interface
  */
+/** Optional extras when creating a customer at the provider. */
+export type CreateCustomerOptions = {
+  /** Our user id, so the provider can resolve the customer by it later. */
+  externalId?: string;
+  name?: string;
+};
+
 export type PaymentProviderAdapter = {
   readonly provider: PaymentProviderName;
   readonly capabilities: PaymentProviderCapabilities;
@@ -270,7 +286,11 @@ export type PaymentProviderAdapter = {
   listSubscriptions(options: ListSubscriptionsOptions): Promise<Subscription[]>;
 
   // Customers
-  createCustomer(email: string, metadata?: Record<string, unknown>): Promise<Customer>;
+  createCustomer(
+    email: string,
+    metadata?: Record<string, unknown>,
+    options?: CreateCustomerOptions,
+  ): Promise<Customer>;
   getCustomer(customerId: string): Promise<Customer | null>;
   getCustomerByEmail(email: string): Promise<Customer | null>;
 
@@ -282,7 +302,8 @@ export type PaymentProviderAdapter = {
 };
 
 /**
- * Pricing tier for UI display (provider-agnostic)
+ * Pricing tier for UI display (provider-agnostic).
+ * `price` amounts are integer minor units of the product's currency (ADR 0007).
  */
 export type PricingTier = {
   readonly id: string;
@@ -292,6 +313,8 @@ export type PricingTier = {
     readonly monthly: number;
     readonly yearly: number;
   };
+  /** ISO 4217 code of `price`. */
+  readonly currency?: string;
   readonly monthly?: ProviderProduct;
   readonly yearly?: ProviderProduct;
   readonly features?: readonly string[];
@@ -301,6 +324,11 @@ export type PricingTier = {
   readonly yearlySavingsPercent?: number;
   /** Shown as "coming soon" and not purchasable (from the Pricing catalog). */
   readonly soon?: boolean;
+  /**
+   * A Pricing catalog plan with no Payment provider product behind it, like
+   * Free. It is never bought through checkout.
+   */
+  readonly catalogOnly?: boolean;
 };
 
 /**

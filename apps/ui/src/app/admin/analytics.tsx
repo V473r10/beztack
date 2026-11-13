@@ -13,6 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { AnimatedBarChart } from "./components/charts/animated-bar-chart";
 import { StatsCard } from "./components/charts/stats-card";
 import { AdminHeader } from "./components/shared/admin-header";
+import { adminApi, adminUrl } from "@/lib/admin-api";
 import { requestJson } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
@@ -42,7 +43,7 @@ async function fetchUserGrowthData() {
   });
 
   if (!response.data) {
-    return [];
+    throw new Error(response.error?.message ?? "Failed to load users");
   }
 
   // Group users by month for growth chart
@@ -67,33 +68,12 @@ async function fetchUserGrowthData() {
 }
 
 // Real data fetchers
-async function fetchSystemMetrics(): Promise<SystemMetric[]> {
-  try {
-    const data = await requestJson<SystemMetricsResponse>("/api/admin/metrics");
-
-    if (data?.metrics && Array.isArray(data.metrics)) {
-      return data.metrics;
-    }
-
-    // Return empty array if no metrics found
-    return [];
-  } catch {
-    // Fallback to simulated data if API fails
-    return [
-      { label: "Memory Usage", value: 67, unit: "%", status: "good" as const },
-      { label: "CPU Load", value: 45, unit: "%", status: "good" as const },
-      { label: "Disk Usage", value: 52, unit: "%", status: "good" as const },
-      {
-        label: "Network Latency",
-        value: 23,
-        unit: "ms",
-        status: "good" as const,
-      },
-    ];
-  }
+export async function fetchSystemMetrics(): Promise<SystemMetric[]> {
+  const data = await requestJson<SystemMetricsResponse>(adminUrl(adminApi.metrics));
+  return Array.isArray(data?.metrics) ? data.metrics : [];
 }
 
-async function fetchUserStats() {
+export async function fetchUserStats() {
   const response = await authClient.admin.listUsers({
     query: {
       limit: 1000,
@@ -103,7 +83,7 @@ async function fetchUserStats() {
   });
 
   if (!response.data) {
-    return { totalUsers: 0, activeUsers: 0, bannedUsers: 0, recentSignups: 0 };
+    throw new Error(response.error?.message ?? "Failed to load users");
   }
 
   const users = response.data.users;
@@ -120,8 +100,101 @@ async function fetchUserStats() {
   return { totalUsers, activeUsers, bannedUsers, recentSignups };
 }
 
+type UserStats = Awaited<ReturnType<typeof fetchUserStats>>;
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error && error.message ? error.message : "Unknown error";
+}
+
+export function UserStatsCards({ stats, error }: { stats: UserStats | undefined; error: unknown }) {
+  if (error) {
+    return (
+      <Card role="alert">
+        <CardContent className="py-6 text-center text-muted-foreground text-sm">
+          <p>Failed to load user stats</p>
+          <p className="mt-1 text-xs">{errorMessage(error)}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!stats) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <StatsCard
+        description="Registered users"
+        icon={<IconUsers className="h-5 w-5" />}
+        title="Total Users"
+        value={stats.totalUsers.toLocaleString()}
+      />
+      <StatsCard
+        description="Currently active"
+        icon={<IconActivity className="h-5 w-5" />}
+        title="Active Users"
+        value={stats.activeUsers.toLocaleString()}
+      />
+      <StatsCard
+        description="Recent signups"
+        icon={<IconTrendingUp className="h-5 w-5" />}
+        title="New This Week"
+        value={stats.recentSignups.toLocaleString()}
+      />
+      <StatsCard
+        description="Restricted accounts"
+        icon={<IconShield className="h-5 w-5" />}
+        title="Banned Users"
+        value={stats.bannedUsers.toLocaleString()}
+      />
+    </div>
+  );
+}
+
+export function SystemMetricsPanelBody({
+  metrics,
+  isLoading,
+  error,
+}: {
+  metrics: SystemMetric[] | undefined;
+  isLoading: boolean;
+  error: unknown;
+}) {
+  if (isLoading) {
+    return (
+      <div className="h-[250px] animate-pulse rounded bg-linear-to-r from-muted/50 to-muted" />
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-[250px] items-center justify-center text-center" role="alert">
+        <div className="text-muted-foreground text-sm">
+          <p>Failed to load system metrics</p>
+          <p className="mt-1 text-xs">{errorMessage(error)}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (metrics && metrics.length > 0) {
+    return <AnimatedBarChart data={metrics} />;
+  }
+
+  return (
+    <div className="flex h-[250px] items-center justify-center">
+      <p className="text-muted-foreground text-sm">No metrics available</p>
+    </div>
+  );
+}
+
 export default function AdminAnalytics() {
-  const { data: growthData, isLoading } = useQuery({
+  const {
+    data: growthData,
+    isLoading,
+    error: growthError,
+  } = useQuery({
     queryKey: queryKeys.admin.growth(),
     queryFn: fetchUserGrowthData,
   });
@@ -134,7 +207,7 @@ export default function AdminAnalytics() {
     },
   };
 
-  const { data: userStats } = useQuery({
+  const { data: userStats, error: userStatsError } = useQuery({
     queryKey: queryKeys.admin.userStats(),
     queryFn: fetchUserStats,
   });
@@ -161,34 +234,7 @@ export default function AdminAnalytics() {
       </div>
 
       {/* User Stats Cards */}
-      {userStats && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <StatsCard
-            description="Registered users"
-            icon={<IconUsers className="h-5 w-5" />}
-            title="Total Users"
-            value={userStats.totalUsers.toLocaleString()}
-          />
-          <StatsCard
-            description="Currently active"
-            icon={<IconActivity className="h-5 w-5" />}
-            title="Active Users"
-            value={userStats.activeUsers.toLocaleString()}
-          />
-          <StatsCard
-            description="Recent signups"
-            icon={<IconTrendingUp className="h-5 w-5" />}
-            title="New This Week"
-            value={userStats.recentSignups.toLocaleString()}
-          />
-          <StatsCard
-            description="Restricted accounts"
-            icon={<IconShield className="h-5 w-5" />}
-            title="Banned Users"
-            value={userStats.bannedUsers.toLocaleString()}
-          />
-        </div>
-      )}
+      <UserStatsCards error={userStatsError} stats={userStats} />
 
       {/* Charts Section */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -204,6 +250,14 @@ export default function AdminAnalytics() {
           <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
             {isLoading ? (
               <div className="h-[300px] animate-pulse rounded bg-linear-to-r from-muted/50 to-muted" />
+            ) : growthError ? (
+              <div
+                className="flex h-[300px] flex-col items-center justify-center text-center text-muted-foreground text-sm"
+                role="alert"
+              >
+                <p>Failed to load user growth</p>
+                <p className="mt-1 text-xs">{errorMessage(growthError)}</p>
+              </div>
             ) : (
               <div>
                 {growthData && growthData.length > 0 ? (
@@ -234,34 +288,11 @@ export default function AdminAnalytics() {
             <CardDescription>Real-time performance indicators</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoadingMetrics ? (
-              <div className="h-[250px] animate-pulse rounded bg-linear-to-r from-muted/50 to-muted" />
-            ) : (
-              <div>
-                {(() => {
-                  if (metricsError) {
-                    return (
-                      <div className="flex h-[250px] items-center justify-center text-center">
-                        <div className="text-muted-foreground text-sm">
-                          <p>Failed to load system metrics</p>
-                          <p className="mt-1 text-xs">Using fallback data</p>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  if (systemMetrics && systemMetrics.length > 0) {
-                    return <AnimatedBarChart data={systemMetrics} />;
-                  }
-
-                  return (
-                    <div className="flex h-[250px] items-center justify-center">
-                      <p className="text-muted-foreground text-sm">No metrics available</p>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
+            <SystemMetricsPanelBody
+              error={metricsError}
+              isLoading={isLoadingMetrics}
+              metrics={systemMetrics}
+            />
           </CardContent>
         </Card>
       </div>

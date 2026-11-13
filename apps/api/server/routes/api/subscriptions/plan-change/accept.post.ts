@@ -14,19 +14,19 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import {
   acceptPlanChange,
-  type PlanChangeBillingCadence,
   PlanChangeError,
-  type PlanChangePaymentAdapter,
   type PlanChangeStore,
   classifyBillingCadence,
   requireSubscriptionBillingCadence,
 } from "@/server/utils/plan-change";
+import { createPlanChangePaymentAdapter } from "@/server/utils/plan-change-payment-adapter";
 import { createDbPendingPlanChangeLedger } from "@/server/utils/pending-plan-change-ledger";
 import { readChargedAmount } from "@/server/utils/billing-amount-resolver";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { organizationAccess, getAppAdminEmails } from "@/server/domain/organization-access";
 import { applyAdminTierOverride } from "@/server/utils/admin-tier-override";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
+import { organizationRequiredError } from "@/server/utils/organization-required";
 
 function readAuthRole(auth: AuthenticatedUser): string | string[] | null {
   const role = (auth.user as { role?: unknown }).role;
@@ -40,7 +40,6 @@ function readAuthRole(auth: AuthenticatedUser): string | string[] | null {
 }
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
-const SINGLE_INTERVAL_COUNT = 1;
 
 const planChangeAcceptSchema = z.object({
   targetPricingCatalogPlanId: z.string().min(1).optional(),
@@ -63,10 +62,7 @@ function resolveMembershipTarget(auth: AuthenticatedUser, body: PlanChangeAccept
   if (env.SUBSCRIPTION_MODE === "organization") {
     const organizationId = body.organizationId ?? auth.session.activeOrganizationId ?? undefined;
     if (!organizationId) {
-      throw createError({
-        statusCode: 400,
-        message: "An organization Membership target is required",
-      });
+      throw organizationRequiredError();
     }
 
     return { type: "organization" as const, id: organizationId };
@@ -185,7 +181,7 @@ function createPlanChangeStore(options: {
             tierRank: row.displayOrder ?? 0,
             billingCadence,
             price: {
-              amount: Number(row.price),
+              amount: row.price,
               currency: row.currency,
             },
           },
@@ -209,68 +205,6 @@ function createPlanChangeStore(options: {
       }
 
       await db.update(userTable).set(updates).where(eq(userTable.id, input.membershipTarget.id));
-    },
-  };
-}
-
-function billingCadenceToInterval(cadence: PlanChangeBillingCadence) {
-  return cadence === "yearly" ? "year" : "month";
-}
-
-function createPaymentAdapter(
-  provider: PaymentProviderAdapter,
-  paymentIntegrationId?: string,
-): PlanChangePaymentAdapter {
-  return {
-    paymentProvider: provider.provider,
-    paymentIntegrationId,
-    capabilities: provider.capabilities,
-    async confirmUpgrade(input) {
-      const subscription = await provider.createSubscription({
-        customerEmail: input.actor.email,
-        customerId: input.actor.userId,
-        customPlan: {
-          amount: input.firstPayment.amount,
-          currency: input.firstPayment.currency,
-          interval: billingCadenceToInterval(input.targetPlan.billingCadence),
-          intervalCount: SINGLE_INTERVAL_COUNT,
-          reason: input.targetPlan.id,
-        },
-        metadata: {
-          direction: "upgrade",
-          fullAmount: input.firstPayment.fullAmount,
-          planChange: true,
-          previousSubscriptionId: input.currentSubscriptionId,
-          targetPlanId: input.targetPlan.id,
-          tier: input.targetPlan.canonicalTierId,
-          ...(input.membershipTarget.type === "organization"
-            ? { organizationId: input.membershipTarget.id }
-            : { userId: input.membershipTarget.id }),
-        },
-      });
-
-      return {
-        firstPayment: {
-          id: subscription.id,
-          status: "pending" as const,
-        },
-        providerConfirmedPlanChangeId: subscription.id,
-        redirectUrl:
-          typeof subscription.metadata?.initPoint === "string"
-            ? subscription.metadata.initPoint
-            : undefined,
-      };
-    },
-    async confirmPendingPlanChange(input) {
-      const productId = input.targetPlan.providerPlanId ?? input.targetPlan.id;
-      const product = await provider.getProduct(productId);
-      if (!product) {
-        throw new Error("Target Pricing catalog plan was not confirmed by provider");
-      }
-
-      return {
-        providerConfirmedPlanChangeId: product.id,
-      };
     },
   };
 }
@@ -367,7 +301,7 @@ export default defineEventHandler(async (event) => {
         userId: auth.user.id,
       },
       membershipTarget,
-      paymentAdapter: createPaymentAdapter(provider, paymentIntegrationId),
+      paymentAdapter: createPlanChangePaymentAdapter(provider, paymentIntegrationId),
       paymentProvider: provider.provider,
       paymentIntegrationId,
       target: {

@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderInLanguage } from "@/test/render-in-language";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -66,12 +66,21 @@ describe("AdminTierOverrideBanner", () => {
   });
 
   it("shows tier, cadence, target, boundary copy, and clear action", () => {
-    const html = renderToStaticMarkup(<AdminTierOverrideBanner />);
+    const html = renderInLanguage("en", <AdminTierOverrideBanner />);
 
     expect(html).toContain("Admin tier override active:");
     expect(html).toContain("Pro monthly for Acme Inc.");
     expect(html).toContain("Real subscriptions are unchanged.");
     expect(html).toContain("Clear override");
+  });
+
+  it("reads in Spanish when the visitor chose Spanish", () => {
+    const html = renderInLanguage("es", <AdminTierOverrideBanner />);
+
+    expect(html).toContain("Nivel asignado por un admin:");
+    expect(html).toContain("Pro mensual para Acme Inc.");
+    expect(html).toContain("Las suscripciones reales no cambian.");
+    expect(html).not.toContain("Real subscriptions");
   });
 
   it("stays hidden when the server reports the caller is not an App admin", () => {
@@ -89,7 +98,7 @@ describe("AdminTierOverrideBanner", () => {
       isClearingAdminTierOverride: false,
     };
 
-    const html = renderToStaticMarkup(<AdminTierOverrideBanner />);
+    const html = renderInLanguage("en", <AdminTierOverrideBanner />);
 
     expect(html).toBe("");
   });
@@ -101,7 +110,7 @@ describe("AdminTierOverrideBanner", () => {
       isClearingAdminTierOverride: false,
     };
 
-    const html = renderToStaticMarkup(<AdminTierOverrideBanner />);
+    const html = renderInLanguage("en", <AdminTierOverrideBanner />);
 
     expect(html).toBe("");
   });

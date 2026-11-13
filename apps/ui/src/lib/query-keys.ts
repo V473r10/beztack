@@ -71,6 +71,8 @@ export const subscriptionKeys = {
       targetTierId,
       billingPeriod,
     ] as const,
+  /** Prefix of every Plan change preview. */
+  planChangePreviews: () => [...SUBSCRIPTIONS_ROOT, "plan-change-preview"] as const,
   /** The Membership target's Pending Plan change; `organizationId` is absent
    * in user subscription mode. */
   pendingPlanChange: (organizationId?: string) =>

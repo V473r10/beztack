@@ -16,6 +16,8 @@ import { resolveCheckoutCallbackUrls } from "@/server/utils/checkout-callback-ur
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import { getAppAdminEmails, organizationAccess } from "@/server/domain/organization-access";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
+import { organizationRequiredError } from "@/server/utils/organization-required";
+import { ensureProviderCustomer } from "@/server/utils/provider-customer";
 
 const TIER_IDS = ["free", "basic", "pro", "ultimate"] as const;
 
@@ -149,6 +151,10 @@ export default defineEventHandler(async (event) => {
     };
     const organizationId = resolveCheckoutOrganizationId(parsed, auth);
     if (env.SUBSCRIPTION_MODE === "organization") {
+      // An App admin without an organization still reaches the Admin tier override.
+      if (!(organizationId || organizationAccess.isAppAdmin(actor))) {
+        throw organizationRequiredError();
+      }
       await requireOrganizationBillingManagerAccess(auth, organizationId);
     }
 
@@ -228,6 +234,12 @@ export default defineEventHandler(async (event) => {
         message: "Subscription Plan changes must use the Plan change acceptance route",
       });
     }
+
+    await ensureProviderCustomer(provider, {
+      id: auth.user.id,
+      email: auth.user.email,
+      name: auth.user.name,
+    });
 
     const result = await provider.createCheckout({
       productId: selectedProduct.id,

@@ -1,12 +1,20 @@
 import { isCurrentSubscription } from "@beztack/payments/subscription";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { TFunction } from "i18next";
 import type React from "react";
-import { createContext, useCallback, useContext, useMemo, useRef } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CreateOrganizationDialog } from "@/components/organizations/create-organization-dialog";
 import { env } from "@/env";
 import { useActiveOrganization } from "@/hooks/use-organizations";
 import { requestJson } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
+import {
+  getBillingErrorMessage,
+  isOrganizationRequiredError,
+  runWithOrganization,
+} from "@/lib/billing-errors";
 import { redirectToExternalUrl } from "@/lib/browser-navigation";
 import { queryKeys } from "@/lib/query-keys";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
@@ -68,6 +76,10 @@ type ClearAdminTierOverrideResponse = {
   changed: boolean;
 };
 
+type OrganizationPrompt = {
+  resolve: (organizationId: string | null) => void;
+};
+
 type CheckoutResponse = {
   checkoutUrl?: string;
   resultKind?: string;
@@ -87,6 +99,7 @@ const EMPTY_SUBSCRIPTIONS: Subscription[] = [];
 const EMPTY_ORDERS: Order[] = [];
 const EMPTY_METERS: CustomerMeter[] = [];
 const EMPTY_BENEFITS: string[] = [];
+const PLAN_CHANGE_PREVIEW_KEY = queryKeys.subscriptions.planChangePreviews()[1];
 
 export type { CustomerMeter, Order, Subscription } from "./membership/membership-types";
 
@@ -114,6 +127,13 @@ export type MembershipContextValue = {
   error: Error | null;
   subscriptions: Subscription[];
   activeSubscription: Subscription | null;
+  /**
+   * The caller has a Subscription, by Membership status or by the provider's
+   * list (which only loads for Billing managers and can lag or fail). A caller
+   * with one changes plan (the dialog with its proration preview) instead of
+   * starting a checkout.
+   */
+  hasActiveSubscription: boolean;
   orders: Order[];
   meters: CustomerMeter[];
   benefits: string[];
@@ -182,17 +202,18 @@ function parseTierIdFromProduct(product: Product): MembershipTier {
 function buildTierConfigFromPlansAndProducts(
   products: Product[],
   plans: CatalogPlan[] | undefined,
-  provider: "polar" | "mercadopago",
 ): MembershipTierConfig[] {
-  return buildTierConfigs(products, plans, provider);
+  return buildTierConfigs(products, plans);
 }
 
 function isAdminTierOverrideCheckoutResponse(data: CheckoutResponse): boolean {
   return data.resultKind === "admin-tier-override";
 }
 
-function getAdminTierOverrideToastMessage(data: CheckoutResponse): string {
-  return data.changed ? "Admin tier override applied." : "Admin tier override already active.";
+function getAdminTierOverrideToastMessage(t: TFunction, data: CheckoutResponse): string {
+  return data.changed
+    ? t("billing.toast.adminOverrideApplied")
+    : t("billing.toast.adminOverrideAlreadyActive");
 }
 
 function organizationQueryString(organizationId: string | undefined): string {
@@ -230,8 +251,16 @@ export type MembershipProviderProps = {
 };
 
 export function MembershipProvider({ children }: MembershipProviderProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  // Set while the "create organization" dialog is open on behalf of a billing
+  // action that found the user without an organization.
+  const [organizationPrompt, setOrganizationPrompt] = useState<OrganizationPrompt | null>(null);
   const { data: activeOrganization } = useActiveOrganization();
+  // The pricing page is public and mounts this provider too: without a session
+  // Membership status can only answer 401.
+  const { data: session } = authClient.useSession();
+  const isSignedIn = Boolean(session);
   const isOrganizationSubscriptionMode = env.VITE_SUBSCRIPTION_MODE === "organization";
   const activeOrganizationId = isOrganizationSubscriptionMode ? activeOrganization?.id : undefined;
 
@@ -248,6 +277,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         `/api/membership/status${organizationQueryString(activeOrganizationId)}`,
       ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
+    enabled: isSignedIn,
   });
 
   // The Subscription list is billing data: only fetched for callers who pass
@@ -305,15 +335,19 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
     onSuccess: (data) => {
       if (isAdminTierOverrideCheckoutResponse(data)) {
-        toast.success(getAdminTierOverrideToastMessage(data));
+        toast.success(getAdminTierOverrideToastMessage(t, data));
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
         return;
       }
 
-      toast.success("Redirecting to checkout...");
+      toast.success(t("billing.toast.redirecting"));
     },
-    onError: () => {
-      toast.error("Failed to start checkout process");
+    onError: (checkoutError: Error) => {
+      // The user is asked to create an organization and the action retried.
+      if (isOrganizationRequiredError(checkoutError)) {
+        return;
+      }
+      toast.error(getBillingErrorMessage(t, checkoutError, t("billing.checkoutFailed")));
     },
   });
 
@@ -345,32 +379,54 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
     onSuccess: (data) => {
       const acceptance = data.planChangeAcceptance as
-        | { changed?: boolean; kind?: string; reconciliationStatus?: string }
+        | { changed?: boolean; direction?: string; kind?: string; reconciliationStatus?: string }
         | undefined;
       if (acceptance?.kind === "admin-tier-override") {
         toast.success(
           acceptance.changed
-            ? "Admin tier override applied."
-            : "Admin tier override already active.",
+            ? t("billing.toast.adminOverrideApplied")
+            : t("billing.toast.adminOverrideAlreadyActive"),
+        );
+      } else if (acceptance?.reconciliationStatus === "reconciling") {
+        toast.success(t("billing.toast.planChangeReconciling"));
+      } else if (
+        acceptance?.direction === "downgrade" ||
+        acceptance?.direction === "cadence_change"
+      ) {
+        // A Pending Plan change: the current plan runs until the renewal.
+        toast.success(
+          t(
+            "billing.planChange.scheduledToast",
+            "Plan change scheduled. It takes effect at your next renewal.",
+          ),
         );
       } else {
-        toast.success(
-          acceptance?.reconciliationStatus === "reconciling"
-            ? "Payment confirmed. Plan change is still reconciling."
-            : "Plan change accepted successfully!",
-        );
+        toast.success(t("billing.toast.planChangeAccepted"));
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
+      // The dialog that sent this change is still open while Membership refreshes. A quote
+      // for the same change would now be priced against the new plan (a 400), so previews
+      // are only marked stale, and the next dialog fetches a fresh one.
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.subscriptions.all(),
+        predicate: (query) => query.queryKey[1] !== PLAN_CHANGE_PREVIEW_KEY,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.subscriptions.planChangePreviews(),
+        refetchType: "none",
+      });
     },
     onError: (mutationError: Error) => {
-      toast.error(mutationError.message || "Failed to change plan");
+      if (isOrganizationRequiredError(mutationError)) {
+        return;
+      }
+      toast.error(getBillingErrorMessage(t, mutationError, t("billing.toast.planChangeFailed")));
     },
   });
 
   const billingPortalMutation = useMutation({
     mutationFn: async (): Promise<void> => {
       if (env.VITE_PAYMENT_PROVIDER !== "polar") {
-        throw new Error("Billing portal is only available for Polar");
+        throw new Error(t("billing.toast.portalOnlyPolar"));
       }
 
       const portalFn = (
@@ -385,22 +441,22 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       ).customer?.portal;
 
       if (!portalFn) {
-        throw new Error("Billing portal is not available");
+        throw new Error(t("billing.toast.portalUnavailable"));
       }
 
       const result = await portalFn();
       if (result.error) {
-        throw new Error(result.error.message || "Failed to open billing portal");
+        throw new Error(result.error.message || t("billing.toast.portalFailed"));
       }
       if (result.data?.url) {
         window.open(result.data.url, "_blank");
       }
     },
     onSuccess: () => {
-      toast.success("Opening billing portal...");
+      toast.success(t("billing.toast.portalOpening"));
     },
     onError: (billingPortalError: Error) => {
-      toast.error(billingPortalError.message || "Failed to open billing portal");
+      toast.error(billingPortalError.message || t("billing.toast.portalFailed"));
     },
   });
 
@@ -413,12 +469,14 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
     onSuccess: (data) => {
       toast.success(
-        data.changed ? "Admin tier override cleared." : "Admin tier override already cleared.",
+        data.changed
+          ? t("billing.toast.adminOverrideCleared")
+          : t("billing.toast.adminOverrideAlreadyCleared"),
       );
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
     onError: () => {
-      toast.error("Failed to clear Admin tier override");
+      toast.error(t("billing.toast.adminOverrideClearFailed"));
     },
   });
 
@@ -442,10 +500,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   const dbPlans = productsQuery.data?.plans;
 
-  const provider = productsQuery.data?.provider ?? "polar";
   const tierConfigs = useMemo(
-    () => buildTierConfigFromPlansAndProducts(products, dbPlans, provider),
-    [products, dbPlans, provider],
+    () => buildTierConfigFromPlansAndProducts(products, dbPlans),
+    [products, dbPlans],
   );
 
   const tierConfig = tierConfigs.find((config) => config.id === currentTier) || null;
@@ -457,6 +514,11 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   );
 
   const isAppAdmin = membershipStatusQuery.data?.data.isAppAdmin === true;
+  const hasActiveSubscription =
+    membershipStatusQuery.data?.data.hasActiveSubscription === true || activeSubscription !== null;
+  // An App admin's Plan change is an Admin tier override (ADR 0004), applied
+  // by the same endpoint, so it never goes through checkout either.
+  const changesPlan = hasActiveSubscription || isAppAdmin;
   const organizationRole = membershipStatusQuery.data?.data.organizationRole ?? null;
   const billingCadence = membershipStatusQuery.data?.data.billingCadence ?? null;
   const canChangeBillingCadence =
@@ -483,30 +545,43 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const planChangeRef = useRef(planChangeMutation.mutateAsync);
   planChangeRef.current = planChangeMutation.mutateAsync;
 
+  const askForOrganization = useCallback(
+    () =>
+      new Promise<string | null>((resolve) => {
+        setOrganizationPrompt({ resolve });
+      }),
+    [],
+  );
+
   const upgradeToTier = useCallback(
     async (
       tierId: string,
       billingPeriod: "monthly" | "yearly" = "monthly",
       organizationId?: string,
     ) => {
-      const checkoutOrganizationId = organizationId ?? activeOrganizationId;
-      if (activeSubscription) {
-        await planChangeRef.current({
-          billingPeriod,
-          productId: tierId,
-          organizationId: checkoutOrganizationId,
-        });
-        return;
-      }
+      await runWithOrganization(
+        async (checkoutOrganizationId) => {
+          if (changesPlan) {
+            await planChangeRef.current({
+              billingPeriod,
+              productId: tierId,
+              organizationId: checkoutOrganizationId,
+            });
+            return;
+          }
 
-      await checkoutRef.current({
-        productId: tierId,
-        billingPeriod,
-        organizationId: checkoutOrganizationId,
-        metadata: checkoutOrganizationId ? { organizationId: checkoutOrganizationId } : {},
-      });
+          await checkoutRef.current({
+            productId: tierId,
+            billingPeriod,
+            organizationId: checkoutOrganizationId,
+            metadata: checkoutOrganizationId ? { organizationId: checkoutOrganizationId } : {},
+          });
+        },
+        organizationId ?? activeOrganizationId,
+        askForOrganization,
+      );
     },
-    [activeSubscription, activeOrganizationId],
+    [changesPlan, activeOrganizationId, askForOrganization],
   );
 
   const changePlan = useCallback(
@@ -518,17 +593,22 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         prorationBehavior?: "invoice" | "prorate";
       },
     ): Promise<PlanChangeResult> => {
-      if (!activeSubscription) {
+      if (!changesPlan) {
         throw new Error("No active subscription to change");
       }
 
-      return planChangeRef.current({
-        billingPeriod: options?.billingPeriod ?? "monthly",
-        organizationId: options?.organizationId ?? activeOrganizationId,
-        productId,
-      });
+      return runWithOrganization(
+        (planChangeOrganizationId) =>
+          planChangeRef.current({
+            billingPeriod: options?.billingPeriod ?? "monthly",
+            organizationId: planChangeOrganizationId,
+            productId,
+          }),
+        options?.organizationId ?? activeOrganizationId,
+        askForOrganization,
+      ).then((result) => result ?? { success: false });
     },
-    [activeSubscription, activeOrganizationId],
+    [changesPlan, activeOrganizationId, askForOrganization],
   );
 
   const billingPortalRef = useRef(billingPortalMutation.mutateAsync);
@@ -626,6 +706,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       error,
       subscriptions,
       activeSubscription,
+      hasActiveSubscription,
       orders: EMPTY_ORDERS,
       meters: EMPTY_METERS,
       benefits: EMPTY_BENEFITS,
@@ -655,6 +736,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       error,
       subscriptions,
       activeSubscription,
+      hasActiveSubscription,
       upgradeToTier,
       changePlan,
       openBillingPortal,
@@ -676,5 +758,23 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     ],
   );
 
-  return <MembershipContext.Provider value={value}>{children}</MembershipContext.Provider>;
+  return (
+    <MembershipContext.Provider value={value}>
+      {children}
+      {organizationPrompt ? (
+        <CreateOrganizationDialog
+          description={t("organizations.createDialog.billingDescription")}
+          onCreated={(organization) => organizationPrompt.resolve(organization.id)}
+          onOpenChange={(open) => {
+            if (!open) {
+              // A no-op when the organization was just created and resolved.
+              organizationPrompt.resolve(null);
+              setOrganizationPrompt(null);
+            }
+          }}
+          open
+        />
+      ) : null}
+    </MembershipContext.Provider>
+  );
 }

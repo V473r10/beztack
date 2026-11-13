@@ -1,22 +1,13 @@
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
-import type { CatalogPlan, PaymentProvider, Product } from "./membership-types";
+import type { CatalogPlan, Product } from "./membership-types";
 
 const MONTHS_PER_YEAR = 12;
-const CENTS_DIVISOR = 100;
 
 type DeepMutable<T> = {
   -readonly [P in keyof T]: T[P] extends object ? DeepMutable<T[P]> : T[P];
 };
 
 type MutableTierConfig = DeepMutable<MembershipTierConfig>;
-
-function toDisplayAmount(amount: number, provider: PaymentProvider): number {
-  if (provider === "polar") {
-    return amount / CENTS_DIVISOR;
-  }
-
-  return amount;
-}
 
 function createEmptyTierConfig(
   id: MembershipTier,
@@ -67,15 +58,12 @@ function applyCatalogPlanDetails(tierConfig: MutableTierConfig, plan: CatalogPla
   }
 }
 
-function applyCatalogPlanBilling(
-  tierConfig: MutableTierConfig,
-  plan: CatalogPlan,
-  provider: PaymentProvider,
-): void {
-  const displayPrice = toDisplayAmount(plan.price.amount, provider);
+function applyCatalogPlanBilling(tierConfig: MutableTierConfig, plan: CatalogPlan): void {
+  // Prices stay integer minor units of their currency (ADR 0007); formatting is `formatPrice`'s job.
+  tierConfig.currency ??= plan.price.currency;
 
   if (isYearlyCatalogPlan(plan)) {
-    tierConfig.price.yearly = displayPrice;
+    tierConfig.price.yearly = plan.price.amount;
     tierConfig.yearly = {
       id: plan.id,
       name: plan.displayName,
@@ -87,7 +75,7 @@ function applyCatalogPlanBilling(
     return;
   }
 
-  tierConfig.price.monthly = displayPrice;
+  tierConfig.price.monthly = plan.price.amount;
   tierConfig.monthly = {
     id: plan.id,
     name: plan.displayName,
@@ -101,7 +89,6 @@ function applyCatalogPlanBilling(
 function applyCatalogPlanToTier(
   tiers: Record<MembershipTier, MutableTierConfig>,
   plan: CatalogPlan,
-  provider: PaymentProvider,
 ): void {
   const tierId = plan.canonicalTierId;
   if (!tierId) {
@@ -110,7 +97,7 @@ function applyCatalogPlanToTier(
 
   const tierConfig = tiers[tierId];
   applyCatalogPlanDetails(tierConfig, plan);
-  applyCatalogPlanBilling(tierConfig, plan, provider);
+  applyCatalogPlanBilling(tierConfig, plan);
 }
 
 function getMetadataStringArray(
@@ -155,13 +142,10 @@ function applyProductDisplayFallback(tierConfig: MutableTierConfig, product: Pro
   }
 }
 
-function applyProductBillingFallback(
-  tierConfig: MutableTierConfig,
-  product: Product,
-  provider: PaymentProvider,
-): void {
+function applyProductBillingFallback(tierConfig: MutableTierConfig, product: Product): void {
   if (product.interval === "month" && !tierConfig.monthly) {
-    tierConfig.price.monthly = toDisplayAmount(product.price.amount, provider);
+    tierConfig.price.monthly = product.price.amount;
+    tierConfig.currency ??= product.price.currency;
     tierConfig.monthly = {
       id: product.id,
       name: product.name,
@@ -173,7 +157,8 @@ function applyProductBillingFallback(
   }
 
   if (product.interval === "year" && !tierConfig.yearly) {
-    tierConfig.price.yearly = toDisplayAmount(product.price.amount, provider);
+    tierConfig.price.yearly = product.price.amount;
+    tierConfig.currency ??= product.price.currency;
     tierConfig.yearly = {
       id: product.id,
       name: product.name,
@@ -209,13 +194,12 @@ function applyProductMetadataFallback(tierConfig: MutableTierConfig, product: Pr
 function applyProductToTier(
   tiers: Record<MembershipTier, MutableTierConfig>,
   product: Product,
-  provider: PaymentProvider,
 ): void {
   const tierId = parseTierIdFromProduct(product);
   const tierConfig = tiers[tierId];
 
   applyProductDisplayFallback(tierConfig, product);
-  applyProductBillingFallback(tierConfig, product, provider);
+  applyProductBillingFallback(tierConfig, product);
   applyProductMetadataFallback(tierConfig, product);
 }
 
@@ -263,18 +247,17 @@ export function parseTierIdFromProduct(product: Product): MembershipTier {
 export function buildTierConfigFromPlansAndProducts(
   products: Product[],
   plans: CatalogPlan[] | undefined,
-  provider: PaymentProvider,
 ): MembershipTierConfig[] {
   const tiers = createInitialTierConfigs();
 
   if (plans && plans.length > 0) {
     for (const plan of plans) {
-      applyCatalogPlanToTier(tiers, plan, provider);
+      applyCatalogPlanToTier(tiers, plan);
     }
   }
 
   for (const product of products) {
-    applyProductToTier(tiers, product, provider);
+    applyProductToTier(tiers, product);
   }
 
   return Object.values(tiers);

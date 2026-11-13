@@ -2,6 +2,7 @@ import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tansta
 import { toast } from "sonner";
 import { requestJson } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
+import { translate } from "@/lib/i18n/translate";
 import type {
   CreateOrganizationData,
   CreateTeamData,
@@ -28,7 +29,7 @@ export function useOrganizations() {
     queryFn: async () => {
       const response = await authClient.organization.list();
       if (!response.data) {
-        throw new Error("Failed to fetch organizations");
+        throw new Error(translate("organizations.errors.fetchOrganizations"));
       }
       return response.data as Organization[];
     },
@@ -36,7 +37,10 @@ export function useOrganizations() {
 }
 
 export function useActiveOrganization() {
+  // The pricing page is public and reads this too: without a session the API can only answer 401.
+  const { data: session } = authClient.useSession();
   return useQuery({
+    enabled: Boolean(session),
     queryKey: queryKeys.organizations.active(),
     queryFn: async () => {
       const response = await authClient.organization.getFullOrganization();
@@ -58,7 +62,7 @@ export function useOrganizationMembers(organizationId?: string) {
         },
       });
       if (!response.data) {
-        throw new Error("Failed to fetch organization members");
+        throw new Error(translate("organizations.errors.fetchMembers"));
       }
       // Handle the actual API response structure
       const apiData = response.data as Record<string, unknown>;
@@ -83,7 +87,7 @@ export function useOrganizationInvitations(organizationId?: string) {
         },
       });
       if (!response.data) {
-        throw new Error("Failed to fetch organization invitations");
+        throw new Error(translate("organizations.errors.fetchInvitations"));
       }
       // Map API response to our interface
       const apiData = response.data as Record<string, unknown>[];
@@ -120,7 +124,7 @@ export function useTeams(organizationId?: string) {
         },
       });
       if (!response.data) {
-        throw new Error("Failed to fetch teams");
+        throw new Error(translate("organizations.errors.fetchTeams"));
       }
       return response.data as Team[];
     },
@@ -141,7 +145,7 @@ export function useTeamMembers(teamId?: string) {
         },
       });
       if (!response.data) {
-        throw new Error("Failed to fetch team members");
+        throw new Error(translate("organizations.errors.fetchTeamMembers"));
       }
       return response.data as TeamMember[];
     },
@@ -161,7 +165,7 @@ export function useCreateOrganization() {
         logo: data.logo,
       });
       if (!response.data) {
-        throw new Error("Failed to create organization");
+        throw new Error(translate("organizations.errors.createOrganization"));
       }
       const orgData = response.data as Record<string, unknown>;
       return {
@@ -172,10 +176,14 @@ export function useCreateOrganization() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       invalidateOrganizationContext(queryClient);
-      toast.success(`Organization "${data.name}" created successfully`);
+      toast.success(translate("organizations.toasts.created", { name: data.name }));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to create organization");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : translate("organizations.errors.createOrganization"),
+      );
     },
   });
 }
@@ -196,7 +204,7 @@ export function useUpdateOrganization() {
         organizationId,
       });
       if (!response.data) {
-        throw new Error("Failed to update organization");
+        throw new Error(translate("organizations.errors.updateOrganization"));
       }
       const orgData = response.data as Record<string, unknown>;
       return {
@@ -207,10 +215,14 @@ export function useUpdateOrganization() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       invalidateOrganizationContext(queryClient);
-      toast.success("Organization updated successfully");
+      toast.success(translate("organizations.toasts.updated"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to update organization");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : translate("organizations.errors.updateOrganization"),
+      );
     },
   });
 }
@@ -228,10 +240,14 @@ export function useDeleteOrganization() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       invalidateOrganizationContext(queryClient);
-      toast.success("Organization deleted successfully");
+      toast.success(translate("organizations.toasts.deleted"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to delete organization");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : translate("organizations.errors.deleteOrganization"),
+      );
     },
   });
 }
@@ -248,10 +264,12 @@ export function useSetActiveOrganization() {
     },
     onSuccess: () => {
       invalidateOrganizationContext(queryClient);
-      toast.success("Active organization changed");
+      toast.success(translate("organizations.toasts.activeChanged"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to change active organization");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.changeActive"),
+      );
     },
   });
 }
@@ -280,10 +298,12 @@ export function useInviteMember() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.organizations.invitations(variables.organizationId),
       });
-      toast.success(`Invitation sent to ${variables.data.email}`);
+      toast.success(translate("organizations.toasts.invited", { email: variables.data.email }));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to send invitation");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.invite"),
+      );
     },
   });
 }
@@ -312,10 +332,12 @@ export function useUpdateMemberRole() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.organizations.members(variables.organizationId),
       });
-      toast.success("Member role updated successfully");
+      toast.success(translate("organizations.toasts.roleUpdated"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to update member role");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.updateRole"),
+      );
     },
   });
 }
@@ -335,10 +357,12 @@ export function useRemoveMember() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.organizations.members(variables.organizationId),
       });
-      toast.success("Member removed successfully");
+      toast.success(translate("organizations.toasts.memberRemoved"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to remove member");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.removeMember"),
+      );
     },
   });
 }
@@ -356,10 +380,10 @@ export function useLeaveOrganization() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
       invalidateOrganizationContext(queryClient);
-      toast.success("Left organization successfully");
+      toast.success(translate("organizations.toasts.left"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to leave organization");
+      toast.error(error instanceof Error ? error.message : translate("organizations.errors.leave"));
     },
   });
 }
@@ -378,10 +402,12 @@ export function useAcceptInvitation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.userInvitations() });
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.list() });
-      toast.success("Invitation accepted successfully");
+      toast.success(translate("organizations.toasts.invitationAccepted"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to accept invitation");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.acceptInvitation"),
+      );
     },
   });
 }
@@ -398,10 +424,12 @@ export function useRejectInvitation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.userInvitations() });
-      toast.success("Invitation rejected");
+      toast.success(translate("organizations.toasts.invitationRejected"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to reject invitation");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.rejectInvitation"),
+      );
     },
   });
 }
@@ -420,10 +448,12 @@ export function useCancelInvitation() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.organizations.allInvitations(),
       });
-      toast.success("Invitation cancelled");
+      toast.success(translate("organizations.toasts.invitationCancelled"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to cancel invitation");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.cancelInvitation"),
+      );
     },
   });
 }
@@ -438,7 +468,7 @@ export function useCreateTeam() {
         name: data.name,
       });
       if (!response.data) {
-        throw new Error("Failed to create team");
+        throw new Error(translate("organizations.errors.createTeam"));
       }
       return response.data as Team;
     },
@@ -446,10 +476,12 @@ export function useCreateTeam() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.organizations.teams(data.id),
       });
-      toast.success(`Team "${data.name}" created successfully`);
+      toast.success(translate("organizations.toasts.teamCreated", { name: data.name }));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to create team");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.createTeam"),
+      );
     },
   });
 }
@@ -471,10 +503,12 @@ export function useDeleteTeam() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.organizations.teamMembers(variables.teamId),
       });
-      toast.success("Team deleted successfully");
+      toast.success(translate("organizations.toasts.teamDeleted"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to delete team");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.deleteTeam"),
+      );
     },
   });
 }
@@ -494,10 +528,12 @@ export function useAddTeamMember() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.organizations.teamMembers(variables.teamId),
       });
-      toast.success("Member added to team successfully");
+      toast.success(translate("organizations.toasts.teamMemberAdded"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to add team member");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.addTeamMember"),
+      );
     },
   });
 }
@@ -517,10 +553,12 @@ export function useRemoveTeamMember() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.organizations.teamMembers(variables.teamId),
       });
-      toast.success("Member removed from team successfully");
+      toast.success(translate("organizations.toasts.teamMemberRemoved"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to remove team member");
+      toast.error(
+        error instanceof Error ? error.message : translate("organizations.errors.removeTeamMember"),
+      );
     },
   });
 }

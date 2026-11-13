@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,18 +13,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
 import { useCreateOrganization } from "@/hooks/use-organizations";
-import { type CreateOrganizationData, createOrganizationSchema } from "@/lib/organization-types";
+import {
+  type CreateOrganizationData,
+  createOrganizationSchema,
+  type Organization,
+} from "@/lib/organization-types";
 
 type CreateOrganizationDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called with the new organization, before the dialog closes. */
+  onCreated?: (organization: Organization) => void;
+  /** Replaces the default description, e.g. to say why an organization is needed. */
+  description?: string;
 };
 
-export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizationDialogProps) {
+export function CreateOrganizationDialog({
+  open,
+  onOpenChange,
+  onCreated,
+  description,
+}: CreateOrganizationDialogProps) {
+  const { t } = useTranslation();
   const createOrganization = useCreateOrganization();
 
   const form = useAppForm({
-    validators: { onChange: createOrganizationSchema },
+    validators: { onChange: createOrganizationSchema(t) },
     defaultValues: {
       name: "",
       slug: "",
@@ -31,7 +46,8 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
     } as CreateOrganizationData,
     onSubmit: async ({ value }) => {
       try {
-        await createOrganization.mutateAsync(value);
+        const organization = await createOrganization.mutateAsync(value);
+        onCreated?.(organization);
         onOpenChange(false);
         form.reset();
       } catch {
@@ -90,9 +106,9 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create Organization</DialogTitle>
+          <DialogTitle>{t("organizations.createDialog.title")}</DialogTitle>
           <DialogDescription>
-            Create a new organization to collaborate with your team.
+            {description ?? t("organizations.createDialog.description")}
           </DialogDescription>
         </DialogHeader>
         <form.AppForm>
@@ -100,13 +116,13 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
             <form.AppField name="name">
               {(field) => (
                 <field.FormItem>
-                  <field.FormLabel>Organization Name</field.FormLabel>
+                  <field.FormLabel>{t("organizations.createDialog.name")}</field.FormLabel>
                   <field.FormControl>
                     <Input
                       disabled={createOrganization.isPending}
                       onBlur={field.handleBlur}
                       onChange={(e) => handleNameChange(e.target.value)}
-                      placeholder="Enter organization name"
+                      placeholder={t("organizations.createDialog.namePlaceholder")}
                       value={field.state.value}
                     />
                   </field.FormControl>
@@ -118,7 +134,7 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
             <form.AppField name="slug">
               {(field) => (
                 <field.FormItem>
-                  <field.FormLabel>Organization Slug</field.FormLabel>
+                  <field.FormLabel>{t("organizations.createDialog.slug")}</field.FormLabel>
                   <field.FormControl>
                     <Input
                       disabled={createOrganization.isPending}
@@ -129,7 +145,7 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                     />
                   </field.FormControl>
                   <field.FormDescription>
-                    This will be used in URLs. Only lowercase letters, numbers, and hyphens allowed.
+                    {t("organizations.createDialog.slugHelp")}
                   </field.FormDescription>
                   <field.FormMessage />
                 </field.FormItem>
@@ -139,7 +155,7 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
             <form.AppField name="logo">
               {(field) => (
                 <field.FormItem>
-                  <field.FormLabel>Logo URL (Optional)</field.FormLabel>
+                  <field.FormLabel>{t("organizations.createDialog.logo")}</field.FormLabel>
                   <field.FormControl>
                     <Input
                       disabled={createOrganization.isPending}
@@ -162,11 +178,11 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                 type="button"
                 variant="outline"
               >
-                Cancel
+                {t("organizations.createDialog.cancel")}
               </Button>
               <Button disabled={createOrganization.isPending} type="submit">
                 {createOrganization.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Organization
+                {t("organizations.createDialog.submit")}
               </Button>
             </DialogFooter>
           </form>

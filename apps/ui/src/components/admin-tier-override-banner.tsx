@@ -1,29 +1,30 @@
+import type { TFunction } from "i18next";
 import { Loader2, ShieldAlert, XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useMembership } from "@/contexts/membership-context";
 import { useActiveOrganization } from "@/hooks/use-organizations";
 import { cn } from "@/lib/utils";
-import type { MembershipTier } from "@/types/membership";
 
-const tierLabels: Record<MembershipTier, string> = {
-  free: "Free",
-  basic: "Basic",
-  pro: "Pro",
-  ultimate: "Ultimate",
-};
-
-function getTargetLabel(options: {
-  activeOrganizationName?: string;
-  target: { type: "user" | "organization"; id: string };
-}): string {
+function getTargetLabel(
+  options: {
+    activeOrganizationName?: string;
+    target: { type: "user" | "organization"; id: string };
+  },
+  t: TFunction,
+): string {
   if (options.target.type === "organization") {
-    return options.activeOrganizationName || `organization ${options.target.id}`;
+    return (
+      options.activeOrganizationName ||
+      t("adminOverride.targetOrganization", { id: options.target.id })
+    );
   }
 
-  return "your user Membership";
+  return t("adminOverride.targetUser");
 }
 
 export function AdminTierOverrideBanner() {
+  const { t } = useTranslation();
   const { data: activeOrganization } = useActiveOrganization();
   const { adminTierOverride, clearAdminTierOverride, isAppAdmin, isClearingAdminTierOverride } =
     useMembership();
@@ -32,17 +33,20 @@ export function AdminTierOverrideBanner() {
     return null;
   }
 
-  const targetLabel = getTargetLabel({
-    activeOrganizationName:
-      adminTierOverride.target.type === "organization" &&
-      activeOrganization?.id === adminTierOverride.target.id
-        ? activeOrganization?.name
-        : undefined,
-    target: adminTierOverride.target,
-  });
-  const tierLabel = tierLabels[adminTierOverride.tier];
+  const targetLabel = getTargetLabel(
+    {
+      activeOrganizationName:
+        adminTierOverride.target.type === "organization" &&
+        activeOrganization?.id === adminTierOverride.target.id
+          ? activeOrganization?.name
+          : undefined,
+      target: adminTierOverride.target,
+    },
+    t,
+  );
+  const tierLabel = t(`membership.tiers.${adminTierOverride.tier}`);
   const cadenceLabel = adminTierOverride.billingCadence
-    ? ` ${adminTierOverride.billingCadence}`
+    ? ` ${t(`adminOverride.cadence.${adminTierOverride.billingCadence}`)}`
     : "";
 
   return (
@@ -57,12 +61,14 @@ export function AdminTierOverrideBanner() {
           <ShieldAlert className="size-4" />
         </div>
         <div className="min-w-0 flex-1 text-sm leading-5">
-          <span className="font-semibold text-amber-200">Admin tier override active:</span>{" "}
+          <span className="font-semibold text-amber-200">{t("adminOverride.active")}</span>{" "}
           <span className="font-medium">
-            {tierLabel}
-            {cadenceLabel} for {targetLabel}.
+            {t("adminOverride.summary", {
+              plan: `${tierLabel}${cadenceLabel}`,
+              target: targetLabel,
+            })}
           </span>{" "}
-          <span className="text-zinc-300">Real subscriptions are unchanged.</span>
+          <span className="text-zinc-300">{t("adminOverride.unchanged")}</span>
         </div>
         <Button
           className="h-8 shrink-0 border-amber-200/40 bg-zinc-900/60 px-2.5 text-amber-100 hover:bg-amber-200 hover:text-zinc-950 sm:px-3"
@@ -77,8 +83,8 @@ export function AdminTierOverrideBanner() {
           ) : (
             <XCircle className="size-3.5" />
           )}
-          <span className="hidden sm:inline">Clear override</span>
-          <span className="sm:hidden">Clear</span>
+          <span className="hidden sm:inline">{t("adminOverride.clear")}</span>
+          <span className="sm:hidden">{t("adminOverride.clearShort")}</span>
         </Button>
       </div>
     </div>

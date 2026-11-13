@@ -56,3 +56,8 @@ dist
 # local CLI/template-sync manual testing sandbox
 .beztack-sandbox/
 .claude/settings.local.json
+
+# Playwright (apps/ui mobile layout audit)
+dist-e2e
+test-results
+playwright-report

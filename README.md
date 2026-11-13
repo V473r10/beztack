@@ -47,6 +47,8 @@ pnpm dev
 
 `pnpm create beztack` runs the `beztack` CLI, which clones this repository and applies your answers. Its closing "Next steps" message prints `pnpm run push`, which is not a script in this repo. Use `pnpm db:migrate`, or `pnpm db:push` to sync the schema without migration files.
 
+Upgrading a database that already has plans? Migration `0009` rewrites stored prices to integer minor units. Take a `pg_dump` backup first: see [docs/price-migration.md](docs/price-migration.md).
+
 To work on Beztack itself, clone the repository and run `pnpm install && pnpm build:packages` before any test or typecheck. Apps and packages resolve workspace packages through their gitignored `dist` folders.
 
 ## Payments
@@ -70,6 +72,7 @@ What the API implements today:
 - **Failed-change retry.** After five failed activations a change is marked `failed`. App admins list failed changes and requeue them (`GET /api/auth/admin/plan-changes/failed`, `POST /api/auth/admin/plan-changes/:id/retry`), also from the admin page in `apps/ui`.
 - **Admin tier overrides.** An App admin can set a tier for a user or organization without charging anything or touching real subscriptions, and clear it (`DELETE /api/membership/admin-tier-override`).
 - **Billing target.** `SUBSCRIPTION_MODE` bills each user or each organization (default: organization).
+- **Personal organization.** With `SUBSCRIPTION_MODE=organization`, `PERSONAL_ORGANIZATION_ON_SIGNUP` (default `true`) gives each new user an organization they own and makes it their Active organization on every new session. With `SUBSCRIPTION_MODE=user` no organization is created whatever the flag says. The organization is named `{name}'s organization` (English); to change the wording or the language, edit `PERSONAL_ORGANIZATION_NAME_TEMPLATE` in `apps/api/server/utils/auth-config.ts`. Set the flag to `false` to have users create organizations by hand; checkout and Plan change then answer `409 organization_required` until they have one.
 - **Plan catalog.** Admin routes under `/api/auth/admin/plans` create, import and sync plans between the provider and the local `plan` table.
 
 Not included: a Stripe adapter or any provider beyond these two (the core package is built to take more, see [Payments Core](apps/docs/content/docs/payments/payments-core.mdx)) and a hosted checkout demo.

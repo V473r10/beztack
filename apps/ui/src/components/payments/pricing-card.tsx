@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +28,8 @@ import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
-import { formatPrice } from "@/lib/format";
+import { formatNumber, formatPrice } from "@/lib/format";
+import { resolvePricingAction } from "./pricing-actions";
 
 export type PricingCardProps = {
   tier: PricingTier;
@@ -35,6 +37,8 @@ export type PricingCardProps = {
   currentTier?: string;
   changeType?: PlanChangeType;
   hasActiveSubscription?: boolean;
+  /** Whether the visitor has an account; the Free plan leads them to sign-up or to the app. */
+  isSignedIn?: boolean;
   isPopular?: boolean;
   onSelect?: (tierId: string) => void;
   onPlanChange?: (tier: PricingTier) => void;
@@ -83,6 +87,7 @@ export function PricingCard({
   currentTier,
   changeType = "same",
   hasActiveSubscription = false,
+  isSignedIn = false,
   isPopular = false,
   onSelect,
   onPlanChange,
@@ -92,10 +97,13 @@ export function PricingCard({
 }: PricingCardProps) {
   const { t } = useTranslation();
   const Icon = tierIcons[tier.id as keyof typeof tierIcons] || Sparkles;
+  const features = tier.features ?? [];
   // The current tier on another Billing cadence is still a Plan change
   // ("Switch billing"), offered only when the provider can do it.
   const isCadenceSwitch = currentTier === tier.id && changeType === "period_change";
-  const isCurrentTier = currentTier === tier.id && !isCadenceSwitch;
+  // A visitor without an account has no current plan, whatever the context's default tier.
+  const isCurrentTier =
+    currentTier === tier.id && !isCadenceSwitch && !(tier.catalogOnly && !isSignedIn);
   // "Coming soon" plans are shown but cannot be bought or switched to.
   const isSoon = tier.soon === true && !isCurrentTier;
   const price = tier.price[billingPeriod];
@@ -104,32 +112,33 @@ export function PricingCard({
 
   const savings =
     billingPeriod === "yearly" && monthlyPrice > 0
-      ? calculateYearlySavings(monthlyPrice, yearlyPrice)
+      ? calculateYearlySavings(monthlyPrice, yearlyPrice, tier.currency)
       : null;
 
+  const productId = billingPeriod === "yearly" ? tier.yearly?.id : tier.monthly?.id;
+  // Free lives in the catalog only: no product, no checkout.
+  const isFreePlan = tier.catalogOnly === true && monthlyPrice === 0 && yearlyPrice === 0;
+  // A plan with no product for this cadence cannot be bought here.
+  const canBuy = !(tier.catalogOnly || !productId);
+  const freeHref = isSignedIn ? "/" : "/auth/sign-up";
+
   const handleSelect = () => {
-    if (disabled || isLoading || isCurrentTier || isSoon) {
+    if (disabled || isLoading || isCurrentTier || isSoon || !canBuy) {
       return;
     }
 
-    // If user has an active subscription, trigger plan change flow
-    if (hasActiveSubscription && onPlanChange) {
-      onPlanChange(tier);
-      return;
+    // A subscriber changes plan in the dialog; anyone else checks out the
+    // product of the chosen Billing period.
+    const action = resolvePricingAction({
+      billingPeriod,
+      changesPlan: hasActiveSubscription && Boolean(onPlanChange),
+      tier,
+    });
+    if (action.kind === "plan-change") {
+      onPlanChange?.(action.tier);
+    } else if (action.kind === "checkout") {
+      onSelect?.(action.productId);
     }
-
-    // Otherwise, proceed with new checkout
-    if (!onSelect) {
-      return;
-    }
-
-    const productId = billingPeriod === "yearly" ? tier.yearly?.id : tier.monthly?.id;
-
-    if (!productId) {
-      return;
-    }
-
-    onSelect(productId);
   };
 
   const getButtonText = () => {
@@ -139,7 +148,10 @@ export function PricingCard({
     if (isSoon) {
       return t("pricing.soon", "Coming soon");
     }
-    if (tier.id === "ultimate") {
+    if (isFreePlan) {
+      return isSignedIn ? t("pricing.goToApp") : t("pricing.startFree");
+    }
+    if (!canBuy) {
       return t("pricing.contactSales", "Contact Sales");
     }
     if (hasActiveSubscription) {
@@ -202,7 +214,7 @@ export function PricingCard({
         {isPopular && (
           <div className="absolute top-0 right-0">
             <div className="rounded-bl-xl bg-primary px-3 py-1 font-medium text-primary-foreground text-xs">
-              Popular
+              {t("pricing.card.popular")}
             </div>
           </div>
         )}
@@ -224,11 +236,13 @@ export function PricingCard({
           <div className="space-y-1 pt-2">
             <div className="flex items-baseline gap-1">
               <span className="font-bold text-4xl tracking-tight">
-                {price === 0 ? "Free" : formatCurrency(price)}
+                {price === 0 ? t("pricing.card.free") : formatPrice(price, tier.currency)}
               </span>
               {price > 0 && (
                 <span className="font-medium text-muted-foreground text-sm">
-                  /{billingPeriod === "yearly" ? "year" : "month"}
+                  {billingPeriod === "yearly"
+                    ? t("pricing.card.perYear")
+                    : t("pricing.card.perMonth")}
                 </span>
               )}
             </div>
@@ -239,10 +253,10 @@ export function PricingCard({
                   className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400"
                   variant="secondary"
                 >
-                  Save {savings.formattedPercentage}
+                  {t("billing.savePercent", { percent: savings.percentage })}
                 </Badge>
                 <span className="text-green-600 text-xs dark:text-green-400">
-                  {savings.formattedAmount} yearly
+                  {t("pricing.card.yearlySaving", { amount: savings.formattedAmount })}
                 </span>
               </div>
             ) : (
@@ -254,26 +268,34 @@ export function PricingCard({
         <CardContent className="flex-1 space-y-6">
           <Separator className="bg-border/50" />
 
-          <div className="space-y-4">
-            <div className="font-semibold text-foreground/80 text-sm">Includes:</div>
-            <ul className="space-y-3">
-              {(tier.features || []).map((feature: string) => (
-                <li
-                  className="flex items-start gap-3 text-muted-foreground text-sm"
-                  key={`${tier.id}-feature-${feature}-${crypto.randomUUID()}`}
-                >
-                  <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <Check className="h-2.5 w-2.5 text-primary" />
-                  </div>
-                  <span className="leading-tight">{t(`pricing.features.${feature}`, feature)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {features.length > 0 && (
+            <div className="space-y-4">
+              <div className="font-semibold text-foreground/80 text-sm">
+                {t("pricing.card.includes")}
+              </div>
+              <ul className="space-y-3">
+                {features.map((feature: string) => (
+                  <li
+                    className="flex items-start gap-3 text-muted-foreground text-sm"
+                    key={`${tier.id}-feature-${feature}`}
+                  >
+                    <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <Check className="h-2.5 w-2.5 text-primary" />
+                    </div>
+                    <span className="leading-tight">
+                      {t(`pricing.features.${feature}`, { defaultValue: feature })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {tier.limits && Object.keys(tier.limits).length > 0 && (
             <div className="space-y-4 pt-2">
-              <div className="font-semibold text-foreground/80 text-sm">Limits:</div>
+              <div className="font-semibold text-foreground/80 text-sm">
+                {t("pricing.card.limits")}
+              </div>
               <div className="grid grid-cols-1 gap-2">
                 {Object.entries(tier.limits).map(([key, value]: [string, number]) => {
                   const IconComponent = limitIcons[key as keyof typeof limitIcons] || FileText;
@@ -286,8 +308,10 @@ export function PricingCard({
                     >
                       <div className="flex items-center gap-2.5">
                         <IconComponent className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-muted-foreground text-xs capitalize">
-                          {key.replace(/([A-Z])/g, " $1").toLowerCase()}
+                        <span className="text-muted-foreground text-xs">
+                          {t(`pricing.limits.${key}`, {
+                            defaultValue: key.replace(/([A-Z])/g, " $1").toLowerCase(),
+                          })}
                         </span>
                       </div>
                       <div className="font-medium text-xs">
@@ -297,7 +321,7 @@ export function PricingCard({
                           </span>
                         ) : (
                           <span>
-                            {value.toLocaleString()}
+                            {formatNumber(value)}
                             {key === "storage" && "GB"}
                           </span>
                         )}
@@ -311,46 +335,52 @@ export function PricingCard({
         </CardContent>
 
         <CardFooter className="pt-6">
-          <Button
-            className={cn(
-              "w-full font-semibold transition-all hover:scale-[1.02]",
-              isPopular ? "shadow-md shadow-primary/20" : "",
-              changeType === "upgrade" &&
-                hasActiveSubscription &&
-                "bg-green-600 hover:bg-green-700",
-              changeType === "downgrade" &&
-                hasActiveSubscription &&
-                "bg-amber-600 text-white hover:bg-amber-700",
-            )}
-            disabled={disabled || isLoading || isCurrentTier || isSoon}
-            onClick={handleSelect}
-            size="lg"
-            variant={
-              getButtonVariant() as
-                | "default"
-                | "destructive"
-                | "outline"
-                | "secondary"
-                | "ghost"
-                | "link"
-            }
-          >
-            {isLoading ? (
-              t("common.processing", "Processing...")
-            ) : (
-              <>
-                {getButtonIcon()}
-                {getButtonText()}
-              </>
-            )}
-          </Button>
+          {isFreePlan && !isCurrentTier ? (
+            <Button asChild className="w-full font-semibold" size="lg" variant="outline">
+              <Link to={freeHref}>{getButtonText()}</Link>
+            </Button>
+          ) : (
+            <Button
+              className={cn(
+                "w-full font-semibold transition-all hover:scale-[1.02]",
+                isPopular ? "shadow-md shadow-primary/20" : "",
+                changeType === "upgrade" &&
+                  hasActiveSubscription &&
+                  "bg-green-600 hover:bg-green-700",
+                changeType === "downgrade" &&
+                  hasActiveSubscription &&
+                  "bg-amber-600 text-white hover:bg-amber-700",
+              )}
+              disabled={disabled || isLoading || isCurrentTier || isSoon || !canBuy}
+              onClick={handleSelect}
+              size="lg"
+              variant={
+                getButtonVariant() as
+                  | "default"
+                  | "destructive"
+                  | "outline"
+                  | "secondary"
+                  | "ghost"
+                  | "link"
+              }
+            >
+              {isLoading ? (
+                t("common.processing", "Processing...")
+              ) : (
+                <>
+                  {getButtonIcon()}
+                  {getButtonText()}
+                </>
+              )}
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </motion.div>
   );
 }
 
-const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
+const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number, currency?: string) => {
   const MONTHS_IN_YEAR = 12;
   const PERCENTAGE_MULTIPLIER = 100;
 
@@ -368,14 +398,7 @@ const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
   const savingsPercentage = (savingsAmount / monthlyYearlyTotal) * PERCENTAGE_MULTIPLIER;
 
   return {
-    formattedPercentage: `${savingsPercentage.toFixed(1)}%`,
-    formattedAmount: formatCurrency(savingsAmount),
+    percentage: savingsPercentage.toFixed(1),
+    formattedAmount: formatPrice(savingsAmount, currency),
   };
 };
-
-/**
- * Format a price in the project locale. Without an explicit `currency` the
- * project default (`VITE_DEFAULT_CURRENCY`) applies.
- */
-export const formatCurrency = (amount: number, currency?: string | null): string =>
-  formatPrice(amount, currency);

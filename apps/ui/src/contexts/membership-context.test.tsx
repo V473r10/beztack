@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/api-client";
 import type { MembershipContextValue } from "./membership-context";
 
 const mocks = vi.hoisted(() => ({
@@ -7,7 +8,11 @@ const mocks = vi.hoisted(() => ({
   invalidateQueries: vi.fn(),
   membershipStatus: undefined as unknown,
   mutationOptions: [] as unknown[],
+  // In the order the provider declares its mutations: checkout, Plan change,
+  // billing portal, clear Admin tier override.
+  mutateAsyncs: [] as ReturnType<typeof vi.fn>[],
   redirectToExternalUrl: vi.fn(),
+  session: { user: { id: "user_1" } } as { user: { id: string } } | null,
   subscriptions: [] as unknown[],
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
@@ -28,7 +33,7 @@ vi.mock("@/hooks/use-organizations", () => ({
 }));
 
 vi.mock("@/lib/auth-client", () => ({
-  authClient: {},
+  authClient: { useSession: () => ({ data: mocks.session }) },
 }));
 
 vi.mock("@/lib/browser-navigation", () => ({
@@ -75,12 +80,16 @@ describe("MembershipProvider", () => {
     mocks.activeOrganization = { id: "org_1" };
     mocks.membershipStatus = undefined;
     mocks.mutationOptions.length = 0;
+    mocks.mutateAsyncs.length = 0;
+    mocks.session = { user: { id: "user_1" } };
     mocks.subscriptions = [];
     mocks.useMutation.mockImplementation((options: unknown) => {
+      const mutateAsync = vi.fn().mockResolvedValue({ success: true });
       mocks.mutationOptions.push(options);
+      mocks.mutateAsyncs.push(mutateAsync);
       return {
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync,
       };
     });
     mocks.useQuery.mockImplementation((options: { queryKey: readonly unknown[] }) => {
@@ -117,6 +126,27 @@ describe("MembershipProvider", () => {
     });
   });
 
+  it("does not ask for Membership status before anyone is signed in", () => {
+    mocks.session = null;
+
+    renderMembershipProvider();
+
+    const membershipQueries = mocks.useQuery.mock.calls
+      .map(([options]) => options as { queryKey: readonly unknown[]; enabled?: boolean })
+      .filter((options) => options.queryKey[1] === "membership");
+    expect(membershipQueries).not.toHaveLength(0);
+    expect(membershipQueries.every((options) => options.enabled === false)).toBe(true);
+  });
+
+  it("asks for Membership status once someone is signed in", () => {
+    renderMembershipProvider();
+
+    const membershipQueries = mocks.useQuery.mock.calls
+      .map(([options]) => options as { queryKey: readonly unknown[]; enabled?: boolean })
+      .filter((options) => options.queryKey[1] === "membership");
+    expect(membershipQueries.every((options) => options.enabled === true)).toBe(true);
+  });
+
   it("uses effective Membership status for the current tier", () => {
     mocks.membershipStatus = {
       data: {
@@ -133,6 +163,107 @@ describe("MembershipProvider", () => {
 
     expect(value?.currentTier).toBe("pro");
     expect(value?.activeSubscription).toBeNull();
+  });
+
+  describe("Plan change or checkout", () => {
+    const CHECKOUT = 0;
+    const PLAN_CHANGE = 1;
+    const status = (overrides: Record<string, unknown>) => ({
+      data: {
+        benefits: [],
+        hasActiveSubscription: false,
+        organizationId: "org_1",
+        tier: "free",
+        userId: "user_1",
+        ...overrides,
+      },
+      success: true,
+    });
+    // The checkout and Plan change mutations are the first two the provider
+    // declares; the last render's calls are the ones the captured value uses.
+    const calls = (index: number) => mocks.mutateAsyncs.slice(-4)[index];
+
+    it("reports an active Subscription from Membership status although the provider list has none", () => {
+      mocks.membershipStatus = status({ hasActiveSubscription: true, tier: "basic" });
+
+      const value = renderMembershipProvider();
+
+      expect(value?.activeSubscription).toBeNull();
+      expect(value?.hasActiveSubscription).toBe(true);
+    });
+
+    it("reports an active Subscription found in the provider list", () => {
+      mocks.membershipStatus = status({ canManageBilling: true });
+      mocks.subscriptions = [{ id: "sub_1", status: "active", metadata: { tier: "basic" } }];
+
+      expect(renderMembershipProvider()?.hasActiveSubscription).toBe(true);
+    });
+
+    it("reports no Subscription when neither source has one", () => {
+      mocks.membershipStatus = status({});
+
+      expect(renderMembershipProvider()?.hasActiveSubscription).toBe(false);
+    });
+
+    it("changes plan, not checkout, when Membership status has an active Subscription", async () => {
+      mocks.membershipStatus = status({ hasActiveSubscription: true, tier: "basic" });
+      const value = renderMembershipProvider();
+
+      await value?.upgradeToTier("prod_pro_month", "monthly");
+
+      expect(calls(PLAN_CHANGE)).toHaveBeenCalledWith({
+        billingPeriod: "monthly",
+        organizationId: "org_1",
+        productId: "prod_pro_month",
+      });
+      expect(calls(CHECKOUT)).not.toHaveBeenCalled();
+    });
+
+    it("starts a checkout of the product when there is no Subscription", async () => {
+      mocks.membershipStatus = status({});
+      const value = renderMembershipProvider();
+
+      await value?.upgradeToTier("prod_pro_year", "yearly");
+
+      expect(calls(CHECKOUT)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          billingPeriod: "yearly",
+          organizationId: "org_1",
+          productId: "prod_pro_year",
+        }),
+      );
+      expect(calls(PLAN_CHANGE)).not.toHaveBeenCalled();
+    });
+
+    it("lets the dialog change plan on a Subscription only Membership status knows about", async () => {
+      mocks.membershipStatus = status({ hasActiveSubscription: true, tier: "basic" });
+      const value = renderMembershipProvider();
+
+      await value?.changePlan("prod_pro_month", { billingPeriod: "monthly" });
+
+      expect(calls(PLAN_CHANGE)).toHaveBeenCalledWith({
+        billingPeriod: "monthly",
+        organizationId: "org_1",
+        productId: "prod_pro_month",
+      });
+    });
+
+    it("sends an App admin's plan choice to the Plan change, which applies an Admin tier override", async () => {
+      mocks.membershipStatus = status({ isAppAdmin: true });
+      const value = renderMembershipProvider();
+
+      await value?.changePlan("prod_pro_month", { billingPeriod: "monthly" });
+
+      expect(calls(PLAN_CHANGE)).toHaveBeenCalledTimes(1);
+      expect(calls(CHECKOUT)).not.toHaveBeenCalled();
+    });
+
+    it("refuses to change plan when there is nothing to change", () => {
+      mocks.membershipStatus = status({});
+      const value = renderMembershipProvider();
+
+      expect(() => value?.changePlan("prod_pro_month")).toThrow("No active subscription");
+    });
   });
 
   it("offers a Cadence change only when the Payment provider supports it", () => {
@@ -217,6 +348,50 @@ describe("MembershipProvider", () => {
     expect(value?.adminTierOverride).toBeNull();
   });
 
+  describe("Plan change toasts", () => {
+    function onPlanChangeSuccess(acceptance: unknown) {
+      renderMembershipProvider();
+      (
+        mocks.mutationOptions[1] as {
+          onSuccess: (data: { planChangeAcceptance: unknown }) => void;
+        }
+      ).onSuccess({ planChangeAcceptance: acceptance });
+    }
+
+    it("says a Downgrade or Cadence change is scheduled for the renewal", () => {
+      onPlanChangeSuccess({ direction: "downgrade", kind: "plan-change-acceptance" });
+
+      expect(mocks.toastSuccess).toHaveBeenCalledWith(
+        "Plan change scheduled. It takes effect at your next renewal.",
+      );
+    });
+
+    it("marks every Plan change preview stale without refetching the one the open dialog shows", () => {
+      onPlanChangeSuccess({ direction: "upgrade", kind: "plan-change-acceptance" });
+
+      // A refetch would price the change against the plan the visitor just moved to: a 400.
+      expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ["subscriptions", "plan-change-preview"],
+        refetchType: "none",
+      });
+      const refreshed = mocks.invalidateQueries.mock.calls
+        .map(([filters]) => filters as { predicate?: (query: unknown) => boolean })
+        .find((filters) => filters.predicate);
+      expect(
+        refreshed?.predicate?.({ queryKey: ["subscriptions", "plan-change-preview", "a"] }),
+      ).toBe(false);
+      expect(refreshed?.predicate?.({ queryKey: ["subscriptions", "membership", "org_1"] })).toBe(
+        true,
+      );
+    });
+
+    it("says an Upgrade is accepted and the provider settles the charge", () => {
+      onPlanChangeSuccess({ direction: "upgrade", kind: "plan-change-acceptance" });
+
+      expect(mocks.toastSuccess).toHaveBeenCalledWith("billing.toast.planChangeAccepted");
+    });
+  });
+
   it("does not show checkout redirect copy for Admin tier overrides", () => {
     renderMembershipProvider();
     const checkoutMutationOptions = mocks.mutationOptions[0] as {
@@ -228,8 +403,8 @@ describe("MembershipProvider", () => {
       resultKind: "admin-tier-override",
     });
 
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Admin tier override applied.");
-    expect(mocks.toastSuccess).not.toHaveBeenCalledWith("Redirecting to checkout...");
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("billing.toast.adminOverrideApplied");
+    expect(mocks.toastSuccess).not.toHaveBeenCalledWith("billing.toast.redirecting");
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
     });
@@ -243,9 +418,39 @@ describe("MembershipProvider", () => {
 
     clearMutationOptions.onSuccess({ changed: true });
 
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Admin tier override cleared.");
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("billing.toast.adminOverrideCleared");
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
+    });
+  });
+
+  describe("checkout errors", () => {
+    function onError(index: number) {
+      renderMembershipProvider();
+      return (mocks.mutationOptions[index] as { onError: (error: Error) => void }).onError;
+    }
+
+    it("shows the server's reason when checkout fails", () => {
+      onError(0)(new ApiError("This plan is not available yet", { statusCode: 409 }));
+
+      expect(mocks.toastError).toHaveBeenCalledWith("This plan is not available yet");
+    });
+
+    it("keeps quiet when the user is only being asked to create an organization", () => {
+      onError(0)(
+        new ApiError("Create an organization first", {
+          statusCode: 409,
+          data: { code: "organization_required" },
+        }),
+      );
+      onError(1)(
+        new ApiError("Create an organization first", {
+          statusCode: 409,
+          data: { code: "organization_required" },
+        }),
+      );
+
+      expect(mocks.toastError).not.toHaveBeenCalled();
     });
   });
 

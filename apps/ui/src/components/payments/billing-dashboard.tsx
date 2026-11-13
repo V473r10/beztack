@@ -12,6 +12,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -20,10 +21,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { CustomerMeter, Order, Subscription } from "@/contexts/membership-context";
+import { formatDate, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 import { MembershipBadge, MembershipStatus } from "./membership-badge";
-import { formatCurrency } from "./pricing-card";
 import { UpgradeDialog } from "./upgrade-dialog";
 import { UsageMetrics } from "./usage-metrics";
 
@@ -45,7 +46,12 @@ type SubscriptionCardProps = {
   onUpgrade?: () => void;
 };
 
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCardProps) {
+  const { t } = useTranslation();
   const isActive = subscription.status === "active";
   const isCanceled = subscription.status === "canceled";
   const inGracePeriod =
@@ -65,17 +71,21 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
 
   const getStatusText = () => {
     if (isActive) {
-      return "Active";
+      return t("billing.dashboard.subscription.statusActive");
     }
     if (inGracePeriod && subscription.currentPeriodEnd) {
-      return (
-        "Canceled (Active until " +
-        new Date(subscription.currentPeriodEnd).toLocaleDateString() +
-        ")"
-      );
+      return t("billing.dashboard.subscription.statusCanceledUntil", {
+        date: formatDate(subscription.currentPeriodEnd),
+      });
     }
-    return "Canceled";
+    return t("billing.dashboard.subscription.statusCanceled");
   };
+
+  const tierName = subscription.metadata?.tier
+    ? t(`membership.tiers.${subscription.metadata.tier}`, {
+        defaultValue: capitalize(subscription.metadata.tier.toString()),
+      })
+    : null;
 
   return (
     <Card>
@@ -83,15 +93,15 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <CardTitle className="text-lg">
-              {subscription.metadata?.tier
-                ? `${subscription.metadata.tier.toString().charAt(0).toUpperCase() + subscription.metadata.tier.toString().slice(1)} Plan`
-                : "Subscription"}
+              {tierName
+                ? t("billing.dashboard.subscription.planName", { tier: tierName })
+                : t("billing.dashboard.subscription.title")}
             </CardTitle>
             <CardDescription>
-              {subscription.metadata?.tier
+              {tierName
                 ? // Price information should be fetched from tier API or subscription data
-                  "Active subscription"
-                : "Unknown subscription"}
+                  t("billing.dashboard.subscription.active")
+                : t("billing.dashboard.subscription.unknown")}
             </CardDescription>
           </div>
           <Badge variant={getStatusColor() as "default" | "secondary" | "destructive" | "outline"}>
@@ -103,11 +113,11 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
           <Alert>
             <Clock className="h-4 w-4" />
             <AlertDescription>
-              Your subscription is canceled but remains active until{" "}
-              {subscription.currentPeriodEnd
-                ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
-                : "N/A"}
-              . You can reactivate it anytime before then.
+              {t("billing.dashboard.subscription.graceNotice", {
+                date: subscription.currentPeriodEnd
+                  ? formatDate(subscription.currentPeriodEnd)
+                  : t("billing.dashboard.notAvailable"),
+              })}
             </AlertDescription>
           </Alert>
         )}
@@ -116,17 +126,21 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <div className="text-muted-foreground text-sm">Next billing</div>
+            <div className="text-muted-foreground text-sm">
+              {t("billing.dashboard.subscription.nextBilling")}
+            </div>
             <div className="font-medium">
               {isActive && subscription.currentPeriodEnd
-                ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                ? formatDate(subscription.currentPeriodEnd)
                 : "—"}
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-muted-foreground text-sm">Started</div>
+            <div className="text-muted-foreground text-sm">
+              {t("billing.dashboard.subscription.started")}
+            </div>
             <div className="font-medium">
-              {subscription.createdAt ? new Date(subscription.createdAt).toLocaleDateString() : "—"}
+              {subscription.createdAt ? formatDate(subscription.createdAt) : "—"}
             </div>
           </div>
         </div>
@@ -137,13 +151,13 @@ function SubscriptionCard({ subscription, onManage, onUpgrade }: SubscriptionCar
           {onManage && (
             <Button className="flex-1" onClick={onManage} size="sm" variant="outline">
               <Settings className="mr-1 h-3 w-3" />
-              Manage
+              {t("billing.dashboard.subscription.manage")}
             </Button>
           )}
           {onUpgrade && (isActive || inGracePeriod) && (
             <Button className="flex-1" onClick={onUpgrade} size="sm">
               <ArrowUpRight className="mr-1 h-3 w-3" />
-              Upgrade
+              {t("billing.dashboard.subscription.upgrade")}
             </Button>
           )}
         </div>
@@ -197,13 +211,15 @@ function getStatusClasses(status: string) {
   return baseClasses;
 }
 
-function OrderHistory({ orders }: OrderHistoryProps) {
+export function OrderHistory({ orders }: OrderHistoryProps) {
+  const { t } = useTranslation();
+
   if (orders.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-8">
           <Receipt className="mb-2 h-8 w-8 text-muted-foreground" />
-          <p className="text-muted-foreground text-sm">No orders found</p>
+          <p className="text-muted-foreground text-sm">{t("billing.dashboard.orders.empty")}</p>
         </CardContent>
       </Card>
     );
@@ -220,20 +236,27 @@ function OrderHistory({ orders }: OrderHistoryProps) {
               <div className="space-y-1">
                 <div className="font-medium">
                   {order.metadata?.tier
-                    ? `${order.metadata.tier.toString().charAt(0).toUpperCase() + order.metadata.tier.toString().slice(1)} Plan`
-                    : "Order"}
+                    ? t("billing.dashboard.subscription.planName", {
+                        tier: t(`membership.tiers.${order.metadata.tier}`, {
+                          defaultValue: capitalize(order.metadata.tier.toString()),
+                        }),
+                      })
+                    : t("billing.dashboard.orders.order")}
                 </div>
                 <div className="text-muted-foreground text-sm">
-                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"} •{" "}
-                  {formatCurrency(order.totalAmount)}
+                  {order.createdAt
+                    ? formatDate(order.createdAt)
+                    : t("billing.dashboard.notAvailable")}{" "}
+                  {"•"} {formatPrice(order.totalAmount, order.currency)}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <Badge variant={getOrderStatusVariant(order.status)}>
-                {(order.status || "unknown").charAt(0).toUpperCase() +
-                  (order.status || "unknown").slice(1)}
+                {t(`billing.dashboard.orders.status.${order.status || "unknown"}`, {
+                  defaultValue: capitalize(order.status || "unknown"),
+                })}
               </Badge>
               <Button size="sm" variant="ghost">
                 <Eye className="h-3 w-3" />
@@ -260,6 +283,7 @@ export function BillingDashboard({
   isLoading = false,
   className,
 }: BillingDashboardProps) {
+  const { t } = useTranslation();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const activeSubscription = (() => {
@@ -277,7 +301,7 @@ export function BillingDashboard({
     if (onManageBilling) {
       onManageBilling();
     } else {
-      toast("There was an error managing your billing");
+      toast(t("billing.dashboard.manageBillingError"));
     }
   };
 
@@ -289,8 +313,8 @@ export function BillingDashboard({
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <CardTitle>Current Plan</CardTitle>
-                <CardDescription>Manage your subscription and billing preferences</CardDescription>
+                <CardTitle>{t("billing.dashboard.currentPlan")}</CardTitle>
+                <CardDescription>{t("billing.dashboard.currentPlanDescription")}</CardDescription>
               </div>
               <MembershipBadge size="lg" tier={currentTier} />
             </div>
@@ -308,18 +332,20 @@ export function BillingDashboard({
                 tier={currentTier}
               />
             ) : (
-              <div className="text-muted-foreground text-sm">No active subscription</div>
+              <div className="text-muted-foreground text-sm">
+                {t("billing.dashboard.noActiveSubscription")}
+              </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button disabled={isLoading} onClick={handleManageBilling} variant="outline">
                 <CreditCard className="mr-2 h-4 w-4" />
-                Manage Billing
+                {t("billing.dashboard.manageBilling")}
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
               <Button disabled={isLoading} onClick={() => setShowUpgradeDialog(true)}>
                 <ArrowUpRight className="mr-2 h-4 w-4" />
-                Change Plan
+                {t("billing.dashboard.changePlan")}
               </Button>
             </div>
           </CardContent>
@@ -327,10 +353,12 @@ export function BillingDashboard({
 
         {/* Tabs for detailed views */}
         <Tabs className="space-y-4" defaultValue="usage">
-          <TabsList>
-            <TabsTrigger value="usage">Usage & Limits</TabsTrigger>
-            <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-            <TabsTrigger value="orders">Order History</TabsTrigger>
+          <TabsList className="h-auto max-w-full flex-wrap justify-start">
+            <TabsTrigger value="usage">{t("billing.dashboard.tabs.usage")}</TabsTrigger>
+            <TabsTrigger value="subscriptions">
+              {t("billing.dashboard.tabs.subscriptions")}
+            </TabsTrigger>
+            <TabsTrigger value="orders">{t("billing.dashboard.tabs.orders")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="usage">
@@ -355,8 +383,12 @@ export function BillingDashboard({
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8">
                   <CreditCard className="mb-2 h-8 w-8 text-muted-foreground" />
-                  <p className="mb-4 text-muted-foreground text-sm">No active subscriptions</p>
-                  <Button onClick={() => setShowUpgradeDialog(true)}>Choose a Plan</Button>
+                  <p className="mb-4 text-muted-foreground text-sm">
+                    {t("billing.dashboard.noActiveSubscriptions")}
+                  </p>
+                  <Button onClick={() => setShowUpgradeDialog(true)}>
+                    {t("billing.dashboard.choosePlan")}
+                  </Button>
                 </CardContent>
               </Card>
             )}

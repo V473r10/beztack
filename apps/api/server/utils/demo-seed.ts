@@ -32,6 +32,7 @@ export const DEMO_IDS = {
   adminUser: "demo_admin",
   adminAccount: "demo_admin_credential",
   customerUser: "demo_customer",
+  customerAccount: "demo_customer_credential",
   organization: "demo_org",
   adminMember: "demo_member_admin",
   customerMember: "demo_member_customer",
@@ -55,6 +56,8 @@ export type DemoSeedOptions = {
   adminEmail: string;
   /** better-auth scrypt hash of the admin password; the password itself never reaches the seed. */
   adminPasswordHash: string;
+  /** Same for the seeded customer, so the walkthrough can sign in as them and see the proration. */
+  customerPasswordHash: string;
   /** Plan row id -> the provider's product id (Polar product ids, Mercado Pago plan ids). */
   providerPlanIds?: Record<string, string>;
   /** Clock for the billing period and the failure time. */
@@ -80,7 +83,7 @@ function planRow(provider: string, seed: SeedPlan, providerPlanId: string | unde
     features: seed.features,
     limits: seed.limits,
     permissions: seed.permissions,
-    price: String(seed.price),
+    price: seed.price,
     currency: seed.currency,
     interval: seed.interval,
     displayOrder: seed.displayOrder,
@@ -141,17 +144,28 @@ export async function seedDemoData(
     }
 
     // better-auth signs in with a `credential` account that holds the hash.
-    const adminAccount = {
-      id: DEMO_IDS.adminAccount,
-      accountId: DEMO_IDS.adminUser,
-      providerId: "credential",
-      userId: DEMO_IDS.adminUser,
-      password: options.adminPasswordHash,
-    };
-    await tx
-      .insert(schema.account)
-      .values(adminAccount)
-      .onConflictDoUpdate({ target: schema.account.id, set: adminAccount });
+    const credentialAccounts = [
+      {
+        id: DEMO_IDS.adminAccount,
+        accountId: DEMO_IDS.adminUser,
+        providerId: "credential",
+        userId: DEMO_IDS.adminUser,
+        password: options.adminPasswordHash,
+      },
+      {
+        id: DEMO_IDS.customerAccount,
+        accountId: DEMO_IDS.customerUser,
+        providerId: "credential",
+        userId: DEMO_IDS.customerUser,
+        password: options.customerPasswordHash,
+      },
+    ];
+    for (const row of credentialAccounts) {
+      await tx
+        .insert(schema.account)
+        .values(row)
+        .onConflictDoUpdate({ target: schema.account.id, set: row });
+    }
 
     const org = {
       id: DEMO_IDS.organization,
@@ -225,10 +239,13 @@ export async function seedDemoData(
         canonicalTierId: "basic",
         tierRank: basicPlan.displayOrder,
         billingCadence: "monthly",
-        price: { amount: Number(basicPlan.price), currency: basicPlan.currency },
+        // Minor units, like `plan.price` (ADR 0007): 900 USD is US$ 9.00.
+        price: { amount: basicPlan.price, currency: basicPlan.currency },
       },
       providerConfirmedPlanChangeId: basicPlan.providerPlanId ?? basicPlan.id,
-      effectiveAt: periodEnd,
+      // The renewal it failed to activate at: Retry activates it "now", which
+      // the activation only allows once this moment has passed.
+      effectiveAt: periodStart,
       status: "failed",
       acceptedByUserId: DEMO_IDS.customerUser,
       canceledByUserId: null,

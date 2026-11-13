@@ -4,7 +4,7 @@
 
 import type { PricingTier, Product, ProviderProduct } from "../types.js";
 
-const CENTS_MULTIPLIER = 100;
+const PERCENT_SCALE = 100;
 
 type ProductsResponse = {
   provider: string;
@@ -92,32 +92,42 @@ function buildBaseTier(product: Product, tierId: string, displayOrder: number): 
     name: baseName,
     description: product.description || `${baseName} tier`,
     price: { monthly: 0, yearly: 0 },
+    currency: product.price.currency,
     features,
     limits,
     permissions,
     displayOrder,
     soon: metadata?.soon === true,
+    ...(metadata?.catalogOnly === true ? { catalogOnly: true } : {}),
   };
 }
 
 /**
- * Convert a provider-native amount to display units.
- * Polar returns cents (900 → $9), MercadoPago returns whole currency (4500 → $4.500).
+ * The leading words two product names share ("Basic Yearly" and "Basic Monthly" share "Basic").
+ * A tier is named after its products without the billing period; with nothing in common the
+ * first name stays.
  */
-function toDisplayAmount(amount: number, provider: string): number {
-  if (provider === "polar") {
-    return amount / CENTS_MULTIPLIER;
+function sharedLeadingWords(current: string, other: string): string {
+  const left = current.split(" ");
+  const right = other.split(" ");
+  const shared: string[] = [];
+  for (const [index, word] of left.entries()) {
+    if (word !== right[index]) {
+      break;
+    }
+    shared.push(word);
   }
-  return amount;
+  return shared.length > 0 ? shared.join(" ") : current;
 }
 
-function applyIntervalToTier(tier: PricingTier, product: Product, provider: string): PricingTier {
-  const displayAmount = toDisplayAmount(product.price.amount, provider);
+/** Tier prices stay in the product's integer minor units (ADR 0007); formatting is the UI's job. */
+function applyIntervalToTier(tier: PricingTier, product: Product): PricingTier {
+  const amount = product.price.amount;
 
   if (product.interval === "month") {
     return {
       ...tier,
-      price: { ...tier.price, monthly: displayAmount },
+      price: { ...tier.price, monthly: amount },
       monthly: buildProviderProduct(product, "month"),
     };
   }
@@ -125,7 +135,7 @@ function applyIntervalToTier(tier: PricingTier, product: Product, provider: stri
   if (product.interval === "year") {
     return {
       ...tier,
-      price: { ...tier.price, yearly: displayAmount },
+      price: { ...tier.price, yearly: amount },
       yearly: buildProviderProduct(product, "year"),
     };
   }
@@ -154,17 +164,22 @@ export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> 
     const displayOrder = getDisplayOrder(product);
     const existing = tiers.get(tierId);
     const baseTier = existing ?? buildBaseTier(product, tierId, displayOrder);
-    const updated = applyIntervalToTier(baseTier, product, payload.provider);
+    const otherName = product.name.split(" - ")[0] || product.name;
+    const named = existing
+      ? { ...baseTier, name: sharedLeadingWords(baseTier.name, otherName) }
+      : baseTier;
+    const updated = applyIntervalToTier(named, product);
     tiers.set(tierId, updated);
   }
 
   for (const [id, tier] of tiers) {
     if (tier.price.monthly > 0 && tier.price.yearly > 0) {
       const annualIfMonthly = tier.price.monthly * 12;
-      const pct = ((annualIfMonthly - tier.price.yearly) / annualIfMonthly) * 100;
+      const pct = ((annualIfMonthly - tier.price.yearly) / annualIfMonthly) * PERCENT_SCALE;
       tiers.set(id, { ...tier, yearlySavingsPercent: Math.round(pct) });
     }
   }
 
-  return Array.from(tiers.values());
+  // Array.prototype.sort is stable, so equal displayOrder keeps the provider order.
+  return Array.from(tiers.values()).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
 }

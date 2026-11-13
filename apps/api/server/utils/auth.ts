@@ -5,7 +5,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { env } from "@/env";
 import { getPolarProductMappings } from "@/lib/payments/config";
 import { getAppAdminEmails } from "../domain/organization-access";
-import { createAuth } from "./auth-config";
+import { createAuth, shouldCreatePersonalOrganization } from "./auth-config";
 import { guardEmailSender } from "./demo-guards";
 
 const isPolarProvider = env.PAYMENT_PROVIDER === "polar";
@@ -42,4 +42,8 @@ export const auth = createAuth({
   appAdminEmails: getAppAdminEmails(),
   sendEmail: guardEmailSender(sendEmail, env.DEMO_MODE),
   plugins: polarPlugin ? [polarPlugin] : [],
+  personalOrganizationOnSignup: shouldCreatePersonalOrganization({
+    subscriptionMode: env.SUBSCRIPTION_MODE,
+    onSignup: env.PERSONAL_ORGANIZATION_ON_SIGNUP,
+  }),
 });

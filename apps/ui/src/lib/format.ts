@@ -1,3 +1,5 @@
+import { currencyDecimals, formatMinorUnits, majorToMinor } from "@beztack/payments/money";
+import i18next from "i18next";
 import { env } from "@/env";
 
 /**
@@ -13,42 +15,120 @@ function projectLocale(): string {
 }
 
 function resolveCurrency(currency: string | null | undefined): string {
-  return currency || env.VITE_DEFAULT_CURRENCY;
+  return (currency || env.VITE_DEFAULT_CURRENCY).trim().toUpperCase();
 }
 
-/** Number of minor-unit decimals `Intl` uses for a currency (USD 2, JPY 0, KWD 3). */
-export function currencyFractionDigits(currency: string): number {
-  return (
-    new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions()
-      .maximumFractionDigits ?? 0
-  );
+const warnedCurrencies = new Set<string>();
+
+/** Logs a bad currency code once, so a list of rows with the same bad code does not flood the console. */
+function warnUnknownCurrencyOnce(currency: string): void {
+  if (warnedCurrencies.has(currency)) {
+    return;
+  }
+  warnedCurrencies.add(currency);
+  // biome-ignore lint/suspicious/noConsole: a price with an unknown currency is a data problem worth one line
+  console.warn(`Unknown currency code ${JSON.stringify(currency)}: showing the raw amount`);
+}
+
+type LanguageSource = { resolvedLanguage?: string; language?: string };
+
+let languageSource: LanguageSource | undefined;
+
+/**
+ * Tells the formatters which i18n instance holds the user's language. The app builds its own
+ * instance (`createInstance()`), so the default i18next singleton never learns the language.
+ * Pass `undefined` to go back to the singleton.
+ */
+export function setFormatLanguageSource(source: LanguageSource | undefined): void {
+  languageSource = source;
 }
 
 /**
- * Format a price in major units (e.g. `29` -> `$29.00`).
- *
- * Decimals come from `Intl` for the currency, never from a fixed count.
- * Currency precedence: the price's own `currency`, then the project default.
+ * The language the user chose, as a BCP 47 tag for `Intl`. When the project
+ * locale is a region of that same language (`es` and `es-UY`), the region
+ * wins, so "US$ 9,00" reads the way the project's market writes it. Before
+ * i18n is initialised (tests, first paint) the project locale applies.
  */
-export function formatPrice(
-  amount: number | string,
-  currency?: string | null,
-  locale: string = projectLocale(),
-): string {
-  const value = typeof amount === "string" ? Number.parseFloat(amount) : amount;
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: resolveCurrency(currency),
-  }).format(value);
+function activeLocale(): string {
+  const language =
+    (languageSource ?? i18next).resolvedLanguage || (languageSource ?? i18next).language;
+  const project = projectLocale();
+  if (!language) {
+    return project;
+  }
+  const projectLanguage = project?.split("-")[0];
+  return projectLanguage === language ? project : language;
 }
 
-/** Format a date (or ISO string) in the project locale. */
+/**
+ * Format a price given as integer minor units plus a currency code
+ * (`900`, `"USD"` -> `$9.00` in English, `US$ 9,00` in Spanish; ADR 0007).
+ *
+ * The language is the active i18n language unless `locale` says otherwise.
+ * Currency precedence: the price's own `currency`, then the project default.
+ * The code is upper-cased first (`usd` is `USD`). A code that is not in the
+ * ISO 4217 table never throws, because a single bad row would blank the whole
+ * page: the number is shown next to the code (`900 XYZ`) and the problem is
+ * logged once.
+ */
+export function formatPrice(
+  amount: number,
+  currency?: string | null,
+  locale: string = activeLocale(),
+): string {
+  const resolved = resolveCurrency(currency);
+  try {
+    currencyDecimals(resolved);
+  } catch {
+    warnUnknownCurrencyOnce(resolved);
+    return `${formatNumber(amount, undefined, locale)} ${resolved}`;
+  }
+  return formatMinorUnits(amount, resolved, locale);
+}
+
+/**
+ * Format a decimal amount read straight from a Mercado Pago payload
+ * (`transaction_amount: 9.99`, or the same as a string in a webhook event).
+ * Mercado Pago is the one provider that still speaks major units, so this is
+ * the UI's edge for its raw data: it converts once to minor units and formats
+ * like any other price. Prices from Beztack's own API never go through here.
+ */
+export function formatMercadoPagoAmount(
+  amount: number | string,
+  currency?: string | null,
+  locale: string = activeLocale(),
+): string {
+  const major = typeof amount === "string" ? Number.parseFloat(amount) : amount;
+  const resolved = resolveCurrency(currency);
+  try {
+    currencyDecimals(resolved);
+  } catch {
+    warnUnknownCurrencyOnce(resolved);
+    return `${formatNumber(major, undefined, locale)} ${resolved}`;
+  }
+  return formatPrice(
+    majorToMinor(major, resolved, { rounding: "half-away-from-zero" }),
+    resolved,
+    locale,
+  );
+}
+
+/** Format a date (or ISO string) in the language the user chose (the project locale before one is set). */
 export function formatDate(
   date: Date | string | number,
   options?: Intl.DateTimeFormatOptions,
-  locale: string = projectLocale(),
+  locale: string = activeLocale(),
 ): string {
   return new Intl.DateTimeFormat(locale, options).format(new Date(date));
+}
+
+/** Format a plain number (counts, limits) in the language the user chose. */
+export function formatNumber(
+  value: number,
+  options?: Intl.NumberFormatOptions,
+  locale: string = activeLocale(),
+): string {
+  return new Intl.NumberFormat(locale, options).format(value);
 }
 
 const SECONDS_PER_MINUTE = 60;
@@ -67,12 +147,13 @@ const RELATIVE_UNITS: ReadonlyArray<[Intl.RelativeTimeFormatUnit, number]> = [
 ];
 
 /**
- * Format a date relative to now in the project locale, e.g. "in 3 days" or
- * "2 hours ago", using the largest unit that fits.
+ * Format a date relative to now in the language the user chose (the project
+ * locale before one is set), e.g. "in 3 days" or "2 hours ago", using the
+ * largest unit that fits.
  */
 export function formatRelativeFromNow(
   date: Date | string | number,
-  locale: string = projectLocale(),
+  locale: string = activeLocale(),
 ): string {
   const diffSeconds = (new Date(date).getTime() - Date.now()) / MILLISECONDS_PER_SECOND;
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });

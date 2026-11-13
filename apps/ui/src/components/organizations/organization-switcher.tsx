@@ -1,5 +1,6 @@
 import { Building2, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -39,6 +40,7 @@ export function OrganizationSwitcher({
   onCreateOrganization,
   onManageOrganizations,
 }: OrganizationSwitcherProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
@@ -83,7 +85,7 @@ export function OrganizationSwitcher({
       <div className={cn("flex items-center space-x-2", className)}>
         <Button className="justify-start" onClick={handleCreateClick} variant="outline">
           <Plus className="mr-2 h-4 w-4" />
-          Create Organization
+          {t("organizations.createDialog.title")}
         </Button>
         <CreateOrganizationDialog onOpenChange={setShowCreateDialog} open={showCreateDialog} />
       </div>
@@ -96,7 +98,7 @@ export function OrganizationSwitcher({
         <PopoverTrigger asChild>
           <Button
             aria-expanded={open}
-            aria-label="Select organization"
+            aria-label={t("organizations.switcher.select")}
             className={cn("w-[200px] justify-between", className)}
             role="combobox"
             variant="outline"
@@ -105,17 +107,19 @@ export function OrganizationSwitcher({
               <div className="flex h-5 w-5 items-center justify-center rounded bg-muted">
                 <Building2 className="h-3 w-3" />
               </div>
-              <span className="truncate">{activeOrganization?.name || "Select organization"}</span>
+              <span className="truncate">
+                {activeOrganization?.name || t("organizations.switcher.select")}
+              </span>
             </div>
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0">
           <Command>
-            <CommandInput placeholder="Search organizations..." />
+            <CommandInput placeholder={t("organizations.switcher.search")} />
             <CommandList>
-              <CommandEmpty>No organizations found.</CommandEmpty>
-              <CommandGroup heading="Organizations">
+              <CommandEmpty>{t("organizations.switcher.empty")}</CommandEmpty>
+              <CommandGroup heading={t("organizations.switcher.heading")}>
                 {organizations.map((organization) => (
                   <CommandItem
                     className="text-sm"
@@ -151,12 +155,12 @@ export function OrganizationSwitcher({
               <CommandGroup>
                 <CommandItem onSelect={handleCreateClick}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Organization
+                  {t("organizations.createDialog.title")}
                 </CommandItem>
                 {onManageOrganizations && (
                   <CommandItem onSelect={handleManageClick}>
                     <Settings className="mr-2 h-4 w-4" />
-                    Manage Organizations
+                    {t("organizations.switcher.manage")}
                   </CommandItem>
                 )}
               </CommandGroup>

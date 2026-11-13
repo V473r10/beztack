@@ -34,8 +34,10 @@ export type SyncedPlanView = {
 function computeDiffs(local: DbPlan, remote: Product): SyncDiff[] {
   const diffs: SyncDiff[] = [];
 
-  // displayName (local) vs name (remote)
-  if (local.displayName !== remote.name) {
+  // displayName (local) vs name (remote). A product named "<Tier> - <Period>" is the
+  // plan called "<Tier>": the pricing page names a tier from the text before " - ".
+  const remoteName = remote.name.split(" - ")[0] || remote.name;
+  if (local.displayName !== remoteName) {
     diffs.push({
       field: "displayName",
       localValue: local.displayName,
@@ -55,8 +57,8 @@ function computeDiffs(local: DbPlan, remote: Product): SyncDiff[] {
     });
   }
 
-  // price — local is a numeric string, remote is a number
-  const localPrice = Number(local.price);
+  // price — both sides are integer minor units of their currency (ADR 0007)
+  const localPrice = local.price;
   const remotePrice = remote.price.amount;
   if (localPrice !== remotePrice) {
     diffs.push({

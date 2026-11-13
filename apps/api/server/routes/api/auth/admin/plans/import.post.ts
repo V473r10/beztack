@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/plans/import — Import a remote provider product into the DB
+ * POST /api/auth/admin/plans/import — Import a remote provider product into the DB
  */
 import { randomUUID } from "node:crypto";
 import { db, plan } from "@beztack/db";
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
       canonicalTierId: body.canonicalTierId ?? "custom",
       displayName: remoteProduct.name,
       description: remoteProduct.description ?? null,
-      price: String(remoteProduct.price.amount),
+      price: remoteProduct.price.amount,
       currency: remoteProduct.price.currency,
       interval: remoteProduct.interval,
       intervalCount: remoteProduct.intervalCount,

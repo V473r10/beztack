@@ -1,14 +1,8 @@
-import {
-  IconCreditCard,
-  IconDotsVertical,
-  IconLanguage,
-  IconLogout,
-  IconNotification,
-  IconRoute,
-} from "@tabler/icons-react";
+import { IconCreditCard, IconDotsVertical, IconLogout, IconRoute } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { LanguageSelector } from "@/components/language-selector";
 import { MembershipBadge } from "@/components/payments/membership-badge";
 import { useTour } from "@/components/tour";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,11 +12,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -33,6 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useMembership } from "@/contexts/membership-context";
 import { authClient } from "@/lib/auth-client";
+import { getInitials } from "@/lib/initials";
 
 export function NavUser() {
   const { data: session } = authClient.useSession();
@@ -42,7 +33,8 @@ export function NavUser() {
     email: session?.user?.email ?? "",
     avatar: session?.user?.image ?? "",
   };
-  const { t, i18n } = useTranslation();
+  const initials = getInitials(user);
+  const { t } = useTranslation();
   const { isMobile } = useSidebar();
   const { startTour } = useTour();
   const { currentTier } = useMembership();
@@ -59,7 +51,7 @@ export function NavUser() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          toast.success("Signed out successfully!");
+          toast.success(t("sidebar.userMenu.signedOut"));
           navigate("/auth/sign-in");
         },
       },
@@ -77,7 +69,7 @@ export function NavUser() {
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage alt={user.name} src={user.avatar} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -99,7 +91,7 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage alt={user.name} src={user.avatar} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -116,33 +108,14 @@ export function NavUser() {
                 <IconCreditCard />
                 {t("sidebar.userMenu.billing")}
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                {t("sidebar.userMenu.notifications")}
-              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleStartTour}>
               <IconRoute />
-              <span>Start Tour</span>
+              <span>{t("tour.start")}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <IconLanguage />
-                {t("sidebar.userMenu.language")}
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onClick={() => i18n.changeLanguage("en")}>
-                    English
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => i18n.changeLanguage("es")}>
-                    Español
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
+            <LanguageSelector variant="submenu" />
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>
               <IconLogout />

@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import { MembershipBadge } from "@/components/payments/membership-badge";
-import { formatCurrency } from "@/components/payments/pricing-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useMembership } from "@/contexts/membership-context";
+import { formatDate, formatNumber, formatPrice } from "@/lib/format";
 import type { MembershipTier } from "@/types/membership";
 
 const MAX_FEATURES_DISPLAY = 6;
@@ -23,10 +23,10 @@ const formatLimitValue = (key: string, value: number, t: TFunction): string => {
   }
 
   if (key === "apiCalls") {
-    return t("billing.checkoutSuccess.perMonth", { value: value.toLocaleString() });
+    return t("billing.checkoutSuccess.perMonth", { value: formatNumber(value) });
   }
 
-  return value.toLocaleString();
+  return formatNumber(value);
 };
 
 export default function CheckoutSuccess() {
@@ -119,7 +119,7 @@ export default function CheckoutSuccess() {
                   {activeSubscription?.metadata?.tier
                     ? t("billing.checkoutSuccess.activeSubscription")
                     : t("billing.checkoutSuccess.pricePerMonth", {
-                        price: formatCurrency(tierConfig?.price?.monthly || 0),
+                        price: formatPrice(tierConfig?.price?.monthly || 0, tierConfig?.currency),
                       })}
                 </div>
               </div>
@@ -131,7 +131,7 @@ export default function CheckoutSuccess() {
                     </div>
                     <div className="font-medium">
                       {activeSubscription.currentPeriodEnd
-                        ? new Date(activeSubscription.currentPeriodEnd).toLocaleDateString()
+                        ? formatDate(activeSubscription.currentPeriodEnd)
                         : t("billing.checkoutSuccess.notAvailable")}
                     </div>
                   </div>
@@ -156,10 +156,10 @@ export default function CheckoutSuccess() {
                   {Object.entries(tierConfig.limits).map(([key, value]: [string, number]) => (
                     <div className="flex items-center justify-between" key={key}>
                       <span className="text-muted-foreground text-sm">
-                        {t(`pricing.limits.${key}`, key)}:
+                        {`${t(`pricing.limits.${key}`, key)}:`}
                       </span>
                       <span className="font-medium text-sm">
-                        {value === -1 ? t("pricing.unlimited") : value}
+                        {value === -1 ? t("pricing.unlimited") : formatNumber(value)}
                       </span>
                     </div>
                   ))}
@@ -206,11 +206,10 @@ export default function CheckoutSuccess() {
                     {Object.entries(tierConfig.limits).map(([key, value]) => (
                       <div className="flex justify-between" key={key}>
                         <span className="text-muted-foreground">
-                          {t(
+                          {`${t(
                             `pricing.limits.${key}`,
                             key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1"),
-                          )}
-                          :
+                          )}:`}
                         </span>
                         <span className="font-medium">{formatLimitValue(key, value, t)}</span>
                       </div>
@@ -273,10 +272,10 @@ export default function CheckoutSuccess() {
               {t("billing.checkoutSuccess.whatsNext")}
             </h3>
             <div className="space-y-2 text-blue-800 text-sm dark:text-blue-200">
-              <p>• {t("billing.checkoutSuccess.nextExplore")}</p>
-              <p>• {t("billing.checkoutSuccess.nextTeam")}</p>
-              <p>• {t("billing.checkoutSuccess.nextApi")}</p>
-              <p>• {t("billing.checkoutSuccess.nextSecurity")}</p>
+              <p>{`• ${t("billing.checkoutSuccess.nextExplore")}`}</p>
+              <p>{`• ${t("billing.checkoutSuccess.nextTeam")}`}</p>
+              <p>{`• ${t("billing.checkoutSuccess.nextApi")}`}</p>
+              <p>{`• ${t("billing.checkoutSuccess.nextSecurity")}`}</p>
             </div>
           </CardContent>
         </Card>
@@ -291,7 +290,7 @@ export default function CheckoutSuccess() {
           <Button className="h-auto p-0" variant="link">
             {t("billing.checkoutSuccess.contactSupport")}
           </Button>
-          .
+          {"."}
         </div>
       </div>
     </div>

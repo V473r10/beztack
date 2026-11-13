@@ -1,66 +1,51 @@
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router";
-import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
-import { authClient } from "@/lib/auth-client";
-import { getPostSignInTarget, withNext } from "@/lib/auth-redirect";
+import { focusFirstInvalidField } from "@/lib/form-errors";
+import { AuthFormError } from "../../auth-form-error";
+import { submitSignIn } from "../../auth-submissions";
 
-// Constants
 const MIN_PASSWORD_LENGTH = 8;
 
-const FormSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  password: z.string().min(MIN_PASSWORD_LENGTH, {
-    message: "Password must be at least 8 characters.",
-  }),
-});
+const getFormSchema = (t: (key: string) => string) =>
+  z.object({
+    email: z.string().email({ message: t("validation.email.invalid") }),
+    password: z.string().min(MIN_PASSWORD_LENGTH, { message: t("validation.password.length") }),
+  });
 
 export function SignInForm() {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const location = useLocation();
+  const formRef = useRef<HTMLFormElement>(null);
+  const FormSchema = getFormSchema(t);
 
   const form = useAppForm({
     validators: { onChange: FormSchema },
+    onSubmitInvalid: () => {
+      // The errors render on the next frame; then move focus to the first one.
+      requestAnimationFrame(() => focusFirstInvalidField(formRef.current));
+    },
     defaultValues: {
       email: "",
       password: "",
     },
     onSubmit: async ({ value }) => {
       setIsLoading(true);
-
-      await authClient.signIn.email(
-        {
-          email: value.email,
-          password: value.password,
-        },
-        {
-          onSuccess(context) {
-            if (context.data.twoFactorRedirect) {
-              toast.success(t("notifications.auth.twoFactorRequired"));
-              navigate(withNext("/auth/sign-in/two-factor", location.search));
-            } else {
-              toast.success(t("notifications.auth.signInSuccess"));
-              navigate(getPostSignInTarget(location.search));
-            }
-          },
-          onError(error) {
-            toast.error(error.error.message);
-          },
-          onResponse() {
-            setIsLoading(false);
-          },
-        },
-      );
+      setFormError(null);
+      const error = await submitSignIn(value, location.search, { t, navigate, queryClient });
+      setFormError(error);
+      setIsLoading(false);
     },
   });
 
@@ -75,10 +60,10 @@ export function SignInForm() {
 
   return (
     <form.AppForm>
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" noValidate onSubmit={handleSubmit} ref={formRef}>
         <form.AppField name="email">
           {(field) => (
-            <field.FormItem>
+            <field.FormItem deferErrors>
               <field.FormLabel>{t("auth.signIn.form.email")}</field.FormLabel>
               <field.FormControl>
                 <Input
@@ -88,7 +73,7 @@ export function SignInForm() {
                   disabled={isLoading}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="name@example.com"
+                  placeholder={t("form.email.placeholder")}
                   type="email"
                   value={field.state.value}
                 />
@@ -100,7 +85,7 @@ export function SignInForm() {
 
         <form.AppField name="password">
           {(field) => (
-            <field.FormItem>
+            <field.FormItem deferErrors>
               <div className="flex items-center justify-between">
                 <field.FormLabel>{t("auth.signIn.form.password")}</field.FormLabel>
                 <Button
@@ -114,8 +99,8 @@ export function SignInForm() {
                   </Link>
                 </Button>
               </div>
-              <field.FormControl>
-                <div className="relative">
+              <div className="relative">
+                <field.FormControl>
                   <Input
                     autoComplete="current-password"
                     className="pr-10"
@@ -125,21 +110,23 @@ export function SignInForm() {
                     type={showPassword ? "text" : "password"}
                     value={field.state.value}
                   />
-                  <button
-                    aria-label={showPassword ? t("form.password.hide") : t("form.password.show")}
-                    className="-translate-y-1/2 absolute top-1/2 right-3 text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowPassword(!showPassword)}
-                    tabIndex={-1}
-                    type="button"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </field.FormControl>
+                </field.FormControl>
+                <button
+                  aria-label={showPassword ? t("form.password.hide") : t("form.password.show")}
+                  className="-translate-y-1/2 absolute top-1/2 right-3 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  type="button"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               <field.FormMessage />
             </field.FormItem>
           )}
         </form.AppField>
+
+        <AuthFormError message={formError} />
 
         <Button className="w-full" disabled={isLoading} type="submit">
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

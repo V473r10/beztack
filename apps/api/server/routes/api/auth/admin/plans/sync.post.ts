@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/plans/sync — Sync a single plan between DB and provider
+ * POST /api/auth/admin/plans/sync — Sync a single plan between DB and provider
  */
 
 import { db, plan } from "@beztack/db";
@@ -34,7 +34,10 @@ export default defineEventHandler(async (event) => {
       await adapter.updateProduct(dbPlan.providerPlanId, {
         name: dbPlan.displayName,
         description: dbPlan.description ?? undefined,
-        price: { amount: Number(dbPlan.price), currency: dbPlan.currency },
+        price: {
+          amount: dbPlan.price,
+          currency: dbPlan.currency,
+        },
         interval: (dbPlan.interval ?? "month") as BillingInterval,
         intervalCount: dbPlan.intervalCount ?? 1,
       });
@@ -43,7 +46,10 @@ export default defineEventHandler(async (event) => {
         name: dbPlan.displayName,
         description: dbPlan.description ?? undefined,
         type: "plan",
-        price: { amount: Number(dbPlan.price), currency: dbPlan.currency },
+        price: {
+          amount: dbPlan.price,
+          currency: dbPlan.currency,
+        },
         interval: (dbPlan.interval ?? "month") as BillingInterval,
         intervalCount: dbPlan.intervalCount ?? 1,
       });
@@ -79,7 +85,7 @@ export default defineEventHandler(async (event) => {
     .set({
       displayName: remoteProduct.name,
       description: remoteProduct.description ?? null,
-      price: String(remoteProduct.price.amount),
+      price: remoteProduct.price.amount,
       currency: remoteProduct.price.currency,
       interval: remoteProduct.interval,
       intervalCount: remoteProduct.intervalCount,

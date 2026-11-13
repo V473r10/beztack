@@ -1,3 +1,5 @@
+import { prorateMinorUnits } from "@beztack/payments/money";
+
 const SECONDS_PER_MINUTE = 60;
 const MINUTES_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;
@@ -5,6 +7,7 @@ const MILLISECONDS_PER_SECOND = 1000;
 const MILLISECONDS_PER_DAY =
   MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY;
 
+/** Amounts are integer minor units of one currency (ADR 0007). */
 export type ProrationInput = {
   currentAmount: number;
   newAmount: number;
@@ -40,8 +43,9 @@ export function calculateProration(input: ProrationInput): ProrationResult {
   const totalDays = Math.max(Math.ceil(totalMs / MILLISECONDS_PER_DAY), 1);
   const daysRemaining = Math.max(Math.ceil(remainingMs / MILLISECONDS_PER_DAY), 0);
 
-  const dailyCurrentRate = input.currentAmount / totalDays;
-  const unusedCredit = Math.round(dailyCurrentRate * daysRemaining);
+  // Integer minor units only; the credit is rounded to the nearest minor unit,
+  // ties away from zero (see `prorateMinorUnits`).
+  const unusedCredit = prorateMinorUnits(input.currentAmount, daysRemaining, totalDays);
 
   const proratedAmount = Math.max(input.newAmount - unusedCredit, 0);
 

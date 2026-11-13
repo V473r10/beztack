@@ -39,6 +39,18 @@ function render(props: Partial<Parameters<typeof FailedPlanChangesView>[0]>) {
 }
 
 describe("Failed plan changes page", () => {
+  it("keeps the Retry action pinned to the right edge while the table scrolls sideways", () => {
+    const html = render({ changes: [FAILED], onRetry: () => undefined });
+
+    const cell = html.match(/<td class="([^"]*)"[^>]*><button[^>]*>Retry now/)?.[1] ?? "";
+    const head = html.match(/<th class="([^"]*)"[^>]*><span class="sr-only">Actions/)?.[1] ?? "";
+    for (const classes of [cell, head]) {
+      expect(classes).toContain("sticky");
+      expect(classes).toContain("right-0");
+      expect(classes).toContain("bg-card");
+    }
+  });
+
   it("shows who it belongs to, the target plan, the last error and the attempts", () => {
     const html = render({ changes: [FAILED] });
 

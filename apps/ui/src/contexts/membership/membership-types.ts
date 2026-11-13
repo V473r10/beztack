@@ -32,7 +32,10 @@ export type Subscription = {
 export type Order = {
   id: string;
   status: string;
+  /** Integer minor units of `currency` (ADR 0007). */
   totalAmount: number;
+  /** ISO 4217 code of the order, not the project's default currency. */
+  currency: string;
   metadata?: Record<string, unknown>;
   createdAt?: string | Date;
 };

@@ -83,7 +83,7 @@ export function FailedPlanChangesView({
           <TableHead className="text-right">Attempts</TableHead>
           <TableHead>Failed</TableHead>
           <TableHead>Accepted by</TableHead>
-          <TableHead>
+          <TableHead className="sticky right-0 border-l bg-card">
             <span className="sr-only">Actions</span>
           </TableHead>
         </TableRow>
@@ -127,7 +127,7 @@ export function FailedPlanChangesView({
               <TableCell className="text-sm">
                 {change.acceptedByEmail ?? "Reconciled from the provider"}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="sticky right-0 border-l bg-card text-right">
                 <Button
                   disabled={!onRetry || Boolean(retryingId)}
                   onClick={() => onRetry?.(change)}

@@ -1,9 +1,10 @@
 /**
- * POST /api/admin/plans — Create a new plan in both DB and payment provider
+ * POST /api/auth/admin/plans — Create a new plan in both DB and payment provider
  */
 import { randomUUID } from "node:crypto";
 import { db, plan } from "@beztack/db";
 import type { BillingInterval } from "@beztack/payments";
+import { ISO_4217_MINOR_UNITS } from "@beztack/payments/money";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { env } from "@/env";
@@ -11,13 +12,25 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { classifyBillingCadence } from "@/server/utils/plan-change";
 import { requireAdmin } from "@/server/utils/require-auth";
 
+/** `plan.price` is a 32-bit integer column: a larger price would be a database error (500). */
+const MAX_PRICE_MINOR_UNITS = 2_147_483_647;
+
 const createSchema = z.object({
   displayName: z.string().min(1),
   description: z.string().nullable().optional(),
   canonicalTierId: z.string().default("custom"),
-  price: z.number().positive(),
-  // Omitted -> the project DEFAULT_CURRENCY (no built-in regional default).
-  currency: z.string().min(1).optional(),
+  // Integer minor units of `currency` (900 = US$ 9.00, ADR 0007).
+  price: z.number().int().positive().max(MAX_PRICE_MINOR_UNITS),
+  // An ISO 4217 code, stored upper-case ("usd" is accepted as "USD"). Omitted -> the project
+  // DEFAULT_CURRENCY (no built-in regional default).
+  currency: z
+    .string()
+    .trim()
+    .transform((code) => code.toUpperCase())
+    .refine((code) => Object.hasOwn(ISO_4217_MINOR_UNITS, code), {
+      message: "currency must be an ISO 4217 currency code",
+    })
+    .optional(),
   interval: z.string().default("month"),
   intervalCount: z.number().int().positive().default(1),
   features: z.array(z.string()).optional(),
@@ -84,7 +97,7 @@ export default defineEventHandler(async (event) => {
       canonicalTierId: data.canonicalTierId,
       displayName: data.displayName,
       description: data.description ?? null,
-      price: String(data.price),
+      price: data.price,
       currency,
       interval: data.interval,
       intervalCount: data.intervalCount,

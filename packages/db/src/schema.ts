@@ -4,7 +4,6 @@ import {
   index,
   integer,
   jsonb,
-  numeric,
   pgTable,
   serial,
   text,
@@ -203,7 +202,9 @@ export const plan = pgTable(
     features: jsonb("features").$type<string[]>(),
     limits: jsonb("limits").$type<Record<string, number>>(),
     permissions: jsonb("permissions").$type<string[]>(),
-    price: numeric("price").notNull(),
+    /** Integer amount in the minor unit of `currency` (`900` + `USD` is US$ 9.00). See ADR 0007. */
+    price: integer("price").notNull(),
+    /** Uppercase ISO 4217 code. */
     currency: text("currency").notNull(),
     interval: text("interval"),
     intervalCount: integer("interval_count").default(1),
@@ -265,7 +266,8 @@ export const payment = pgTable(
     userId: text("user_id").references(() => user.id),
     subscriptionId: text("subscription_id").references(() => subscription.id),
     status: text("status").notNull(),
-    amount: numeric("amount").notNull(),
+    // Integer minor units of `currency` (ADR 0007).
+    amount: integer("amount").notNull(),
     currency: text("currency").notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

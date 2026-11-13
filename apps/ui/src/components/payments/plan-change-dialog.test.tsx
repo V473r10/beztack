@@ -151,6 +151,64 @@ describe("Plan change dialog", () => {
     expect(html).not.toContain("billing.planChange.credit");
   });
 
+  it.each(["downgrade", "cadence_change"] as const)(
+    "presents a %s as a Pending Plan change that activates at renewal",
+    (direction) => {
+      mocks.preview = {
+        data: {
+          ...UPGRADE,
+          direction,
+          effectiveTiming: "next_renewal",
+          firstPayment: { amount: 2900, credit: 0, currency: "UYU", fullAmount: 2900 },
+        },
+        isLoading: false,
+        error: null,
+      };
+
+      const html = renderDialog();
+
+      expect(html).toContain("billing.planChange.pendingTitle");
+      expect(html).toContain("billing.planChange.pendingNotice");
+      // Nothing is charged today.
+      expect(html).not.toContain("billing.planChange.dueToday");
+    },
+  );
+
+  it("labels the Upgrade amount as an estimate", () => {
+    mocks.preview = { data: UPGRADE, isLoading: false, error: null };
+
+    const html = renderDialog();
+
+    expect(html).toContain("billing.planChange.dueToday");
+    expect(html).toContain("billing.planChange.prorationEstimateNote");
+  });
+
+  it.each(["downgrade", "cadence_change"] as const)(
+    "does not show the proration estimate note for a %s (nothing is charged today)",
+    (direction) => {
+      mocks.preview = {
+        data: {
+          ...UPGRADE,
+          direction,
+          effectiveTiming: "next_renewal",
+          firstPayment: { amount: 2900, credit: 0, currency: "UYU", fullAmount: 2900 },
+        },
+        isLoading: false,
+        error: null,
+      };
+
+      expect(renderDialog()).not.toContain("billing.planChange.prorationEstimateNote");
+    },
+  );
+
+  it("does not call an Upgrade pending: it applies after the first Payment", () => {
+    mocks.preview = { data: UPGRADE, isLoading: false, error: null };
+
+    const html = renderDialog();
+
+    expect(html).not.toContain("billing.planChange.pendingTitle");
+  });
+
   it("shows the server's error and offers no way to accept", () => {
     mocks.preview = {
       data: undefined,

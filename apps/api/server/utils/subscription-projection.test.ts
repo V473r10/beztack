@@ -384,7 +384,11 @@ describe("projectSubscriptionProviderEvent", () => {
     });
 
     expect(outcome.status).toBe("processed");
-    expect(provider.adjustSubscriptionAmount).toHaveBeenCalledWith("sub_new", FULL_UPGRADE_AMOUNT);
+    expect(provider.adjustSubscriptionAmount).toHaveBeenCalledWith(
+      "sub_new",
+      FULL_UPGRADE_AMOUNT,
+      "UYU",
+    );
     expect(provider.cancelSubscription).toHaveBeenCalledWith("sub_old", true);
     expect(store.payments.get("pay_1")).toMatchObject({
       id: "pay_1",
