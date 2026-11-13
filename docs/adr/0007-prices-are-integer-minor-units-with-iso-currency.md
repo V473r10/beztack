@@ -26,4 +26,4 @@ The main risk is converting an amount twice (for example multiplying by 100 a va
 
 1. **Expand** (this change): add the ADR and the helpers next to the existing convention. No existing consumer changes.
 2. **Migrate**: move each consumer and adapter to the new contract. `plan.price` becomes an integer column and existing rows and stored Pending Plan change snapshots are converted, with a documented database backup before the migration.
-3. **Contract**: remove the old convention once nothing reads it.
+3. **Contract** (done): the old convention is gone. No reader converts a stored price back to a provider unit; the API, the payment adapters and the UI all read minor units. The UI's `formatPrice` takes minor units plus a currency code and formats with the active language. The one place outside an adapter that still sees a provider's decimals is `formatMercadoPagoAmount` in `apps/ui/src/lib/format.ts`, for raw Mercado Pago payloads (subscription details and webhook events) that the UI shows without going through Beztack's own price contract.
