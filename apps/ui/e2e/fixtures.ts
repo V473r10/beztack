@@ -186,9 +186,60 @@ export const metrics = {
   timestamp: NOW,
 };
 
+const basicMonthlyPlan = {
+  id: "polar_basic_month",
+  provider: "polar",
+  providerPlanId: "prod_basic_month",
+  canonicalTierId: "basic",
+  displayName: "Basic",
+  description: "For growing teams",
+  features: ["basic_dashboard", "export_data"],
+  limits: { users: 5 },
+  permissions: [],
+  price: 900,
+  currency: "USD",
+  interval: "month",
+  intervalCount: 1,
+  displayOrder: 1,
+  highlighted: false,
+  soon: false,
+  visible: true,
+  status: "active",
+  createdAt: NOW,
+  updatedAt: NOW,
+};
+
 export const syncStatus = {
   provider: "polar",
-  plans: [],
+  plans: [
+    {
+      localPlan: basicMonthlyPlan,
+      remoteProduct: {
+        id: "prod_basic_month",
+        name: "Basic - Monthly",
+        type: "plan",
+        price: { amount: 900, currency: "USD" },
+        interval: "month",
+        intervalCount: 1,
+      },
+      syncStatus: "synced",
+      diffs: [],
+    },
+    {
+      localPlan: {
+        ...basicMonthlyPlan,
+        id: "polar_free_month",
+        providerPlanId: null,
+        canonicalTierId: "free",
+        displayName: "Free",
+        price: 0,
+        displayOrder: 0,
+      },
+      remoteProduct: null,
+      syncStatus: "local-only",
+      diffs: [],
+    },
+  ],
 };
 
 export const failedPlanChanges = {

@@ -165,7 +165,7 @@ export function PlanSyncScreen() {
     }
 
     return (
-      <div className="grid min-w-4xl grid-cols-1 gap-6">
+      <div className="grid min-w-0 grid-cols-1 gap-6">
         {plans.map((view) => {
           const key = getPlanKey(view);
           return (

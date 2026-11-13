@@ -31,6 +31,7 @@ const ROUTES: AuditedRoute[] = [
   { name: "organizations", path: "/organizations", signedIn: true },
   { name: "admin", path: "/admin", signedIn: true },
   { name: "admin/users", path: "/admin/users", signedIn: true },
+  { name: "admin/plans", path: "/admin/plans", signedIn: true },
   { name: "admin/plan-changes", path: "/admin/plan-changes", signedIn: true },
 ];
 

@@ -2,7 +2,7 @@
 
 Playwright drives the built UI at 360 and 393 px, in English and Spanish, and fails when a key page has a layout problem (BZ-117, spec BZ-105 V6). The API is mocked inside the browser (`mock-api.ts`, data in `fixtures.ts`), so the run needs no database, payment provider or API server.
 
-Audited pages: sign-in, sign-up, home, pricing, billing, organizations, admin, admin/users, admin/plan-changes. Sign-in and sign-up are audited as a visitor; the rest as a signed-in App admin.
+Audited pages: sign-in, sign-up, home, pricing, billing, organizations, admin, admin/users, admin/plans, admin/plan-changes. Sign-in and sign-up are audited as a visitor; the rest as a signed-in App admin.
 
 Each page fails the run when it has:
 
