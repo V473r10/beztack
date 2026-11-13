@@ -36,6 +36,7 @@ type PolarRecurringInterval = NonNullable<PolarProductUpdate["recurring_interval
 /** Polar rejects fixed prices below 50 minor units (50 cents for USD). */
 const MIN_PRICE_MINOR_UNITS = 50;
 const DEFAULT_LIMIT = 50;
+const PRODUCTS_PAGE_LIMIT = 100;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function maskEmail(email?: string): string | undefined {
@@ -197,12 +198,28 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
     capabilities: { cadenceChange: true },
 
     async listProducts(): Promise<Product[]> {
-      const response = await client.products.list({
-        organization_id: config.organizationId,
-        is_archived: false,
-      });
+      // Polar answers 10 products per page by default: walk every page, or the
+      // catalog silently loses its tail.
+      const products: Product[] = [];
+      let page = 1;
+      let lastPage = 1;
 
-      return response.items.map((product) => mapPolarProduct(product as PolarProductResponse));
+      do {
+        const response = await client.products.list({
+          organization_id: config.organizationId,
+          is_archived: false,
+          page,
+          limit: PRODUCTS_PAGE_LIMIT,
+        });
+
+        for (const product of response.items) {
+          products.push(mapPolarProduct(product as PolarProductResponse));
+        }
+        lastPage = response.pagination?.max_page ?? 1;
+        page += 1;
+      } while (page <= lastPage);
+
+      return products;
     },
 
     async getProduct(productId: string): Promise<Product | null> {

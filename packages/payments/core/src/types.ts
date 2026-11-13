@@ -315,6 +315,11 @@ export type PricingTier = {
   readonly yearlySavingsPercent?: number;
   /** Shown as "coming soon" and not purchasable (from the Pricing catalog). */
   readonly soon?: boolean;
+  /**
+   * A Pricing catalog plan with no Payment provider product behind it, like
+   * Free. It is never bought through checkout.
+   */
+  readonly catalogOnly?: boolean;
 };
 
 /**

@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/env", () => ({ env: {} }));
@@ -6,7 +7,12 @@ vi.mock("@/lib/format", () => ({
   formatPrice: (amount: number) => `$${amount}`,
 }));
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, options?: unknown) =>
+      typeof options === "object" && options !== null && "amount" in options
+        ? `${key}:${String((options as { amount: unknown }).amount)}`
+        : key,
+  }),
 }));
 
 import { PricingCard } from "./pricing-card";
@@ -84,5 +90,142 @@ describe("Pricing card for the current tier on another Billing cadence", () => {
 
     expect(html).not.toContain("pricing.switchBilling");
     expect(buttonFor(html, "pricing.currentPlan")).toContain('disabled=""');
+  });
+});
+
+const FREE: PricingTier = {
+  id: "free",
+  name: "Free",
+  description: "For evaluation",
+  price: { monthly: 0, yearly: 0 },
+  currency: "USD",
+  features: ["basic_dashboard"],
+  catalogOnly: true,
+};
+
+function renderFreeCard(props: { isSignedIn: boolean; currentTier?: string }) {
+  return renderToStaticMarkup(
+    <MemoryRouter>
+      <PricingCard
+        billingPeriod="monthly"
+        currentTier={props.currentTier ?? "free"}
+        isSignedIn={props.isSignedIn}
+        onPlanChange={vi.fn()}
+        onSelect={vi.fn()}
+        tier={FREE}
+      />
+    </MemoryRouter>,
+  );
+}
+
+describe("Pricing card for the Free plan", () => {
+  it("sends a visitor without an account to sign-up, not to checkout", () => {
+    const html = renderFreeCard({ isSignedIn: false });
+
+    expect(html).toContain('href="/auth/sign-up"');
+    expect(html).toContain("pricing.startFree");
+    expect(html).not.toContain("pricing.currentPlan");
+    expect(html).not.toContain("pricing.subscribe");
+  });
+
+  it("sends a signed-in subscriber to the app, not to checkout or a plan change", () => {
+    const html = renderFreeCard({ isSignedIn: true, currentTier: "pro" });
+
+    expect(html).toContain('href="/"');
+    expect(html).toContain("pricing.goToApp");
+    expect(html).not.toContain("pricing.downgrade");
+  });
+
+  it("shows Current Plan to the member who is on Free", () => {
+    const html = renderFreeCard({ isSignedIn: true, currentTier: "free" });
+
+    expect(buttonFor(html, "pricing.currentPlan")).toContain('disabled=""');
+  });
+
+  it("shows the price as Free", () => {
+    expect(renderFreeCard({ isSignedIn: false })).toContain("pricing.card.free");
+  });
+});
+
+describe("Pricing card features", () => {
+  it("lists the plan features under Includes", () => {
+    const html = renderToStaticMarkup(
+      <PricingCard
+        billingPeriod="monthly"
+        tier={{ ...PRO, features: ["advanced_analytics", "priority_support"] }}
+      />,
+    );
+
+    expect(html).toContain("pricing.card.includes");
+    expect(html).toContain("pricing.features.advanced_analytics");
+    expect(html).toContain("pricing.features.priority_support");
+  });
+
+  it("hides Includes when the plan has no features", () => {
+    const html = renderToStaticMarkup(
+      <PricingCard billingPeriod="monthly" tier={{ ...PRO, features: [] }} />,
+    );
+
+    expect(html).not.toContain("pricing.card.includes");
+  });
+
+  it("hides Includes when the plan carries no features field at all", () => {
+    const { features: _features, ...withoutFeatures } = PRO;
+    const html = renderToStaticMarkup(
+      <PricingCard billingPeriod="monthly" tier={withoutFeatures} />,
+    );
+
+    expect(html).not.toContain("pricing.card.includes");
+  });
+
+  it("labels each limit with its key", () => {
+    const html = renderToStaticMarkup(
+      <PricingCard
+        billingPeriod="monthly"
+        tier={{ ...PRO, limits: { users: 50, apiCalls: 100_000 } }}
+      />,
+    );
+
+    expect(html).toContain("pricing.card.limits");
+    expect(html).toContain("pricing.limits.users");
+    expect(html).toContain("pricing.limits.apiCalls");
+  });
+});
+
+describe("Pricing card Contact Sales", () => {
+  const ULTIMATE: PricingTier = { ...PRO, id: "ultimate", name: "Ultimate" };
+
+  it("offers checkout, not Contact Sales, for an Ultimate plan that can be bought", () => {
+    const html = renderToStaticMarkup(
+      <PricingCard billingPeriod="monthly" currentTier="free" onSelect={vi.fn()} tier={ULTIMATE} />,
+    );
+
+    expect(html).toContain("pricing.subscribe");
+    expect(html).not.toContain("pricing.contactSales");
+  });
+
+  it("offers Contact Sales for a plan the provider does not sell", () => {
+    const html = renderToStaticMarkup(
+      <PricingCard
+        billingPeriod="monthly"
+        currentTier="free"
+        tier={{ ...ULTIMATE, monthly: undefined, yearly: undefined }}
+      />,
+    );
+
+    expect(buttonFor(html, "pricing.contactSales")).toContain('disabled=""');
+  });
+
+  it("does not offer Contact Sales for a plan that is bought for the other cadence", () => {
+    const html = renderToStaticMarkup(
+      <PricingCard
+        billingPeriod="monthly"
+        currentTier="free"
+        onSelect={vi.fn()}
+        tier={{ ...PRO, yearly: undefined }}
+      />,
+    );
+
+    expect(html).not.toContain("pricing.contactSales");
   });
 });

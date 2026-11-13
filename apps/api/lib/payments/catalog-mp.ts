@@ -35,49 +35,69 @@ export async function getCatalogPlans(): Promise<CatalogPlan[]> {
   }));
 }
 
-/**
- * The active visible Pricing catalog plans of a Payment provider, shaped like
- * the provider's own products (same id, price and interval) so the pricing
- * page and checkout treat them the same. Used when the provider is down.
- */
-export async function getCatalogProducts(paymentProvider: string): Promise<Product[]> {
-  const rows = await db
+type PlanRow = typeof plan.$inferSelect;
+
+/** A catalog row shaped like the provider's own product. Null for an interval the pricing page cannot show. */
+function toCatalogProduct(row: PlanRow): Product | null {
+  if (!(row.interval === "month" || row.interval === "year")) {
+    return null;
+  }
+
+  return {
+    id: row.providerPlanId ?? row.id,
+    name: row.displayName,
+    description: row.description ?? undefined,
+    type: "plan",
+    price: {
+      amount: row.price,
+      currency: row.currency,
+    },
+    interval: row.interval,
+    intervalCount: row.intervalCount ?? 1,
+    metadata: {
+      planId: row.canonicalTierId,
+      tier: row.canonicalTierId,
+      features: (row.features as string[] | null) ?? [],
+      limits: (row.limits as Record<string, number> | null) ?? {},
+      permissions: (row.permissions as string[] | null) ?? [],
+      displayOrder: row.displayOrder,
+      soon: row.soon,
+      // No product at the provider behind this row (Free, or not synced yet).
+      catalogOnly: row.providerPlanId === null,
+    },
+  };
+}
+
+function visibleActivePlans(paymentProvider: string) {
+  return db
     .select()
     .from(plan)
     .where(
       and(eq(plan.provider, paymentProvider), eq(plan.visible, true), eq(plan.status, "active")),
     )
     .orderBy(plan.displayOrder);
+}
 
-  return rows.flatMap((row): Product[] => {
-    if (!(row.interval === "month" || row.interval === "year")) {
-      return [];
-    }
+/**
+ * The active visible Pricing catalog plans of a Payment provider, shaped like
+ * the provider's own products (same id, price and interval) so the pricing
+ * page and checkout treat them the same. Used when the provider is down.
+ */
+export async function getCatalogProducts(paymentProvider: string): Promise<Product[]> {
+  const rows = await visibleActivePlans(paymentProvider);
 
-    return [
-      {
-        id: row.providerPlanId ?? row.id,
-        name: row.displayName,
-        description: row.description ?? undefined,
-        type: "plan",
-        price: {
-          amount: row.price,
-          currency: row.currency,
-        },
-        interval: row.interval,
-        intervalCount: row.intervalCount ?? 1,
-        metadata: {
-          planId: row.canonicalTierId,
-          tier: row.canonicalTierId,
-          features: (row.features as string[] | null) ?? [],
-          limits: (row.limits as Record<string, number> | null) ?? {},
-          permissions: (row.permissions as string[] | null) ?? [],
-          displayOrder: row.displayOrder,
-          soon: row.soon,
-        },
-      },
-    ];
-  });
+  return rows.flatMap((row) => toCatalogProduct(row) ?? []);
+}
+
+/**
+ * The visible catalog plans that have no product at the Payment provider, like
+ * Free. They are listed next to the provider's products so the pricing page can
+ * show them; they are never bought through checkout.
+ */
+export async function getCatalogOnlyProducts(paymentProvider: string): Promise<Product[]> {
+  const rows = await visibleActivePlans(paymentProvider);
+
+  return rows.flatMap((row) => (row.providerPlanId === null ? (toCatalogProduct(row) ?? []) : []));
 }
 
 /**

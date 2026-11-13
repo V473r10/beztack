@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { PlanChangeDialog } from "@/components/payments/plan-change-dialog";
 import { PricingCard } from "@/components/payments/pricing-card";
+import { PricingBar } from "@/components/pricing-bar";
 import {
   Accordion,
   AccordionContent,
@@ -43,212 +44,84 @@ import { getSignUpPathForCheckout } from "@/lib/checkout-resume";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
 import { queryKeys } from "@/lib/query-keys";
+import {
+  type Comparison,
+  type ComparisonRow,
+  type ComparisonValue,
+  buildComparison,
+} from "./pricing-comparison";
 
-const LOADING_SKELETON_COUNT = 3;
+const LOADING_SKELETON_COUNT = 4;
 
-type FeatureValue = boolean | string | number;
-
-type FeatureRow = {
-  id: number;
-  name: string;
-  basic: FeatureValue;
-  pro: FeatureValue;
-  ultimate: FeatureValue;
-};
-
-type GroupedFeatures = Record<string, FeatureRow[]>;
-
-function buildTierData(allTiers: PricingTier[]) {
-  const tierMap: Record<string, PricingTier> = {};
-  const allFeatures = new Set<string>();
-  const allLimits = new Set<string>();
-  const allPermissions = new Set<string>();
-
-  for (const tier of allTiers) {
-    tierMap[tier.id] = tier;
-    for (const feature of tier.features || []) {
-      allFeatures.add(feature);
-    }
-    for (const limit of Object.keys(tier.limits || {})) {
-      allLimits.add(limit);
-    }
-    for (const permission of Object.keys(tier.permissions || {})) {
-      allPermissions.add(permission);
-    }
+function renderValue(value: ComparisonValue, unlimitedLabel: string) {
+  if (typeof value === "boolean") {
+    return value ? (
+      <div className="flex items-center justify-center">
+        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+        </div>
+      </div>
+    ) : (
+      <div className="flex items-center justify-center">
+        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted">
+          <Minus className="h-3 w-3 text-muted-foreground" />
+        </div>
+      </div>
+    );
   }
-
-  return { tierMap, allFeatures, allLimits, allPermissions };
+  if (value.kind === "missing") {
+    return (
+      <div className="flex items-center justify-center">
+        <X className="h-4 w-4 text-muted-foreground/50" />
+      </div>
+    );
+  }
+  if (value.kind === "unlimited") {
+    return <span className="font-medium text-primary text-sm">{unlimitedLabel}</span>;
+  }
+  return <span className="font-medium text-foreground text-sm">{value.text}</span>;
 }
 
-function processFeatures(
-  tierMap: Record<string, PricingTier>,
-  allFeatures: Set<string>,
-  featureId: { current: number },
-  t: (key: string, fallback?: string) => string,
-): FeatureRow[] {
-  const rows: FeatureRow[] = [];
-
-  for (const feature of allFeatures) {
-    const row: FeatureRow = {
-      id: featureId.current++,
-      name: t(`pricing.features.${feature}`, feature),
-      basic: (tierMap.basic?.features || []).includes(feature),
-      pro: (tierMap.pro?.features || []).includes(feature),
-      ultimate: (tierMap.ultimate?.features || []).includes(feature),
-    };
-    rows.push(row);
-  }
-
-  return rows;
-}
-
-function processLimits(
-  tierMap: Record<string, PricingTier>,
-  allLimits: Set<string>,
-  featureId: { current: number },
-  t: (key: string, fallback?: string) => string,
-): FeatureRow[] {
-  const rows: FeatureRow[] = [];
-
-  for (const limit of allLimits) {
-    const formatLimit = (value: number | undefined) => {
-      if (value === undefined) {
-        return "-";
-      }
-      if (value === -1) {
-        return "Unlimited";
-      }
-      if (limit === "storage") {
-        return `${value}GB`;
-      }
-      return value.toLocaleString();
-    };
-
-    const row: FeatureRow = {
-      id: featureId.current++,
-      name: t(`pricing.limits.${limit}`, limit.replace(/([A-Z])/g, " $1").trim()),
-      basic: formatLimit(tierMap.basic?.limits?.[limit]),
-      pro: formatLimit(tierMap.pro?.limits?.[limit]),
-      ultimate: formatLimit(tierMap.ultimate?.limits?.[limit]),
-    };
-    rows.push(row);
-  }
-
-  return rows;
-}
-
-function processPermissions(
-  tierMap: Record<string, PricingTier>,
-  allPermissions: Set<string>,
-  featureId: { current: number },
-  t: (key: string, fallback?: string) => string,
-): FeatureRow[] {
-  const rows: FeatureRow[] = [];
-
-  for (const permission of allPermissions) {
-    const row: FeatureRow = {
-      id: featureId.current++,
-      name: t(`pricing.permissions.${permission}`, permission.replace(/([A-Z])/g, " $1").trim()),
-      basic: tierMap.basic?.permissions?.[permission] ?? false,
-      pro: tierMap.pro?.permissions?.[permission] ?? false,
-      ultimate: tierMap.ultimate?.permissions?.[permission] ?? false,
-    };
-    rows.push(row);
-  }
-
-  return rows;
-}
-
-type ProcessAllCategoriesParams = {
-  tierMap: Record<string, PricingTier>;
-  allFeatures: Set<string>;
-  allLimits: Set<string>;
-  allPermissions: Set<string>;
-  featureId: { current: number };
-  t: (key: string, fallback?: string) => string;
-};
-
-function processAllCategories({
-  tierMap,
-  allFeatures,
-  allLimits,
-  allPermissions,
-  featureId,
-  t,
-}: ProcessAllCategoriesParams): GroupedFeatures {
-  const grouped: GroupedFeatures = {};
-
-  if (allFeatures.size > 0) {
-    grouped.core = processFeatures(tierMap, allFeatures, featureId, t);
-  }
-  if (allLimits.size > 0) {
-    grouped.usageLimits = processLimits(tierMap, allLimits, featureId, t);
-  }
-  if (allPermissions.size > 0) {
-    grouped.permissions = processPermissions(tierMap, allPermissions, featureId, t);
-  }
-
-  return grouped;
-}
-
-function FeatureComparisonTable({ features }: { features: FeatureRow[] }) {
+function FeatureComparisonTable({
+  columns,
+  rows,
+}: {
+  columns: Comparison["columns"];
+  rows: ComparisonRow[];
+}) {
   const { t } = useTranslation();
-  const renderValue = (value: FeatureValue) => {
-    if (typeof value === "boolean") {
-      return value ? (
-        <div className="flex items-center justify-center">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-            <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-center">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted">
-            <Minus className="h-3 w-3 text-muted-foreground" />
-          </div>
-        </div>
-      );
-    }
-    if (value === "-") {
-      return (
-        <div className="flex items-center justify-center">
-          <X className="h-4 w-4 text-muted-foreground/50" />
-        </div>
-      );
-    }
-    if (value === "Unlimited") {
-      return <span className="font-medium text-primary text-sm">{t("pricing.unlimited")}</span>;
-    }
-    return <span className="font-medium text-foreground text-sm">{value}</span>;
-  };
 
   return (
     <Table>
       <TableHeader>
         <TableRow className="border-border/50 border-b hover:bg-transparent">
-          <TableHead className="w-[40%] font-semibold text-foreground">
+          <TableHead className="min-w-40 font-semibold text-foreground">
             {t("pricing.compare.feature")}
           </TableHead>
-          <TableHead className="text-center font-semibold text-foreground">Basic</TableHead>
-          <TableHead className="text-center font-semibold text-foreground">Pro</TableHead>
-          <TableHead className="text-center font-semibold text-foreground">Ultimate</TableHead>
+          {columns.map((column) => (
+            <TableHead className="text-center font-semibold text-foreground" key={column.id}>
+              {column.name}
+            </TableHead>
+          ))}
         </TableRow>
       </TableHeader>
       <TableBody>
-        {features.map((feature, idx) => (
+        {rows.map((row, idx) => (
           <TableRow
             className={cn(
               "border-border/30 border-b transition-colors hover:bg-muted/30",
               idx % 2 === 0 ? "bg-transparent" : "bg-muted/10",
             )}
-            key={feature.id}
+            key={row.id}
           >
             <TableCell className="py-4 font-medium text-muted-foreground text-sm">
-              {feature.name}
+              {row.name}
             </TableCell>
-            <TableCell className="py-4 text-center">{renderValue(feature.basic)}</TableCell>
-            <TableCell className="py-4 text-center">{renderValue(feature.pro)}</TableCell>
-            <TableCell className="py-4 text-center">{renderValue(feature.ultimate)}</TableCell>
+            {columns.map((column) => (
+              <TableCell className="py-4 text-center" key={column.id}>
+                {renderValue(row.values[column.id] ?? false, t("pricing.unlimited"))}
+              </TableCell>
+            ))}
           </TableRow>
         ))}
       </TableBody>
@@ -282,23 +155,10 @@ export default function Pricing() {
   const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
   const savingsPercent = Math.max(...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0));
 
-  const groupedFeatures = useMemo(() => {
-    if (!allTiers.length) {
-      return {};
-    }
-
-    const featureId = { current: 1 };
-    const { tierMap, allFeatures, allLimits, allPermissions } = buildTierData(allTiers);
-
-    return processAllCategories({
-      tierMap,
-      allFeatures,
-      allLimits,
-      allPermissions,
-      featureId,
-      t: (key, fallback) => t(key, { defaultValue: fallback || key }),
-    });
-  }, [allTiers, t]);
+  const comparison = useMemo(
+    () => buildComparison(allTiers, (key, fallback) => t(key, { defaultValue: fallback })),
+    [allTiers, t],
+  );
 
   const handleTierSelect = async (productId: string) => {
     // A visitor without an account signs up first, then resumes this checkout.
@@ -323,6 +183,20 @@ export default function Pricing() {
     setSelectedTier(tier);
     setShowPlanChangeDialog(true);
   }, []);
+
+  // The closing call to action offers Pro: a subscriber changes plan, anyone else checks out.
+  const proTier = allTiers.find((tier) => tier.id === "pro" && !tier.catalogOnly);
+  const proProductId = billingPeriod === "yearly" ? proTier?.yearly?.id : proTier?.monthly?.id;
+  const handleGetPro = () => {
+    if (!(proTier && proProductId)) {
+      return;
+    }
+    if (hasActiveSubscription) {
+      handlePlanChange(proTier);
+      return;
+    }
+    handleTierSelect(proProductId);
+  };
 
   const handleConfirmPlanChange = useCallback(
     async (productId: string) => {
@@ -384,6 +258,8 @@ export default function Pricing() {
         <div className="absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-orange-500/5 blur-3xl" />
       </div>
 
+      <PricingBar isSignedIn={Boolean(session)} />
+
       <div className="container relative mx-auto px-4 py-20">
         <motion.div
           animate={{ opacity: 1, y: 0 }}
@@ -393,18 +269,18 @@ export default function Pricing() {
         >
           <Badge className="mb-4 border-primary/20 bg-primary/10 text-primary" variant="outline">
             <Sparkles className="mr-1.5 h-3 w-3" />
-            Simple Pricing
+            {t("pricing.hero.badge")}
           </Badge>
 
           <h1 className="mb-4 font-bold text-4xl tracking-tight md:text-5xl">
-            Choose your{" "}
+            {t("pricing.hero.title")}{" "}
             <span className="bg-linear-to-r from-primary via-blue-500 to-primary bg-clip-text text-transparent">
-              perfect plan
+              {t("pricing.hero.titleHighlight")}
             </span>
           </h1>
 
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground">
-            Start free and scale as you grow. No hidden fees, no surprises.
+            {t("pricing.hero.subtitle")}
           </p>
 
           {hasYearlyPlans && (
@@ -425,13 +301,13 @@ export default function Pricing() {
                       className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
                       value="monthly"
                     >
-                      Monthly
+                      {t("billing.monthly")}
                     </TabsTrigger>
                     <TabsTrigger
                       className="relative rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
                       value="yearly"
                     >
-                      Yearly
+                      {t("billing.yearly")}
                       {savingsPercent > 0 && (
                         <Badge
                           className="ml-2 h-5 border-green-200 bg-green-100 px-1.5 text-green-700 text-xs dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
@@ -454,12 +330,12 @@ export default function Pricing() {
               initial={{ opacity: 0 }}
             >
               <Zap className="mr-1 inline h-3.5 w-3.5" />
-              Get 2 months free with annual billing
+              {t("pricing.hero.annualBonus")}
             </motion.p>
           )}
         </motion.div>
 
-        <div className="mx-auto mb-24 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mb-24 grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           {isLoadingTiers
             ? Array.from({ length: LOADING_SKELETON_COUNT }, () => (
                 <Card className="relative" key={crypto.randomUUID()}>
@@ -490,6 +366,7 @@ export default function Pricing() {
                   hasActiveSubscription={hasActiveSubscription}
                   index={index}
                   isLoading={isLoading}
+                  isSignedIn={Boolean(session)}
                   isPopular={tier.id === "pro"}
                   key={tier.id}
                   onPlanChange={handlePlanChange}
@@ -499,34 +376,38 @@ export default function Pricing() {
               ))}
         </div>
 
-        <motion.div
-          className="mb-24"
-          initial={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          whileInView={{ opacity: 1 }}
-        >
-          <div className="mb-10 text-center">
-            <h2 className="mb-3 font-bold text-3xl tracking-tight">{t("pricing.compare.title")}</h2>
-            <p className="text-muted-foreground">{t("pricing.compare.description")}</p>
-          </div>
+        {comparison.groups.length > 0 && (
+          <motion.div
+            className="mb-24"
+            initial={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            whileInView={{ opacity: 1 }}
+          >
+            <div className="mb-10 text-center">
+              <h2 className="mb-3 font-bold text-3xl tracking-tight">
+                {t("pricing.compare.title")}
+              </h2>
+              <p className="text-muted-foreground">{t("pricing.compare.description")}</p>
+            </div>
 
-          <div className="mx-auto max-w-5xl space-y-6">
-            {Object.entries(groupedFeatures).map(([category, features]) => (
-              <Card className="overflow-hidden border-border/50" key={category}>
-                <div className="border-border/50 border-b bg-muted/30 px-6 py-4">
-                  <h3 className="flex items-center gap-2 font-semibold text-lg">
-                    {category === "core" && <Sparkles className="h-4 w-4 text-primary" />}
-                    {category === "usageLimits" && <Zap className="h-4 w-4 text-blue-500" />}
-                    {category === "permissions" && <Shield className="h-4 w-4 text-orange-500" />}
-                    {t(`pricing.compare.${category}`)}
-                  </h3>
-                </div>
-                <FeatureComparisonTable features={features} />
-              </Card>
-            ))}
-          </div>
-        </motion.div>
+            <div className="mx-auto max-w-6xl space-y-6">
+              {comparison.groups.map((group) => (
+                <Card className="overflow-hidden border-border/50" key={group.id}>
+                  <div className="border-border/50 border-b bg-muted/30 px-6 py-4">
+                    <h3 className="flex items-center gap-2 font-semibold text-lg">
+                      {group.id === "core" && <Sparkles className="h-4 w-4 text-primary" />}
+                      {group.id === "usageLimits" && <Zap className="h-4 w-4 text-blue-500" />}
+                      {group.id === "permissions" && <Shield className="h-4 w-4 text-orange-500" />}
+                      {t(`pricing.compare.${group.id}`)}
+                    </h3>
+                  </div>
+                  <FeatureComparisonTable columns={comparison.columns} rows={group.rows} />
+                </Card>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           className="mb-24"
@@ -587,8 +468,8 @@ export default function Pricing() {
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
                 <Button
                   className="group"
-                  disabled={isLoading}
-                  onClick={() => handleTierSelect("pro")}
+                  disabled={isLoading || !proProductId}
+                  onClick={handleGetPro}
                   size="lg"
                 >
                   {t("pricing.cta.getStartedPro")}
