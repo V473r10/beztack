@@ -55,7 +55,7 @@ describe("createPolarAdapter", () => {
   });
 
   describe("products", () => {
-    it("maps a recurring Polar product from cents to the price amount", async () => {
+    it("maps a recurring Polar product keeping the minor-unit amount untouched", async () => {
       client.products.get.mockResolvedValueOnce({
         id: "prod_pro",
         name: "Pro",
@@ -70,11 +70,103 @@ describe("createPolarAdapter", () => {
         name: "Pro",
         description: undefined,
         type: "plan",
-        price: { amount: 29, currency: "USD" },
+        price: { amount: 2900, currency: "USD" },
         interval: "year",
         intervalCount: 1,
         metadata: { tier: "pro", isRecurring: true },
       });
+    });
+
+    it.each([
+      ["USD", 900],
+      ["UYU", 39_000],
+      ["JPY", 900],
+      ["KWD", 9000],
+    ])("reads a %s price from Polar without converting it", async (currency, amount) => {
+      client.products.list.mockResolvedValueOnce({
+        items: [
+          {
+            id: "prod_1",
+            name: "Basic",
+            is_recurring: true,
+            recurring_interval: "month",
+            prices: [{ price_amount: amount, price_currency: currency.toLowerCase() }],
+          },
+        ],
+      });
+
+      const [product] = await createAdapter().listProducts();
+
+      expect(product?.price).toEqual({ amount, currency });
+    });
+
+    it.each([
+      ["USD", 900],
+      ["UYU", 39_000],
+      ["JPY", 900],
+      ["KWD", 9000],
+    ])("sends a %s price to Polar without converting it", async (currency, amount) => {
+      client.products.create.mockResolvedValueOnce({ id: "prod_new", name: "Basic", prices: [] });
+
+      await createAdapter().createProduct({
+        name: "Basic",
+        type: "plan",
+        interval: "month",
+        intervalCount: 1,
+        price: { amount, currency },
+      });
+
+      expect(client.products.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prices: [
+            { amount_type: "fixed", price_amount: amount, price_currency: currency.toLowerCase() },
+          ],
+        }),
+      );
+    });
+
+    it("sends an updated price to Polar without converting it", async () => {
+      client.products.update.mockResolvedValueOnce({ id: "prod_pro", name: "Pro", prices: [] });
+
+      await createAdapter().updateProduct("prod_pro", { price: { amount: 2900, currency: "USD" } });
+
+      expect(client.products.update).toHaveBeenCalledWith("prod_pro", {
+        prices: [{ amount_type: "fixed", price_amount: 2900, price_currency: "usd" }],
+      });
+    });
+
+    it("round-trips a price through create and read without changing it", async () => {
+      client.products.create.mockImplementationOnce((request: { prices: unknown[] }) =>
+        Promise.resolve({
+          id: "prod_new",
+          name: "Basic",
+          is_recurring: true,
+          prices: request.prices,
+        }),
+      );
+
+      const product = await createAdapter().createProduct({
+        name: "Basic",
+        type: "plan",
+        interval: "month",
+        intervalCount: 1,
+        price: { amount: 900, currency: "USD" },
+      });
+
+      expect(product.price).toEqual({ amount: 900, currency: "USD" });
+    });
+
+    it("refuses a price that is not an integer amount of minor units", async () => {
+      await expect(
+        createAdapter().createProduct({
+          name: "Basic",
+          type: "plan",
+          interval: "month",
+          intervalCount: 1,
+          price: { amount: 9.5, currency: "USD" },
+        }),
+      ).rejects.toThrow(RangeError);
+      expect(client.products.create).not.toHaveBeenCalled();
     });
 
     it("treats a missing product as not found", async () => {
@@ -83,7 +175,7 @@ describe("createPolarAdapter", () => {
       await expect(createAdapter().getProduct("prod_missing")).resolves.toBeNull();
     });
 
-    it("creates a product in cents, raising it to Polar's minimum price", async () => {
+    it("raises a product below Polar's minimum price to the minimum", async () => {
       client.products.create.mockResolvedValueOnce({ id: "prod_new", name: "Tiny", prices: [] });
 
       await createAdapter().createProduct({
@@ -91,7 +183,7 @@ describe("createPolarAdapter", () => {
         type: "plan",
         interval: "month",
         intervalCount: 1,
-        price: { amount: 0.1, currency: "USD" },
+        price: { amount: 10, currency: "USD" },
       });
 
       expect(client.products.create).toHaveBeenCalledWith(

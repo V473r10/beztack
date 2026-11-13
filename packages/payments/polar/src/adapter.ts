@@ -32,8 +32,8 @@ type PresentmentCurrency = NonNullable<PolarFixedPriceCreate["price_currency"]>;
 type PolarProductUpdate = Parameters<PolarClient["products"]["update"]>[1];
 type PolarRecurringInterval = NonNullable<PolarProductUpdate["recurring_interval"]>;
 
-const CENTS_TO_DOLLARS = 100;
-const MIN_PRICE_CENTS = 50;
+/** Polar rejects fixed prices below 50 minor units (50 cents for USD). */
+const MIN_PRICE_MINOR_UNITS = 50;
 const DEFAULT_LIMIT = 50;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -131,7 +131,8 @@ function mapPolarProduct(product: PolarProductResponse): Product {
     description: product.description ?? undefined,
     type: product.is_recurring ? "plan" : "product",
     price: {
-      amount: (price?.price_amount ?? 0) / CENTS_TO_DOLLARS,
+      // Polar already speaks integer minor units: no conversion (ADR 0007).
+      amount: price?.price_amount ?? 0,
       currency: (price?.price_currency ?? "usd").toUpperCase(),
     },
     interval: mapPolarInterval(interval),
@@ -169,9 +170,17 @@ function mapPolarCustomer(customer: PolarCustomer): Customer {
 }
 
 function fixedPrice(price: { amount: number; currency: string }): PolarFixedPriceCreate {
+  // Polar takes integer minor units, the same contract as the domain (ADR 0007).
+  // A fractional amount is a caller still on major units: refuse it instead of
+  // sending a price off by a factor of 100.
+  if (!Number.isSafeInteger(price.amount)) {
+    throw new RangeError(
+      `Expected an integer amount in minor units, received ${price.amount} ${price.currency}`,
+    );
+  }
   return {
     amount_type: "fixed",
-    price_amount: Math.max(Math.round(price.amount * CENTS_TO_DOLLARS), MIN_PRICE_CENTS),
+    price_amount: Math.max(price.amount, MIN_PRICE_MINOR_UNITS),
     price_currency: price.currency.toLowerCase() as PresentmentCurrency,
   };
 }
