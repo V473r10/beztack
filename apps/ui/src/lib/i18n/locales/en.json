@@ -375,6 +375,7 @@
       "planDetails": "Plan details",
       "planInfo": "Your active subscription",
       "yourPlan": "Your plan",
+      "defaultPlanName": "Subscription",
       "nextPayment": "Next payment",
       "paymentMethod": "Payment method",
       "goToDashboard": "Go to Dashboard",

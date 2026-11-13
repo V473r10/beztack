@@ -29,20 +29,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  formatAmount,
-  type SubscriptionDetails,
-  useSubscriptionDetails,
-} from "@/hooks/use-subscription-details";
+import { type SubscriptionDetails, useSubscriptionDetails } from "@/hooks/use-subscription-details";
 import { authClient } from "@/lib/auth-client";
-import { formatDate, formatRelativeFromNow } from "@/lib/format";
+import { formatDate, formatPrice, formatRelativeFromNow } from "@/lib/format";
 
 const MONTHS_PER_YEAR = 12;
 const DAYS_PER_WEEK = 7;
 
 function frequencyLabel(
   frequency: number,
-  frequencyType: SubscriptionDetails["price"]["frequencyType"],
+  frequencyType: NonNullable<SubscriptionDetails["price"]>["frequencyType"],
   t: TFunction,
 ): string {
   if (frequencyType === "months") {
@@ -219,12 +215,7 @@ export default function SubscriptionWelcome() {
   }
 
   const statusLabel = t(`billing.welcome.status.${subscription.status}`, subscription.status);
-  const formattedPrice = formatAmount(subscription.price.amount, subscription.price.currency);
-  const formattedFrequency = frequencyLabel(
-    subscription.price.frequency,
-    subscription.price.frequencyType,
-    t,
-  );
+  const { price } = subscription;
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-16">
@@ -267,11 +258,19 @@ export default function SubscriptionWelcome() {
             {/* Plan name and price */}
             <div className="rounded-lg bg-muted/50 p-4 text-center">
               <p className="mb-1 text-muted-foreground text-sm">{t("billing.welcome.yourPlan")}</p>
-              <h2 className="mb-2 font-semibold text-xl">{subscription.plan.name}</h2>
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="font-bold text-3xl text-primary">{formattedPrice}</span>
-                <span className="text-muted-foreground">{`/ ${formattedFrequency}`}</span>
-              </div>
+              <h2 className="mb-2 font-semibold text-xl">
+                {subscription.plan.name ?? t("billing.welcome.defaultPlanName")}
+              </h2>
+              {price && (
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="font-bold text-3xl text-primary">
+                    {formatPrice(price.amount, price.currency)}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {`/ ${frequencyLabel(price.frequency, price.frequencyType, t)}`}
+                  </span>
+                </div>
+              )}
             </div>
 
             <Separator />
