@@ -198,4 +198,30 @@ describe("calculateProration", () => {
     expect(result.unusedCredit).toBe(FEBRUARY_UNUSED_CREDIT);
     expect(result.proratedAmount).toBe(FEBRUARY_PRORATED_AMOUNT);
   });
+
+  it("rounds the credit to the nearest minor unit using integers only", () => {
+    // 1000 minor units over 30 days, 2 days left: 66.67 -> 67.
+    const result = calculateProration({
+      currentAmount: 1000,
+      newAmount: 2000,
+      periodStart: new Date("2026-01-01T00:00:00.000Z"),
+      periodEnd: new Date("2026-01-31T00:00:00.000Z"),
+      upgradeDate: new Date("2026-01-29T00:00:00.000Z"),
+    });
+
+    expect(result.unusedCredit).toBe(67);
+    expect(result.proratedAmount).toBe(1933);
+  });
+
+  it("refuses an amount that is not an integer of minor units", () => {
+    expect(() =>
+      calculateProration({
+        currentAmount: 9.99,
+        newAmount: 19.99,
+        periodStart: new Date("2026-01-01T00:00:00.000Z"),
+        periodEnd: new Date("2026-01-31T00:00:00.000Z"),
+        upgradeDate: new Date("2026-01-15T00:00:00.000Z"),
+      }),
+    ).toThrow(RangeError);
+  });
 });

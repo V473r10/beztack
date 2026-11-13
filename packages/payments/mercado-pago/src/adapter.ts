@@ -18,10 +18,27 @@ import type {
   WebhookPayload,
 } from "@beztack/payments";
 import { SubscriptionUpdateNotAppliedError } from "@beztack/payments";
+import { majorToMinor, minorToMajor } from "@beztack/payments/money";
 import { decodeExternalReference, encodeExternalReference } from "./helpers/external-reference.js";
 import { mapMPStatus } from "./helpers/status-mapping.js";
 import { createMercadoPagoClient } from "./server/client.js";
 import type { MPPreapproval, MPPreapprovalPlan, MPSubscriptionResponse } from "./types.js";
+
+/**
+ * Mercado Pago speaks decimal major units (`9.99`); the domain speaks integer
+ * minor units (`999`, ADR 0007). The adapter converts at its edge, once per
+ * crossing. An amount read from Mercado Pago is rounded to the nearest minor
+ * unit: the provider never reports sub-minor-unit precision for our plans, so
+ * rounding only absorbs floating point noise.
+ */
+function fromProviderAmount(major: number, currency: string): number {
+  return majorToMinor(major, currency, { rounding: "half-away-from-zero" });
+}
+
+/** Domain minor units to Mercado Pago decimals. Throws on a non-integer amount. */
+function toProviderAmount(minor: number, currency: string): number {
+  return minorToMajor(minor, currency);
+}
 
 const PROVIDER_PAGE_LIMIT = 50;
 const MAX_APPLICATION_SCAN_PAGES = 50;
@@ -82,10 +99,11 @@ function buildSubscriptionBody(
     body.preapproval_plan_id = options.productId;
   } else if (options.customPlan) {
     body.reason = options.customPlan.reason;
+    const planCurrency = options.customPlan.currency || currency;
     const autoRecurring: Record<string, unknown> = {
       ...toMPRecurring(options.customPlan.interval, options.customPlan.intervalCount),
-      transaction_amount: options.customPlan.amount,
-      currency_id: options.customPlan.currency || currency,
+      transaction_amount: toProviderAmount(options.customPlan.amount, planCurrency),
+      currency_id: planCurrency,
     };
     if (options.customPlan.freeTrial) {
       autoRecurring.free_trial = {
@@ -240,7 +258,10 @@ function mapPlanToProduct(plan: MPPreapprovalPlan, metadata?: Record<string, unk
     description: undefined,
     type: "plan" as const,
     price: {
-      amount: plan.auto_recurring.transaction_amount,
+      amount: fromProviderAmount(
+        plan.auto_recurring.transaction_amount,
+        plan.auto_recurring.currency_id,
+      ),
       currency: plan.auto_recurring.currency_id,
     },
     interval: mapMPInterval(plan.auto_recurring.frequency_type),
@@ -249,8 +270,24 @@ function mapPlanToProduct(plan: MPPreapprovalPlan, metadata?: Record<string, unk
   };
 }
 
+/**
+ * What the provider charges per period, in minor units. Undefined when the
+ * provider reports no amount. `defaultCurrency` only fills a missing currency.
+ */
+function readBillingAmount(
+  autoRecurring: MPSubscriptionResponse["auto_recurring"],
+  defaultCurrency: string,
+): number | undefined {
+  const amount = autoRecurring?.transaction_amount;
+  if (typeof amount !== "number") {
+    return;
+  }
+  return fromProviderAmount(amount, autoRecurring?.currency_id || defaultCurrency);
+}
+
 function mapSubscriptionResource(
   sub: MPPreapproval | MPSubscriptionResponse,
+  defaultCurrency: string,
   fallbackId?: string,
 ): Subscription {
   const decodedRef = decodeExternalReference(sub.external_reference);
@@ -268,7 +305,7 @@ function mapSubscriptionResource(
     metadata: withProviderIntegrationMetadata(
       {
         ...decodedRef,
-        billingAmount: sub.auto_recurring?.transaction_amount,
+        billingAmount: readBillingAmount(sub.auto_recurring, defaultCurrency),
         billingCurrency: sub.auto_recurring?.currency_id,
         billingInterval: mapMPInterval(sub.auto_recurring?.frequency_type ?? "months"),
         billingFrequency: sub.auto_recurring?.frequency,
@@ -365,12 +402,15 @@ async function scanApplicationPages<T extends ApplicationScopedResource>(options
   return matches;
 }
 
-function mapSearchResult(sub: MPPreapproval): {
+function mapSearchResult(
+  sub: MPPreapproval,
+  defaultCurrency: string,
+): {
   subscription: Subscription;
   debug: Record<string, unknown>;
 } {
   const decodedRef = decodeExternalReference(sub.external_reference);
-  const subscription = mapSubscriptionResource(sub);
+  const subscription = mapSubscriptionResource(sub, defaultCurrency);
 
   return {
     subscription,
@@ -464,7 +504,10 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
         reason: options.name,
         auto_recurring: {
           ...toMPRecurring(options.interval, options.intervalCount),
-          transaction_amount: options.price.amount,
+          transaction_amount: toProviderAmount(
+            options.price.amount,
+            options.price.currency || currency,
+          ),
           // The price's own currency wins; the project default only fills a gap.
           currency_id: options.price.currency || currency,
         },
@@ -498,7 +541,10 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
 
       if (options.price?.amount) {
         updateBody.auto_recurring = {
-          transaction_amount: options.price.amount,
+          transaction_amount: toProviderAmount(
+            options.price.amount,
+            options.price.currency || currency,
+          ),
         };
       }
 
@@ -545,7 +591,12 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
           backUrl: options.successUrl,
           customPlan: {
             reason: plan.reason,
-            amount: plan.auto_recurring.transaction_amount,
+            // Minor units in, decimals back out when the body is built: the
+            // plan's own amount survives the round trip unchanged.
+            amount: fromProviderAmount(
+              plan.auto_recurring.transaction_amount,
+              plan.auto_recurring.currency_id,
+            ),
             currency: plan.auto_recurring.currency_id,
             interval: mapMPInterval(plan.auto_recurring.frequency_type),
             intervalCount: plan.auto_recurring.frequency,
@@ -584,7 +635,7 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
       );
       assertBelongsToApplication(subscription, applicationId, "Subscription");
 
-      const result = mapSubscriptionResource(subscription);
+      const result = mapSubscriptionResource(subscription, currency);
       result.productId = options.productId ?? result.productId;
       result.metadata = withProviderIntegrationMetadata(
         {
@@ -605,7 +656,7 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
           return null;
         }
 
-        return mapSubscriptionResource(sub, subscriptionId);
+        return mapSubscriptionResource(sub, currency, subscriptionId);
       } catch {
         return null;
       }
@@ -657,7 +708,7 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
         );
       }
 
-      return mapSubscriptionResource(updated, subscriptionId);
+      return mapSubscriptionResource(updated, currency, subscriptionId);
     },
 
     async cancelSubscription(subscriptionId: string, _immediately = false): Promise<Subscription> {
@@ -671,7 +722,7 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
       assertBelongsToApplication(canceled, applicationId, "Subscription");
 
       return {
-        ...mapSubscriptionResource(canceled, subscriptionId),
+        ...mapSubscriptionResource(canceled, currency, subscriptionId),
         status: "canceled",
       };
     },
@@ -697,7 +748,7 @@ export function createMercadoPagoAdapter(config: MercadoPagoAdapterConfig): Paym
             offset,
           }),
       });
-      const mappedResults = matchingResults.map(mapSearchResult);
+      const mappedResults = matchingResults.map((item) => mapSearchResult(item, currency));
       const subscriptions = mappedResults.map(({ subscription }) => subscription);
 
       return subscriptions;
