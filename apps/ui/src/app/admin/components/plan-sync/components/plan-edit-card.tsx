@@ -34,6 +34,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { MAX_FEATURES_DISPLAY, TIER_OPTIONS } from "../constants";
 import { planToEditState } from "../helpers";
@@ -349,7 +350,9 @@ export function PlanEditCard({
             )}
           </div>
           <div className="shrink-0 text-right">
-            <div className="font-bold text-2xl tracking-tight">${plan.price}</div>
+            <div className="font-bold text-2xl tracking-tight">
+              {formatPrice(plan.price, plan.currency)}
+            </div>
             <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
               {plan.currency} / {plan.interval ?? "month"}
             </div>

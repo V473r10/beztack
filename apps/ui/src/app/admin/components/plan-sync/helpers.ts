@@ -1,3 +1,4 @@
+import { majorToMinor } from "@beztack/payments/money";
 import type { DbPlan, EditState, SyncedPlanView } from "./types";
 
 export function planToEditState(plan: DbPlan): EditState {
@@ -33,4 +34,24 @@ export function getPlanKey(view: SyncedPlanView): string {
     return `remote-${view.remoteProduct.id}`;
   }
   return `unknown-${Math.random()}`;
+}
+
+/**
+ * The price an App admin typed in a form (`"9.99"`, in the plan's currency) as
+ * the integer minor units the API takes (ADR 0007). `null` when it is not a
+ * positive amount or the currency is not an ISO 4217 code.
+ */
+export function priceInputToMinorUnits(input: string, currency: string): number | null {
+  const major = Number.parseFloat(input);
+  if (!(Number.isFinite(major) && major > 0)) {
+    return null;
+  }
+  try {
+    const minor = majorToMinor(major, currency.trim().toUpperCase(), {
+      rounding: "half-away-from-zero",
+    });
+    return minor > 0 ? minor : null;
+  } catch {
+    return null;
+  }
 }

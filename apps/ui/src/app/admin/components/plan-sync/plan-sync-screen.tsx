@@ -9,7 +9,6 @@ import {
   ServerCrash,
 } from "lucide-react";
 import { useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +16,6 @@ import { cn } from "@/lib/utils";
 import { CreatePlanSheet } from "./components/create-plan-sheet";
 import { PlansSkeleton } from "./components/plans-skeleton";
 import { SyncedPlanCard } from "./components/synced-plan-card";
-import { PLAN_SYNC_PUSH_DISABLED_TITLE, PLAN_SYNC_PUSH_ENABLED } from "./constants";
 import { getPlanKey } from "./helpers";
 import { useSyncStatusQuery } from "./hooks";
 
@@ -47,9 +45,7 @@ export function PlanSyncScreen() {
         <div className="flex items-center gap-3">
           <Button
             className="gap-2 shadow-sm"
-            disabled={!PLAN_SYNC_PUSH_ENABLED}
             onClick={() => setCreateSheetOpen(true)}
-            title={PLAN_SYNC_PUSH_ENABLED ? undefined : PLAN_SYNC_PUSH_DISABLED_TITLE}
             type="button"
           >
             <Plus className="h-4 w-4" />
@@ -67,17 +63,6 @@ export function PlanSyncScreen() {
           </Button>
         </div>
       </div>
-
-      {!PLAN_SYNC_PUSH_ENABLED && (
-        <Alert role="status">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Pushing prices to the payment provider is disabled</AlertTitle>
-          <AlertDescription>
-            Plan prices are not stored in the provider's unit yet, so pushing or creating plans
-            would send wrong amounts. Importing and pulling from the provider still work.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Stats Row */}
       {!(isLoading || error) && plans.length > 0 && (
@@ -170,12 +155,7 @@ export function PlanSyncScreen() {
                 payment provider configuration.
               </p>
             </div>
-            <Button
-              className="mt-2 gap-2"
-              disabled={!PLAN_SYNC_PUSH_ENABLED}
-              onClick={() => setCreateSheetOpen(true)}
-              type="button"
-            >
+            <Button className="mt-2 gap-2" onClick={() => setCreateSheetOpen(true)} type="button">
               <Plus className="h-4 w-4" />
               Create Plan
             </Button>

@@ -28,6 +28,7 @@ import {
   MP_INTERVAL_OPTIONS,
   TIER_OPTIONS,
 } from "../constants";
+import { priceInputToMinorUnits } from "../helpers";
 import { useCreatePlanMutation } from "../hooks";
 import type { CreatePlanState } from "../types";
 
@@ -55,6 +56,13 @@ export function CreatePlanSheet({
       return;
     }
 
+    const currency = form.currency.trim().toUpperCase() || env.VITE_DEFAULT_CURRENCY;
+    const price = priceInputToMinorUnits(form.price, currency);
+    if (price === null) {
+      toast.error(`Price must be a positive amount in ${currency}`);
+      return;
+    }
+
     let parsedLimits: Record<string, number> = {};
     try {
       parsedLimits = JSON.parse(form.limits);
@@ -67,8 +75,8 @@ export function CreatePlanSheet({
       displayName: form.displayName.trim(),
       description: form.description.trim() || null,
       canonicalTierId: form.canonicalTierId,
-      price: form.price,
-      currency: form.currency,
+      price,
+      currency,
       interval: form.interval,
       intervalCount: Number(form.intervalCount) || 1,
       features: form.features

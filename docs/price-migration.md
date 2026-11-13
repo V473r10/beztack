@@ -68,9 +68,3 @@ If a Mercado Pago price now shows `450000` for a plan that used to be `4500`, th
 `pnpm tsx packages/db/scripts/seed-plan-catalog.ts <provider>` and the demo seed now write minor units for
 both providers. Polar plans are US$ cents. Mercado Pago demo plans are whole units of `DEFAULT_CURRENCY`
 converted to its minor units.
-
-## Temporary shim
-
-Until the payment adapters and the Plan change math move to minor units (BZ-114) and the old form is
-removed (BZ-119), the API converts at the read boundary, so adapters and UI still receive the old unit.
-Everything lives in `apps/api/server/utils/legacy-plan-price.ts`.

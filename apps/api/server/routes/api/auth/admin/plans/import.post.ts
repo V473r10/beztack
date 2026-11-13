@@ -6,7 +6,6 @@ import { db, plan } from "@beztack/db";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { ensurePaymentProvider } from "@/lib/payments";
-import { planPriceFromLegacyAmount, withLegacyPlanPrice } from "@/server/utils/legacy-plan-price";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const importSchema = z.object({
@@ -43,11 +42,7 @@ export default defineEventHandler(async (event) => {
       canonicalTierId: body.canonicalTierId ?? "custom",
       displayName: remoteProduct.name,
       description: remoteProduct.description ?? null,
-      price: planPriceFromLegacyAmount(
-        remoteProduct.price.amount,
-        remoteProduct.price.currency,
-        adapter.provider,
-      ),
+      price: remoteProduct.price.amount,
       currency: remoteProduct.price.currency,
       interval: remoteProduct.interval,
       intervalCount: remoteProduct.intervalCount,
@@ -56,5 +51,5 @@ export default defineEventHandler(async (event) => {
     })
     .returning();
 
-  return { plan: newPlan ? withLegacyPlanPrice(newPlan) : newPlan };
+  return { plan: newPlan };
 });

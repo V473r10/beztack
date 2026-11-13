@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { env } from "@/env";
 import { redirectToExternalUrl } from "@/lib/browser-navigation";
-import { formatPrice } from "@/lib/format";
+import { formatMercadoPagoAmount } from "@/lib/format";
 
 type SubscriptionFormProps = {
   planId?: string;
@@ -169,7 +169,7 @@ const SubscriptionForm = ({
 
           <div className="rounded-lg bg-muted p-4">
             <p className="font-medium text-lg">
-              {formatPrice(amount, currencyId)}
+              {formatMercadoPagoAmount(amount, currencyId)}
               <span className="font-normal text-muted-foreground text-sm">
                 {" "}
                 / cada {frequency} {frequencyType === "months" ? "mes(es)" : "día(s)"}

@@ -6,7 +6,6 @@ import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { ensurePaymentProvider } from "@/lib/payments";
-import { withLegacyPlanPrice } from "@/server/utils/legacy-plan-price";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const updateSchema = z.object({
@@ -59,5 +58,5 @@ export default defineEventHandler(async (event) => {
 
   const [updated] = await db.update(plan).set(data).where(eq(plan.id, planId)).returning();
 
-  return { plan: updated ? withLegacyPlanPrice(updated) : updated };
+  return { plan: updated };
 });

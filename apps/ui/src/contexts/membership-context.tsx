@@ -193,9 +193,8 @@ function parseTierIdFromProduct(product: Product): MembershipTier {
 function buildTierConfigFromPlansAndProducts(
   products: Product[],
   plans: CatalogPlan[] | undefined,
-  provider: "polar" | "mercadopago",
 ): MembershipTierConfig[] {
-  return buildTierConfigs(products, plans, provider);
+  return buildTierConfigs(products, plans);
 }
 
 function isAdminTierOverrideCheckoutResponse(data: CheckoutResponse): boolean {
@@ -464,10 +463,9 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
   const dbPlans = productsQuery.data?.plans;
 
-  const provider = productsQuery.data?.provider ?? "polar";
   const tierConfigs = useMemo(
-    () => buildTierConfigFromPlansAndProducts(products, dbPlans, provider),
-    [products, dbPlans, provider],
+    () => buildTierConfigFromPlansAndProducts(products, dbPlans),
+    [products, dbPlans],
   );
 
   const tierConfig = tierConfigs.find((config) => config.id === currentTier) || null;

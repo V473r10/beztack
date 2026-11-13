@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { env } from "@/env";
-import { formatPrice } from "@/lib/format";
+import { formatMercadoPagoAmount } from "@/lib/format";
 
 // =============================================================================
 // Types
@@ -94,7 +94,8 @@ function formatAmount(
   if (Number.isNaN(num)) {
     return "";
   }
-  return formatPrice(num, currency);
+  // Event payloads carry Mercado Pago's decimal amounts.
+  return formatMercadoPagoAmount(num, currency);
 }
 
 // =============================================================================

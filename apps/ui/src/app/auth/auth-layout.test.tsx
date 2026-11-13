@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({ env: { VITE_APP_NAME: "Acme Billing", VITE_DEM
 vi.mock("@/env", () => ({ env: mocks.env }));
 vi.mock("sonner", () => ({ Toaster: () => <div data-testid="toaster" /> }));
 vi.mock("react-router", () => ({ Outlet: () => <div data-testid="outlet" /> }));
-vi.mock("@/components/language-toggle", () => ({ LanguageToggle: () => null }));
+vi.mock("@/components/language-selector", () => ({ LanguageSelector: () => null }));
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) =>

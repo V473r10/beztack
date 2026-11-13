@@ -4,7 +4,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { ApiError, requestJson } from "@/lib/api-client";
-import { formatPrice } from "@/lib/format";
+import { formatMercadoPagoAmount } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
 
 // Time constants
@@ -236,8 +236,9 @@ export function formatFrequency(frequency: number, frequencyType: "days" | "mont
 }
 
 /**
- * Format currency amount in the project locale, with the currency's own decimals.
+ * Format an amount of the raw Mercado Pago subscription (decimal major units)
+ * in the active language, with the currency's own decimals.
  */
 export function formatAmount(amount: number, currency: string): string {
-  return formatPrice(amount, currency);
+  return formatMercadoPagoAmount(amount, currency);
 }

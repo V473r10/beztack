@@ -7,7 +7,7 @@ import {
   type PaymentEvent,
   usePaymentEvents,
 } from "@/hooks/use-payment-events";
-import { formatDate, formatPrice } from "@/lib/format";
+import { formatDate, formatMercadoPagoAmount } from "@/lib/format";
 
 type PaymentEventsMonitorProps = {
   /** Filter events for a specific user ID */
@@ -79,7 +79,8 @@ function formatAmount(
   if (Number.isNaN(num)) {
     return "";
   }
-  return formatPrice(num, currency);
+  // Event payloads carry Mercado Pago's decimal amounts.
+  return formatMercadoPagoAmount(num, currency);
 }
 
 export function PaymentEventsMonitor({

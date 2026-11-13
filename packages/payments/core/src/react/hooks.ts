@@ -2,8 +2,9 @@
  * Provider-agnostic React hooks for payments
  */
 
-import { minorToMajor } from "../money.js";
 import type { PricingTier, Product, ProviderProduct } from "../types.js";
+
+const PERCENT_SCALE = 100;
 
 type ProductsResponse = {
   provider: string;
@@ -91,6 +92,7 @@ function buildBaseTier(product: Product, tierId: string, displayOrder: number): 
     name: baseName,
     description: product.description || `${baseName} tier`,
     price: { monthly: 0, yearly: 0 },
+    currency: product.price.currency,
     features,
     limits,
     permissions,
@@ -99,23 +101,14 @@ function buildBaseTier(product: Product, tierId: string, displayOrder: number): 
   };
 }
 
-/**
- * Product amounts are integer minor units of the product's currency whatever
- * the provider (ADR 0007), so display units come from the currency's decimals.
- * The provider is no longer needed here; the display conversion goes away with
- * the move of `formatPrice` to minor units.
- */
-function toDisplayAmount(product: Product): number {
-  return minorToMajor(product.price.amount, product.price.currency);
-}
-
+/** Tier prices stay in the product's integer minor units (ADR 0007); formatting is the UI's job. */
 function applyIntervalToTier(tier: PricingTier, product: Product): PricingTier {
-  const displayAmount = toDisplayAmount(product);
+  const amount = product.price.amount;
 
   if (product.interval === "month") {
     return {
       ...tier,
-      price: { ...tier.price, monthly: displayAmount },
+      price: { ...tier.price, monthly: amount },
       monthly: buildProviderProduct(product, "month"),
     };
   }
@@ -123,7 +116,7 @@ function applyIntervalToTier(tier: PricingTier, product: Product): PricingTier {
   if (product.interval === "year") {
     return {
       ...tier,
-      price: { ...tier.price, yearly: displayAmount },
+      price: { ...tier.price, yearly: amount },
       yearly: buildProviderProduct(product, "year"),
     };
   }
@@ -159,7 +152,7 @@ export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> 
   for (const [id, tier] of tiers) {
     if (tier.price.monthly > 0 && tier.price.yearly > 0) {
       const annualIfMonthly = tier.price.monthly * 12;
-      const pct = ((annualIfMonthly - tier.price.yearly) / annualIfMonthly) * 100;
+      const pct = ((annualIfMonthly - tier.price.yearly) / annualIfMonthly) * PERCENT_SCALE;
       tiers.set(id, { ...tier, yearlySavingsPercent: Math.round(pct) });
     }
   }

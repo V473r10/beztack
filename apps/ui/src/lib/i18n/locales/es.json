@@ -6,7 +6,8 @@
         "email": "Correo Electrónico",
         "save": "Guardar Perfil",
         "title": "Perfil",
-        "username": "Nombre de Usuario"
+        "username": "Nombre de Usuario",
+        "saving": "Guardando..."
       },
       "title": "Configuración de Cuenta",
       "twoFactor": {
@@ -49,7 +50,10 @@
           "copy": "Copiar Todos los Códigos",
           "download": "Descargar como Archivo",
           "done": "Listo"
-        }
+        },
+        "alreadyEnabled": "Tu cuenta está protegida con autenticación en dos pasos. Tus códigos de respaldo se guardaron y cifraron de forma segura.",
+        "backupCodesWarning": "¡Guardá estos códigos de respaldo ahora! No vas a poder verlos de nuevo. Cada código se puede usar una sola vez.",
+        "scanQrCode": "Escaneá este código QR con tu aplicación de autenticación y después ingresá el código de verificación."
       }
     }
   },
@@ -347,7 +351,9 @@
     "footer": "© {{year}} {{appName}}. Todos los derechos reservados.",
     "more": "Más",
     "workflowStreamline": "Optimiza tu flujo de trabajo con nuestra potente plataforma.",
-    "yourLogo": "Tu Logo"
+    "yourLogo": "Tu Logo",
+    "cancel": "Cancelar",
+    "processing": "Procesando..."
   },
   "dashboard": {
     "acquisitionNeedsAttention": "La adquisición necesita atención",
@@ -521,7 +527,31 @@
       "outline": "Esquema",
       "pastPerformance": "Rendimiento Pasado",
       "placeholder": "Selecciona una vista"
-    }
+    },
+    "capabilities": "Capacidades",
+    "coverPage": "Portada",
+    "design": "Diseño",
+    "eddieLake": "Eddie Lake",
+    "emilyWhalen": "Emily Whalen",
+    "executiveSummary": "Resumen ejecutivo",
+    "focusDocuments": "Documentos clave",
+    "goToFirstPage": "Ir a la primera página",
+    "goToLastPage": "Ir a la última página",
+    "goToNextPage": "Ir a la página siguiente",
+    "goToPreviousPage": "Ir a la página anterior",
+    "header": "Encabezado",
+    "jamikTashpulatov": "Jamik Tashpulatov",
+    "limit": "Límite",
+    "narrative": "Narrativa",
+    "of": "de",
+    "reviewer": "Revisor",
+    "rowsPerPage": "Filas por página",
+    "showingTotalVisitors": "Mostrando el total de visitantes de los últimos 6 meses",
+    "status": "Estado",
+    "tableOfContents": "Tabla de contenidos",
+    "target": "Objetivo",
+    "technicalApproach": "Enfoque técnico",
+    "type": "Tipo"
   },
   "form": {
     "confirmPassword": {
@@ -604,20 +634,17 @@
   },
   "sidebar": {
     "analytics": "Analytics",
-    "dashboard": "Dashboard",
     "documents": {
       "dataLibrary": "Biblioteca de Datos",
       "reports": "Informes",
       "title": "Documentos",
-      "wordAssistant": "Asistente de Palabras"
+      "wordAssistant": "Asistente de Palabras",
+      "delete": "Eliminar",
+      "open": "Abrir",
+      "share": "Compartir"
     },
     "lifecycle": "Ciclo de Vida",
     "projects": "Proyectos",
-    "secondary": {
-      "getHelp": "Ayuda",
-      "search": "Buscar",
-      "settings": "Configuración"
-    },
     "team": "Equipo",
     "userMenu": {
       "account": "Cuenta",
@@ -625,6 +652,33 @@
       "language": "Idioma",
       "notifications": "Notificaciones",
       "signOut": "Cerrar Sesión"
+    },
+    "nav": {
+      "dashboard": "Panel",
+      "ai": "IA",
+      "ocr": "OCR",
+      "organizations": "Organizaciones",
+      "billing": "Facturación",
+      "platformAdmin": "Administración de la plataforma",
+      "userManagement": "Gestión de usuarios",
+      "analytics": "Analítica",
+      "planSync": "Sincronización de planes",
+      "failedPlanChanges": "Cambios de plan fallidos",
+      "pricing": "Precios",
+      "settings": "Configuración",
+      "getHelp": "Ayuda",
+      "search": "Buscar"
+    },
+    "name": {
+      "length": "El nombre debe tener al menos 2 caracteres."
+    },
+    "password": {
+      "length": "La contraseña debe tener al menos 8 caracteres",
+      "lowercase": "Debe contener al menos una letra minúscula",
+      "mismatch": "Las contraseñas no coinciden",
+      "number": "Debe contener al menos un número",
+      "special": "Debe contener al menos un carácter especial",
+      "uppercase": "Debe contener al menos una letra mayúscula"
     }
   },
   "validation": {
@@ -686,6 +740,15 @@
     },
     "expired": "Esta invitación venció.",
     "goHome": "Ir al inicio"
+  },
+  "settings": {
+    "theme": {
+      "colorTheme": "Tema de color",
+      "colorThemeDescription": "Elegí tu esquema de colores y estilo visual preferido",
+      "loading": "Cargando temas...",
+      "showLess": "Ver menos",
+      "showMore": "Ver más ({{hidden}})"
+    }
   },
   "organizations": {
     "createDialog": {

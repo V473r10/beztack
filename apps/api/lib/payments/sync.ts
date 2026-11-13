@@ -7,7 +7,6 @@
 
 import type { plan } from "@beztack/db";
 import type { Product } from "@beztack/payments";
-import { legacyAmountFromPlanPrice, withLegacyPlanPrice } from "@/server/utils/legacy-plan-price";
 
 type DbPlan = typeof plan.$inferSelect;
 
@@ -56,8 +55,8 @@ function computeDiffs(local: DbPlan, remote: Product): SyncDiff[] {
     });
   }
 
-  // price — both sides in the provider's unit (the stored minor units go through the shim)
-  const localPrice = legacyAmountFromPlanPrice(local.price, local.currency, local.provider);
+  // price — both sides are integer minor units of their currency (ADR 0007)
+  const localPrice = local.price;
   const remotePrice = remote.price.amount;
   if (localPrice !== remotePrice) {
     diffs.push({
@@ -133,7 +132,7 @@ export function buildSyncView(dbPlans: DbPlan[], remoteProducts: Product[]): Syn
         const diffs = computeDiffs(dbPlan, remote);
 
         results.push({
-          localPlan: withLegacyPlanPrice(dbPlan),
+          localPlan: dbPlan,
           remoteProduct: remote,
           syncStatus: diffs.length === 0 ? "synced" : "out-of-sync",
           diffs,
@@ -141,7 +140,7 @@ export function buildSyncView(dbPlans: DbPlan[], remoteProducts: Product[]): Syn
       } else {
         // Has providerPlanId but remote product is missing
         results.push({
-          localPlan: withLegacyPlanPrice(dbPlan),
+          localPlan: dbPlan,
           remoteProduct: null,
           syncStatus: "local-only",
           diffs: [],
@@ -150,7 +149,7 @@ export function buildSyncView(dbPlans: DbPlan[], remoteProducts: Product[]): Syn
     } else {
       // No providerPlanId — purely local
       results.push({
-        localPlan: withLegacyPlanPrice(dbPlan),
+        localPlan: dbPlan,
         remoteProduct: null,
         syncStatus: "local-only",
         diffs: [],

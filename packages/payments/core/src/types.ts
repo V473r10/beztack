@@ -293,7 +293,8 @@ export type PaymentProviderAdapter = {
 };
 
 /**
- * Pricing tier for UI display (provider-agnostic)
+ * Pricing tier for UI display (provider-agnostic).
+ * `price` amounts are integer minor units of the product's currency (ADR 0007).
  */
 export type PricingTier = {
   readonly id: string;
@@ -303,6 +304,8 @@ export type PricingTier = {
     readonly monthly: number;
     readonly yearly: number;
   };
+  /** ISO 4217 code of `price`. */
+  readonly currency?: string;
   readonly monthly?: ProviderProduct;
   readonly yearly?: ProviderProduct;
   readonly features?: readonly string[];
