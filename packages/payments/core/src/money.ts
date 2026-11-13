@@ -6,8 +6,12 @@
  *
  * Browser-safe: this entry point has no dependencies and imports nothing
  * provider-specific, so the API, the UI and the payment adapters share it.
- * The number of decimals of each currency comes from `Intl`, not from a table
- * of our own.
+ *
+ * The number of decimals of each currency comes from the ISO 4217 minor-unit
+ * table below, never from the runtime's `Intl` data: CLDR differs between
+ * Node versions and browsers (some builds give COP, HUF or IDR no decimals,
+ * ISO 4217 gives them 2), and a disagreement would show prices 100x off.
+ * `Intl` is only used to format; it is told the table's decimals.
  */
 
 /** An amount of money: integer minor units of an ISO 4217 currency. */
@@ -37,20 +41,38 @@ const CURRENCY_CODE_PATTERN = /^[A-Z]{3}$/;
  */
 const SIGNIFICANT_DIGITS = 15;
 
-let supportedCurrencies: ReadonlySet<string> | undefined;
-const decimalsByCurrency = new Map<string, number>();
+/**
+ * Codes of the ISO 4217 currencies (including funds codes) grouped by the
+ * number of digits of their minor unit (the `CcyMnrUnts` field).
+ *
+ * Source: the ISO 4217 "List one" (current currency and funds codes) kept by
+ * the maintenance agency SIX, published 2026-09-17:
+ * https://www.six-group.com/en/products-services/financial-information/data-center/iso-currency.html
+ * Codes without a minor unit (XAU, XAG, XDR, XXX, ...) are not currencies a
+ * plan can be priced in and are absent. A currency ISO 4217 withdrew (SLL,
+ * HRK, ZWL, ...) is absent too: it is unknown.
+ *
+ * `packages/db/drizzle/0009_prices_minor_units.sql` carries the same table; a
+ * test fails when the two differ. Update both when ISO 4217 changes.
+ */
+const CURRENCIES_BY_MINOR_UNITS: ReadonlyArray<readonly [number, string]> = [
+  [0, "BIF CLP DJF GNF ISK JPY KMF KRW PYG RWF UGX UYI VND VUV XAF XOF XPF"],
+  [
+    2,
+    "AED AFN ALL AMD AOA ARS AUD AWG AZN BAM BBD BDT BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CNY COP COU CRC CUP CVE CZK DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GTQ GYD HKD HNL HTG HUF IDR ILS INR IRR JMD KES KGS KHR KPW KYD KZT LAK LBP LKR LRD LSL MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD PAB PEN PGK PHP PKR PLN QAR RON RSD RUB SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STN SVC SYP SZL THB TJS TMT TOP TRY TTD TWD TZS UAH USD USN UYU UZS VED VES WST XAD XCD XCG YER ZAR ZMW ZWG",
+  ],
+  [3, "BHD IQD JOD KWD LYD OMR TND"],
+  [4, "CLF UYW"],
+];
 
-function assertCurrency(currency: string): void {
-  if (!CURRENCY_CODE_PATTERN.test(currency)) {
-    throw new RangeError(
-      `Invalid currency code ${JSON.stringify(currency)}: expected an uppercase ISO 4217 code`,
-    );
-  }
-  supportedCurrencies ??= new Set(Intl.supportedValuesOf("currency"));
-  if (!supportedCurrencies.has(currency)) {
-    throw new RangeError(`Unknown currency code ${JSON.stringify(currency)}`);
-  }
-}
+/** Minor-unit digits by uppercase ISO 4217 code. Exported for the tests that tie it to the SQL migration. */
+export const ISO_4217_MINOR_UNITS: Readonly<Record<string, number>> = Object.freeze(
+  Object.fromEntries(
+    CURRENCIES_BY_MINOR_UNITS.flatMap(([decimals, codes]) =>
+      codes.split(" ").map((code) => [code, decimals] as const),
+    ),
+  ),
+);
 
 function assertMinorUnits(amount: number): void {
   if (!Number.isSafeInteger(amount)) {
@@ -58,20 +80,24 @@ function assertMinorUnits(amount: number): void {
   }
 }
 
-/** Number of decimal places of the currency's minor unit: USD 2, JPY 0, KWD 3. */
+/**
+ * Number of decimal places of the currency's minor unit, from ISO 4217:
+ * USD 2, JPY 0, KWD 3, CLF 4. Throws a `RangeError` for a code that is not an
+ * uppercase ISO 4217 code.
+ */
 export function currencyDecimals(currency: string): number {
-  assertCurrency(currency);
-  let decimals = decimalsByCurrency.get(currency);
+  if (!CURRENCY_CODE_PATTERN.test(currency)) {
+    throw new RangeError(
+      `Invalid currency code ${JSON.stringify(currency)}: expected an uppercase ISO 4217 code`,
+    );
+  }
+  const decimals = Object.hasOwn(ISO_4217_MINOR_UNITS, currency)
+    ? ISO_4217_MINOR_UNITS[currency]
+    : undefined;
   if (decimals === undefined) {
-    const resolved = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-    }).resolvedOptions().maximumFractionDigits;
-    if (resolved === undefined) {
-      throw new RangeError(`Cannot resolve the decimals of currency ${currency}`);
-    }
-    decimals = resolved;
-    decimalsByCurrency.set(currency, decimals);
+    throw new RangeError(
+      `Unknown currency code ${JSON.stringify(currency)}: it is not in the ISO 4217 table`,
+    );
   }
   return decimals;
 }
@@ -120,9 +146,14 @@ export function majorToMinor(
  * locale is the language the user chose; it never changes the amount.
  */
 export function formatMinorUnits(minor: number, currency: string, locale: string): string {
-  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(
-    minorToMajor(minor, currency),
-  );
+  // The decimals come from the ISO 4217 table, not from this runtime's CLDR.
+  const decimals = currencyDecimals(currency);
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(minorToMajor(minor, currency));
 }
 
 /**

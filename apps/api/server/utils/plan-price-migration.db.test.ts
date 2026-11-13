@@ -11,9 +11,9 @@
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { currencyDecimals } from "@beztack/payments/money";
+import { currencyDecimals, ISO_4217_MINOR_UNITS } from "@beztack/payments/money";
 import { sql } from "drizzle-orm";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 
@@ -25,6 +25,9 @@ const MIGRATIONS_FOLDER = resolve(import.meta.dirname, "../../../../packages/db/
 
 /** Tag of the migration that moves prices to integer minor units. */
 const PRICE_MIGRATION_TAG = "0009_prices_minor_units";
+
+/** Every currency the ISO 4217 table knows. */
+const ALL_CURRENCIES = Object.keys(ISO_4217_MINOR_UNITS);
 
 type Journal = { entries: { idx: number; tag: string }[] };
 
@@ -78,6 +81,20 @@ function copyMigrationsWithout(tag: string, destination: string): void {
   writeFileSync(journalPath, JSON.stringify(journal));
 }
 
+type Db = typeof import("@beztack/db").db;
+type Migrate = typeof import("drizzle-orm/postgres-js/migrator").migrate;
+
+/** Empties the database and builds the schema as it was before the price migration. Returns the scratch folder to remove. */
+async function buildOldSchema(db: Db, migrate: Migrate): Promise<string> {
+  const scratch = mkdtempSync(join(tmpdir(), "beztack-price-migration-"));
+  copyMigrationsWithout(PRICE_MIGRATION_TAG, scratch);
+  await db.execute(sql`DROP SCHEMA IF EXISTS drizzle CASCADE`);
+  await db.execute(sql`DROP SCHEMA public CASCADE`);
+  await db.execute(sql`CREATE SCHEMA public`);
+  await migrate(db, { migrationsFolder: scratch });
+  return scratch;
+}
+
 describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
   let dbModule: typeof import("@beztack/db");
   let migrate: typeof import("drizzle-orm/postgres-js/migrator").migrate;
@@ -114,13 +131,7 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
     ]);
     const { db } = dbModule;
 
-    scratchFolder = mkdtempSync(join(tmpdir(), "beztack-price-migration-"));
-    copyMigrationsWithout(PRICE_MIGRATION_TAG, scratchFolder);
-
-    await db.execute(sql`DROP SCHEMA IF EXISTS drizzle CASCADE`);
-    await db.execute(sql`DROP SCHEMA public CASCADE`);
-    await db.execute(sql`CREATE SCHEMA public`);
-    await migrate(db, { migrationsFolder: scratchFolder });
+    scratchFolder = await buildOldSchema(db, migrate);
 
     for (const [id, provider, currency, price] of OLD_PLANS) {
       await db.execute(sql`
@@ -129,8 +140,8 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
       `);
     }
 
-    // One Mercado Pago plan of 1 major unit for every currency Intl knows.
-    for (const currency of Intl.supportedValuesOf("currency")) {
+    // One Mercado Pago plan of 1 major unit for every ISO 4217 currency.
+    for (const currency of ALL_CURRENCIES) {
       await db.execute(sql`
         INSERT INTO plan (id, provider, canonical_tier_id, display_name, price, currency, interval)
         VALUES (${`all_${currency}`}, 'mercadopago', 'basic', ${currency}, 1, ${currency}, 'month')
@@ -166,8 +177,8 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
     await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
   });
 
-  afterAll(async () => {
-    await dbModule?.db.$client.end();
+  afterAll(() => {
+    // The client is shared with the next describe, which closes it.
     if (scratchFolder) {
       rmSync(scratchFolder, { recursive: true, force: true });
     }
@@ -175,7 +186,7 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
 
   it("starts from the old convention", () => {
     expect(before).toEqual({
-      plans: OLD_PLANS.length + Intl.supportedValuesOf("currency").length,
+      plans: OLD_PLANS.length + ALL_CURRENCIES.length,
       changes: OLD_SNAPSHOTS.length,
     });
   });
@@ -212,9 +223,9 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
     });
   });
 
-  it("agrees with currencyDecimals() on the decimals of every currency", async () => {
+  it("agrees with the ISO 4217 table of @beztack/payments/money on every currency", async () => {
     const converted = (await readPlans()).filter((row) => row.id.startsWith("all_"));
-    expect(converted).toHaveLength(Intl.supportedValuesOf("currency").length);
+    expect(converted).toHaveLength(ALL_CURRENCIES.length);
     for (const row of converted) {
       // 1 major unit is 10^decimals minor units.
       expect({ currency: row.currency, price: row.price }).toEqual({
@@ -222,6 +233,25 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
         price: 10 ** currencyDecimals(row.currency),
       });
     }
+  });
+
+  it("carries the same ISO 4217 table as @beztack/payments/money", () => {
+    const sqlText = readFileSync(join(MIGRATIONS_FOLDER, `${PRICE_MIGRATION_TAG}.sql`), "utf8");
+    const fromSql: Record<string, number> = {};
+    for (const [name, decimals] of [
+      ["zero_decimal", 0],
+      ["two_decimal", 2],
+      ["three_decimal", 3],
+      ["four_decimal", 4],
+    ] as const) {
+      const match = new RegExp(`${name} text\\[\\] := ARRAY\\[([^\\]]*)\\]`).exec(sqlText);
+      expect(match, `${name} in the migration`).not.toBeNull();
+      for (const code of (match?.[1] ?? "").match(/[A-Z]{3}/g) ?? []) {
+        expect(fromSql[code], `${code} listed twice`).toBeUndefined();
+        fromSql[code] = decimals;
+      }
+    }
+    expect(fromSql).toEqual({ ...ISO_4217_MINOR_UNITS });
   });
 
   it("converts the price inside every Pending Plan change snapshot, whatever its status", async () => {
@@ -270,5 +300,62 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
 
     expect(await readPlans()).toEqual(plansAfterFirstRun);
     expect(await readSnapshots()).toEqual(snapshotsAfterFirstRun);
+  });
+});
+
+describe.skipIf(!TEST_DATABASE_URL)("Price migration refuses data it cannot convert exactly", () => {
+  let dbModule: typeof import("@beztack/db");
+  let migrate: Migrate;
+  let scratchFolder: string;
+
+  async function insertPlan(
+    id: string,
+    provider: string,
+    currency: string,
+    price: string,
+  ): Promise<void> {
+    await dbModule.db.execute(sql`
+      INSERT INTO plan (id, provider, canonical_tier_id, display_name, price, currency, interval)
+      VALUES (${id}, ${provider}, 'basic', ${id}, ${price}::numeric, ${currency}, 'month')
+    `);
+  }
+
+  async function priceColumnType(): Promise<string | undefined> {
+    const rows = (await dbModule.db.execute(sql`
+      SELECT data_type FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'plan' AND column_name = 'price'
+    `)) as unknown as { data_type: string }[];
+    return rows[0]?.data_type;
+  }
+
+  beforeAll(async () => {
+    const url = TEST_DATABASE_URL as string;
+    assertThrowawayDatabase(url);
+    process.env.DATABASE_URL = url;
+    [dbModule, { migrate }] = await Promise.all([
+      import("@beztack/db"),
+      import("drizzle-orm/postgres-js/migrator"),
+    ]);
+  });
+
+  beforeEach(async () => {
+    scratchFolder = await buildOldSchema(dbModule.db, migrate);
+  });
+
+  afterEach(() => {
+    if (scratchFolder) {
+      rmSync(scratchFolder, { recursive: true, force: true });
+    }
+  });
+
+  afterAll(async () => {
+    await dbModule?.db.$client.end();
+  });
+
+  it("stops on a Mercado Pago plan in a currency that is not an ISO 4217 code in use", async () => {
+    await insertPlan("mp_withdrawn", "mercadopago", "SLL", "4500");
+    await expect(migrate(dbModule.db, { migrationsFolder: MIGRATIONS_FOLDER })).rejects.toThrow();
+    // Nothing changed: the whole migration rolled back.
+    expect(await priceColumnType()).toBe("numeric");
   });
 });

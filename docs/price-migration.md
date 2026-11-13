@@ -40,9 +40,11 @@ What changes:
 | `mercadopago`                                                    | decimal major units (`4500` = $ 4500) | multiplied by 10^decimals of the row's currency, rounded half away from zero |
 | anything else                                                    | unknown                               | left as it is                                                                |
 
-The decimals per currency are the ones `currencyDecimals()` returns (`Intl`): UYU, USD, EUR 2; JPY, CLP,
-COP 0; KWD 3. The migration lists the currencies that do not have 2 decimals in its SQL, and a test
-checks that list against `Intl` for every currency.
+The decimals per currency are the ISO 4217 minor units that `currencyDecimals()` returns: UYU, USD, EUR,
+COP 2; JPY, CLP 0; KWD 3; CLF 4. The migration carries the same table in its SQL (it cannot import the
+TypeScript one) and a test fails if the two differ. A Mercado Pago plan or Pending Plan change whose
+currency is not an ISO 4217 code in use (for example a withdrawn code such as `SLL`) stops the migration
+with an error before anything changes: fix the currency and run it again.
 
 Pending Plan changes of every status (`pending`, `failed`, `activated`, `canceled`) are converted, because
 the admin pages also list the history.

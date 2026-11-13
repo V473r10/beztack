@@ -1,3 +1,4 @@
+import { currencyDecimals } from "@beztack/payments/money";
 import { z } from "zod";
 
 // ============================================================================
@@ -584,8 +585,8 @@ export type ProcessPaymentResponse = {
 // ============================================================================
 
 /**
- * Format a plan price in `locale`, with the decimals `Intl` gives for the
- * currency. The caller supplies the locale (the project's DEFAULT_LOCALE);
+ * Format a plan price in `locale`, with the ISO 4217 decimals of the
+ * currency (not the runtime's `Intl` data). The caller supplies the locale (the project's DEFAULT_LOCALE);
  * there is no built-in regional default.
  */
 export function formatPlanPrice(
@@ -594,9 +595,12 @@ export function formatPlanPrice(
   locale: string,
 ): string {
   const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
+  const decimals = currencyDecimals(currencyId);
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currencyId,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(numAmount);
 }
 
