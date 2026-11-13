@@ -533,7 +533,10 @@
         "number": "Al menos un número",
         "special": "Al menos un carácter especial",
         "uppercase": "Al menos una letra mayúscula"
-      }
+      },
+      "ruleMet": "Requisito cumplido",
+      "rulePending": "Requisito todavía sin cumplir",
+      "ruleUnmet": "Requisito no cumplido"
     }
   },
   "misc": {

@@ -2,6 +2,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
 import React from "react";
 import { Label } from "@/components/ui/label";
+import { visibleFieldErrors } from "@/lib/form-errors";
 import { cn } from "@/lib/utils";
 
 const {
@@ -26,25 +27,43 @@ const { useAppForm, withForm } = createFormHook({
 
 type FormItemContextValue = {
   id: string;
+  deferErrors?: boolean;
 };
 
 const FormItemContext = React.createContext<FormItemContextValue>({} as FormItemContextValue);
 
-function FormItem({ className, ...props }: React.ComponentProps<"div">) {
+function FormItem({
+  className,
+  deferErrors = false,
+  ...props
+}: React.ComponentProps<"div"> & {
+  /** Show this field's errors only after the user left it or tried to submit the form. */
+  deferErrors?: boolean;
+}) {
   const id = React.useId();
 
   return (
-    <FormItemContext.Provider value={{ id }}>
+    <FormItemContext.Provider value={{ id, deferErrors }}>
       <div className={cn("grid gap-2", className)} data-slot="form-item" {...props} />
     </FormItemContext.Provider>
   );
 }
 
 const useFieldContext = () => {
-  const { id } = React.useContext(FormItemContext);
+  const { id, deferErrors = false } = React.useContext(FormItemContext);
   const { name, store, ...fieldContext } = _useFieldContext();
 
-  const errors = useStore(store, (state) => state.meta.errors);
+  const allErrors = useStore(store, (state) => state.meta.errors);
+  const isBlurred = useStore(store, (state) => state.meta.isBlurred);
+  const submissionAttempts = useStore(
+    fieldContext.form.store,
+    (state: { submissionAttempts: number }) => state.submissionAttempts,
+  );
+  const errors = visibleFieldErrors(allErrors, {
+    deferred: deferErrors,
+    isBlurred,
+    submissionAttempts,
+  });
   if (!fieldContext) {
     throw new Error("useFieldContext should be used within <FormItem>");
   }

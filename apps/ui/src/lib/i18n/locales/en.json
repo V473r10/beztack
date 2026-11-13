@@ -529,7 +529,10 @@
         "number": "At least one number",
         "special": "At least one special character",
         "uppercase": "At least one uppercase letter"
-      }
+      },
+      "ruleMet": "Requirement met",
+      "rulePending": "Requirement not met yet",
+      "ruleUnmet": "Requirement not met"
     }
   },
   "misc": {
