@@ -15,6 +15,7 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import type { ProductsResponse } from "@/contexts/membership/membership-types";
 import { env } from "@/env";
 import { requestJson } from "@/lib/api-client";
+import { shouldRetryBillingQuery } from "@/lib/billing-errors";
 import { queryKeys } from "@/lib/query-keys";
 
 const MILLISECONDS_PER_MINUTE = 60_000;
@@ -37,6 +38,7 @@ export function productsQueryOptions(): UseQueryOptions<ProductsResponse> {
     queryKey: queryKeys.subscriptions.products(),
     queryFn: () => requestJson<ProductsResponse>("/api/subscriptions/products"),
     staleTime: PRODUCTS_STALE_TIME,
+    retry: shouldRetryBillingQuery,
   };
 }
 

@@ -15,6 +15,7 @@ import {
   getBillingErrorMessage,
   isOrganizationRequiredError,
   runWithOrganization,
+  shouldRetryBillingQuery,
 } from "@/lib/billing-errors";
 import { redirectToExternalUrl } from "@/lib/browser-navigation";
 import { queryKeys } from "@/lib/query-keys";
@@ -272,6 +273,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
     enabled: isSignedIn,
+    retry: shouldRetryBillingQuery,
   });
 
   // The Subscription list is billing data: only fetched for callers who pass
@@ -286,6 +288,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
     enabled: canManageBilling,
+    retry: shouldRetryBillingQuery,
   });
 
   const checkoutMutation = useMutation({
