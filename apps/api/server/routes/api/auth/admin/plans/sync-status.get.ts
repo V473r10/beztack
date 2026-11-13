@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/plans/sync-status — Compare DB plans with remote provider products
+ * GET /api/auth/admin/plans/sync-status — Compare DB plans with remote provider products
  */
 import { db, plan } from "@beztack/db";
 import { defineEventHandler } from "h3";

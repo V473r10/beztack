@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/plans/sync — Sync a single plan between DB and provider
+ * POST /api/auth/admin/plans/sync — Sync a single plan between DB and provider
  */
 
 import { db, plan } from "@beztack/db";

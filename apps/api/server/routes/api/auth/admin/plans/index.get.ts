@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/plans — List all plans from the generic plan table
+ * GET /api/auth/admin/plans — List all plans from the generic plan table
  */
 import { db, plan } from "@beztack/db";
 import { defineEventHandler } from "h3";

@@ -1,5 +1,5 @@
 /**
- * DELETE /api/admin/plans/:id — Soft-delete a plan and optionally remove from provider
+ * DELETE /api/auth/admin/plans/:id — Soft-delete a plan and optionally remove from provider
  */
 import { db, plan } from "@beztack/db";
 import { eq } from "drizzle-orm";
