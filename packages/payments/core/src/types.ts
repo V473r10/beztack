@@ -234,6 +234,15 @@ export type MembershipUpdate = {
  */
 export type PaymentProviderCapabilities = {
   /**
+   * Whether an Upgrade can be applied to the existing Subscription itself:
+   * `updateSubscription({ productId, prorationBehavior: "invoice" })` moves it
+   * to the higher Product now and the provider charges the prorated difference
+   * on its own. Polar does (https://polar.sh/docs/features/subscriptions/proration).
+   * Mercado Pago cannot reprice a preapproval mid-period, so its Upgrade is a
+   * new Subscription the customer pays at a redirect.
+   */
+  readonly proratedUpgrade: boolean;
+  /**
    * Whether an existing Subscription can move to another Billing cadence
    * (e.g. monthly to yearly). Mercado Pago cannot change a preapproval's
    * frequency; Polar can.

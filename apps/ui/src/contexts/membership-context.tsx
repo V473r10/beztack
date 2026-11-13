@@ -125,6 +125,13 @@ export type MembershipContextValue = {
   error: Error | null;
   subscriptions: Subscription[];
   activeSubscription: Subscription | null;
+  /**
+   * The caller has a Subscription, by Membership status or by the provider's
+   * list (which only loads for Billing managers and can lag or fail). A caller
+   * with one changes plan (the dialog with its proration preview) instead of
+   * starting a checkout.
+   */
+  hasActiveSubscription: boolean;
   orders: Order[];
   meters: CustomerMeter[];
   benefits: string[];
@@ -363,7 +370,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
     onSuccess: (data) => {
       const acceptance = data.planChangeAcceptance as
-        | { changed?: boolean; kind?: string; reconciliationStatus?: string }
+        | { changed?: boolean; direction?: string; kind?: string; reconciliationStatus?: string }
         | undefined;
       if (acceptance?.kind === "admin-tier-override") {
         toast.success(
@@ -371,12 +378,21 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
             ? "Admin tier override applied."
             : "Admin tier override already active.",
         );
-      } else {
+      } else if (acceptance?.reconciliationStatus === "reconciling") {
+        toast.success("Payment confirmed. Plan change is still reconciling.");
+      } else if (
+        acceptance?.direction === "downgrade" ||
+        acceptance?.direction === "cadence_change"
+      ) {
+        // A Pending Plan change: the current plan runs until the renewal.
         toast.success(
-          acceptance?.reconciliationStatus === "reconciling"
-            ? "Payment confirmed. Plan change is still reconciling."
-            : "Plan change accepted successfully!",
+          t(
+            "billing.planChange.scheduledToast",
+            "Plan change scheduled. It takes effect at your next renewal.",
+          ),
         );
+      } else {
+        toast.success("Plan change accepted successfully!");
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
@@ -477,6 +493,11 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   );
 
   const isAppAdmin = membershipStatusQuery.data?.data.isAppAdmin === true;
+  const hasActiveSubscription =
+    membershipStatusQuery.data?.data.hasActiveSubscription === true || activeSubscription !== null;
+  // An App admin's Plan change is an Admin tier override (ADR 0004), applied
+  // by the same endpoint, so it never goes through checkout either.
+  const changesPlan = hasActiveSubscription || isAppAdmin;
   const organizationRole = membershipStatusQuery.data?.data.organizationRole ?? null;
   const billingCadence = membershipStatusQuery.data?.data.billingCadence ?? null;
   const canChangeBillingCadence =
@@ -519,7 +540,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     ) => {
       await runWithOrganization(
         async (checkoutOrganizationId) => {
-          if (activeSubscription) {
+          if (changesPlan) {
             await planChangeRef.current({
               billingPeriod,
               productId: tierId,
@@ -539,7 +560,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         askForOrganization,
       );
     },
-    [activeSubscription, activeOrganizationId, askForOrganization],
+    [changesPlan, activeOrganizationId, askForOrganization],
   );
 
   const changePlan = useCallback(
@@ -551,7 +572,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         prorationBehavior?: "invoice" | "prorate";
       },
     ): Promise<PlanChangeResult> => {
-      if (!activeSubscription) {
+      if (!changesPlan) {
         throw new Error("No active subscription to change");
       }
 
@@ -566,7 +587,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         askForOrganization,
       ).then((result) => result ?? { success: false });
     },
-    [activeSubscription, activeOrganizationId, askForOrganization],
+    [changesPlan, activeOrganizationId, askForOrganization],
   );
 
   const billingPortalRef = useRef(billingPortalMutation.mutateAsync);
@@ -664,6 +685,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       error,
       subscriptions,
       activeSubscription,
+      hasActiveSubscription,
       orders: EMPTY_ORDERS,
       meters: EMPTY_METERS,
       benefits: EMPTY_BENEFITS,
@@ -693,6 +715,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       error,
       subscriptions,
       activeSubscription,
+      hasActiveSubscription,
       upgradeToTier,
       changePlan,
       openBillingPortal,

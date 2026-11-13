@@ -29,6 +29,7 @@ import type { PlanChangeType } from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
 import { formatPrice } from "@/lib/format";
+import { resolvePricingAction } from "./pricing-actions";
 
 export type PricingCardProps = {
   tier: PricingTier;
@@ -126,22 +127,18 @@ export function PricingCard({
       return;
     }
 
-    // If user has an active subscription, trigger plan change flow
-    if (hasActiveSubscription && onPlanChange) {
-      onPlanChange(tier);
-      return;
+    // A subscriber changes plan in the dialog; anyone else checks out the
+    // product of the chosen Billing period.
+    const action = resolvePricingAction({
+      billingPeriod,
+      changesPlan: hasActiveSubscription && Boolean(onPlanChange),
+      tier,
+    });
+    if (action.kind === "plan-change") {
+      onPlanChange?.(action.tier);
+    } else if (action.kind === "checkout") {
+      onSelect?.(action.productId);
     }
-
-    // Otherwise, proceed with new checkout
-    if (!onSelect) {
-      return;
-    }
-
-    if (!productId) {
-      return;
-    }
-
-    onSelect(productId);
   };
 
   const getButtonText = () => {

@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { PlanChangeDialog } from "@/components/payments/plan-change-dialog";
 import { PricingCard } from "@/components/payments/pricing-card";
+import { resolvePricingAction, resolveTierProductId } from "@/components/payments/pricing-actions";
 import { PricingBar } from "@/components/pricing-bar";
 import {
   Accordion,
@@ -136,6 +137,8 @@ export default function Pricing() {
   const {
     currentTier,
     activeSubscription,
+    hasActiveSubscription,
+    isAppAdmin,
     upgradeToTier,
     changePlan,
     getPlanChangeType,
@@ -145,7 +148,10 @@ export default function Pricing() {
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();
 
-  const hasActiveSubscription = Boolean(activeSubscription);
+  // Choosing a plan opens the Plan change dialog (with its proration preview)
+  // for a subscriber, whichever source says so, and for an App admin, whose
+  // Plan change is an Admin tier override. Everyone else goes to checkout.
+  const changesPlan = hasActiveSubscription || isAppAdmin;
 
   const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<PricingTier[]>({
     queryKey: queryKeys.subscriptions.productTiers(),
@@ -184,18 +190,20 @@ export default function Pricing() {
     setShowPlanChangeDialog(true);
   }, []);
 
-  // The closing call to action offers Pro: a subscriber changes plan, anyone else checks out.
+  // The closing call to action offers Pro for the chosen period: a subscriber
+  // changes plan, anyone else checks out the Pro product (not the tier id).
   const proTier = allTiers.find((tier) => tier.id === "pro" && !tier.catalogOnly);
-  const proProductId = billingPeriod === "yearly" ? proTier?.yearly?.id : proTier?.monthly?.id;
+  const proProductId = proTier ? resolveTierProductId(proTier, billingPeriod) : undefined;
   const handleGetPro = () => {
-    if (!(proTier && proProductId)) {
+    if (!proTier) {
       return;
     }
-    if (hasActiveSubscription) {
-      handlePlanChange(proTier);
-      return;
+    const action = resolvePricingAction({ billingPeriod, changesPlan, tier: proTier });
+    if (action.kind === "plan-change") {
+      handlePlanChange(action.tier);
+    } else if (action.kind === "checkout") {
+      handleTierSelect(action.productId);
     }
-    handleTierSelect(proProductId);
   };
 
   const handleConfirmPlanChange = useCallback(
@@ -363,7 +371,7 @@ export default function Pricing() {
                   billingPeriod={billingPeriod}
                   changeType={getChangeTypeForTier(tier.id)}
                   currentTier={currentTier}
-                  hasActiveSubscription={hasActiveSubscription}
+                  hasActiveSubscription={changesPlan}
                   index={index}
                   isLoading={isLoading}
                   isSignedIn={Boolean(session)}

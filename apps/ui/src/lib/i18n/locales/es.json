@@ -255,7 +255,10 @@
       "dueToday": "A pagar hoy",
       "thenFullAmount": "Después {{price}} por período.",
       "startsOn": "Mantienes tu plan actual hasta el {{date}} y después pagas {{price}}.",
-      "startsAtRenewal": "Mantienes tu plan actual hasta la próxima renovación y después pagas {{price}}."
+      "startsAtRenewal": "Mantienes tu plan actual hasta la próxima renovación y después pagas {{price}}.",
+      "pendingTitle": "Cambio de plan pendiente",
+      "pendingNotice": "Se activa en tu próxima renovación. Hoy no se cobra nada.",
+      "scheduledToast": "Cambio de plan programado. Se aplica en tu próxima renovación."
     },
     "downgradeWarning": {
       "title": "Confirmar Reducción",
@@ -385,7 +388,8 @@
     "errors": {
       "customer_email_rejected": "El proveedor de pagos rechazó tu correo electrónico. Usá otro correo.",
       "payment_provider_unavailable": "El proveedor de pagos no está disponible. Probá de nuevo en un momento.",
-      "organization_required": "Primero creá una organización: esta acción se cobra a una organización."
+      "organization_required": "Primero creá una organización: esta acción se cobra a una organización.",
+      "provider_did_not_apply": "El proveedor de pagos no aplicó el cambio de plan. No se cobró nada. Probá de nuevo en un momento."
     },
     "checkoutFailed": "No se pudo iniciar el pago"
   },
