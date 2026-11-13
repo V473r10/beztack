@@ -29,6 +29,7 @@ function buildRoutes(signedIn: boolean): Record<string, Handler> {
       total: organization.members.length,
     }),
     "GET /api/auth/organization/list-invitations": () => [],
+    "GET /api/auth/organization/list-teams": () => [],
     "GET /api/auth/admin/list-users": () => ({
       users,
       total: users.length,

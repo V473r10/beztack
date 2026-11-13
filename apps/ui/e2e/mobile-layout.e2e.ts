@@ -28,6 +28,7 @@ const ROUTES: AuditedRoute[] = [
   { name: "home", path: "/", signedIn: true },
   { name: "pricing", path: "/pricing", signedIn: true },
   { name: "billing", path: "/billing", signedIn: true },
+  { name: "organizations", path: "/organizations", signedIn: true },
   { name: "admin", path: "/admin", signedIn: true },
   { name: "admin/users", path: "/admin/users", signedIn: true },
   { name: "admin/plan-changes", path: "/admin/plan-changes", signedIn: true },

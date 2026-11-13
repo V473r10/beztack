@@ -33,6 +33,8 @@ export const session = {
   updatedAt: NOW,
 };
 
+const LONG_USER_EMAIL = "someone.with.a.rather.long.address@subdomain.example.com";
+
 export const organization = {
   id: "org_1",
   name: "Ada's workspace",
@@ -49,12 +51,18 @@ export const organization = {
       createdAt: NOW,
       user: { id: adminUser.id, name: adminUser.name, email: adminUser.email, image: null },
     },
+    {
+      id: "member_2",
+      organizationId: "org_1",
+      userId: "user_long_email",
+      role: "member",
+      createdAt: NOW,
+      user: { id: "user_long_email", name: "", email: LONG_USER_EMAIL, image: null },
+    },
   ],
   invitations: [],
   teams: [],
 };
-
-const LONG_USER_EMAIL = "someone.with.a.rather.long.address@subdomain.example.com";
 
 export const users = [
   adminUser,

@@ -63,7 +63,7 @@ function planStatusOf(args: {
 
 function HomeSkeleton() {
   return (
-    <div className="grid gap-4 px-4 lg:px-6">
+    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6">
       <Skeleton className="h-40 w-full" />
       <Skeleton className="h-40 w-full" />
     </div>
@@ -208,7 +208,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
+      <div className="grid grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:px-6">
         <Card id={TOUR_STEP_IDS.Home.PLAN_CARD}>
           <CardHeader>
             <CardDescription>{t("home.plan.title")}</CardDescription>
@@ -299,7 +299,7 @@ export default function Home() {
       ) : null}
 
       {organization ? (
-        <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <div className="grid grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:px-6">
           <Card>
             <CardHeader>
               <CardDescription>{t("home.seats.title")}</CardDescription>
