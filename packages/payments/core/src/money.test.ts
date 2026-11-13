@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { currencyDecimals, formatMinorUnits, majorToMinor, minorToMajor } from "./money.js";
+import {
+  currencyDecimals,
+  formatMinorUnits,
+  majorToMinor,
+  minorToMajor,
+  prorateMinorUnits,
+} from "./money.js";
 
 describe("currencyDecimals", () => {
   it.each([
@@ -144,5 +150,50 @@ describe("formatMinorUnits", () => {
 
   it("rejects an amount that is not an integer", () => {
     expect(() => formatMinorUnits(9.5, "USD", "en-US")).toThrow(/minor units/i);
+  });
+});
+
+describe("prorateMinorUnits", () => {
+  it("takes the share of an amount for part of a period", () => {
+    expect(prorateMinorUnits(2900, 15, 30)).toBe(1450);
+    expect(prorateMinorUnits(2900, 30, 30)).toBe(2900);
+    expect(prorateMinorUnits(2900, 0, 30)).toBe(0);
+  });
+
+  it("rounds to the nearest minor unit, ties away from zero", () => {
+    expect(prorateMinorUnits(999, 10, 30)).toBe(333);
+    // 1000 * 1 / 30 = 33.33...
+    expect(prorateMinorUnits(1000, 1, 30)).toBe(33);
+    // 1000 * 2 / 30 = 66.66...
+    expect(prorateMinorUnits(1000, 2, 30)).toBe(67);
+    // 5 * 1 / 2 = 2.5 is a tie
+    expect(prorateMinorUnits(5, 1, 2)).toBe(3);
+    expect(prorateMinorUnits(-5, 1, 2)).toBe(-3);
+  });
+
+  it("works for currencies without or with extra decimals", () => {
+    expect(prorateMinorUnits(900, 10, 31)).toBe(290); // JPY 900, 290.32
+    expect(prorateMinorUnits(9000, 10, 31)).toBe(2903); // KWD 9.000, 2903.2
+  });
+
+  it("is exact for large amounts", () => {
+    expect(prorateMinorUnits(9_007_199_254_740, 1, 1000)).toBe(9_007_199_255);
+  });
+
+  it.each([
+    [9.5, 1, 2],
+    [100, 1.5, 2],
+    [100, 1, 2.5],
+  ])("rejects non-integer input (%s, %s, %s)", (amount, numerator, denominator) => {
+    expect(() => prorateMinorUnits(amount, numerator, denominator)).toThrow(RangeError);
+  });
+
+  it("rejects a non-positive denominator and a negative numerator", () => {
+    expect(() => prorateMinorUnits(100, 1, 0)).toThrow(RangeError);
+    expect(() => prorateMinorUnits(100, -1, 30)).toThrow(RangeError);
+  });
+
+  it("rejects a product that does not fit in a safe integer", () => {
+    expect(() => prorateMinorUnits(Number.MAX_SAFE_INTEGER, 31, 30)).toThrow(RangeError);
   });
 });
