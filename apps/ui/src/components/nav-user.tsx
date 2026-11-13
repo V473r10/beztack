@@ -1,7 +1,6 @@
 import {
   IconCreditCard,
   IconDotsVertical,
-  IconLanguage,
   IconLogout,
   IconNotification,
   IconRoute,
@@ -9,6 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { LanguageSelector } from "@/components/language-selector";
 import { MembershipBadge } from "@/components/payments/membership-badge";
 import { useTour } from "@/components/tour";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,11 +18,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -42,7 +38,7 @@ export function NavUser() {
     email: session?.user?.email ?? "",
     avatar: session?.user?.image ?? "",
   };
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { isMobile } = useSidebar();
   const { startTour } = useTour();
   const { currentTier } = useMembership();
@@ -127,22 +123,7 @@ export function NavUser() {
               <span>Start Tour</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <IconLanguage />
-                {t("sidebar.userMenu.language")}
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onClick={() => i18n.changeLanguage("en")}>
-                    English
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => i18n.changeLanguage("es")}>
-                    Español
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
+            <LanguageSelector variant="submenu" />
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>
               <IconLogout />

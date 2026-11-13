@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
 import { Toaster } from "sonner";
-import { LanguageToggle } from "@/components/language-toggle";
+import { LanguageSelector } from "@/components/language-selector";
 import { cn } from "@/lib/utils";
 
 type AuthLayoutProps = {
@@ -26,7 +26,7 @@ const AuthLayout = ({ className }: AuthLayoutProps) => {
       {/* Main Content */}
       <div className="relative flex w-full items-center justify-center p-8 lg:w-1/2">
         <div className="absolute top-8 right-8">
-          <LanguageToggle />
+          <LanguageSelector />
         </div>
         <div className={cn("w-full max-w-md space-y-8", className)}>
           <div className="mb-8 text-center lg:hidden">
