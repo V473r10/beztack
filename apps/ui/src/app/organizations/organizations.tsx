@@ -49,8 +49,8 @@ export default function OrganizationsPage() {
   return (
     <div className="space-y-6 p-4 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="font-bold text-3xl">{t("organizations.page.title")}</h1>
           <p className="text-muted-foreground">{t("organizations.page.description")}</p>
         </div>

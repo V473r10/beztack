@@ -4,10 +4,13 @@ Beztack can run as a public demo where a visitor sees the billing depth without 
 
 ## What a visitor sees
 
-1. **Sign up** with any email and password. Email verification is off, and no email is sent in demo mode.
-2. **Pick a plan** on the pricing page and check out in the **Mercado Pago sandbox** or the **Polar sandbox** (one provider per deployment, chosen by `PAYMENT_PROVIDER`).
-3. **Change plan** with the proration preview: upgrades charge the difference, downgrades and cadence changes become a Pending Plan change that activates at renewal. The proration shows for a visitor who paid in the sandbox, not for the seeded customer or the admin (see "What is fake, what is sandbox").
-4. **Open the admin pages** as the demo App admin: the Failed plan changes page lists one failed downgrade that the seed creates, with its Retry action.
+1. **Sign up** with any email whose domain can receive mail (for example `you@gmail.com`) and a password. Email verification is off, and no email is sent in demo mode. The Polar sandbox rejects made-up domains such as `.test`, and the sign-up page says so. Beztack creates a **Personal organization** and makes it the active one, so the visitor lands on the home with their real plan.
+2. **Pick a plan** on the pricing page (Free, Basic, Pro, Ultimate, in that order, each with its features and limits) and check out in the **Mercado Pago sandbox** or the **Polar sandbox** (one provider per deployment, chosen by `PAYMENT_PROVIDER`). Free does not go through checkout.
+3. **Upgrade** with the proration preview: with a Subscription, choosing a higher plan opens the Plan change dialog and shows the credit for the unused days and the amount due today.
+4. **Downgrade** or change cadence: it becomes a **Pending plan change** that activates at renewal, and nothing is charged today. The proration shows for a visitor who paid in the sandbox, not for the seeded customer or the admin (see "What is fake, what is sandbox").
+5. **Open the admin pages** as the demo App admin: the Failed plan changes page lists one failed downgrade that the seed creates (US$ 9.00, Basic), with its Retry action. Plan Sync lists the seven catalog plans against the Polar products (a plan is Synced when the tier name, which is the product name before `-`, and the description match), and Analytics shows the user counts of the demo database. Keep the admin password private and show this step in a recorded walkthrough.
+
+The language selector (English, Spanish) is on every page, including pricing, and the choice is remembered.
 
 A banner pinned to the bottom of every page reads "Demo: sandbox payments, data resets daily". The sign-in and sign-up pages also show a "How to try the demo" panel with the test cards of the active sandbox (Polar or Mercado Pago, from `VITE_PAYMENT_PROVIDER`) and the daily wipe notice. On wide screens it sits in the brand column; on a phone it is a collapsed section under the form. It never shows the admin credentials.
 
@@ -121,7 +124,29 @@ At [sandbox.polar.sh](https://sandbox.polar.sh), in the organization named by `P
 | Ultimate month | Monthly | 99          | `ultimate`      | `POLAR_ULTIMATE_MONTHLY_PRODUCT_ID` |
 | Ultimate year  | Yearly  | 990         | `ultimate`      | `POLAR_ULTIMATE_YEARLY_PRODUCT_ID`  |
 
-Add the `tier` key under the product's metadata; it is what ties a Polar product to a plan row. Copy each product's id (a UUID) into its variable in `apps/api/.env`, then run `pnpm demo:check`. Archive products you replaced: an archived product may still answer by id, and the check does not look at whether a product is archived.
+Add the `tier` key under the product's metadata; it is what ties a Polar product to a plan row. Name each product `<Tier> - <Period>` as in the table ("Basic - Monthly"): the pricing page names a tier after the text before the first `-`, so "Basic - Monthly" and "Basic - Yearly" both give the card "Basic". Copy each product's id (a UUID) into its variable in `apps/api/.env`, then run `pnpm demo:check`.
+
+Archive products you replaced. An archived product may still answer by id, and the check does not look at whether a product is archived, so a stale id keeps passing. To list what the sandbox still has, call the products endpoint of the sandbox API with the organization access token (`GET https://sandbox-api.polar.sh/v1/products/?organization_id=<id>&is_archived=false`) and archive each leftover with `PATCH /v1/products/<id>` and `{"is_archived": true}`. The three monthly products from before the tier metadata existed (Basic, Pro and Ultimate, with prices 100 times the catalog) were archived this way on 2026-11-12.
+
+## Database created before the price contract
+
+Plan prices and Pending plan change snapshots are integer minor units of their currency since ADR 0007 (`900` USD is US$ 9.00). A demo database created before that change holds the old values, and `pnpm db:migrate` converts them in place. Back it up first, and follow [`docs/price-migration.md`](./price-migration.md) (it has the `pg_dump` command, the order of steps and what to check afterwards). A demo database that only has seeded data does not need the backup: `pnpm db:migrate` and then `pnpm demo:reset` is enough.
+
+## Closing walkthrough
+
+Run this before announcing the demo, with a real Polar sandbox and the API and UI on loopback ports. It is the closing check of the live-demo spec (BZ-105).
+
+1. `pnpm demo:check`, then `pnpm demo:reset` (`DEMO_MODE=true`, a database used only by the demo).
+2. As a new visitor with an email on a real domain: sign up, see the Personal organization active, pay Basic with the sandbox test card (`4242 4242 4242 4242`, any future date, any CVC), upgrade to Pro and read the proration, downgrade to Basic and look for the Pending plan change.
+3. As the admin: Failed plan changes (US$ 9.00, Retry), Plan Sync, Analytics.
+4. Repeat the pages at 1440 and 393 px, light and dark, English and Spanish. Fail on any unexpected 4xx or 5xx response, any visible `some.key.name` text and any page that scrolls sideways (`apps/ui/e2e/layout-audit.ts` is the audit).
+
+Polar cannot call a server on `127.0.0.1`, so these steps need a deployed API with the webhook endpoint registered, and cannot be proven on a laptop:
+
+- **Pending plan change after a downgrade or a cadence change.** Accepting it reaches Polar, but Beztack stores the Pending plan change against its own Subscription row (`pending_plan_change.subscription_id` references `subscription`), and the webhook is what creates that row after a checkout. Without it the insert fails, the answer is `reconciling` and the pending notice does not show. On 2026-11-12 this was the one step of the walkthrough that could not be completed locally.
+- **Retry of a change on a visitor's Subscription**, for the same reason. Retry on the seeded failed change works, because the seed creates its Subscription row.
+
+What does work without the webhook: sign-up, the Personal organization, pricing, the sandbox checkout, the Membership shown right after paying (read from Polar), the Upgrade preview and its acceptance, the downgrade preview and the warning dialog, and every admin page.
 
 ## Safety limits
 
@@ -134,6 +159,7 @@ Add the `tier` key under the product's metadata; it is what ties a Polar product
 | Rate limits on sign-up and checkout    | **Not built.** Put a platform rule in front (Vercel Firewall or Cloudflare rate limiting) on `/api/auth/sign-up/*` and `/api/subscriptions/checkout` before announcing the URL.                      |
 | Reject live-mode Mercado Pago webhooks | **Not built.** Mercado Pago webhooks carry a `live_mode` flag; the demo should drop events where it is `true`.                                                                                       |
 | Daily reset scheduled                  | **Not built.** See "Demo data and reset".                                                                                                                                                            |
+| Provider rate limits                   | **Not handled.** Pages that list Subscriptions or products call the provider on every load. The Polar sandbox answers 429 when many sessions load pages at once; the API passes the 429 on.          |
 
 ## What Facundo must provide
 

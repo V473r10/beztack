@@ -42,7 +42,7 @@ export default function Billing() {
           {/* Header Skeleton */}
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-96" />
+            <Skeleton className="h-4 w-96 max-w-full" />
           </div>
 
           {/* Main Content Skeleton */}

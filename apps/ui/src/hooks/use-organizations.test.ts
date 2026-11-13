@@ -1,7 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   invalidateQueries: vi.fn(),
+  session: { user: { id: "user_1" } } as { user: { id: string } } | null,
   setActive: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -33,6 +35,7 @@ vi.mock("sonner", () => ({
 
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
+    useSession: () => ({ data: mocks.session }),
     organization: {
       acceptInvitation: vi.fn(),
       addTeamMember: vi.fn(),
@@ -59,7 +62,33 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-import { useCancelInvitation, useSetActiveOrganization } from "./use-organizations";
+import {
+  useActiveOrganization,
+  useCancelInvitation,
+  useSetActiveOrganization,
+} from "./use-organizations";
+
+describe("useActiveOrganization", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("does not ask the API for the active organization without a session", () => {
+    mocks.session = null;
+
+    useActiveOrganization();
+
+    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
+  });
+
+  it("asks for it once someone is signed in", () => {
+    mocks.session = { user: { id: "user_1" } };
+
+    useActiveOrganization();
+
+    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
+  });
+});
 
 describe("useSetActiveOrganization", () => {
   beforeEach(() => {

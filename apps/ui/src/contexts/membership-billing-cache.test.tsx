@@ -21,7 +21,7 @@ vi.mock("@/hooks/use-organizations", () => ({
 }));
 
 vi.mock("@/lib/auth-client", () => ({
-  authClient: {},
+  authClient: { useSession: () => ({ data: { user: { id: "user_1" } } }) },
 }));
 
 vi.mock("sonner", () => ({

@@ -99,6 +99,7 @@ const EMPTY_SUBSCRIPTIONS: Subscription[] = [];
 const EMPTY_ORDERS: Order[] = [];
 const EMPTY_METERS: CustomerMeter[] = [];
 const EMPTY_BENEFITS: string[] = [];
+const PLAN_CHANGE_PREVIEW_KEY = queryKeys.subscriptions.planChangePreviews()[1];
 
 export type { CustomerMeter, Order, Subscription } from "./membership/membership-types";
 
@@ -256,6 +257,10 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // action that found the user without an organization.
   const [organizationPrompt, setOrganizationPrompt] = useState<OrganizationPrompt | null>(null);
   const { data: activeOrganization } = useActiveOrganization();
+  // The pricing page is public and mounts this provider too: without a session
+  // Membership status can only answer 401.
+  const { data: session } = authClient.useSession();
+  const isSignedIn = Boolean(session);
   const isOrganizationSubscriptionMode = env.VITE_SUBSCRIPTION_MODE === "organization";
   const activeOrganizationId = isOrganizationSubscriptionMode ? activeOrganization?.id : undefined;
 
@@ -272,6 +277,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         `/api/membership/status${organizationQueryString(activeOrganizationId)}`,
       ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
+    enabled: isSignedIn,
   });
 
   // The Subscription list is billing data: only fetched for callers who pass
@@ -397,7 +403,17 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       } else {
         toast.success(t("billing.toast.planChangeAccepted"));
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
+      // The dialog that sent this change is still open while Membership refreshes. A quote
+      // for the same change would now be priced against the new plan (a 400), so previews
+      // are only marked stale, and the next dialog fetches a fresh one.
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.subscriptions.all(),
+        predicate: (query) => query.queryKey[1] !== PLAN_CHANGE_PREVIEW_KEY,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.subscriptions.planChangePreviews(),
+        refetchType: "none",
+      });
     },
     onError: (mutationError: Error) => {
       if (isOrganizationRequiredError(mutationError)) {
