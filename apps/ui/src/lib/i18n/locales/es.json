@@ -123,29 +123,48 @@
     "getStarted": "Comenzar",
     "subscribe": "Suscribirse",
     "features": {
-      "two-factor": "Autenticación de Dos Factores",
-      "social-login": "Inicio de Sesión Social",
-      "passkeys": "Autenticación con Passkeys",
-      "basic-dashboard-access": "Acceso al Panel Básico",
-      "email-support": "Soporte por Email",
-      "all-basic": "Todas las Características Básicas",
-      "organizations": "Soporte Multi-Organización",
-      "role-based-access-control": "Control de Acceso Basado en Roles",
-      "all-pro": "Todas las Características Pro",
-      "advanced-dashboard-access": "Acceso al Panel Avanzado",
-      "priority-support": "Soporte Prioritario y SLA"
+      "basic_dashboard": "Panel básico",
+      "up_to_5_users": "Hasta 5 usuarios",
+      "community_support": "Soporte de la comunidad",
+      "export_data": "Exportación de datos",
+      "advanced_analytics": "Analíticas avanzadas",
+      "up_to_50_users": "Hasta 50 usuarios",
+      "priority_support": "Soporte prioritario",
+      "custom_integrations": "Integraciones a medida",
+      "unlimited_users": "Usuarios ilimitados",
+      "dedicated_support": "Soporte dedicado",
+      "white_label": "Marca blanca",
+      "sla_guarantee": "Garantía de SLA",
+      "advanced_security": "Seguridad avanzada",
+      "audit_logs": "Registros de auditoría"
     },
     "limits": {
-      "users": "Miembros del Equipo",
-      "organizations": "Organizaciones",
-      "storage": "Almacenamiento",
-      "api-calls": "Llamadas API/Mes"
+      "users": "Miembros del equipo",
+      "projects": "Proyectos",
+      "storage": "Almacenamiento (GB)",
+      "apiCalls": "Llamadas a la API por mes",
+      "organizations": "Organizaciones"
     },
     "permissions": {
-      "read": "Acceso de Lectura",
-      "write": "Acceso de Escritura",
-      "admin": "Acceso de Administrador",
-      "billing": "Acceso de Facturación"
+      "dashboard": {
+        "read": "Ver el panel"
+      },
+      "projects": {
+        "read": "Ver proyectos",
+        "write": "Editar proyectos"
+      },
+      "billing": {
+        "read": "Ver la facturación",
+        "write": "Gestionar la facturación"
+      },
+      "analytics": {
+        "read": "Ver analíticas",
+        "write": "Gestionar analíticas"
+      },
+      "admin": {
+        "read": "Ver el área de administración",
+        "write": "Gestionar el área de administración"
+      }
     },
     "categories": {
       "authentication": "Autenticación",
@@ -185,6 +204,29 @@
       "description": "Únete a miles de equipos que ya usan Beztack para asegurar y escalar sus aplicaciones.",
       "getStartedPro": "Empezar con Pro",
       "viewDocs": "Ver documentación"
+    },
+    "hero": {
+      "badge": "Precios simples",
+      "title": "Elegí tu",
+      "titleHighlight": "plan ideal",
+      "subtitle": "Empezá gratis y crecé a tu ritmo. Sin costos ocultos, sin sorpresas.",
+      "annualBonus": "Con el pago anual te regalamos 2 meses"
+    },
+    "card": {
+      "includes": "Incluye:",
+      "limits": "Límites:",
+      "popular": "Popular",
+      "free": "Gratis",
+      "perMonth": "/mes",
+      "perYear": "/año",
+      "yearlySaving": "{{amount}} por año"
+    },
+    "startFree": "Empezar gratis",
+    "goToApp": "Ir a la app",
+    "bar": {
+      "label": "Navegación de precios",
+      "backToApp": "Volver a la app",
+      "signIn": "Iniciar sesión"
     }
   },
   "billing": {
@@ -353,7 +395,13 @@
     "workflowStreamline": "Optimiza tu flujo de trabajo con nuestra potente plataforma.",
     "yourLogo": "Tu Logo",
     "cancel": "Cancelar",
-    "processing": "Procesando..."
+    "processing": "Procesando...",
+    "theme": {
+      "toggle": "Cambiar tema",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    }
   },
   "dashboard": {
     "acquisitionNeedsAttention": "La adquisición necesita atención",

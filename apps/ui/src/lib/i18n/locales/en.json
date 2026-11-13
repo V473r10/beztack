@@ -123,29 +123,48 @@
     "getStarted": "Get Started",
     "subscribe": "Subscribe",
     "features": {
-      "two-factor": "Two-Factor Authentication",
-      "social-login": "Social Login",
-      "passkeys": "Passkey Authentication",
-      "basic-dashboard-access": "Basic Dashboard Access",
-      "email-support": "Email Support",
-      "all-basic": "All Basic Features",
-      "organizations": "Multi-Organization Support",
-      "role-based-access-control": "Role-Based Access Control",
-      "all-pro": "All Pro Features",
-      "advanced-dashboard-access": "Advanced Dashboard Access",
-      "priority-support": "Priority Support & SLA"
+      "basic_dashboard": "Basic dashboard",
+      "up_to_5_users": "Up to 5 users",
+      "community_support": "Community support",
+      "export_data": "Data export",
+      "advanced_analytics": "Advanced analytics",
+      "up_to_50_users": "Up to 50 users",
+      "priority_support": "Priority support",
+      "custom_integrations": "Custom integrations",
+      "unlimited_users": "Unlimited users",
+      "dedicated_support": "Dedicated support",
+      "white_label": "White label",
+      "sla_guarantee": "SLA guarantee",
+      "advanced_security": "Advanced security",
+      "audit_logs": "Audit logs"
     },
     "limits": {
-      "users": "Team Members",
-      "organizations": "Organizations",
-      "storage": "Storage",
-      "api-calls": "API Calls/Month"
+      "users": "Team members",
+      "projects": "Projects",
+      "storage": "Storage (GB)",
+      "apiCalls": "API calls per month",
+      "organizations": "Organizations"
     },
     "permissions": {
-      "read": "Read Access",
-      "write": "Write Access",
-      "admin": "Admin Access",
-      "billing": "Billing Access"
+      "dashboard": {
+        "read": "View the dashboard"
+      },
+      "projects": {
+        "read": "View projects",
+        "write": "Edit projects"
+      },
+      "billing": {
+        "read": "View billing",
+        "write": "Manage billing"
+      },
+      "analytics": {
+        "read": "View analytics",
+        "write": "Manage analytics"
+      },
+      "admin": {
+        "read": "View the admin area",
+        "write": "Manage the admin area"
+      }
     },
     "categories": {
       "authentication": "Authentication",
@@ -185,6 +204,29 @@
       "description": "Join thousands of teams already using Beztack to secure and scale their applications.",
       "getStartedPro": "Get Started with Pro",
       "viewDocs": "View Docs"
+    },
+    "hero": {
+      "badge": "Simple pricing",
+      "title": "Choose your",
+      "titleHighlight": "perfect plan",
+      "subtitle": "Start free and scale as you grow. No hidden fees, no surprises.",
+      "annualBonus": "Get 2 months free with annual billing"
+    },
+    "card": {
+      "includes": "Includes:",
+      "limits": "Limits:",
+      "popular": "Popular",
+      "free": "Free",
+      "perMonth": "/month",
+      "perYear": "/year",
+      "yearlySaving": "{{amount}} per year"
+    },
+    "startFree": "Start free",
+    "goToApp": "Go to the app",
+    "bar": {
+      "label": "Pricing navigation",
+      "backToApp": "Back to the app",
+      "signIn": "Sign in"
     }
   },
   "billing": {
@@ -353,7 +395,13 @@
     "workflowStreamline": "Streamline your workflow with our powerful platform.",
     "yourLogo": "Your Logo",
     "cancel": "Cancel",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "theme": {
+      "toggle": "Change theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
   },
   "dashboard": {
     "acquisitionNeedsAttention": "Acquisition needs attention",
