@@ -39,8 +39,7 @@ describe("BillingDashboard in Spanish", () => {
     expect(html).toContain("Sin suscripción activa");
     expect(html).toContain("Administrar facturación");
     expect(html).toContain("Cambiar de plan");
-    expect(html).toContain("Uso y límites");
-    expect(html).toContain("Historial de pedidos");
+    expect(html).toContain("Pedidos");
   });
 
   it("keeps English text for English", () => {

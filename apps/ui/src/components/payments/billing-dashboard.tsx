@@ -353,7 +353,7 @@ export function BillingDashboard({
 
         {/* Tabs for detailed views */}
         <Tabs className="space-y-4" defaultValue="usage">
-          <TabsList>
+          <TabsList className="h-auto max-w-full flex-wrap justify-start">
             <TabsTrigger value="usage">{t("billing.dashboard.tabs.usage")}</TabsTrigger>
             <TabsTrigger value="subscriptions">
               {t("billing.dashboard.tabs.subscriptions")}

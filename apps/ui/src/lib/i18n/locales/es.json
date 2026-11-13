@@ -411,9 +411,9 @@
       "changePlan": "Cambiar de plan",
       "choosePlan": "Elegir un plan",
       "tabs": {
-        "usage": "Uso y límites",
+        "usage": "Uso",
         "subscriptions": "Suscripciones",
-        "orders": "Historial de pedidos"
+        "orders": "Pedidos"
       },
       "subscription": {
         "title": "Suscripción",
