@@ -20,7 +20,7 @@ Before running the migration:
 1. In Mercado Pago, list the payments of your plans that are `pending` or `in_process` (an Upgrade pays the
    prorated difference first). Wait until they are approved or rejected, or cancel them.
 2. Check that no Upgrade is mid-flight on your side: `SELECT id, status FROM pending_plan_change WHERE
-   status = 'pending' AND target_plan_snapshot ->> 'paymentProvider' = 'mercadopago'` lists scheduled
+status = 'pending' AND target_plan_snapshot ->> 'paymentProvider' = 'mercadopago'` lists scheduled
    changes (downgrades and period switches). Those are safe, the migration converts their price.
 3. Deploy the new code and run the migration in the same maintenance window, so no old `fullamt` is
    approved against the new code.
@@ -54,12 +54,12 @@ pnpm db:migrate
 
 What changes:
 
-| Provider (`provider` column / `paymentProvider` in the snapshot) | Old unit                                                                  | Conversion                                                                   |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `polar`, id like `polar_<tier>_<month\|year>` (written by the seed) | integer cents                                                             | none, already minor units                                                    |
-| `polar`, any other id (admin create, import or Plan Sync)        | decimal major units (`9.99` = US$ 9.99), because the old adapter converted | multiplied by 10^decimals of the row's currency, rounded half away from zero |
-| `mercadopago`                                                    | decimal major units (`4500` = $ 4500)                                     | multiplied by 10^decimals of the row's currency, rounded half away from zero |
-| anything else                                                    | unknown                                                                   | left as it is                                                                |
+| Provider (`provider` column / `paymentProvider` in the snapshot)    | Old unit                                                                   | Conversion                                                                   |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `polar`, id like `polar_<tier>_<month\|year>` (written by the seed) | integer cents                                                              | none, already minor units                                                    |
+| `polar`, any other id (admin create, import or Plan Sync)           | decimal major units (`9.99` = US$ 9.99), because the old adapter converted | multiplied by 10^decimals of the row's currency, rounded half away from zero |
+| `mercadopago`                                                       | decimal major units (`4500` = $ 4500)                                      | multiplied by 10^decimals of the row's currency, rounded half away from zero |
+| anything else                                                       | unknown                                                                    | left as it is                                                                |
 
 `payment.amount` becomes an `integer` in minor units too. Only the Mercado Pago projection writes payments, so
 Mercado Pago payments are converted like Mercado Pago plans (multiplied by 10^decimals of the payment's

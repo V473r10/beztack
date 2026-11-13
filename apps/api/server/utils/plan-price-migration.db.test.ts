@@ -352,85 +352,90 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
   });
 });
 
-describe.skipIf(!TEST_DATABASE_URL)("Price migration refuses data it cannot convert exactly", () => {
-  let dbModule: typeof import("@beztack/db");
-  let migrate: Migrate;
-  let scratchFolder: string;
+describe.skipIf(!TEST_DATABASE_URL)(
+  "Price migration refuses data it cannot convert exactly",
+  () => {
+    let dbModule: typeof import("@beztack/db");
+    let migrate: Migrate;
+    let scratchFolder: string;
 
-  async function insertPlan(
-    id: string,
-    provider: string,
-    currency: string,
-    price: string,
-  ): Promise<void> {
-    await dbModule.db.execute(sql`
+    async function insertPlan(
+      id: string,
+      provider: string,
+      currency: string,
+      price: string,
+    ): Promise<void> {
+      await dbModule.db.execute(sql`
       INSERT INTO plan (id, provider, canonical_tier_id, display_name, price, currency, interval)
       VALUES (${id}, ${provider}, 'basic', ${id}, ${price}::numeric, ${currency}, 'month')
     `);
-  }
+    }
 
-  async function priceColumnType(): Promise<string | undefined> {
-    const rows = (await dbModule.db.execute(sql`
+    async function priceColumnType(): Promise<string | undefined> {
+      const rows = (await dbModule.db.execute(sql`
       SELECT data_type FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'plan' AND column_name = 'price'
     `)) as unknown as { data_type: string }[];
-    return rows[0]?.data_type;
-  }
-
-  /** The migration rejects and leaves the old shape and the old prices untouched. */
-  async function expectMigrationToRollBack(): Promise<void> {
-    const before = await dbModule.db.execute(sql`SELECT id, price FROM plan ORDER BY id`);
-    await expect(migrate(dbModule.db, { migrationsFolder: MIGRATIONS_FOLDER })).rejects.toThrow();
-    expect(await priceColumnType()).toBe("numeric");
-    expect(await dbModule.db.execute(sql`SELECT id, price FROM plan ORDER BY id`)).toEqual(before);
-  }
-
-  beforeAll(async () => {
-    const url = TEST_DATABASE_URL as string;
-    assertThrowawayDatabase(url);
-    process.env.DATABASE_URL = url;
-    [dbModule, { migrate }] = await Promise.all([
-      import("@beztack/db"),
-      import("drizzle-orm/postgres-js/migrator"),
-    ]);
-  });
-
-  beforeEach(async () => {
-    scratchFolder = await buildOldSchema(dbModule.db, migrate);
-  });
-
-  afterEach(() => {
-    if (scratchFolder) {
-      rmSync(scratchFolder, { recursive: true, force: true });
+      return rows[0]?.data_type;
     }
-  });
 
-  afterAll(async () => {
-    await dbModule?.db.$client.end();
-  });
+    /** The migration rejects and leaves the old shape and the old prices untouched. */
+    async function expectMigrationToRollBack(): Promise<void> {
+      const before = await dbModule.db.execute(sql`SELECT id, price FROM plan ORDER BY id`);
+      await expect(migrate(dbModule.db, { migrationsFolder: MIGRATIONS_FOLDER })).rejects.toThrow();
+      expect(await priceColumnType()).toBe("numeric");
+      expect(await dbModule.db.execute(sql`SELECT id, price FROM plan ORDER BY id`)).toEqual(
+        before,
+      );
+    }
 
-  it("never silently truncates: a seeded Polar price with decimals stops the migration", async () => {
-    await insertPlan("polar_basic_month", "polar", "USD", "900.5");
-    await expectMigrationToRollBack();
-  });
+    beforeAll(async () => {
+      const url = TEST_DATABASE_URL as string;
+      assertThrowawayDatabase(url);
+      process.env.DATABASE_URL = url;
+      [dbModule, { migrate }] = await Promise.all([
+        import("@beztack/db"),
+        import("drizzle-orm/postgres-js/migrator"),
+      ]);
+    });
 
-  it("never silently truncates: a price of a provider we cannot convert, with decimals, stops the migration", async () => {
-    await insertPlan("stripe_basic_usd", "stripe", "USD", "9.99");
-    await expectMigrationToRollBack();
-  });
+    beforeEach(async () => {
+      scratchFolder = await buildOldSchema(dbModule.db, migrate);
+    });
 
-  it("stops when a converted price does not fit in a 32-bit integer", async () => {
-    await insertPlan("00000000-0000-4000-8000-0000000000b1", "polar", "USD", "99999999.99");
-    await expectMigrationToRollBack();
-  });
+    afterEach(() => {
+      if (scratchFolder) {
+        rmSync(scratchFolder, { recursive: true, force: true });
+      }
+    });
 
-  it("stops on a Polar plan written in major units whose currency is unknown", async () => {
-    await insertPlan("00000000-0000-4000-8000-0000000000b2", "polar", "ZZZ", "9.99");
-    await expectMigrationToRollBack();
-  });
+    afterAll(async () => {
+      await dbModule?.db.$client.end();
+    });
 
-  it("stops on a Mercado Pago plan in a currency that is not an ISO 4217 code in use", async () => {
-    await insertPlan("mp_withdrawn", "mercadopago", "SLL", "4500");
-    await expectMigrationToRollBack();
-  });
-});
+    it("never silently truncates: a seeded Polar price with decimals stops the migration", async () => {
+      await insertPlan("polar_basic_month", "polar", "USD", "900.5");
+      await expectMigrationToRollBack();
+    });
+
+    it("never silently truncates: a price of a provider we cannot convert, with decimals, stops the migration", async () => {
+      await insertPlan("stripe_basic_usd", "stripe", "USD", "9.99");
+      await expectMigrationToRollBack();
+    });
+
+    it("stops when a converted price does not fit in a 32-bit integer", async () => {
+      await insertPlan("00000000-0000-4000-8000-0000000000b1", "polar", "USD", "99999999.99");
+      await expectMigrationToRollBack();
+    });
+
+    it("stops on a Polar plan written in major units whose currency is unknown", async () => {
+      await insertPlan("00000000-0000-4000-8000-0000000000b2", "polar", "ZZZ", "9.99");
+      await expectMigrationToRollBack();
+    });
+
+    it("stops on a Mercado Pago plan in a currency that is not an ISO 4217 code in use", async () => {
+      await insertPlan("mp_withdrawn", "mercadopago", "SLL", "4500");
+      await expectMigrationToRollBack();
+    });
+  },
+);

@@ -109,11 +109,15 @@ function unionMembers(file: string, typeName: string): string[] {
 }
 
 function dynamicFamilies(): Record<string, string[]> {
-  const subscriptionStatuses = unionMembers("packages/payments/core/src/types.ts", "SubscriptionStatus");
+  const subscriptionStatuses = unionMembers(
+    "packages/payments/core/src/types.ts",
+    "SubscriptionStatus",
+  );
   const tierIds = [
-    ...readFileSync(path.resolve(SRC_DIR, "../../../packages/db/src/plan-catalog.ts"), "utf8").matchAll(
-      /canonicalTierId: "([a-z]+)"/g,
-    ),
+    ...readFileSync(
+      path.resolve(SRC_DIR, "../../../packages/db/src/plan-catalog.ts"),
+      "utf8",
+    ).matchAll(/canonicalTierId: "([a-z]+)"/g),
   ].map((match) => match[1]);
   const homeText = readFileSync(path.resolve(SRC_DIR, "app/home/home.tsx"), "utf8");
   const homeStatuses = [
@@ -256,4 +260,3 @@ describe("toasts", () => {
     expect(withoutTranslateCalls('t("k") + translate("j")')).toBe(" + ");
   });
 });
-

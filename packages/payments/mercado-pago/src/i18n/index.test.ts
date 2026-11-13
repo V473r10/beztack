@@ -184,7 +184,9 @@ describe("i18n", () => {
     });
 
     it("forces the ISO 4217 decimals even where the runtime's Intl data differs", () => {
-      expect(formatPriceLocalized(1500, "COP", "en-US").replace(/\u00a0/g, " ")).toMatch(/1,500\.00$/);
+      expect(formatPriceLocalized(1500, "COP", "en-US").replace(/\u00a0/g, " ")).toMatch(
+        /1,500\.00$/,
+      );
     });
 
     it("uses the ISO 4217 decimals of the currency", () => {

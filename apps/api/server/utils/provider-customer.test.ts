@@ -69,7 +69,9 @@ describe("ensureProviderCustomer", () => {
 
   it("answers 502 payment_provider_unavailable when the lookup fails, never a raw 500", async () => {
     const provider = polar({
-      getCustomerByEmail: vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED for ana@example.com")),
+      getCustomerByEmail: vi
+        .fn()
+        .mockRejectedValue(new Error("connect ECONNREFUSED for ana@example.com")),
     });
 
     const error = await captureError(ensureProviderCustomer(provider, USER));
@@ -85,7 +87,9 @@ describe("ensureProviderCustomer", () => {
     const provider = polar({
       getCustomerByEmail: vi
         .fn()
-        .mockRejectedValue(Object.assign(new Error("bad email ana@example.com"), { statusCode: 422 })),
+        .mockRejectedValue(
+          Object.assign(new Error("bad email ana@example.com"), { statusCode: 422 }),
+        ),
     });
 
     const error = await captureError(ensureProviderCustomer(provider, USER));
@@ -106,7 +110,9 @@ describe("ensureProviderCustomer", () => {
 
   it("treats a CONFLICT on creation as an existing customer", async () => {
     const provider = polar({
-      createCustomer: vi.fn().mockRejectedValue(Object.assign(new Error("exists"), { statusCode: 409 })),
+      createCustomer: vi
+        .fn()
+        .mockRejectedValue(Object.assign(new Error("exists"), { statusCode: 409 })),
     });
 
     await expect(ensureProviderCustomer(provider, USER)).resolves.toBeUndefined();

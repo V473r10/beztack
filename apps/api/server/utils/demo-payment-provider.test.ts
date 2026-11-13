@@ -5,10 +5,7 @@ import {
   SubscriptionUpdateNotAppliedError,
 } from "@beztack/payments";
 import { describe, expect, it, vi } from "vitest";
-import {
-  type DemoSubscriptionStore,
-  withDemoSubscriptions,
-} from "./demo-payment-provider";
+import { type DemoSubscriptionStore, withDemoSubscriptions } from "./demo-payment-provider";
 
 const DEMO_SUBSCRIPTION: Subscription = {
   id: "demo_sub_pro",

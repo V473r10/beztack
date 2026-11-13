@@ -25,7 +25,9 @@ export function useProfileMutation(currentEmail?: string) {
       });
 
       if (nameUpdateResult.error) {
-        throw new Error(nameUpdateResult.error.message || translate("settings.profile.updateFailed"));
+        throw new Error(
+          nameUpdateResult.error.message || translate("settings.profile.updateFailed"),
+        );
       }
 
       // Handle email change separately if email has changed
@@ -36,7 +38,9 @@ export function useProfileMutation(currentEmail?: string) {
         });
 
         if (emailChangeResult.error) {
-          throw new Error(emailChangeResult.error.message || translate("settings.profile.emailChangeFailed"));
+          throw new Error(
+            emailChangeResult.error.message || translate("settings.profile.emailChangeFailed"),
+          );
         }
 
         toast.success(translate("settings.profile.updatedVerifyEmail"));
