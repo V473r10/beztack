@@ -208,6 +208,15 @@ describe("Home", () => {
   });
 
   describe("with a Pending Plan change", () => {
+    it("names the current plan and the destination through the tier translations", () => {
+      mocks.pendingPlanChange = { data: DOWNGRADE };
+
+      const html = renderHome();
+
+      expect(html).toContain("membership.tiers.pro(Pro)");
+      expect(html).toContain("membership.tiers.basic(Basic)");
+    });
+
     it("shows the destination and the date it applies", () => {
       mocks.pendingPlanChange = { data: DOWNGRADE };
 
@@ -215,7 +224,7 @@ describe("Home", () => {
 
       expect(html).toContain("home.pendingPlanChange.title");
       expect(html).toContain(
-        "billing.pendingPlanChange.downgradeOn(Basic,billing.monthly,USD 900,November 1, 2026)",
+        "billing.pendingPlanChange.downgradeOn(membership.tiers.basic(Basic),billing.monthly,USD 900,November 1, 2026)",
       );
     });
 

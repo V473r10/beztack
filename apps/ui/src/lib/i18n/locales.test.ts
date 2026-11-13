@@ -97,6 +97,72 @@ describe("locale files", () => {
   });
 });
 
+/**
+ * Keys built at run time (`t(`home.plan.status.${status}`)`) are invisible to the static scan above,
+ * so a missing status or tier shows its raw English code. Each family is listed here with the
+ * values the code can produce; the lists that live in code are read from it.
+ */
+function unionMembers(file: string, typeName: string): string[] {
+  const text = readFileSync(path.resolve(SRC_DIR, "../../..", file), "utf8");
+  const body = new RegExp(`export type ${typeName} =([^;]+);`).exec(text)?.[1] ?? "";
+  return [...body.matchAll(/"([A-Za-z_]+)"/g)].map((match) => match[1]);
+}
+
+function dynamicFamilies(): Record<string, string[]> {
+  const subscriptionStatuses = unionMembers("packages/payments/core/src/types.ts", "SubscriptionStatus");
+  const tierIds = [
+    ...readFileSync(path.resolve(SRC_DIR, "../../../packages/db/src/plan-catalog.ts"), "utf8").matchAll(
+      /canonicalTierId: "([a-z]+)"/g,
+    ),
+  ].map((match) => match[1]);
+  const homeText = readFileSync(path.resolve(SRC_DIR, "app/home/home.tsx"), "utf8");
+  const homeStatuses = [
+    ...(/KNOWN_STATUSES = \[([^\]]+)\]/.exec(homeText)?.[1] ?? "").matchAll(/"([a-z_]+)"/g),
+  ].map((match) => match[1]);
+
+  return {
+    // Polar statuses (the union) plus the two Mercado Pago spellings.
+    "billing.welcome.status": [...subscriptionStatuses, "authorized", "cancelled"],
+    "home.plan.status": [...homeStatuses, "free", "canceling"],
+    "membership.tiers": tierIds,
+    "billing.cadenceUnit": ["monthly", "yearly"],
+    "organizations.roles": ["owner", "admin", "member"],
+    "organizations.roleDescriptions": ["owner", "admin", "member"],
+    "invitation.roles": ["owner", "admin", "member"],
+  };
+}
+
+describe("keys built at run time", () => {
+  it("reads the lists from code (guards the scanner itself)", () => {
+    const families = dynamicFamilies();
+
+    expect(families["billing.welcome.status"]).toEqual(
+      expect.arrayContaining(["active", "past_due", "trialing", "canceled", "cancelled"]),
+    );
+    expect(families["membership.tiers"]).toEqual(
+      expect.arrayContaining(["free", "basic", "pro", "ultimate"]),
+    );
+    expect(families["home.plan.status"]).toEqual(expect.arrayContaining(["past_due", "free"]));
+  });
+
+  it("every value of each family resolves in en.json and es.json", () => {
+    const missing: string[] = [];
+    for (const [family, values] of Object.entries(dynamicFamilies())) {
+      for (const value of values) {
+        const key = `${family}.${value}`;
+        if (!hasKey(enKeys, key)) {
+          missing.push(`${key} (en.json)`);
+        }
+        if (!hasKey(esKeys, key)) {
+          missing.push(`${key} (es.json)`);
+        }
+      }
+    }
+
+    expect(missing).toEqual([]);
+  });
+});
+
 /** Text inside the parentheses that open at `start - 1`, honouring nested brackets and quoted strings. */
 function readBracketed(text: string, start: number): string {
   let depth = 1;

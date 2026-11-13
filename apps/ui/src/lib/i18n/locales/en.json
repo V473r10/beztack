@@ -384,7 +384,12 @@
         "authorized": "Authorized",
         "pending": "Pending",
         "paused": "Paused",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "trialing": "Trial",
+        "past_due": "Payment overdue",
+        "unpaid": "Unpaid",
+        "inactive": "Inactive",
+        "canceled": "Canceled"
       },
       "frequency": {
         "monthly": "monthly",
