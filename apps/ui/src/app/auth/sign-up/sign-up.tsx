@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DemoEmailHint } from "./components/demo-email-hint";
 import { SignUpForm } from "./components/form";
 
 export default function SignUp() {
@@ -27,6 +28,9 @@ export default function SignUp() {
         </CardHeader>
         <CardContent>
           <SignUpForm />
+          <div className="mt-4">
+            <DemoEmailHint />
+          </div>
         </CardContent>
         <CardFooter className="flex flex-wrap items-center justify-center gap-2">
           <div className="text-muted-foreground text-sm">
