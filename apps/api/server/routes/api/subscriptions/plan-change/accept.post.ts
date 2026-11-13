@@ -26,6 +26,7 @@ import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discove
 import { organizationAccess, getAppAdminEmails } from "@/server/domain/organization-access";
 import { applyAdminTierOverride } from "@/server/utils/admin-tier-override";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
+import { organizationRequiredError } from "@/server/utils/organization-required";
 
 function readAuthRole(auth: AuthenticatedUser): string | string[] | null {
   const role = (auth.user as { role?: unknown }).role;
@@ -61,10 +62,7 @@ function resolveMembershipTarget(auth: AuthenticatedUser, body: PlanChangeAccept
   if (env.SUBSCRIPTION_MODE === "organization") {
     const organizationId = body.organizationId ?? auth.session.activeOrganizationId ?? undefined;
     if (!organizationId) {
-      throw createError({
-        statusCode: 400,
-        message: "An organization Membership target is required",
-      });
+      throw organizationRequiredError();
     }
 
     return { type: "organization" as const, id: organizationId };

@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   applyAdminTierOverride: vi.fn(),
   enrichProductWithCatalog: vi.fn(),
   ensurePaymentProvider: vi.fn(),
+  canManageBilling: vi.fn(),
   isAppAdminActor: vi.fn(),
   readBody: vi.fn(),
   resolveCheckoutCallbackUrls: vi.fn(),
@@ -52,7 +53,10 @@ vi.mock("@/server/utils/admin-tier-override", () => ({
 }));
 vi.mock("@/server/domain/organization-access", () => ({
   getAppAdminEmails: () => ["admin@example.com"],
-  organizationAccess: { isAppAdmin: mocks.isAppAdminActor },
+  organizationAccess: {
+    isAppAdmin: mocks.isAppAdminActor,
+    canManageBilling: mocks.canManageBilling,
+  },
 }));
 vi.mock("@/server/utils/billing-amount-resolver", () => ({
   estimatePeriodEnd: vi.fn(),
@@ -233,6 +237,102 @@ describe("POST /api/subscriptions/checkout", () => {
       expect(provider.getCustomerByEmail).not.toHaveBeenCalled();
       expect(provider.createCustomer).not.toHaveBeenCalled();
       expect(provider.createCheckout).toHaveBeenCalledTimes(1);
+    });
+  });
+  describe("organization subscription mode", () => {
+    const PRODUCT = { id: "prod_pro_month", metadata: { tier: "pro" } };
+
+    function setupOrganizationCheckout(session: Record<string, unknown>) {
+      const provider = {
+        provider: "polar",
+        listProducts: vi.fn().mockResolvedValue([PRODUCT]),
+        getCustomerByEmail: vi.fn().mockResolvedValue({ id: "cus_1" }),
+        createCheckout: vi
+          .fn()
+          .mockResolvedValue({ id: "chk_1", url: "https://sandbox.polar.sh/checkout/chk_1" }),
+      };
+      mocks.env.SUBSCRIPTION_MODE = "organization";
+      mocks.env.PAYMENT_PROVIDER = "polar";
+      mocks.ensurePaymentProvider.mockResolvedValue(provider);
+      mocks.requireAuth.mockResolvedValue({
+        user: { id: "user_1", email: "visitor@example.com", name: "Visitor", role: "user" },
+        session,
+      });
+      mocks.readBody.mockResolvedValue({ billingPeriod: "monthly", productId: PRODUCT.id });
+      mocks.isAppAdminActor.mockReturnValue(false);
+      mocks.canManageBilling.mockResolvedValue(true);
+      mocks.resolveCheckoutCallbackUrls.mockReturnValue({
+        successUrl: "https://app.example.com/ok",
+        cancelUrl: "https://app.example.com/cancel",
+      });
+      mocks.enrichProductWithCatalog.mockImplementation(async (product: unknown) => product);
+      return provider;
+    }
+
+    async function callHandler() {
+      const handler = (await import("../routes/api/subscriptions/checkout.post")).default as (
+        event: unknown,
+      ) => Promise<unknown>;
+      return handler({});
+    }
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+      mocks.env.SUBSCRIPTION_MODE = "user";
+    });
+
+    it("answers 409 organization_required when the user has no organization", async () => {
+      const provider = setupOrganizationCheckout({ activeOrganizationId: null });
+
+      await expect(callHandler()).rejects.toMatchObject({
+        statusCode: 409,
+        data: { code: "organization_required" },
+      });
+      expect(provider.createCheckout).not.toHaveBeenCalled();
+    });
+
+    it("charges the Active organization", async () => {
+      const provider = setupOrganizationCheckout({ activeOrganizationId: "org_1" });
+
+      await callHandler();
+
+      expect(mocks.canManageBilling).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "user_1" }),
+        "org_1",
+      );
+      expect(provider.createCheckout).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ organizationId: "org_1", userId: "user_1" }),
+        }),
+      );
+    });
+
+    it("uses the organization the caller names over the Active organization", async () => {
+      const provider = setupOrganizationCheckout({ activeOrganizationId: null });
+      mocks.readBody.mockResolvedValue({
+        billingPeriod: "monthly",
+        productId: PRODUCT.id,
+        organizationId: "org_new",
+      });
+
+      await callHandler();
+
+      expect(provider.createCheckout).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ organizationId: "org_new" }),
+        }),
+      );
+    });
+
+    it("answers 403 to a member who is not a Billing manager", async () => {
+      const provider = setupOrganizationCheckout({ activeOrganizationId: "org_1" });
+      mocks.canManageBilling.mockResolvedValue(false);
+
+      await expect(callHandler()).rejects.toMatchObject({ statusCode: 403 });
+      expect(provider.createCheckout).not.toHaveBeenCalled();
     });
   });
 });

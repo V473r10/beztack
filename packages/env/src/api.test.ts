@@ -160,3 +160,31 @@ describe("API env: DEMO_MODE fails closed", () => {
     await expect(loadApiEnv()).rejects.toThrow();
   });
 });
+
+describe("API env: Personal organization at sign-up", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("creates one by default", async () => {
+    stubApiEnv({});
+
+    const env = await loadApiEnv();
+
+    expect(env.PERSONAL_ORGANIZATION_ON_SIGNUP).toBe(true);
+  });
+
+  it("can be turned off for projects that create organizations by hand", async () => {
+    stubApiEnv({ PERSONAL_ORGANIZATION_ON_SIGNUP: "false" });
+
+    const env = await loadApiEnv();
+
+    expect(env.PERSONAL_ORGANIZATION_ON_SIGNUP).toBe(false);
+  });
+});
