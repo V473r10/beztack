@@ -99,6 +99,7 @@ const EMPTY_SUBSCRIPTIONS: Subscription[] = [];
 const EMPTY_ORDERS: Order[] = [];
 const EMPTY_METERS: CustomerMeter[] = [];
 const EMPTY_BENEFITS: string[] = [];
+const PLAN_CHANGE_PREVIEW_KEY = queryKeys.subscriptions.planChangePreviews()[1];
 
 export type { CustomerMeter, Order, Subscription } from "./membership/membership-types";
 
@@ -397,7 +398,17 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       } else {
         toast.success(t("billing.toast.planChangeAccepted"));
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
+      // The dialog that sent this change is still open while Membership refreshes. A quote
+      // for the same change would now be priced against the new plan (a 400), so previews
+      // are only marked stale, and the next dialog fetches a fresh one.
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.subscriptions.all(),
+        predicate: (query) => query.queryKey[1] !== PLAN_CHANGE_PREVIEW_KEY,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.subscriptions.planChangePreviews(),
+        refetchType: "none",
+      });
     },
     onError: (mutationError: Error) => {
       if (isOrganizationRequiredError(mutationError)) {

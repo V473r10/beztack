@@ -343,6 +343,25 @@ describe("MembershipProvider", () => {
       );
     });
 
+    it("marks every Plan change preview stale without refetching the one the open dialog shows", () => {
+      onPlanChangeSuccess({ direction: "upgrade", kind: "plan-change-acceptance" });
+
+      // A refetch would price the change against the plan the visitor just moved to: a 400.
+      expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ["subscriptions", "plan-change-preview"],
+        refetchType: "none",
+      });
+      const refreshed = mocks.invalidateQueries.mock.calls
+        .map(([filters]) => filters as { predicate?: (query: unknown) => boolean })
+        .find((filters) => filters.predicate);
+      expect(
+        refreshed?.predicate?.({ queryKey: ["subscriptions", "plan-change-preview", "a"] }),
+      ).toBe(false);
+      expect(refreshed?.predicate?.({ queryKey: ["subscriptions", "membership", "org_1"] })).toBe(
+        true,
+      );
+    });
+
     it("says an Upgrade is accepted and the provider settles the charge", () => {
       onPlanChangeSuccess({ direction: "upgrade", kind: "plan-change-acceptance" });
 
