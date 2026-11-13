@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   ensurePaymentProvider: vi.fn(),
   enrichProductWithCatalog: vi.fn(),
   getCatalogProducts: vi.fn(),
+  getCatalogOnlyProducts: vi.fn(),
   env: { PAYMENT_PROVIDER: "mercadopago" },
 }));
 
@@ -19,6 +20,7 @@ vi.mock("@/lib/payments", () => ({
 vi.mock("@/lib/payments/catalog-mp", () => ({
   enrichProductWithCatalog: mocks.enrichProductWithCatalog,
   getCatalogProducts: mocks.getCatalogProducts,
+  getCatalogOnlyProducts: mocks.getCatalogOnlyProducts,
 }));
 
 const CATALOG_PRODUCT = {
@@ -45,6 +47,7 @@ describe("GET /api/subscriptions/products", () => {
       Promise.resolve(product),
     );
     mocks.getCatalogProducts.mockResolvedValue([CATALOG_PRODUCT]);
+    mocks.getCatalogOnlyProducts.mockResolvedValue([]);
   });
 
   it("answers from the Payment provider when it is up", async () => {
@@ -81,5 +84,63 @@ describe("GET /api/subscriptions/products", () => {
     const response = await (await loadHandler())({});
 
     expect(response).toMatchObject({ products: [CATALOG_PRODUCT], source: "catalog" });
+  });
+
+  describe("plans that exist only in the Pricing catalog", () => {
+    const FREE_PRODUCT = {
+      id: "polar_free_month",
+      name: "Free",
+      type: "plan",
+      price: { amount: 0, currency: "USD" },
+      interval: "month",
+      intervalCount: 1,
+      metadata: { tier: "free", displayOrder: 0, catalogOnly: true },
+    };
+
+    it("adds the Free plan, which has no product at the provider", async () => {
+      const providerProduct = { ...CATALOG_PRODUCT, id: "live_pro_month" };
+      mocks.ensurePaymentProvider.mockResolvedValue({
+        provider: "polar",
+        listProducts: vi.fn().mockResolvedValue([providerProduct]),
+      });
+      mocks.getCatalogOnlyProducts.mockResolvedValue([FREE_PRODUCT]);
+
+      const response = await (await loadHandler())({});
+
+      expect(response).toEqual({ provider: "polar", products: [providerProduct, FREE_PRODUCT] });
+      expect(mocks.getCatalogOnlyProducts).toHaveBeenCalledWith("polar");
+    });
+
+    it("leaves out a catalog row whose tier the provider already sells", async () => {
+      const providerProduct = { ...CATALOG_PRODUCT, id: "live_pro_month" };
+      const unsyncedYearly = {
+        ...CATALOG_PRODUCT,
+        id: "polar_pro_year",
+        interval: "year",
+        metadata: { tier: "pro", catalogOnly: true },
+      };
+      mocks.ensurePaymentProvider.mockResolvedValue({
+        provider: "polar",
+        listProducts: vi.fn().mockResolvedValue([providerProduct]),
+      });
+      mocks.getCatalogOnlyProducts.mockResolvedValue([unsyncedYearly, FREE_PRODUCT]);
+
+      const response = (await (await loadHandler())({})) as { products: unknown[] };
+
+      expect(response.products).toEqual([providerProduct, FREE_PRODUCT]);
+    });
+
+    it("still answers with the provider products when the catalog cannot be read", async () => {
+      const providerProduct = { ...CATALOG_PRODUCT, id: "live_pro_month" };
+      mocks.ensurePaymentProvider.mockResolvedValue({
+        provider: "polar",
+        listProducts: vi.fn().mockResolvedValue([providerProduct]),
+      });
+      mocks.getCatalogOnlyProducts.mockRejectedValue(new Error("relation plan does not exist"));
+
+      const response = await (await loadHandler())({});
+
+      expect(response).toEqual({ provider: "polar", products: [providerProduct] });
+    });
   });
 });
