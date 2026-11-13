@@ -5,6 +5,7 @@
  * the real migrations); skipped otherwise, except on CI, where it must run.
  */
 import { resolve } from "node:path";
+import { formatMinorUnits } from "@beztack/payments/money";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { DemoSeedOptions } from "./demo-seed";
@@ -199,5 +200,46 @@ describe.skipIf(!TEST_DATABASE_URL)("Demo seed on Postgres", () => {
     const plans = await db.select().from(plan);
     expect(new Set(plans.map((row) => row.currency))).toEqual(new Set(["UYU"]));
     expect(plans.map((row) => row.interval)).toEqual(Array(4).fill("month"));
+  });
+
+  it("stores Polar prices and the failed plan change snapshot in minor units: US$ 9.00", async () => {
+    const { db, plan, pendingPlanChange } = modules.dbModule;
+    await modules.seedModule.seedDemoData(db, OPTIONS);
+
+    const prices = Object.fromEntries((await db.select().from(plan)).map((r) => [r.id, r.price]));
+    expect(prices).toMatchObject({
+      polar_free_month: 0,
+      polar_basic_month: 900,
+      polar_basic_year: 9000,
+      polar_pro_month: 2900,
+      polar_ultimate_year: 99_000,
+    });
+
+    const [row] = await db.select().from(pendingPlanChange);
+    const { amount, currency } = row?.targetPlanSnapshot.price ?? { amount: -1, currency: "" };
+    expect({ amount, currency }).toEqual({ amount: 900, currency: "USD" });
+    expect(formatMinorUnits(amount, currency, "es-UY")).toBe("US$\u00a09,00"); // Intl puts a no-break space after "US$"
+    expect(formatMinorUnits(amount, currency, "en-US")).toBe("$9.00");
+  });
+
+  it("stores Mercado Pago prices and the snapshot in the minor units of the project currency", async () => {
+    const { db, plan, pendingPlanChange } = modules.dbModule;
+    await modules.seedModule.seedDemoData(db, {
+      ...OPTIONS,
+      provider: "mercadopago",
+      currency: "UYU",
+      providerPlanIds: undefined,
+    });
+
+    const prices = Object.fromEntries((await db.select().from(plan)).map((r) => [r.id, r.price]));
+    expect(prices).toEqual({
+      mercadopago_free_month: 0,
+      mercadopago_basic_month: 450_000, // UYU 4500.00
+      mercadopago_pro_month: 800_000,
+      mercadopago_ultimate_month: 1_500_000,
+    });
+
+    const [row] = await db.select().from(pendingPlanChange);
+    expect(row?.targetPlanSnapshot.price).toEqual({ amount: 450_000, currency: "UYU" });
   });
 });

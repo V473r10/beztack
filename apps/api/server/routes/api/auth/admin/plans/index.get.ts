@@ -3,12 +3,14 @@
  */
 import { db, plan } from "@beztack/db";
 import { defineEventHandler } from "h3";
+import { withLegacyPlanPrice } from "@/server/utils/legacy-plan-price";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
 
-  const plans = await db.select().from(plan).orderBy(plan.displayOrder);
+  const rows = await db.select().from(plan).orderBy(plan.displayOrder);
+  const plans = rows.map(withLegacyPlanPrice);
 
   return {
     plans,

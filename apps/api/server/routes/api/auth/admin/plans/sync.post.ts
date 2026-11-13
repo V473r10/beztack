@@ -8,6 +8,10 @@ import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { ensurePaymentProvider } from "@/lib/payments";
+import {
+  legacyAmountFromPlanPrice,
+  planPriceFromLegacyAmount,
+} from "@/server/utils/legacy-plan-price";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const syncSchema = z.object({
@@ -34,7 +38,10 @@ export default defineEventHandler(async (event) => {
       await adapter.updateProduct(dbPlan.providerPlanId, {
         name: dbPlan.displayName,
         description: dbPlan.description ?? undefined,
-        price: { amount: Number(dbPlan.price), currency: dbPlan.currency },
+        price: {
+          amount: legacyAmountFromPlanPrice(dbPlan.price, dbPlan.currency, dbPlan.provider),
+          currency: dbPlan.currency,
+        },
         interval: (dbPlan.interval ?? "month") as BillingInterval,
         intervalCount: dbPlan.intervalCount ?? 1,
       });
@@ -43,7 +50,10 @@ export default defineEventHandler(async (event) => {
         name: dbPlan.displayName,
         description: dbPlan.description ?? undefined,
         type: "plan",
-        price: { amount: Number(dbPlan.price), currency: dbPlan.currency },
+        price: {
+          amount: legacyAmountFromPlanPrice(dbPlan.price, dbPlan.currency, dbPlan.provider),
+          currency: dbPlan.currency,
+        },
         interval: (dbPlan.interval ?? "month") as BillingInterval,
         intervalCount: dbPlan.intervalCount ?? 1,
       });
@@ -79,7 +89,11 @@ export default defineEventHandler(async (event) => {
     .set({
       displayName: remoteProduct.name,
       description: remoteProduct.description ?? null,
-      price: String(remoteProduct.price.amount),
+      price: planPriceFromLegacyAmount(
+        remoteProduct.price.amount,
+        remoteProduct.price.currency,
+        adapter.provider,
+      ),
       currency: remoteProduct.price.currency,
       interval: remoteProduct.interval,
       intervalCount: remoteProduct.intervalCount,

@@ -47,6 +47,8 @@ pnpm dev
 
 `pnpm create beztack` runs the `beztack` CLI, which clones this repository and applies your answers. Its closing "Next steps" message prints `pnpm run push`, which is not a script in this repo. Use `pnpm db:migrate`, or `pnpm db:push` to sync the schema without migration files.
 
+Upgrading a database that already has plans? Migration `0009` rewrites stored prices to integer minor units. Take a `pg_dump` backup first: see [docs/price-migration.md](docs/price-migration.md).
+
 To work on Beztack itself, clone the repository and run `pnpm install && pnpm build:packages` before any test or typecheck. Apps and packages resolve workspace packages through their gitignored `dist` folders.
 
 ## Payments
