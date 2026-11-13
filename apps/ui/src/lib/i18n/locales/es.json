@@ -373,6 +373,7 @@
       "planDetails": "Detalles del plan",
       "planInfo": "Información de tu suscripción activa",
       "yourPlan": "Tu plan",
+      "defaultPlanName": "Suscripción",
       "nextPayment": "Próximo cobro",
       "paymentMethod": "Método de pago",
       "goToDashboard": "Ir al panel",
