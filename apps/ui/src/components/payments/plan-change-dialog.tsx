@@ -232,12 +232,18 @@ export function PlanChangePreviewSummary({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">
-                {t("billing.planChange.dueToday", "Due today")}
+                {t("billing.planChange.dueToday", "Due today (estimate)")}
               </span>
               <span className="font-semibold">
                 {formatPrice(firstPayment.amount, firstPayment.currency)}
               </span>
             </div>
+            <p className="text-muted-foreground text-xs">
+              {t(
+                "billing.planChange.prorationEstimateNote",
+                "This is an estimate: your payment provider prorates by the second, so the final charge may differ slightly.",
+              )}
+            </p>
             <p className="text-muted-foreground text-xs">
               {t("billing.planChange.thenFullAmount", {
                 defaultValue: "Then {{price}} each period.",
