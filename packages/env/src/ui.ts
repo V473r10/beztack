@@ -27,6 +27,8 @@ export const env = createEnv({
       .enum(["true", "false"])
       .default("false")
       .transform((value) => value === "true"),
+    // Optional docs URL for the sidebar "Get Help" link; the link is hidden when unset.
+    VITE_DOCS_URL: z.string().url().optional(),
     VITE_SUBSCRIPTION_MODE: z.enum(["user", "organization"]).default("organization"),
     // Project regional defaults (required, no code default)
     VITE_DEFAULT_CURRENCY: CURRENCY_CODE_SCHEMA,

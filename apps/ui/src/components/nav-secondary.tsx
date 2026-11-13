@@ -21,6 +21,7 @@ export function NavSecondary({
     url: string;
     icon: Icon;
     id?: string;
+    external?: boolean;
   }[];
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const { t } = useTranslation();
@@ -29,12 +30,19 @@ export function NavSecondary({
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
+            <SidebarMenuItem key={item.url}>
               <SidebarMenuButton asChild id={item.id}>
-                <Link to={item.url}>
-                  <item.icon />
-                  <span>{t(item.title)}</span>
-                </Link>
+                {item.external ? (
+                  <a href={item.url} rel="noopener noreferrer" target="_blank">
+                    <item.icon />
+                    <span>{t(item.title)}</span>
+                  </a>
+                ) : (
+                  <Link to={item.url}>
+                    <item.icon />
+                    <span>{t(item.title)}</span>
+                  </Link>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

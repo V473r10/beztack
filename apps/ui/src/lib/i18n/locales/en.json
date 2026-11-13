@@ -456,10 +456,6 @@
       "jamik": "Jamik Tashpulatov"
     },
     "selectAll": "Select all",
-    "selectFocusDocuments": "Select focus documents",
-    "selectKeyPersonnel": "Select key personnel",
-    "selectOutline": "Select outline",
-    "selectPastPerformance": "Select past performance",
     "selectRow": "Select row",
     "statuses": {
       "done": "Done",
@@ -560,6 +556,11 @@
       }
     }
   },
+  "header": {
+    "pageTitles": {
+      "checkoutConfirm": "Confirm checkout"
+    }
+  },
   "misc": {
     "welcomeToReact": "Welcome to React and react-i18next"
   },
@@ -638,7 +639,6 @@
       "account": "Account",
       "billing": "Billing",
       "language": "Language",
-      "notifications": "Notifications",
       "signOut": "Sign Out"
     },
     "nav": {

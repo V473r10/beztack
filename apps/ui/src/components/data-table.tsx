@@ -402,30 +402,30 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
 
   return (
     <Tabs className="w-full flex-col justify-start gap-6" defaultValue="outline">
-      <div className="flex items-center justify-between px-4 lg:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 lg:px-6">
         <Label className="sr-only" htmlFor="view-selector">
-          View
+          {t("dataTable.views.label")}
         </Label>
         <Select defaultValue="outline">
           <SelectTrigger className="flex @4xl/main:hidden w-fit" id="view-selector" size="sm">
-            <SelectValue placeholder="Select a view" />
+            <SelectValue placeholder={t("dataTable.views.placeholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="outline">{t("dataTable.selectOutline")}</SelectItem>
-            <SelectItem value="past-performance">{t("dataTable.selectPastPerformance")}</SelectItem>
-            <SelectItem value="key-personnel">{t("dataTable.selectKeyPersonnel")}</SelectItem>
-            <SelectItem value="focus-documents">{t("dataTable.selectFocusDocuments")}</SelectItem>
+            <SelectItem value="outline">{t("dataTable.views.outline")}</SelectItem>
+            <SelectItem value="past-performance">{t("dataTable.views.pastPerformance")}</SelectItem>
+            <SelectItem value="key-personnel">{t("dataTable.views.keyPersonnel")}</SelectItem>
+            <SelectItem value="focus-documents">{t("dataTable.views.focusDocuments")}</SelectItem>
           </SelectContent>
         </Select>
-        <TabsList className="@4xl/main:flex hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1">
-          <TabsTrigger value="outline">{t("dataTable.selectOutline")}</TabsTrigger>
+        <TabsList className="@4xl/main:flex hidden min-w-0 **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1">
+          <TabsTrigger value="outline">{t("dataTable.views.outline")}</TabsTrigger>
           <TabsTrigger value="past-performance">
-            {t("dataTable.selectPastPerformance")} <Badge variant="secondary">3</Badge>
+            {t("dataTable.views.pastPerformance")} <Badge variant="secondary">3</Badge>
           </TabsTrigger>
           <TabsTrigger value="key-personnel">
-            {t("dataTable.selectKeyPersonnel")} <Badge variant="secondary">2</Badge>
+            {t("dataTable.views.keyPersonnel")} <Badge variant="secondary">2</Badge>
           </TabsTrigger>
-          <TabsTrigger value="focus-documents">{t("dataTable.selectFocusDocuments")}</TabsTrigger>
+          <TabsTrigger value="focus-documents">{t("dataTable.views.focusDocuments")}</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
           <DropdownMenu>
