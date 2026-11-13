@@ -399,7 +399,16 @@
       "customer_email_rejected": "The payment provider rejected your email address. Use a different email.",
       "payment_provider_unavailable": "The payment provider is unavailable. Try again in a moment.",
       "organization_required": "Create an organization first: this action bills an organization.",
-      "provider_did_not_apply": "The payment provider did not apply the plan change. Nothing was charged. Try again in a moment."
+      "provider_did_not_apply": "The payment provider did not apply the plan change. Nothing was charged. Try again in a moment.",
+      "invalid_current_subscription": "The subscription for this plan change is not valid.",
+      "invalid_target": "That plan is not available for a plan change.",
+      "missing_current_subscription": "You need an active subscription to change plans.",
+      "not_a_plan_change": "That plan is the one you already have.",
+      "not_retryable": "This plan change cannot be retried.",
+      "payment_integration_mismatch": "This subscription belongs to a different payment provider than the one configured.",
+      "unsupported_billing_cadence": "Only monthly and yearly billing are supported.",
+      "unsupported_cadence_change": "Switching the billing period is not supported for this plan.",
+      "unauthorized_plan_change": "You are not allowed to change this plan."
     },
     "checkoutFailed": "Failed to start checkout process",
     "toast": {
