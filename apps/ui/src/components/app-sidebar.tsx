@@ -50,30 +50,50 @@ export type SidebarNavItem = {
 export type SidebarAccess = RouteAccess;
 
 const NAV_MAIN: SidebarNavItem[] = [
-  { title: "sidebar.dashboard", url: "/", icon: IconDashboard },
-  { title: "AI", url: "/ai", icon: IconBrain },
-  { title: "OCR", url: "/ocr", icon: IconScan },
+  { title: "sidebar.nav.dashboard", url: "/", icon: IconDashboard },
+  { title: "sidebar.nav.ai", url: "/ai", icon: IconBrain },
+  { title: "sidebar.nav.ocr", url: "/ocr", icon: IconScan },
 ];
 
 /** "Organization" section: management and billing of the Active organization. */
 const NAV_ORGANIZATION: SidebarNavItem[] = [
   {
-    title: "Organizations",
+    title: "sidebar.nav.organizations",
     url: "/organizations",
     icon: IconBuilding,
     requires: "organization-admin",
   },
-  { title: "Billing", url: "/billing", icon: IconCreditCard, requires: "billing-manager" },
+  {
+    title: "sidebar.nav.billing",
+    url: "/billing",
+    icon: IconCreditCard,
+    requires: "billing-manager",
+  },
 ];
 
 /** "Platform" section: App admin tools. */
 const NAV_PLATFORM: SidebarNavItem[] = [
-  { title: "Platform Admin", url: "/admin", icon: IconShield, requires: "app-admin" },
-  { title: "User Management", url: "/admin/users", icon: IconUserCog, requires: "app-admin" },
-  { title: "Analytics", url: "/admin/analytics", icon: IconChartBar, requires: "app-admin" },
-  { title: "Plan Sync", url: "/admin/plans", icon: IconListDetails, requires: "app-admin" },
+  { title: "sidebar.nav.platformAdmin", url: "/admin", icon: IconShield, requires: "app-admin" },
   {
-    title: "Failed Plan Changes",
+    title: "sidebar.nav.userManagement",
+    url: "/admin/users",
+    icon: IconUserCog,
+    requires: "app-admin",
+  },
+  {
+    title: "sidebar.nav.analytics",
+    url: "/admin/analytics",
+    icon: IconChartBar,
+    requires: "app-admin",
+  },
+  {
+    title: "sidebar.nav.planSync",
+    url: "/admin/plans",
+    icon: IconListDetails,
+    requires: "app-admin",
+  },
+  {
+    title: "sidebar.nav.failedPlanChanges",
     url: "/admin/plan-changes",
     icon: IconAlertTriangle,
     requires: "app-admin",
@@ -81,15 +101,15 @@ const NAV_PLATFORM: SidebarNavItem[] = [
 ];
 
 const NAV_SECONDARY: SidebarNavItem[] = [
-  { title: "Pricing", url: "/pricing", icon: IconCrown },
+  { title: "sidebar.nav.pricing", url: "/pricing", icon: IconCrown },
   {
-    title: "sidebar.secondary.settings",
+    title: "sidebar.nav.settings",
     url: "/settings",
     icon: IconSettings,
     id: TOUR_STEP_IDS.SETTINGS_BUTTON,
   },
-  { title: "sidebar.secondary.getHelp", url: "#", icon: IconHelp },
-  { title: "sidebar.secondary.search", url: "#", icon: IconSearch },
+  { title: "sidebar.nav.getHelp", url: "#", icon: IconHelp },
+  { title: "sidebar.nav.search", url: "#", icon: IconSearch },
 ];
 
 function meets(requirement: NavRequirement | undefined, access: SidebarAccess): boolean {

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("sonner", () => ({ Toaster: () => <div data-testid="toaster" /> }));
 vi.mock("react-router", () => ({ Outlet: () => <div data-testid="outlet" /> }));
-vi.mock("@/components/language-toggle", () => ({ LanguageToggle: () => null }));
+vi.mock("@/components/language-selector", () => ({ LanguageSelector: () => null }));
 vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import AuthLayout from "./auth-layout";
