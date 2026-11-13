@@ -1,12 +1,19 @@
 import { isCurrentSubscription } from "@beztack/payments/subscription";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
-import { createContext, useCallback, useContext, useMemo, useRef } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CreateOrganizationDialog } from "@/components/organizations/create-organization-dialog";
 import { env } from "@/env";
 import { useActiveOrganization } from "@/hooks/use-organizations";
 import { requestJson } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
+import {
+  getBillingErrorMessage,
+  isOrganizationRequiredError,
+  runWithOrganization,
+} from "@/lib/billing-errors";
 import { redirectToExternalUrl } from "@/lib/browser-navigation";
 import { queryKeys } from "@/lib/query-keys";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
@@ -66,6 +73,10 @@ type ClearAdminTierOverrideResponse = {
   success: boolean;
   resultKind: "admin-tier-override-cleared";
   changed: boolean;
+};
+
+type OrganizationPrompt = {
+  resolve: (organizationId: string | null) => void;
 };
 
 type CheckoutResponse = {
@@ -230,7 +241,11 @@ export type MembershipProviderProps = {
 };
 
 export function MembershipProvider({ children }: MembershipProviderProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  // Set while the "create organization" dialog is open on behalf of a billing
+  // action that found the user without an organization.
+  const [organizationPrompt, setOrganizationPrompt] = useState<OrganizationPrompt | null>(null);
   const { data: activeOrganization } = useActiveOrganization();
   const isOrganizationSubscriptionMode = env.VITE_SUBSCRIPTION_MODE === "organization";
   const activeOrganizationId = isOrganizationSubscriptionMode ? activeOrganization?.id : undefined;
@@ -312,8 +327,12 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
 
       toast.success("Redirecting to checkout...");
     },
-    onError: () => {
-      toast.error("Failed to start checkout process");
+    onError: (checkoutError: Error) => {
+      // The user is asked to create an organization and the action retried.
+      if (isOrganizationRequiredError(checkoutError)) {
+        return;
+      }
+      toast.error(getBillingErrorMessage(t, checkoutError, t("billing.checkoutFailed")));
     },
   });
 
@@ -363,7 +382,10 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
     onError: (mutationError: Error) => {
-      toast.error(mutationError.message || "Failed to change plan");
+      if (isOrganizationRequiredError(mutationError)) {
+        return;
+      }
+      toast.error(getBillingErrorMessage(t, mutationError, "Failed to change plan"));
     },
   });
 
@@ -483,30 +505,43 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const planChangeRef = useRef(planChangeMutation.mutateAsync);
   planChangeRef.current = planChangeMutation.mutateAsync;
 
+  const askForOrganization = useCallback(
+    () =>
+      new Promise<string | null>((resolve) => {
+        setOrganizationPrompt({ resolve });
+      }),
+    [],
+  );
+
   const upgradeToTier = useCallback(
     async (
       tierId: string,
       billingPeriod: "monthly" | "yearly" = "monthly",
       organizationId?: string,
     ) => {
-      const checkoutOrganizationId = organizationId ?? activeOrganizationId;
-      if (activeSubscription) {
-        await planChangeRef.current({
-          billingPeriod,
-          productId: tierId,
-          organizationId: checkoutOrganizationId,
-        });
-        return;
-      }
+      await runWithOrganization(
+        async (checkoutOrganizationId) => {
+          if (activeSubscription) {
+            await planChangeRef.current({
+              billingPeriod,
+              productId: tierId,
+              organizationId: checkoutOrganizationId,
+            });
+            return;
+          }
 
-      await checkoutRef.current({
-        productId: tierId,
-        billingPeriod,
-        organizationId: checkoutOrganizationId,
-        metadata: checkoutOrganizationId ? { organizationId: checkoutOrganizationId } : {},
-      });
+          await checkoutRef.current({
+            productId: tierId,
+            billingPeriod,
+            organizationId: checkoutOrganizationId,
+            metadata: checkoutOrganizationId ? { organizationId: checkoutOrganizationId } : {},
+          });
+        },
+        organizationId ?? activeOrganizationId,
+        askForOrganization,
+      );
     },
-    [activeSubscription, activeOrganizationId],
+    [activeSubscription, activeOrganizationId, askForOrganization],
   );
 
   const changePlan = useCallback(
@@ -522,13 +557,18 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         throw new Error("No active subscription to change");
       }
 
-      return planChangeRef.current({
-        billingPeriod: options?.billingPeriod ?? "monthly",
-        organizationId: options?.organizationId ?? activeOrganizationId,
-        productId,
-      });
+      return runWithOrganization(
+        (planChangeOrganizationId) =>
+          planChangeRef.current({
+            billingPeriod: options?.billingPeriod ?? "monthly",
+            organizationId: planChangeOrganizationId,
+            productId,
+          }),
+        options?.organizationId ?? activeOrganizationId,
+        askForOrganization,
+      ).then((result) => result ?? { success: false });
     },
-    [activeSubscription, activeOrganizationId],
+    [activeSubscription, activeOrganizationId, askForOrganization],
   );
 
   const billingPortalRef = useRef(billingPortalMutation.mutateAsync);
@@ -676,5 +716,23 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     ],
   );
 
-  return <MembershipContext.Provider value={value}>{children}</MembershipContext.Provider>;
+  return (
+    <MembershipContext.Provider value={value}>
+      {children}
+      {organizationPrompt ? (
+        <CreateOrganizationDialog
+          description={t("organizations.createDialog.billingDescription")}
+          onCreated={(organization) => organizationPrompt.resolve(organization.id)}
+          onOpenChange={(open) => {
+            if (!open) {
+              // A no-op when the organization was just created and resolved.
+              organizationPrompt.resolve(null);
+              setOrganizationPrompt(null);
+            }
+          }}
+          open
+        />
+      ) : null}
+    </MembershipContext.Provider>
+  );
 }

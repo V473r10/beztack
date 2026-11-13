@@ -19,7 +19,8 @@
     "db:studio": "pnpm --filter @beztack/db db:studio",
     "generate-auth-schema": "pnpm --filter @beztack/db generate-auth-schema",
     "demo:seed": "pnpm --filter @beztack/api run demo:seed",
-    "demo:reset": "pnpm --filter @beztack/api run demo:reset"
+    "demo:reset": "pnpm --filter @beztack/api run demo:reset",
+    "demo:check": "pnpm --filter @beztack/api run demo:check"
   },
   "devDependencies": {
     "@nx/js": "21.4.1",

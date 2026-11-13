@@ -34,6 +34,7 @@ async function translator(lng: "en" | "es"): Promise<TFunction> {
 
 let t: TFunction;
 const navigate = vi.fn();
+const queryClient = { invalidateQueries: vi.fn() };
 
 const SIGN_UP = { name: "Ada", email: "ada@example.com", password: "Str0ng!pass" };
 const CREDENTIALS = { email: "ada@example.com", password: "Str0ng!pass" };
@@ -56,7 +57,7 @@ describe("submitSignUp", () => {
       failure({ status: 500, statusText: "Internal Server Error", message: "Customer rejected" }),
     );
 
-    const error = await submitSignUp(SIGN_UP, "", { t, navigate });
+    const error = await submitSignUp(SIGN_UP, "", { t, navigate, queryClient });
 
     expect(error).toBe("Customer rejected");
     expect(mocks.toast.error).toHaveBeenCalledWith("Customer rejected");
@@ -69,7 +70,11 @@ describe("submitSignUp", () => {
       failure({ status: 422, code: "USER_ALREADY_EXISTS", message: "User already exists." }),
     );
 
-    const error = await submitSignUp(SIGN_UP, "", { t: await translator("es"), navigate });
+    const error = await submitSignUp(SIGN_UP, "", {
+      t: await translator("es"),
+      navigate,
+      queryClient,
+    });
 
     expect(error).toBe("Ya existe una cuenta con este email. Iniciá sesión.");
     expect(navigate).not.toHaveBeenCalled();
@@ -78,7 +83,7 @@ describe("submitSignUp", () => {
   it("shows a generic server message when a 500 carries nothing else", async () => {
     mocks.signUp.mockResolvedValue(failure({ status: 500, statusText: "Internal Server Error" }));
 
-    const error = await submitSignUp(SIGN_UP, "", { t, navigate });
+    const error = await submitSignUp(SIGN_UP, "", { t, navigate, queryClient });
 
     expect(error).toBe("Something went wrong on our side. Please try again in a moment.");
     expect(navigate).not.toHaveBeenCalled();
@@ -87,7 +92,7 @@ describe("submitSignUp", () => {
   it("reports a request that throws instead of navigating", async () => {
     mocks.signUp.mockRejectedValue(new TypeError("Failed to fetch"));
 
-    const error = await submitSignUp(SIGN_UP, "", { t, navigate });
+    const error = await submitSignUp(SIGN_UP, "", { t, navigate, queryClient });
 
     expect(error).toBe("An unexpected error occurred. Please try again.");
     expect(mocks.toast.error).toHaveBeenCalledWith(error);
@@ -100,6 +105,7 @@ describe("submitSignUp", () => {
     const error = await submitSignUp(SIGN_UP, "?next=%2Faccept-invitation%2Finv_1", {
       t,
       navigate,
+      queryClient,
     });
 
     expect(error).toBeNull();
@@ -118,7 +124,7 @@ describe("submitSignIn", () => {
       }),
     );
 
-    const error = await submitSignIn(CREDENTIALS, "", { t, navigate });
+    const error = await submitSignIn(CREDENTIALS, "", { t, navigate, queryClient });
 
     expect(error).toBe("Incorrect email or password.");
     expect(mocks.toast.error).toHaveBeenCalledWith("Incorrect email or password.");
@@ -128,7 +134,7 @@ describe("submitSignIn", () => {
   it("goes to the post sign-in target on success", async () => {
     mocks.signIn.mockResolvedValue(success({ user: { id: "u1" } }));
 
-    expect(await submitSignIn(CREDENTIALS, "", { t, navigate })).toBeNull();
+    expect(await submitSignIn(CREDENTIALS, "", { t, navigate, queryClient })).toBeNull();
 
     expect(navigate).toHaveBeenCalledWith("/");
   });
@@ -136,7 +142,7 @@ describe("submitSignIn", () => {
   it("continues to the two-factor step when the server asks for it", async () => {
     mocks.signIn.mockResolvedValue(success({ twoFactorRedirect: true }));
 
-    expect(await submitSignIn(CREDENTIALS, "", { t, navigate })).toBeNull();
+    expect(await submitSignIn(CREDENTIALS, "", { t, navigate, queryClient })).toBeNull();
 
     expect(navigate).toHaveBeenCalledWith("/auth/sign-in/two-factor");
   });
@@ -146,7 +152,7 @@ describe("submitTotp", () => {
   it("shows an invalid code and does not navigate", async () => {
     mocks.verifyTotp.mockResolvedValue(failure({ status: 401, code: "INVALID_TOTP_CODE" }));
 
-    const error = await submitTotp("123456", "", { t, navigate });
+    const error = await submitTotp("123456", "", { t, navigate, queryClient });
 
     expect(error).toBe("Invalid TOTP code. Please try again.");
     expect(mocks.toast.error).toHaveBeenCalledWith(error);
@@ -156,7 +162,7 @@ describe("submitTotp", () => {
   it("navigates on a valid code", async () => {
     mocks.verifyTotp.mockResolvedValue(success());
 
-    expect(await submitTotp("123456", "", { t, navigate })).toBeNull();
+    expect(await submitTotp("123456", "", { t, navigate, queryClient })).toBeNull();
 
     expect(navigate).toHaveBeenCalledWith("/");
   });
@@ -168,7 +174,7 @@ describe("submitBackupCode", () => {
       .mockResolvedValueOnce(failure({ status: 401, code: "BACKUP_CODE_NOT_FOUND" }))
       .mockResolvedValueOnce(success());
 
-    expect(await submitBackupCode("ABCDE-12345", "", { t, navigate })).toBeNull();
+    expect(await submitBackupCode("ABCDE-12345", "", { t, navigate, queryClient })).toBeNull();
 
     expect(mocks.verifyBackupCode).toHaveBeenNthCalledWith(1, { code: "ABCDE-12345" });
     expect(mocks.verifyBackupCode).toHaveBeenNthCalledWith(2, { code: "ABCDE12345" });
@@ -181,10 +187,55 @@ describe("submitBackupCode", () => {
       failure({ status: 401, code: "BACKUP_CODE_NOT_FOUND" }),
     );
 
-    const error = await submitBackupCode("ABCDE-12345", "", { t, navigate });
+    const error = await submitBackupCode("ABCDE-12345", "", { t, navigate, queryClient });
 
     expect(error).toBe("Invalid backup code.");
     expect(mocks.toast.error).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe("session-scoped data after authenticating", () => {
+  // better-auth's client does not refetch the active organization after a
+  // sign-in (better-auth #9710), and the cache holds the previous user's.
+  it("refetches the cached queries once sign-up creates the session", async () => {
+    mocks.signUp.mockResolvedValue(success({ user: { id: "u1" } }));
+
+    await submitSignUp(SIGN_UP, "", { t, navigate, queryClient });
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(1);
+  });
+
+  it("refetches the cached queries once sign-in creates the session", async () => {
+    mocks.signIn.mockResolvedValue(success({ user: { id: "u1" } }));
+
+    await submitSignIn(CREDENTIALS, "", { t, navigate, queryClient });
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits for the second factor before refetching", async () => {
+    mocks.signIn.mockResolvedValue(success({ twoFactorRedirect: true }));
+
+    await submitSignIn(CREDENTIALS, "", { t, navigate, queryClient });
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it("refetches after the second factor completes the session", async () => {
+    mocks.verifyTotp.mockResolvedValue(success());
+    await submitTotp("123456", "", { t, navigate, queryClient });
+    mocks.verifyBackupCode.mockResolvedValue(success());
+    await submitBackupCode("abcd-efgh", "", { t, navigate, queryClient });
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves the cache alone when authentication fails", async () => {
+    mocks.signIn.mockResolvedValue(failure({ status: 401, code: "INVALID_EMAIL_OR_PASSWORD" }));
+
+    await submitSignIn(CREDENTIALS, "", { t, navigate, queryClient });
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 });

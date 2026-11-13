@@ -4,6 +4,10 @@
  *   pnpm demo:seed            upsert the demo fixtures (idempotent)
  *   pnpm demo:reset           empty every table, then seed (the periodic reset)
  *
+ * Both first check that the configured provider products exist with the right
+ * tier and cadence (`pnpm demo:check` runs only that) and abort before writing
+ * when one does not.
+ *
  * Needs the API env (apps/api/.env) with DEMO_MODE=true, DEMO_ADMIN_EMAIL and
  * DEMO_ADMIN_PASSWORD. Loading the env runs the sandbox-only check, so this
  * refuses to touch a database when payments are not sandbox. Secrets are never
@@ -15,6 +19,7 @@ import { db } from "@beztack/db";
 import { env } from "@beztack/env/api";
 import { parseAppAdminEmails } from "../server/domain/organization-access/implementation";
 import { type DemoProvider, resetDemoData, seedDemoData } from "../server/utils/demo-seed";
+import { checkDemoProviderProducts } from "./demo-provider-check";
 
 function log(message: string): void {
   // biome-ignore lint/suspicious/noConsole: CLI script
@@ -49,6 +54,9 @@ async function main(): Promise<void> {
   if (!parseAppAdminEmails(env.APP_ADMIN_EMAILS).includes(env.DEMO_ADMIN_EMAIL.toLowerCase())) {
     fail("DEMO_ADMIN_EMAIL must also be listed in APP_ADMIN_EMAILS, or the admin pages answer 403");
   }
+
+  // Before anything is written, and before a reset empties the tables.
+  await checkDemoProviderProducts(log);
 
   const provider: DemoProvider = env.PAYMENT_PROVIDER;
   if (process.argv.includes("--reset")) {

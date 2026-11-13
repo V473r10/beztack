@@ -1,5 +1,6 @@
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router";
 import { z } from "zod";
@@ -50,6 +51,7 @@ export function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const FormSchema = getFormSchema(t);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const location = useLocation();
 
   const form = useAppForm({
@@ -63,7 +65,7 @@ export function SignUpForm() {
     onSubmit: async ({ value }) => {
       setIsLoading(true);
       setFormError(null);
-      const error = await submitSignUp(value, location.search, { t, navigate });
+      const error = await submitSignUp(value, location.search, { t, navigate, queryClient });
       setFormError(error);
       setIsLoading(false);
     },

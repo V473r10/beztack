@@ -319,7 +319,13 @@
         "weekly": "semanal",
         "everyDays": "cada {{count}} días"
       }
-    }
+    },
+    "errors": {
+      "customer_email_rejected": "El proveedor de pagos rechazó tu correo electrónico. Usá otro correo.",
+      "payment_provider_unavailable": "El proveedor de pagos no está disponible. Probá de nuevo en un momento.",
+      "organization_required": "Primero creá una organización: esta acción se cobra a una organización."
+    },
+    "checkoutFailed": "No se pudo iniciar el pago"
   },
   "common": {
     "footer": "© {{year}} Tu Compañía. Todos los derechos reservados.",
@@ -719,6 +725,20 @@
       "loading": "Cargando temas...",
       "showLess": "Ver menos",
       "showMore": "Ver más ({{hidden}})"
+    }
+  },
+  "organizations": {
+    "createDialog": {
+      "title": "Crear organización",
+      "description": "Creá una organización para colaborar con tu equipo.",
+      "billingDescription": "El cobro es por organización. Creá la tuya para continuar.",
+      "name": "Nombre de la organización",
+      "namePlaceholder": "Ingresá el nombre de la organización",
+      "slug": "Identificador de la organización",
+      "slugHelp": "Se usa en las URLs. Solo minúsculas, números y guiones.",
+      "logo": "URL del logo (opcional)",
+      "submit": "Crear organización",
+      "cancel": "Cancelar"
     }
   }
 }
