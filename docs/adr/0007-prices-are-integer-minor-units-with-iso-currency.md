@@ -1,0 +1,29 @@
+# Prices are integer minor units with an ISO 4217 currency code
+
+Every price Beztack stores or computes is an integer amount in the currency's minor unit plus an ISO 4217 currency code: `900 USD` is US$ 9.00, `900 JPY` is ¥ 900 and `9000 KWD` is KWD 9.000. This applies to `plan.price`, to `targetPlanSnapshot.price` and to every Plan change calculation (credit, proration), so domain logic only adds and subtracts integers and never rounds by accident. The number of decimals of a currency comes from `Intl.NumberFormat(locale, { style: "currency", currency }).resolvedOptions().maximumFractionDigits`, not from a table of our own. We rejected decimal major units (`9.00`) as the stored form because they reintroduce floating point error in every sum, and rejected keeping an implicit "cents" convention because it silently breaks for currencies that do not have two decimals (JPY and CLP have none, KWD has three).
+
+## Where the helpers live
+
+The helpers are in `@beztack/payments`, under the browser-safe subpath `@beztack/payments/money` (`packages/payments/core/src/money.ts`). We picked it because it is the only package that the API, the UI and both payment adapters (`@beztack/payments-polar`, `@beztack/mercadopago`) already depend on, and it already has a precedent for a dependency-free entry point shared by API and UI (`@beztack/payments/subscription`). A subpath keeps the UI from bundling the provider factory. `@beztack/env` was rejected because it is configuration, not domain logic, and `@beztack/db` because the UI does not import it.
+
+The module exports `currencyDecimals`, `minorToMajor`, `majorToMinor` and `formatMinorUnits`, plus the `Money` and `MoneyRounding` types. `majorToMinor` requires an explicit rounding mode (`half-away-from-zero`, `floor` or `ceil`); there is no default because the right choice differs between a price the customer pays and a credit we owe them. `formatMinorUnits` takes the locale of the language the user chose, so the same amount reads naturally in English and Spanish.
+
+## Conversion happens at the edge of each adapter
+
+A payment adapter is the only place that knows its provider's format, and it converts there, once, in both directions:
+
+- **Polar** already uses integer amounts in the currency's minor unit (cents for USD). The adapter passes amounts through with no conversion.
+- **Mercado Pago** uses decimal major units (`9.99`). Its adapter calls `minorToMajor` when sending a price and `majorToMinor` when reading one, with an explicit rounding mode.
+- **Stripe** (no adapter yet) uses integer minor units, but its list of zero-decimal and special-case currencies does not fully match ISO 4217 or `Intl` (HUF, TWD, ISK and UGX are the known cases). A Stripe adapter must carry its own table of exceptions and translate at its boundary.
+
+Callers outside an adapter never see a provider format: they pass and receive `{ amount, currency }` in minor units.
+
+## Risk: converting twice
+
+The main risk is converting an amount twice (for example multiplying by 100 a value that is already in cents), which is the existing bug that shows Basic as "$900.00" instead of "$9.00". Mitigation: only adapters convert, domain code and UI never multiply or divide by 100 by hand, and each boundary has tests with USD (2 decimals), JPY (0) and KWD (3) so a wrong factor fails visibly.
+
+## Rollout: expand, migrate, contract
+
+1. **Expand** (this change): add the ADR and the helpers next to the existing convention. No existing consumer changes.
+2. **Migrate**: move each consumer and adapter to the new contract. `plan.price` becomes an integer column and existing rows and stored Pending Plan change snapshots are converted, with a documented database backup before the migration.
+3. **Contract**: remove the old convention once nothing reads it.
