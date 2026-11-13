@@ -11,6 +11,7 @@ import {
   requireOrganizationBillingManagerAccess,
   toOrganizationAccessActor,
 } from "@/server/utils/organization-access";
+import { withProviderRateLimit } from "@/server/utils/provider-rate-limit";
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 
 function readQueryString(value: unknown): string | undefined {
@@ -54,26 +55,30 @@ export default defineEventHandler(async (event) => {
   }
   const scopedAuth = withSubscriptionOrganization(auth, organizationId);
 
-  let subscriptions = await provider.listSubscriptions({
-    customerEmail: auth.user.email,
-    customerId: auth.user.id,
-    limit,
-    offset,
-  });
+  // A provider 429 reaches the UI as `provider_rate_limited`, not a generic failure.
+  let subscriptions = await withProviderRateLimit(async () => {
+    const listed = await provider.listSubscriptions({
+      customerEmail: auth.user.email,
+      customerId: auth.user.id,
+      limit,
+      offset,
+    });
 
-  if (subscriptions.length === 0) {
-    subscriptions = await discoverSubscriptionsFromDb(auth.user.id, provider);
-  } else {
+    if (listed.length === 0) {
+      return discoverSubscriptionsFromDb(auth.user.id, provider);
+    }
+
     // Merge DB-discovered subscriptions (e.g. cancelled but still within
     // their billing period) that the provider search missed.
     const dbSubs = await discoverSubscriptionsFromDb(auth.user.id, provider);
-    const existingIds = new Set(subscriptions.map((s) => s.id));
+    const existingIds = new Set(listed.map((s) => s.id));
     for (const dbSub of dbSubs) {
       if (!existingIds.has(dbSub.id)) {
-        subscriptions.push(dbSub);
+        listed.push(dbSub);
       }
     }
-  }
+    return listed;
+  });
 
   subscriptions = subscriptions.filter((subscription) =>
     organizationAccess.ownsSubscription(
