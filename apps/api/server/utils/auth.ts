@@ -42,4 +42,5 @@ export const auth = createAuth({
   appAdminEmails: getAppAdminEmails(),
   sendEmail: guardEmailSender(sendEmail, env.DEMO_MODE),
   plugins: polarPlugin ? [polarPlugin] : [],
+  personalOrganizationOnSignup: env.PERSONAL_ORGANIZATION_ON_SIGNUP,
 });
