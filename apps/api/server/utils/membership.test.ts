@@ -162,6 +162,23 @@ describe("getMembershipInfo", () => {
     });
   });
 
+  it("keeps the cached Membership when the provider fails while verifying it", async () => {
+    const paymentProvider = provider({
+      getSubscription: vi.fn().mockRejectedValue(new Error("429 Too Many Requests")),
+    });
+    mocks.ensurePaymentProvider.mockResolvedValue(paymentProvider);
+    mocks.selectResults.push([cachedOrganizationMembership("sub_1")]);
+
+    const membership = await getMembershipInfo("user_1", "org_1");
+
+    expect(membership).toMatchObject({
+      tier: "pro",
+      hasActiveSubscription: true,
+      subscriptionId: "sub_1",
+    });
+    expect(paymentProvider.listSubscriptions).not.toHaveBeenCalled();
+  });
+
   it("falls back to provider discovery when paid Mercado Pago cache has no Subscription ID", async () => {
     const paymentProvider = provider({
       getSubscription: vi.fn(),
