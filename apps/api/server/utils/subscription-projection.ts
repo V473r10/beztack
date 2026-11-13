@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import type { PaymentProviderAdapter } from "@beztack/payments";
 import { majorToMinor, minorToMajor } from "@beztack/payments/money";
-import { legacyAmountFromPlanPrice } from "./legacy-plan-price";
 import { createPendingPlanChangeProviderPort } from "./pending-plan-change-provider";
 import {
   activatePendingPlanChange,
@@ -1075,7 +1074,7 @@ export async function createDbPendingPlanChangeActivationStore(): Promise<PlanCh
             tierRank: row.displayOrder ?? 0,
             billingCadence,
             price: {
-              amount: legacyAmountFromPlanPrice(row.price, row.currency, row.provider),
+              amount: row.price,
               currency: row.currency,
             },
           },
