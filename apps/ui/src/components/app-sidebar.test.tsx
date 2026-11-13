@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderInLanguage } from "@/test/render-in-language";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -84,7 +84,7 @@ describe("AppSidebar by role", () => {
 
   it("member: no Organization or Platform section", () => {
     as({ organizationRole: "member" });
-    const html = renderToStaticMarkup(<AppSidebar />);
+    const html = renderInLanguage("en", <AppSidebar />);
 
     expect(section(html, "Organization")).toEqual([]);
     expect(section(html, "Platform")).toEqual([]);
@@ -93,7 +93,7 @@ describe("AppSidebar by role", () => {
 
   it("Organization admin who is not Billing manager: Organizations only", () => {
     as({ organizationRole: "admin" });
-    const html = renderToStaticMarkup(<AppSidebar />);
+    const html = renderInLanguage("en", <AppSidebar />);
 
     expect(section(html, "Organization")).toEqual(["/organizations"]);
     expect(section(html, "Platform")).toEqual([]);
@@ -101,14 +101,14 @@ describe("AppSidebar by role", () => {
 
   it("owner and Billing manager: Organizations and Billing", () => {
     as({ organizationRole: "owner", canManageBilling: true });
-    const html = renderToStaticMarkup(<AppSidebar />);
+    const html = renderInLanguage("en", <AppSidebar />);
 
     expect(section(html, "Organization")).toEqual(["/organizations", "/billing"]);
   });
 
   it("App admin outside any Organization: Platform and Billing, no Organizations", () => {
     as({ isAppAdmin: true, canManageBilling: true });
-    const html = renderToStaticMarkup(<AppSidebar />);
+    const html = renderInLanguage("en", <AppSidebar />);
 
     expect(section(html, "Organization")).toEqual(["/billing"]);
     expect(section(html, "Platform")).toEqual([
@@ -129,7 +129,7 @@ describe("AppSidebar by role", () => {
     });
 
     expect(sections.organization).toEqual([]);
-    expect(section(renderToStaticMarkup(<AppSidebar />), "Platform")).toEqual([]);
+    expect(section(renderInLanguage("en", <AppSidebar />), "Platform")).toEqual([]);
   });
 });
 
@@ -167,7 +167,7 @@ describe("AppSidebar secondary links", () => {
   it("renders the configured docs URL in the sidebar", () => {
     mocks.env = { VITE_DOCS_URL: "https://docs.example.com/help" };
 
-    expect(section(renderToStaticMarkup(<AppSidebar />), "secondary")).toContain(
+    expect(section(renderInLanguage("en", <AppSidebar />), "secondary")).toContain(
       "https://docs.example.com/help",
     );
   });

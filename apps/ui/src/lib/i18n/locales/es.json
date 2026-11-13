@@ -387,7 +387,83 @@
       "payment_provider_unavailable": "El proveedor de pagos no está disponible. Probá de nuevo en un momento.",
       "organization_required": "Primero creá una organización: esta acción se cobra a una organización."
     },
-    "checkoutFailed": "No se pudo iniciar el pago"
+    "checkoutFailed": "No se pudo iniciar el pago",
+    "dashboard": {
+      "currentPlan": "Plan actual",
+      "currentPlanDescription": "Administrá tu suscripción y tus preferencias de facturación",
+      "noActiveSubscription": "Sin suscripción activa",
+      "noActiveSubscriptions": "No hay suscripciones activas",
+      "manageBilling": "Administrar facturación",
+      "manageBillingError": "Hubo un error al administrar tu facturación",
+      "changePlan": "Cambiar de plan",
+      "choosePlan": "Elegir un plan",
+      "tabs": {
+        "usage": "Uso y límites",
+        "subscriptions": "Suscripciones",
+        "orders": "Historial de pedidos"
+      },
+      "subscription": {
+        "title": "Suscripción",
+        "planName": "Plan {{tier}}",
+        "active": "Suscripción activa",
+        "unknown": "Suscripción desconocida",
+        "statusActive": "Activa",
+        "statusCanceledUntil": "Cancelada (activa hasta el {{date}})",
+        "statusCanceled": "Cancelada",
+        "graceNotice": "Tu suscripción está cancelada pero sigue activa hasta el {{date}}. Podés reactivarla cuando quieras antes de esa fecha.",
+        "nextBilling": "Próximo cobro",
+        "started": "Inicio",
+        "manage": "Administrar",
+        "upgrade": "Mejorar"
+      },
+      "orders": {
+        "empty": "No se encontraron pedidos",
+        "order": "Pedido",
+        "status": {
+          "completed": "Completado",
+          "pending": "Pendiente",
+          "canceled": "Cancelado",
+          "refunded": "Reembolsado",
+          "failed": "Fallido",
+          "unknown": "Desconocido"
+        }
+      },
+      "notAvailable": "N/D"
+    },
+    "usage": {
+      "title": "Métricas de uso",
+      "description": "Uso actual de tu plan {{plan}}",
+      "badgeExceeded": "Límite superado",
+      "badgeNear": "Cerca del límite",
+      "percentUsed": "{{percent}}% usado",
+      "itemExceeded": "Superaste el límite de uso",
+      "itemNear": "Te acercás al límite de uso",
+      "bannerExceeded": "Superaste los límites de uso",
+      "bannerNear": "Te acercás a los límites de uso",
+      "hintExceeded": "Mejorá tu plan para recuperar todas las funciones",
+      "hintNear": "Considerá mejorar tu plan para evitar interrupciones del servicio",
+      "upgradePlan": "Mejorar plan",
+      "enterpriseUnlimited": "El plan Enterprise incluye uso ilimitado en todas las métricas"
+    },
+    "upgradeDialog": {
+      "noChangesTitle": "No hay cambios de plan disponibles",
+      "noChangesDescription": "No hay otros planes disponibles. Contactá a nuestro equipo de ventas para soluciones enterprise a medida.",
+      "contactSales": "Contactar a ventas",
+      "title": "Cambiá tu plan",
+      "subtitle": "Elegí el plan que se ajuste a lo que necesitás",
+      "currentlyOn": "Actualmente en:",
+      "upgradePreview": "Vista previa de la mejora",
+      "creditFromCurrent": "Crédito del plan actual:",
+      "daysRemaining_one": "queda {{count}} día",
+      "daysRemaining_other": "quedan {{count}} días",
+      "thenPerMonth": "después {{price}}/mes",
+      "downgradePreview": "Vista previa del cambio a un plan inferior",
+      "benefitsKept_one": "Mantenés los beneficios actuales por {{count}} día más",
+      "benefitsKept_other": "Mantenés los beneficios actuales por {{count}} días más",
+      "perMonth": "{{price}}/mes",
+      "enterpriseTitle": "¿Necesitás funciones Enterprise?",
+      "enterpriseDescription": "Soluciones a medida, soporte dedicado y uso ilimitado para organizaciones grandes."
+    }
   },
   "common": {
     "footer": "© {{year}} {{appName}}. Todos los derechos reservados.",
@@ -555,7 +631,8 @@
       "account": "Cuenta",
       "billing": "Facturación",
       "language": "Idioma",
-      "signOut": "Cerrar Sesión"
+      "signOut": "Cerrar Sesión",
+      "signedOut": "¡Cerraste sesión!"
     },
     "nav": {
       "dashboard": "Panel",
@@ -583,6 +660,10 @@
       "number": "Debe contener al menos un número",
       "special": "Debe contener al menos un carácter especial",
       "uppercase": "Debe contener al menos una letra mayúscula"
+    },
+    "groups": {
+      "organization": "Organización",
+      "platform": "Plataforma"
     }
   },
   "validation": {
@@ -615,7 +696,10 @@
       "step1": "En la página de configuración puedes gestionar tus configuraciones de autenticación de dos factores, información, etc.",
       "plan": "Esta tarjeta muestra tu plan actual y cuándo se renueva.",
       "nextSteps": "Acá ves qué hacer ahora: elegir un plan, invitar a tu equipo o cambiar de plan."
-    }
+    },
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "finish": "Terminar"
   },
   "invitation": {
     "loading": "Cargando invitación",
@@ -680,6 +764,40 @@
       "organization": "Organización",
       "platform": "Plataforma",
       "secondary": "Más"
+    }
+  },
+  "membership": {
+    "tiers": {
+      "free": "Gratis",
+      "basic": "Básico",
+      "pro": "Pro",
+      "ultimate": "Ultimate"
+    },
+    "status": {
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "expired": "Vencida"
+    },
+    "renews": "Se renueva el {{date}}",
+    "keepsUntil": "Mantenés tu membresía hasta el {{date}}"
+  },
+  "demo": {
+    "banner": {
+      "label": "Demo:",
+      "message": "pagos de prueba, los datos se borran todos los días"
+    }
+  },
+  "adminOverride": {
+    "active": "Nivel asignado por un admin:",
+    "summary": "{{plan}} para {{target}}.",
+    "unchanged": "Las suscripciones reales no cambian.",
+    "clear": "Quitar el nivel asignado",
+    "clearShort": "Quitar",
+    "targetOrganization": "la organización {{id}}",
+    "targetUser": "tu membresía de usuario",
+    "cadence": {
+      "monthly": "mensual",
+      "yearly": "anual"
     }
   }
 }

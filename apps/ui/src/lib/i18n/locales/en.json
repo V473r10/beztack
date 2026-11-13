@@ -387,7 +387,83 @@
       "payment_provider_unavailable": "The payment provider is unavailable. Try again in a moment.",
       "organization_required": "Create an organization first: this action bills an organization."
     },
-    "checkoutFailed": "Failed to start checkout process"
+    "checkoutFailed": "Failed to start checkout process",
+    "dashboard": {
+      "currentPlan": "Current Plan",
+      "currentPlanDescription": "Manage your subscription and billing preferences",
+      "noActiveSubscription": "No active subscription",
+      "noActiveSubscriptions": "No active subscriptions",
+      "manageBilling": "Manage Billing",
+      "manageBillingError": "There was an error managing your billing",
+      "changePlan": "Change Plan",
+      "choosePlan": "Choose a Plan",
+      "tabs": {
+        "usage": "Usage & Limits",
+        "subscriptions": "Subscriptions",
+        "orders": "Order History"
+      },
+      "subscription": {
+        "title": "Subscription",
+        "planName": "{{tier}} Plan",
+        "active": "Active subscription",
+        "unknown": "Unknown subscription",
+        "statusActive": "Active",
+        "statusCanceledUntil": "Canceled (active until {{date}})",
+        "statusCanceled": "Canceled",
+        "graceNotice": "Your subscription is canceled but remains active until {{date}}. You can reactivate it anytime before then.",
+        "nextBilling": "Next billing",
+        "started": "Started",
+        "manage": "Manage",
+        "upgrade": "Upgrade"
+      },
+      "orders": {
+        "empty": "No orders found",
+        "order": "Order",
+        "status": {
+          "completed": "Completed",
+          "pending": "Pending",
+          "canceled": "Canceled",
+          "refunded": "Refunded",
+          "failed": "Failed",
+          "unknown": "Unknown"
+        }
+      },
+      "notAvailable": "N/A"
+    },
+    "usage": {
+      "title": "Usage Metrics",
+      "description": "Current usage for your {{plan}} plan",
+      "badgeExceeded": "Limit Exceeded",
+      "badgeNear": "Near Limit",
+      "percentUsed": "{{percent}}% used",
+      "itemExceeded": "Usage limit exceeded",
+      "itemNear": "Approaching usage limit",
+      "bannerExceeded": "Usage limits exceeded",
+      "bannerNear": "Approaching usage limits",
+      "hintExceeded": "Upgrade your plan to restore full functionality",
+      "hintNear": "Consider upgrading to avoid service interruption",
+      "upgradePlan": "Upgrade Plan",
+      "enterpriseUnlimited": "Enterprise plan includes unlimited usage across all metrics"
+    },
+    "upgradeDialog": {
+      "noChangesTitle": "No Plan Changes Available",
+      "noChangesDescription": "There are no other plans available. Contact our sales team for custom enterprise solutions.",
+      "contactSales": "Contact Sales",
+      "title": "Change Your Plan",
+      "subtitle": "Choose a plan that fits your needs",
+      "currentlyOn": "Currently on:",
+      "upgradePreview": "Upgrade Preview",
+      "creditFromCurrent": "Credit from current plan:",
+      "daysRemaining_one": "{{count}} day remaining",
+      "daysRemaining_other": "{{count}} days remaining",
+      "thenPerMonth": "then {{price}}/mo",
+      "downgradePreview": "Downgrade Preview",
+      "benefitsKept_one": "Current benefits kept for {{count}} more day",
+      "benefitsKept_other": "Current benefits kept for {{count}} more days",
+      "perMonth": "{{price}}/mo",
+      "enterpriseTitle": "Need Enterprise Features?",
+      "enterpriseDescription": "Custom solutions, dedicated support, and unlimited usage for large organizations."
+    }
   },
   "common": {
     "footer": "© {{year}} {{appName}}. All rights reserved.",
@@ -566,7 +642,8 @@
       "account": "Account",
       "billing": "Billing",
       "language": "Language",
-      "signOut": "Sign Out"
+      "signOut": "Sign Out",
+      "signedOut": "Signed out successfully!"
     },
     "nav": {
       "dashboard": "Dashboard",
@@ -583,6 +660,10 @@
       "settings": "Settings",
       "getHelp": "Get Help",
       "search": "Search"
+    },
+    "groups": {
+      "organization": "Organization",
+      "platform": "Platform"
     }
   },
   "tour": {
@@ -598,7 +679,10 @@
       "step1": "On the settings page you can manage your account settings such as two factor authentication, info, etc.",
       "plan": "This card shows your current plan and when it renews.",
       "nextSteps": "Here is what to do next: pick a plan, invite your team or change plan."
-    }
+    },
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Finish"
   },
   "validation": {
     "password": {
@@ -680,6 +764,40 @@
       "organization": "Organization",
       "platform": "Platform",
       "secondary": "More"
+    }
+  },
+  "membership": {
+    "tiers": {
+      "free": "Free",
+      "basic": "Basic",
+      "pro": "Pro",
+      "ultimate": "Ultimate"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "expired": "Expired"
+    },
+    "renews": "Renews {{date}}",
+    "keepsUntil": "You will keep your membership until {{date}}"
+  },
+  "demo": {
+    "banner": {
+      "label": "Demo:",
+      "message": "sandbox payments, data resets daily"
+    }
+  },
+  "adminOverride": {
+    "active": "Admin tier override active:",
+    "summary": "{{plan}} for {{target}}.",
+    "unchanged": "Real subscriptions are unchanged.",
+    "clear": "Clear override",
+    "clearShort": "Clear",
+    "targetOrganization": "organization {{id}}",
+    "targetUser": "your user Membership",
+    "cadence": {
+      "monthly": "monthly",
+      "yearly": "yearly"
     }
   }
 }

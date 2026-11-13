@@ -51,7 +51,7 @@ export function NavUser() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          toast.success("Signed out successfully!");
+          toast.success(t("sidebar.userMenu.signedOut"));
           navigate("/auth/sign-in");
         },
       },
@@ -112,7 +112,7 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleStartTour}>
               <IconRoute />
-              <span>Start Tour</span>
+              <span>{t("tour.start")}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <LanguageSelector variant="submenu" />
