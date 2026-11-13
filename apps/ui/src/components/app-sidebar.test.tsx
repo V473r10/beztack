@@ -144,10 +144,16 @@ describe("AppSidebar secondary links", () => {
     expect(urls).not.toContain("#");
   });
 
+  it("every item either goes somewhere or does something", () => {
+    const items = Object.values(getSidebarSections(nobody, "https://docs.example.com")).flat();
+
+    expect(items.filter((item) => !(item.url || item.action))).toEqual([]);
+  });
+
   it("hides Get Help when no docs URL is configured", () => {
     const urls = getSidebarSections(nobody).secondary.map((item) => item.url);
 
-    expect(urls).toEqual(["/pricing", "/settings"]);
+    expect(urls).toEqual(["", "/pricing", "/settings"]);
   });
 
   it("links Get Help to the configured docs URL, outside the app", () => {
@@ -166,12 +172,12 @@ describe("AppSidebar secondary links", () => {
     );
   });
 
-  it("has no Search entry until the command palette exists", () => {
-    const titles = Object.values(getSidebarSections(nobody, "https://docs.example.com"))
-      .flat()
-      .map((item) => item.title);
+  it("opens the command palette from Search, for every role", () => {
+    const search = getSidebarSections(nobody).secondary.find(
+      (item) => item.title === "sidebar.nav.search",
+    );
 
-    expect(titles).not.toContain("sidebar.secondary.search");
+    expect(search).toMatchObject({ action: "open-command-palette" });
   });
 });
 

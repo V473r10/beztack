@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatDate, formatMercadoPagoAmount, formatPrice, formatRelativeFromNow } from "./format";
-import { i18n } from "./i18n/i18n";
+import i18n from "i18next";
+import {
+  formatDate,
+  formatMercadoPagoAmount,
+  formatPrice,
+  formatRelativeFromNow,
+  setFormatLanguageSource,
+} from "./format";
 
 vi.mock("@/env", () => ({
   env: {
@@ -23,24 +29,23 @@ describe("formatPrice", () => {
     expect(plain(formatPrice(39_000, "UYU", "es-UY"))).toBe("$ 390,00");
   });
 
-  it("uses the project currency when the price carries none", () => {
-    expect(plain(formatPrice(2900))).toBe("€29.00");
-    expect(plain(formatPrice(2900, null))).toBe("€29.00");
-    expect(plain(formatPrice(2900, ""))).toBe("€29.00");
+  it("uses the project currency and locale when the price carries none", () => {
+    expect(plain(formatPrice(2900))).toBe("29,00 €");
+    expect(plain(formatPrice(2900, null))).toBe("29,00 €");
+    expect(plain(formatPrice(2900, ""))).toBe("29,00 €");
   });
 
-  it("keeps the price's own currency", () => {
-    expect(plain(formatPrice(1500, "JPY"))).toBe("¥1,500");
+  it("keeps the price's own currency in the project locale", () => {
+    expect(plain(formatPrice(1500, "JPY"))).toBe("1.500 ¥");
   });
 
   it("refuses an amount that is not whole minor units instead of showing a wrong price", () => {
     expect(() => formatPrice(9.99, "USD", "en-US")).toThrow(RangeError);
   });
 
-  // The app's own i18n instance: the one the language selector switches.
   describe("with an active i18n language", () => {
     beforeEach(async () => {
-      await i18n.changeLanguage("en");
+      await i18n.init({ lng: "en", resources: {}, showSupportNotice: false });
     });
 
     afterEach(async () => {
@@ -55,15 +60,9 @@ describe("formatPrice", () => {
     });
 
     it("keeps the project's region when it is the same language", async () => {
-      vi.resetModules();
-      vi.doMock("@/env", () => ({
-        env: { VITE_DEFAULT_CURRENCY: "UYU", VITE_DEFAULT_LOCALE: "es-UY" },
-      }));
-      const { formatPrice: formatForUruguay } = await import("./format");
-      const { i18n: uruguayI18n } = await import("./i18n/i18n");
-      await uruguayI18n.changeLanguage("es");
+      await i18n.changeLanguage("de");
 
-      expect(plain(formatForUruguay(2900))).toBe("$ 29,00"); // `es` alone would read "29,00 UYU"
+      expect(plain(formatPrice(900, "USD"))).toBe("9,00 $"); // project locale de-DE
     });
 
     it("falls back to the bare language for another language", async () => {
@@ -83,10 +82,24 @@ describe("formatMercadoPagoAmount", () => {
 });
 
 describe("formatDate", () => {
-  it("formats in the project locale by default", () => {
+  it("formats in the project locale until the user has a language", () => {
+    setFormatLanguageSource({});
+
     expect(formatDate("2026-03-05T12:00:00Z", { dateStyle: "long", timeZone: "UTC" })).toBe(
       "5. März 2026",
     );
+
+    setFormatLanguageSource(undefined);
+  });
+
+  it("formats in the language the user chose", async () => {
+    await i18n.changeLanguage("es");
+
+    expect(formatDate("2026-03-05T12:00:00Z", { dateStyle: "long", timeZone: "UTC" })).toBe(
+      "5 de marzo de 2026",
+    );
+
+    await i18n.changeLanguage("en");
   });
 
   it("formats in an explicit locale", () => {

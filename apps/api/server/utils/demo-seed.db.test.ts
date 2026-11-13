@@ -5,9 +5,10 @@
  * the real migrations); skipped otherwise, except on CI, where it must run.
  */
 import { resolve } from "node:path";
+import type { PaymentProviderAdapter } from "@beztack/payments";
 import { formatMinorUnits } from "@beztack/payments/money";
 import { sql } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DemoSeedOptions } from "./demo-seed";
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
@@ -22,8 +23,12 @@ const OPTIONS: DemoSeedOptions = {
   provider: "polar",
   currency: "USD",
   adminEmail: "Admin@Demo.Beztack.Test",
-  adminPasswordHash: "salt:hash-not-a-real-password",
-  providerPlanIds: { polar_basic_month: "00000000-0000-4000-8000-000000000001" },
+  adminPasswordHash: "salt:admin-hash-not-a-real-password",
+  customerPasswordHash: "salt:customer-hash-not-a-real-password",
+  providerPlanIds: {
+    polar_basic_month: "00000000-0000-4000-8000-000000000001",
+    polar_pro_month: "00000000-0000-4000-8000-000000000002",
+  },
   now: new Date("2026-11-11T12:00:00.000Z"),
 };
 
@@ -97,10 +102,10 @@ describe.skipIf(!TEST_DATABASE_URL)("Demo seed on Postgres", () => {
       .from(user)
       .where(sql`${user.id} = 'demo_admin'`);
     expect(admin).toMatchObject({ email: "admin@demo.beztack.test", role: "sudo" });
-    const [credential] = await db.select().from(account);
-    expect(credential).toMatchObject({
+    const credentials = await db.select().from(account);
+    expect(credentials).toHaveLength(2);
+    expect(credentials.find((row) => row.userId === "demo_admin")).toMatchObject({
       providerId: "credential",
-      userId: "demo_admin",
       password: OPTIONS.adminPasswordHash,
     });
 
@@ -145,7 +150,14 @@ describe.skipIf(!TEST_DATABASE_URL)("Demo seed on Postgres", () => {
     const second = await snapshot();
 
     expect(second).toEqual(first);
-    expect(first).toMatchObject({ plan: 7, user: 2, organization: 1, pendingPlanChange: 1 });
+    expect(first).toMatchObject({
+      plan: 7,
+      user: 2,
+      account: 2,
+      subscription: 1,
+      organization: 1,
+      pendingPlanChange: 1,
+    });
   });
 
   it("restores a fixture a visitor changed", async () => {
@@ -241,5 +253,154 @@ describe.skipIf(!TEST_DATABASE_URL)("Demo seed on Postgres", () => {
 
     const [row] = await db.select().from(pendingPlanChange);
     expect(row?.targetPlanSnapshot.price).toEqual({ amount: 450_000, currency: "UYU" });
+  });
+  it("gives the seeded customer a credential account to sign in with", async () => {
+    const { db, account } = modules.dbModule;
+    await modules.seedModule.seedDemoData(db, OPTIONS);
+
+    const credentials = await db.select().from(account);
+
+    expect(credentials.find((row) => row.userId === "demo_customer")).toMatchObject({
+      providerId: "credential",
+      password: OPTIONS.customerPasswordHash,
+    });
+  });
+
+  it("seeds the Pro Subscription with a demo_sub_ id at the catalog amount in minor units", async () => {
+    const { db } = modules.dbModule;
+    await modules.seedModule.seedDemoData(db, OPTIONS);
+
+    const { createDbDemoSubscriptionStore } = await import("./demo-subscription-store");
+    const read = await createDbDemoSubscriptionStore(db).get("demo_sub_pro");
+
+    expect(read).toMatchObject({
+      id: "demo_sub_pro",
+      status: "active",
+      productId: "00000000-0000-4000-8000-000000000002",
+      customerId: "demo_customer",
+      customerEmail: "customer@demo.beztack.test",
+      metadata: {
+        tier: "pro",
+        billingCadence: "monthly",
+        organizationId: "demo_org",
+        billingAmount: 2900, // US$ 29.00
+        billingCurrency: "USD",
+        billingInterval: "month",
+      },
+    });
+  });
+
+  it("seeds Mercado Pago's Subscription in the project currency", async () => {
+    const { db } = modules.dbModule;
+    await modules.seedModule.seedDemoData(db, {
+      ...OPTIONS,
+      provider: "mercadopago",
+      currency: "UYU",
+      providerPlanIds: undefined,
+    });
+
+    const { createDbDemoSubscriptionStore } = await import("./demo-subscription-store");
+    const read = await createDbDemoSubscriptionStore(db).get("demo_sub_pro");
+
+    expect(read).toMatchObject({
+      productId: "mercadopago_pro_month",
+      metadata: { billingAmount: 800_000, billingCurrency: "UYU" }, // UYU 8000.00
+    });
+  });
+
+  it("lets Retry of the seeded failed plan change succeed on the demo Subscription", async () => {
+    const { db, organization } = modules.dbModule;
+    await modules.seedModule.seedDemoData(db, OPTIONS);
+
+    const [{ withDemoSubscriptions }, { createDbDemoSubscriptionStore }] = await Promise.all([
+      import("./demo-payment-provider"),
+      import("./demo-subscription-store"),
+    ]);
+    const [{ retryFailedPendingPlanChange }, { createPendingPlanChangeProviderPort }] =
+      await Promise.all([import("./plan-change"), import("./pending-plan-change-provider")]);
+    const { createDbPendingPlanChangeActivationStore } = await import("./subscription-projection");
+    const { createDbPendingPlanChangeLedger } = await import("./pending-plan-change-ledger");
+
+    const realUpdate = vi.fn().mockRejectedValue(new Error("the real provider does not know it"));
+    const adapter = withDemoSubscriptions(
+      { provider: "polar", updateSubscription: realUpdate } as unknown as PaymentProviderAdapter,
+      { demoMode: true, store: () => createDbDemoSubscriptionStore(db) },
+    );
+
+    const activation = await retryFailedPendingPlanChange({
+      actor: {
+        email: "admin@demo.beztack.test",
+        isAppAdmin: true,
+        isBillingManager: false,
+        userId: "demo_admin",
+      },
+      pendingPlanChangeId: "demo_failed_plan_change",
+      provider: createPendingPlanChangeProviderPort(() => Promise.resolve(adapter)),
+      store: {
+        ...(await createDbPendingPlanChangeActivationStore()),
+        requeueFailedPendingPlanChange:
+          createDbPendingPlanChangeLedger().requeueFailedPendingPlanChange,
+      },
+    });
+
+    expect(activation).toMatchObject({ action: "activated", membershipMoved: true });
+    expect(realUpdate).not.toHaveBeenCalled();
+    const [org] = await db.select().from(organization);
+    expect(org).toMatchObject({ subscriptionTier: "basic" });
+    // The Subscription now reads as Basic: /billing and the Membership agree.
+    await expect(adapter.getSubscription("demo_sub_pro")).resolves.toMatchObject({
+      productId: "00000000-0000-4000-8000-000000000001",
+      metadata: { tier: "basic", billingAmount: 900, billingCurrency: "USD" },
+    });
+  });
+
+  it("cancels the demo Subscription in the database", async () => {
+    const { db } = modules.dbModule;
+    await modules.seedModule.seedDemoData(db, OPTIONS);
+    const { createDbDemoSubscriptionStore } = await import("./demo-subscription-store");
+    const store = createDbDemoSubscriptionStore(db);
+
+    await expect(store.cancel("demo_sub_pro", false)).resolves.toMatchObject({
+      status: "active",
+      cancelAtPeriodEnd: true,
+    });
+    await expect(store.cancel("demo_sub_pro", true)).resolves.toMatchObject({
+      status: "canceled",
+    });
+  });
+  it("shows the Pro Subscription to the Demo Organization owner, the way /billing lists it", async () => {
+    const { db } = modules.dbModule;
+    // Discovery only lists Subscriptions whose period has not ended.
+    await modules.seedModule.seedDemoData(db, { ...OPTIONS, now: new Date() });
+
+    const [{ withDemoSubscriptions }, { createDbDemoSubscriptionStore }] = await Promise.all([
+      import("./demo-payment-provider"),
+      import("./demo-subscription-store"),
+    ]);
+    const { discoverSubscriptionsFromDb } = await import("./subscription-discovery");
+    const { createOrganizationAccess } =
+      await import("../domain/organization-access/implementation");
+    const adapter = withDemoSubscriptions(
+      {
+        provider: "polar",
+        getSubscription: vi.fn().mockRejectedValue(new Error("the real provider was asked")),
+      } as unknown as PaymentProviderAdapter,
+      { demoMode: true, store: () => createDbDemoSubscriptionStore(db) },
+    );
+
+    const listed = await discoverSubscriptionsFromDb("demo_customer", adapter);
+
+    expect(listed.map((row) => row.id)).toEqual(["demo_sub_pro"]);
+    expect(listed[0]).toMatchObject({ status: "active", metadata: { tier: "pro" } });
+    const owns = createOrganizationAccess().ownsSubscription(
+      {
+        id: "demo_customer",
+        email: "customer@demo.beztack.test",
+        activeOrganizationId: "demo_org",
+      },
+      listed[0],
+      "organization",
+    );
+    expect(owns).toBe(true);
   });
 });

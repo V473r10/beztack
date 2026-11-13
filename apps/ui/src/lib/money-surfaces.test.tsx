@@ -6,7 +6,6 @@
  * tier, and the real `formatPrice` formats every amount in the active language.
  */
 import i18n from "i18next";
-import { setLanguageSource } from "@/lib/format";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -205,7 +204,6 @@ function plain(value: string): string {
 describe("The same plan shows the same amount everywhere", () => {
   beforeAll(async () => {
     await i18n.init({ lng: "es", resources: {}, showSupportNotice: false });
-    setLanguageSource(() => i18n.language);
   });
 
   afterEach(async () => {

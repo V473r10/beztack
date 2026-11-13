@@ -8,6 +8,8 @@
 import type { PaymentProviderAdapter, PaymentProviderName } from "@beztack/payments";
 import { createPaymentProvider, getPaymentProvider as getCoreProvider } from "@beztack/payments";
 import { env } from "@/env";
+import { withDemoSubscriptions } from "@/server/utils/demo-payment-provider";
+import { createDbDemoSubscriptionStore } from "@/server/utils/demo-subscription-store";
 
 // Re-export all types from core so existing imports keep working
 export type {
@@ -33,6 +35,31 @@ export type {
 export type PaymentProvider = PaymentProviderName;
 
 let initialized = false;
+
+// One decorated adapter per real adapter, so a reset of the core cache resets this too.
+const demoAdapters = new WeakMap<PaymentProviderAdapter, PaymentProviderAdapter>();
+
+/**
+ * The adapter every caller gets. Only with `DEMO_MODE=true` it answers for the
+ * seeded `demo_sub_*` Subscriptions (docs/demo.md); otherwise it is the real
+ * adapter itself.
+ */
+function resolveAdapter(): PaymentProviderAdapter {
+  const adapter = getCoreProvider();
+  if (env.DEMO_MODE !== true) {
+    return adapter;
+  }
+
+  let decorated = demoAdapters.get(adapter);
+  if (!decorated) {
+    decorated = withDemoSubscriptions(adapter, {
+      demoMode: env.DEMO_MODE,
+      store: () => createDbDemoSubscriptionStore(),
+    });
+    demoAdapters.set(adapter, decorated);
+  }
+  return decorated;
+}
 
 function getEnvConfig(): Record<string, string> {
   return {
@@ -68,7 +95,7 @@ export function getPaymentProvider(): PaymentProviderAdapter {
     initialized = true;
   }
 
-  return getCoreProvider();
+  return resolveAdapter();
 }
 
 /**
@@ -83,7 +110,7 @@ export async function ensurePaymentProvider(): Promise<PaymentProviderAdapter> {
     initialized = true;
   }
 
-  return getCoreProvider();
+  return resolveAdapter();
 }
 
 export { resetPaymentProvider } from "@beztack/payments";
