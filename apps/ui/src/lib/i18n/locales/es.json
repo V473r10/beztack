@@ -402,6 +402,21 @@
       "provider_did_not_apply": "El proveedor de pagos no aplicó el cambio de plan. No se cobró nada. Probá de nuevo en un momento."
     },
     "checkoutFailed": "No se pudo iniciar el pago",
+    "toast": {
+      "redirecting": "Redirigiendo al pago...",
+      "adminOverrideApplied": "Se aplicó el nivel asignado por un admin.",
+      "adminOverrideAlreadyActive": "El nivel asignado por un admin ya estaba activo.",
+      "adminOverrideCleared": "Se quitó el nivel asignado por un admin.",
+      "adminOverrideAlreadyCleared": "El nivel asignado por un admin ya estaba quitado.",
+      "adminOverrideClearFailed": "No se pudo quitar el nivel asignado por un admin",
+      "planChangeReconciling": "Pago confirmado. El cambio de plan todavía se está conciliando.",
+      "planChangeAccepted": "¡Cambio de plan aceptado!",
+      "planChangeFailed": "No se pudo cambiar el plan",
+      "portalOpening": "Abriendo el portal de facturación...",
+      "portalFailed": "No se pudo abrir el portal de facturación",
+      "portalOnlyPolar": "El portal de facturación solo está disponible con Polar.",
+      "portalUnavailable": "El portal de facturación no está disponible."
+    },
     "dashboard": {
       "currentPlan": "Plan actual",
       "currentPlanDescription": "Administrá tu suscripción y tus preferencias de facturación",
@@ -750,6 +765,13 @@
     "goHome": "Ir al inicio"
   },
   "settings": {
+    "profile": {
+      "updatedVerifyEmail": "¡Perfil actualizado! Revisá tu correo para verificar la nueva dirección.",
+      "saved": "¡Se guardó la configuración del perfil!",
+      "saveFailed": "No se pudo guardar el perfil: {{message}}",
+      "updateFailed": "No se pudo actualizar el perfil",
+      "emailChangeFailed": "No se pudo cambiar el correo"
+    },
     "theme": {
       "colorTheme": "Tema de color",
       "colorThemeDescription": "Elegí tu esquema de colores y estilo visual preferido",

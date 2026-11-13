@@ -96,3 +96,98 @@ describe("locale files", () => {
     expect(used.has("sidebar.nav.billing")).toBe(true);
   });
 });
+
+/** Text inside the parentheses that open at `start - 1`, honouring nested brackets and quoted strings. */
+function readBracketed(text: string, start: number): string {
+  let depth = 1;
+  let quote: string | null = null;
+  let index = start;
+  for (; index < text.length && depth > 0; index++) {
+    const char = text[index];
+    if (quote) {
+      if (char === "\\") {
+        index++;
+      } else if (char === quote) {
+        quote = null;
+      }
+    } else if (char === '"' || char === "'" || char === "`") {
+      quote = char;
+    } else if ("([{".includes(char)) {
+      depth++;
+    } else if (")]}".includes(char)) {
+      depth--;
+    }
+  }
+  return text.slice(start, index - 1);
+}
+
+/** The first top-level argument of a call, given the text after its opening parenthesis. */
+function firstArgument(callText: string): string {
+  const args = readBracketed(callText, 0);
+  let depth = 0;
+  let quote: string | null = null;
+  for (let index = 0; index < args.length; index++) {
+    const char = args[index];
+    if (quote) {
+      if (char === "\\") {
+        index++;
+      } else if (char === quote) {
+        quote = null;
+      }
+    } else if (char === '"' || char === "'" || char === "`") {
+      quote = char;
+    } else if ("([{".includes(char)) {
+      depth++;
+    } else if (")]}".includes(char)) {
+      depth--;
+    } else if (char === "," && depth === 0) {
+      return args.slice(0, index);
+    }
+  }
+  return args;
+}
+
+/** Removes every `t(...)` / `translate(...)` call, whose literals are translation keys or defaults. */
+function withoutTranslateCalls(text: string): string {
+  const call = /(?<![\w$.])(?:t|translate)\(/;
+  let rest = text;
+  for (let match = call.exec(rest); match; match = call.exec(rest)) {
+    const open = match.index + match[0].length;
+    rest = rest.slice(0, match.index) + rest.slice(open + readBracketed(rest, open).length + 1);
+  }
+  return rest;
+}
+
+const TOAST_CALL = /\btoast\.(?:success|error|info|warning|message)\(/g;
+
+describe("toasts", () => {
+  // Admin pages are not translated (the spec covers the demo path: customer-facing screens).
+  it("never show a hardcoded string outside app/admin (go through t())", () => {
+    const hardcoded: string[] = [];
+    for (const file of sourceFiles(SRC_DIR)) {
+      const relative = path.relative(SRC_DIR, file).split(path.sep).join("/");
+      if (relative.startsWith("app/admin/")) {
+        continue;
+      }
+      const text = readFileSync(file, "utf8");
+      for (const match of text.matchAll(TOAST_CALL)) {
+        const first = withoutTranslateCalls(
+          firstArgument(text.slice(match.index + match[0].length)),
+        );
+        if (/["'`]/.test(first)) {
+          hardcoded.push(`${relative}: ${first.trim().replace(/\s+/g, " ").slice(0, 80)}`);
+        }
+      }
+    }
+    expect(hardcoded).toEqual([]);
+  });
+
+  it("finds toast calls (guards the scanner itself)", () => {
+    const sample = 'toast.success(a ? "x, y" : t("k", "d"), { description: "z" });';
+    const start = sample.indexOf("(") + 1;
+    expect(firstArgument(sample.slice(start))).toBe('a ? "x, y" : t("k", "d")');
+    expect(withoutTranslateCalls('a ? "x" : t("k", "d")')).toBe('a ? "x" : ');
+    expect(withoutTranslateCalls('t("k") + translate("j")')).toBe(" + ");
+  });
+});
+

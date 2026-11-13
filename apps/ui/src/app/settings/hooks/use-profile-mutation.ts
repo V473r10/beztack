@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { translate } from "@/lib/i18n/translate";
 import { queryKeys } from "@/lib/query-keys";
 
 type ProfileData = {
@@ -24,7 +25,7 @@ export function useProfileMutation(currentEmail?: string) {
       });
 
       if (nameUpdateResult.error) {
-        throw new Error(nameUpdateResult.error.message || "Failed to update profile");
+        throw new Error(nameUpdateResult.error.message || translate("settings.profile.updateFailed"));
       }
 
       // Handle email change separately if email has changed
@@ -35,10 +36,10 @@ export function useProfileMutation(currentEmail?: string) {
         });
 
         if (emailChangeResult.error) {
-          throw new Error(emailChangeResult.error.message || "Failed to change email");
+          throw new Error(emailChangeResult.error.message || translate("settings.profile.emailChangeFailed"));
         }
 
-        toast.success("Profile updated! Please check your email to verify the new address.");
+        toast.success(translate("settings.profile.updatedVerifyEmail"));
         return { nameUpdated: true, emailChangeRequested: true };
       }
 
@@ -46,12 +47,12 @@ export function useProfileMutation(currentEmail?: string) {
     },
     onSuccess: (data) => {
       if (!data.emailChangeRequested) {
-        toast.success("Profile settings saved!");
+        toast.success(translate("settings.profile.saved"));
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.userSession.all() });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to save profile: ${error.message}`);
+      toast.error(translate("settings.profile.saveFailed", { message: error.message }));
     },
   });
 }

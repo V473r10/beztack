@@ -1,5 +1,6 @@
 import { isCurrentSubscription } from "@beztack/payments/subscription";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { TFunction } from "i18next";
 import type React from "react";
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -208,8 +209,10 @@ function isAdminTierOverrideCheckoutResponse(data: CheckoutResponse): boolean {
   return data.resultKind === "admin-tier-override";
 }
 
-function getAdminTierOverrideToastMessage(data: CheckoutResponse): string {
-  return data.changed ? "Admin tier override applied." : "Admin tier override already active.";
+function getAdminTierOverrideToastMessage(t: TFunction, data: CheckoutResponse): string {
+  return data.changed
+    ? t("billing.toast.adminOverrideApplied")
+    : t("billing.toast.adminOverrideAlreadyActive");
 }
 
 function organizationQueryString(organizationId: string | undefined): string {
@@ -326,12 +329,12 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
     onSuccess: (data) => {
       if (isAdminTierOverrideCheckoutResponse(data)) {
-        toast.success(getAdminTierOverrideToastMessage(data));
+        toast.success(getAdminTierOverrideToastMessage(t, data));
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
         return;
       }
 
-      toast.success("Redirecting to checkout...");
+      toast.success(t("billing.toast.redirecting"));
     },
     onError: (checkoutError: Error) => {
       // The user is asked to create an organization and the action retried.
@@ -375,11 +378,11 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       if (acceptance?.kind === "admin-tier-override") {
         toast.success(
           acceptance.changed
-            ? "Admin tier override applied."
-            : "Admin tier override already active.",
+            ? t("billing.toast.adminOverrideApplied")
+            : t("billing.toast.adminOverrideAlreadyActive"),
         );
       } else if (acceptance?.reconciliationStatus === "reconciling") {
-        toast.success("Payment confirmed. Plan change is still reconciling.");
+        toast.success(t("billing.toast.planChangeReconciling"));
       } else if (
         acceptance?.direction === "downgrade" ||
         acceptance?.direction === "cadence_change"
@@ -392,7 +395,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
           ),
         );
       } else {
-        toast.success("Plan change accepted successfully!");
+        toast.success(t("billing.toast.planChangeAccepted"));
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
@@ -400,14 +403,14 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       if (isOrganizationRequiredError(mutationError)) {
         return;
       }
-      toast.error(getBillingErrorMessage(t, mutationError, "Failed to change plan"));
+      toast.error(getBillingErrorMessage(t, mutationError, t("billing.toast.planChangeFailed")));
     },
   });
 
   const billingPortalMutation = useMutation({
     mutationFn: async (): Promise<void> => {
       if (env.VITE_PAYMENT_PROVIDER !== "polar") {
-        throw new Error("Billing portal is only available for Polar");
+        throw new Error(t("billing.toast.portalOnlyPolar"));
       }
 
       const portalFn = (
@@ -422,22 +425,22 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       ).customer?.portal;
 
       if (!portalFn) {
-        throw new Error("Billing portal is not available");
+        throw new Error(t("billing.toast.portalUnavailable"));
       }
 
       const result = await portalFn();
       if (result.error) {
-        throw new Error(result.error.message || "Failed to open billing portal");
+        throw new Error(result.error.message || t("billing.toast.portalFailed"));
       }
       if (result.data?.url) {
         window.open(result.data.url, "_blank");
       }
     },
     onSuccess: () => {
-      toast.success("Opening billing portal...");
+      toast.success(t("billing.toast.portalOpening"));
     },
     onError: (billingPortalError: Error) => {
-      toast.error(billingPortalError.message || "Failed to open billing portal");
+      toast.error(billingPortalError.message || t("billing.toast.portalFailed"));
     },
   });
 
@@ -450,12 +453,14 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
     },
     onSuccess: (data) => {
       toast.success(
-        data.changed ? "Admin tier override cleared." : "Admin tier override already cleared.",
+        data.changed
+          ? t("billing.toast.adminOverrideCleared")
+          : t("billing.toast.adminOverrideAlreadyCleared"),
       );
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all() });
     },
     onError: () => {
-      toast.error("Failed to clear Admin tier override");
+      toast.error(t("billing.toast.adminOverrideClearFailed"));
     },
   });
 

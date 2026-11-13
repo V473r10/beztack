@@ -402,6 +402,21 @@
       "provider_did_not_apply": "The payment provider did not apply the plan change. Nothing was charged. Try again in a moment."
     },
     "checkoutFailed": "Failed to start checkout process",
+    "toast": {
+      "redirecting": "Redirecting to checkout...",
+      "adminOverrideApplied": "Admin tier override applied.",
+      "adminOverrideAlreadyActive": "Admin tier override already active.",
+      "adminOverrideCleared": "Admin tier override cleared.",
+      "adminOverrideAlreadyCleared": "Admin tier override already cleared.",
+      "adminOverrideClearFailed": "Failed to clear Admin tier override",
+      "planChangeReconciling": "Payment confirmed. Plan change is still reconciling.",
+      "planChangeAccepted": "Plan change accepted successfully!",
+      "planChangeFailed": "Failed to change plan",
+      "portalOpening": "Opening billing portal...",
+      "portalFailed": "Failed to open billing portal",
+      "portalOnlyPolar": "The billing portal is only available with Polar.",
+      "portalUnavailable": "The billing portal is not available."
+    },
     "dashboard": {
       "currentPlan": "Current Plan",
       "currentPlanDescription": "Manage your subscription and billing preferences",
@@ -750,6 +765,13 @@
     "goHome": "Go to home"
   },
   "settings": {
+    "profile": {
+      "updatedVerifyEmail": "Profile updated! Please check your email to verify the new address.",
+      "saved": "Profile settings saved!",
+      "saveFailed": "Failed to save profile: {{message}}",
+      "updateFailed": "Failed to update profile",
+      "emailChangeFailed": "Failed to change email"
+    },
     "theme": {
       "colorTheme": "Color Theme",
       "colorThemeDescription": "Choose your preferred color scheme and visual style",
