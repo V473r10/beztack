@@ -37,7 +37,10 @@ export function useOrganizations() {
 }
 
 export function useActiveOrganization() {
+  // The pricing page is public and reads this too: without a session the API can only answer 401.
+  const { data: session } = authClient.useSession();
   return useQuery({
+    enabled: Boolean(session),
     queryKey: queryKeys.organizations.active(),
     queryFn: async () => {
       const response = await authClient.organization.getFullOrganization();

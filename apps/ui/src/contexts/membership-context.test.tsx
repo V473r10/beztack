@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   // billing portal, clear Admin tier override.
   mutateAsyncs: [] as ReturnType<typeof vi.fn>[],
   redirectToExternalUrl: vi.fn(),
+  session: { user: { id: "user_1" } } as { user: { id: string } } | null,
   subscriptions: [] as unknown[],
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
@@ -32,7 +33,7 @@ vi.mock("@/hooks/use-organizations", () => ({
 }));
 
 vi.mock("@/lib/auth-client", () => ({
-  authClient: {},
+  authClient: { useSession: () => ({ data: mocks.session }) },
 }));
 
 vi.mock("@/lib/browser-navigation", () => ({
@@ -80,6 +81,7 @@ describe("MembershipProvider", () => {
     mocks.membershipStatus = undefined;
     mocks.mutationOptions.length = 0;
     mocks.mutateAsyncs.length = 0;
+    mocks.session = { user: { id: "user_1" } };
     mocks.subscriptions = [];
     mocks.useMutation.mockImplementation((options: unknown) => {
       const mutateAsync = vi.fn().mockResolvedValue({ success: true });
@@ -122,6 +124,27 @@ describe("MembershipProvider", () => {
 
       throw new Error(`Unhandled query key: ${options.queryKey.join(".")}`);
     });
+  });
+
+  it("does not ask for Membership status before anyone is signed in", () => {
+    mocks.session = null;
+
+    renderMembershipProvider();
+
+    const membershipQueries = mocks.useQuery.mock.calls
+      .map(([options]) => options as { queryKey: readonly unknown[]; enabled?: boolean })
+      .filter((options) => options.queryKey[1] === "membership");
+    expect(membershipQueries).not.toHaveLength(0);
+    expect(membershipQueries.every((options) => options.enabled === false)).toBe(true);
+  });
+
+  it("asks for Membership status once someone is signed in", () => {
+    renderMembershipProvider();
+
+    const membershipQueries = mocks.useQuery.mock.calls
+      .map(([options]) => options as { queryKey: readonly unknown[]; enabled?: boolean })
+      .filter((options) => options.queryKey[1] === "membership");
+    expect(membershipQueries.every((options) => options.enabled === true)).toBe(true);
   });
 
   it("uses effective Membership status for the current tier", () => {

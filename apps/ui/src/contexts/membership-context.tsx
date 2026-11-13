@@ -257,6 +257,10 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   // action that found the user without an organization.
   const [organizationPrompt, setOrganizationPrompt] = useState<OrganizationPrompt | null>(null);
   const { data: activeOrganization } = useActiveOrganization();
+  // The pricing page is public and mounts this provider too: without a session
+  // Membership status can only answer 401.
+  const { data: session } = authClient.useSession();
+  const isSignedIn = Boolean(session);
   const isOrganizationSubscriptionMode = env.VITE_SUBSCRIPTION_MODE === "organization";
   const activeOrganizationId = isOrganizationSubscriptionMode ? activeOrganization?.id : undefined;
 
@@ -273,6 +277,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         `/api/membership/status${organizationQueryString(activeOrganizationId)}`,
       ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
+    enabled: isSignedIn,
   });
 
   // The Subscription list is billing data: only fetched for callers who pass
