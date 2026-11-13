@@ -19,6 +19,8 @@ export const env = createEnv({
    */
   client: {
     VITE_API_URL: z.string().url().default("http://localhost:3000"),
+    // Product name shown on the auth pages. The `create` CLI rewrites it to the project name.
+    VITE_APP_NAME: z.string().min(1).default("Beztack"),
     VITE_BASE_PATH: z.string().default("/").optional(),
     VITE_MERCADO_PAGO_PUBLIC_KEY: z.string().default(""),
     VITE_PAYMENT_PROVIDER: z.enum(["polar", "mercadopago"]).default("polar"),

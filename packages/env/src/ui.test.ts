@@ -84,3 +84,39 @@ describe("UI env: VITE_DEMO_MODE", () => {
     await expect(loadUiEnv()).rejects.toThrow();
   });
 });
+
+describe("UI env: VITE_APP_NAME", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("falls back to Beztack when unset", async () => {
+    stubUiEnv({});
+
+    const env = await loadUiEnv();
+
+    expect(env.VITE_APP_NAME).toBe("Beztack");
+  });
+
+  it("uses the configured app name", async () => {
+    stubUiEnv({ VITE_APP_NAME: "Acme Billing" });
+
+    const env = await loadUiEnv();
+
+    expect(env.VITE_APP_NAME).toBe("Acme Billing");
+  });
+
+  it("treats an empty value as unset", async () => {
+    stubUiEnv({ VITE_APP_NAME: "" });
+
+    const env = await loadUiEnv();
+
+    expect(env.VITE_APP_NAME).toBe("Beztack");
+  });
+});

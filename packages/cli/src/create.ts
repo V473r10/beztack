@@ -17,6 +17,7 @@ import { debugLog, debugOutput } from "./debug.js";
 import { initProject } from "./init-project.js";
 import type { PaymentProvider } from "./modules.js";
 import { modules } from "./modules.js";
+import { applyAppName } from "./app-name.js";
 import {
   applyRegionalDefaults,
   normalizeCurrencyCode,
@@ -430,7 +431,7 @@ async function copyDir(options: CopyDirOptions) {
       }
 
       if (entry.name === ".env.example") {
-        content = content.replace(/APP_NAME=beztack/g, `APP_NAME=${config.name}`);
+        content = applyAppName(content, config.name);
         content = applyRegionalDefaults(content, config.regionalDefaults);
       }
 

@@ -54,6 +54,9 @@
     }
   },
   "auth": {
+    "brand": {
+      "tagline": "Cobros para tu SaaS: suscripciones, cambios de plan con prorrateo y organizaciones, listos para usar."
+    },
     "signIn": {
       "backToSignIn": "Volver a Iniciar Sesión",
       "button": "Iniciar Sesión",
@@ -73,14 +76,16 @@
         "backupCodeDescription": "Ingresá uno de tus códigos de recuperación",
         "backupCodeWarning": "Cada código de recuperación se puede usar una sola vez",
         "verifyCode": "Verificar código",
-        "verifyBackupCode": "Verificar código de recuperación"
+        "verifyBackupCode": "Verificar código de recuperación",
+        "pageTitle": "Autenticación de dos factores - {{appName}}"
       },
       "form": {
         "email": "Correo Electrónico",
         "password": "Contraseña",
         "button": "Iniciar Sesión",
         "forgotPassword": "¿Olvidaste tu contraseña?"
-      }
+      },
+      "pageTitle": "Iniciar sesión - {{appName}}"
     },
     "signUp": {
       "button": "Registrarse",
@@ -88,7 +93,8 @@
       "demoEmailHint": "Usá un email con un dominio real (por ejemplo vos@gmail.com). El sandbox de pagos rechaza dominios inventados como .test.",
       "hasAccount": "¿Ya tienes una cuenta?",
       "signIn": "Iniciar sesión",
-      "title": "Crear una cuenta"
+      "title": "Creá tu cuenta",
+      "pageTitle": "Creá tu cuenta - {{appName}}"
     }
   },
   "pricing": {
@@ -324,7 +330,7 @@
     "checkoutFailed": "No se pudo iniciar el pago"
   },
   "common": {
-    "footer": "© {{year}} Tu Compañía. Todos los derechos reservados.",
+    "footer": "© {{year}} {{appName}}. Todos los derechos reservados.",
     "more": "Más",
     "workflowStreamline": "Optimiza tu flujo de trabajo con nuestra potente plataforma.",
     "yourLogo": "Tu Logo"
