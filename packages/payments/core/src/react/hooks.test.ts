@@ -123,3 +123,34 @@ describe("fetchPricingTiers catalog-only plans", () => {
     expect(tiers.find((tier) => tier.id === "pro")?.catalogOnly).toBeUndefined();
   });
 });
+
+describe("fetchPricingTiers names", () => {
+  const named = (name: string, interval: "month" | "year", tier = "basic") => ({
+    ...product(tier, 1, interval),
+    name,
+  });
+
+  it("names a tier without the billing period when the provider names each product after it", async () => {
+    stubProductList([named("Basic Yearly", "year"), named("Basic Monthly", "month")]);
+
+    const [tier] = await fetchPricingTiers("http://api.test");
+
+    expect(tier?.name).toBe("Basic");
+  });
+
+  it("keeps the name of a tier whose products share one name", async () => {
+    stubProductList([named("Pro", "year", "pro"), named("Pro", "month", "pro")]);
+
+    const [tier] = await fetchPricingTiers("http://api.test");
+
+    expect(tier?.name).toBe("Pro");
+  });
+
+  it("keeps the name of a tier that has a single product", async () => {
+    stubProductList([named("Basic Yearly", "year")]);
+
+    const [tier] = await fetchPricingTiers("http://api.test");
+
+    expect(tier?.name).toBe("Basic Yearly");
+  });
+});

@@ -102,6 +102,24 @@ function buildBaseTier(product: Product, tierId: string, displayOrder: number): 
   };
 }
 
+/**
+ * The leading words two product names share ("Basic Yearly" and "Basic Monthly" share "Basic").
+ * A tier is named after its products without the billing period; with nothing in common the
+ * first name stays.
+ */
+function sharedLeadingWords(current: string, other: string): string {
+  const left = current.split(" ");
+  const right = other.split(" ");
+  const shared: string[] = [];
+  for (const [index, word] of left.entries()) {
+    if (word !== right[index]) {
+      break;
+    }
+    shared.push(word);
+  }
+  return shared.length > 0 ? shared.join(" ") : current;
+}
+
 /** Tier prices stay in the product's integer minor units (ADR 0007); formatting is the UI's job. */
 function applyIntervalToTier(tier: PricingTier, product: Product): PricingTier {
   const amount = product.price.amount;
@@ -146,7 +164,11 @@ export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> 
     const displayOrder = getDisplayOrder(product);
     const existing = tiers.get(tierId);
     const baseTier = existing ?? buildBaseTier(product, tierId, displayOrder);
-    const updated = applyIntervalToTier(baseTier, product);
+    const otherName = product.name.split(" - ")[0] || product.name;
+    const named = existing
+      ? { ...baseTier, name: sharedLeadingWords(baseTier.name, otherName) }
+      : baseTier;
+    const updated = applyIntervalToTier(named, product);
     tiers.set(tierId, updated);
   }
 
