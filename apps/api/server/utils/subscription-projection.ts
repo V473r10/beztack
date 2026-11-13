@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { PaymentProviderAdapter } from "@beztack/payments";
+import { majorToMinor, minorToMajor } from "@beztack/payments/money";
 import { legacyAmountFromPlanPrice } from "./legacy-plan-price";
 import { createPendingPlanChangeProviderPort } from "./pending-plan-change-provider";
 import {
@@ -45,6 +46,7 @@ export type ProjectionSubscription = {
 export type ProjectionPayment = {
   id: string;
   status: string;
+  /** Integer minor units of `currency` (ADR 0007). */
   amount: number;
   currency: string;
   payerEmail?: string | null;
@@ -61,7 +63,12 @@ export type SubscriptionProjectionProviderAdapter = PendingPlanChangeProviderPor
   provider: string;
   getSubscription(subscriptionId: string): Promise<ProjectionSubscription | null>;
   getPayment(paymentId: string): Promise<ProjectionPayment | null>;
-  adjustSubscriptionAmount(subscriptionId: string, fullAmount: number): Promise<void>;
+  /** `fullAmount` is integer minor units of `currency` (ADR 0007). */
+  adjustSubscriptionAmount(
+    subscriptionId: string,
+    fullAmount: number,
+    currency: string,
+  ): Promise<void>;
   cancelSubscription(subscriptionId: string, immediately?: boolean): Promise<void>;
 };
 
@@ -708,7 +715,11 @@ async function applyApprovedPaymentFollowUps(options: {
   const touched: SubscriptionProjectionOutcome["touched"] = {};
   const fullAmount = readNumber(options.payment.metadata, "fullAmount");
   if (fullAmount && options.payment.subscriptionId) {
-    await options.provider.adjustSubscriptionAmount(options.payment.subscriptionId, fullAmount);
+    await options.provider.adjustSubscriptionAmount(
+      options.payment.subscriptionId,
+      fullAmount,
+      options.payment.currency,
+    );
   }
 
   const previousSubscriptionId = readString(options.payment.metadata, "previousSubscriptionId");
@@ -1282,6 +1293,18 @@ function assertMercadoPagoApplicationResource(
   throw new Error("Subscription not found");
 }
 
+/**
+ * Mercado Pago reports decimals; the projection works in integer minor units
+ * (ADR 0007). Everything read from Mercado Pago here is converted once, and
+ * the one amount sent back is converted back once.
+ */
+function fromMercadoPagoAmount(major: number | undefined, currency: string): number | undefined {
+  if (typeof major !== "number") {
+    return;
+  }
+  return majorToMinor(major, currency, { rounding: "half-away-from-zero" });
+}
+
 export async function createMercadoPagoSubscriptionProjectionProvider(): Promise<SubscriptionProjectionProviderAdapter> {
   const [{ env }, mercadoPago, mercadoPagoServer] = await Promise.all([
     import("@/env"),
@@ -1324,7 +1347,10 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
         metadata: {
           ...metadata,
           ...(providerIntegrationId ? { providerIntegrationId } : {}),
-          billingAmount: subscription.auto_recurring?.transaction_amount,
+          billingAmount: fromMercadoPagoAmount(
+            subscription.auto_recurring?.transaction_amount,
+            subscription.auto_recurring?.currency_id || env.DEFAULT_CURRENCY,
+          ),
           billingCurrency: subscription.auto_recurring?.currency_id,
           billingInterval: mapInterval(subscription.auto_recurring?.frequency_type),
           billingFrequency: subscription.auto_recurring?.frequency,
@@ -1340,12 +1366,14 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
       }
       const metadata = mercadoPago.decodeExternalReference(payment.external_reference);
 
+      // The Payment's own currency wins; the project default only fills a gap.
+      const paymentCurrency = payment.currency_id || env.DEFAULT_CURRENCY;
+
       return {
         id: String(payment.id),
         status: payment.status ?? "unknown",
-        amount: payment.transaction_amount ?? 0,
-        // The Payment's own currency wins; the project default only fills a gap.
-        currency: payment.currency_id || env.DEFAULT_CURRENCY,
+        amount: fromMercadoPagoAmount(payment.transaction_amount, paymentCurrency) ?? 0,
+        currency: paymentCurrency,
         payerEmail: payment.payer?.email ?? null,
         externalReference: payment.external_reference ?? null,
         subscriptionId: payment.point_of_interaction?.transaction_data?.subscription_id ?? null,
@@ -1355,13 +1383,13 @@ export async function createMercadoPagoSubscriptionProjectionProvider(): Promise
         },
       };
     },
-    async adjustSubscriptionAmount(subscriptionId, fullAmount) {
+    async adjustSubscriptionAmount(subscriptionId, fullAmount, currency) {
       const subscription = await client.subscriptions.get(subscriptionId);
       assertMercadoPagoApplicationResource(subscription, applicationId);
 
       await client.subscriptions.update(subscriptionId, {
         auto_recurring: {
-          transaction_amount: fullAmount,
+          transaction_amount: minorToMajor(fullAmount, currency),
         },
       });
     },

@@ -237,6 +237,204 @@ describe("createMercadoPagoAdapter", () => {
     });
   });
 
+  describe("minor units at the boundary", () => {
+    // Provider decimals on the left, domain minor units on the right (ADR 0007).
+    const CASES = [
+      { currency: "USD", major: 9.99, minor: 999 },
+      { currency: "UYU", major: 390, minor: 39_000 },
+      { currency: "JPY", major: 900, minor: 900 },
+      { currency: "KWD", major: 9.5, minor: 9500 },
+    ];
+
+    function planIn(id: string, currency: string, major: number): MPPreapprovalPlan {
+      const result = plan(id);
+      result.auto_recurring = {
+        ...result.auto_recurring,
+        transaction_amount: major,
+        currency_id: currency,
+      };
+      return result;
+    }
+
+    function subscriptionIn(currency: string, major: number): MPPreapproval {
+      const result = subscription("sub_1");
+      result.auto_recurring = {
+        ...result.auto_recurring,
+        transaction_amount: major,
+        currency_id: currency,
+      };
+      return result;
+    }
+
+    it.each(CASES)("lists a $currency plan in minor units", async ({ currency, major, minor }) => {
+      client.plans.list.mockResolvedValueOnce({
+        paging: { total: 1, limit: 50, offset: 0 },
+        results: [planIn("plan_1", currency, major)],
+      });
+
+      const [product] = await createAdapter().listProducts();
+
+      expect(product?.price).toEqual({ amount: minor, currency });
+    });
+
+    it.each(CASES)(
+      "reads one $currency plan in minor units",
+      async ({ currency, major, minor }) => {
+        client.plans.get.mockResolvedValueOnce(planIn("plan_1", currency, major));
+
+        await expect(createAdapter().getProduct("plan_1")).resolves.toMatchObject({
+          price: { amount: minor, currency },
+        });
+      },
+    );
+
+    it.each(CASES)(
+      "creates a $currency plan sending provider decimals",
+      async ({ currency, major, minor }) => {
+        client.plans.create.mockResolvedValueOnce(planIn("plan_1", currency, major));
+
+        const product = await createAdapter().createProduct({
+          name: "Pro",
+          type: "plan",
+          price: { amount: minor, currency },
+          interval: "month",
+          intervalCount: 1,
+        });
+
+        expect(client.plans.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            auto_recurring: expect.objectContaining({
+              transaction_amount: major,
+              currency_id: currency,
+            }),
+          }),
+        );
+        // The way back gives the same amount: nothing is converted twice.
+        expect(product.price).toEqual({ amount: minor, currency });
+      },
+    );
+
+    it.each(CASES)(
+      "updates a $currency plan price sending provider decimals",
+      async ({ currency, major, minor }) => {
+        client.plans.get.mockResolvedValueOnce(planIn("plan_1", currency, major));
+        client.plans.update.mockResolvedValueOnce(planIn("plan_1", currency, major));
+
+        await createAdapter().updateProduct("plan_1", { price: { amount: minor, currency } });
+
+        expect(client.plans.update).toHaveBeenCalledWith("plan_1", {
+          auto_recurring: { transaction_amount: major },
+        });
+      },
+    );
+
+    it.each(CASES)(
+      "checks out a $currency plan with the plan's own decimals",
+      async ({ currency, major }) => {
+        client.plans.get.mockResolvedValueOnce(planIn("plan_match", currency, major));
+        client.subscriptions.create.mockResolvedValueOnce(subscription("sub_created"));
+
+        await createAdapter().createCheckout({
+          productId: "plan_match",
+          customerEmail: "payer@example.com",
+          successUrl: "https://example.com/success",
+        });
+
+        expect(client.subscriptions.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            auto_recurring: expect.objectContaining({
+              transaction_amount: major,
+              currency_id: currency,
+            }),
+          }),
+        );
+      },
+    );
+
+    it.each(CASES)(
+      "creates a $currency subscription from a custom plan in minor units",
+      async ({ currency, major, minor }) => {
+        client.subscriptions.create.mockResolvedValueOnce(subscription("sub_created"));
+
+        await createAdapter().createSubscription({
+          customerEmail: "payer@example.com",
+          customPlan: {
+            reason: "Upgrade",
+            amount: minor,
+            currency,
+            interval: "month",
+            intervalCount: 1,
+          },
+        });
+
+        expect(client.subscriptions.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            auto_recurring: expect.objectContaining({
+              transaction_amount: major,
+              currency_id: currency,
+            }),
+          }),
+        );
+      },
+    );
+
+    it.each(CASES)(
+      "reports the billing amount of a $currency subscription in minor units",
+      async ({ currency, major, minor }) => {
+        client.subscriptions.get.mockResolvedValueOnce(subscriptionIn(currency, major));
+
+        const result = await createAdapter().getSubscription("sub_1");
+
+        expect(result?.metadata).toMatchObject({
+          billingAmount: minor,
+          billingCurrency: currency,
+        });
+      },
+    );
+
+    it("reports the billing amount of a listed subscription in minor units", async () => {
+      client.subscriptions.search.mockResolvedValueOnce({
+        paging: { total: 1, limit: 50, offset: 0 },
+        results: [subscriptionIn("USD", 9.99)],
+      });
+
+      const [listed] = await createAdapter().listSubscriptions({
+        customerEmail: "payer@example.com",
+      });
+
+      expect(listed?.metadata?.billingAmount).toBe(999);
+    });
+
+    it("refuses a price that is not an integer amount of minor units", async () => {
+      await expect(
+        createAdapter().createProduct({
+          name: "Pro",
+          type: "plan",
+          price: { amount: 9.99, currency: "USD" },
+          interval: "month",
+          intervalCount: 1,
+        }),
+      ).rejects.toThrow(RangeError);
+      expect(client.plans.create).not.toHaveBeenCalled();
+    });
+
+    it("follows a USD target plan with a cent amount when changing plan", async () => {
+      client.plans.get.mockResolvedValueOnce(planIn("plan_basic", "USD", 9.99));
+      client.subscriptions.get
+        .mockResolvedValueOnce(subscriptionIn("USD", 29.99))
+        .mockResolvedValueOnce(subscriptionIn("USD", 9.99));
+
+      const updated = await createAdapter().updateSubscription("sub_1", {
+        productId: "plan_basic",
+      });
+
+      expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
+        auto_recurring: { transaction_amount: 9.99 },
+      });
+      expect(updated.metadata?.billingAmount).toBe(999);
+    });
+  });
+
   it("returns only plans from the configured Application and scans later pages", async () => {
     client.plans.list
       .mockResolvedValueOnce({
@@ -397,7 +595,8 @@ describe("createMercadoPagoAdapter", () => {
       expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
         auto_recurring: { transaction_amount: 500 },
       });
-      expect(updated.metadata?.billingAmount).toBe(500);
+      // 500 UYU in the provider's decimals is 50000 minor units in the domain.
+      expect(updated.metadata?.billingAmount).toBe(50_000);
     });
 
     it("refuses when Mercado Pago returns another amount", async () => {

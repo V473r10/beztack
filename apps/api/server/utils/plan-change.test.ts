@@ -1655,6 +1655,110 @@ describe("previewPlanChange", () => {
   });
 });
 
+describe("Plan change amounts in integer minor units", () => {
+  async function previewUpgrade(options: {
+    currency: string;
+    basic: number;
+    pro: number;
+    charged?: number | null;
+    daysLeft: number;
+  }): Promise<PlanChangePreview> {
+    const store = createStore({
+      currentSubscription: currentSubscription({
+        currentPeriodChargedAmount: options.charged ?? null,
+      }),
+      plans: [
+        catalogPlan({ price: { amount: options.basic, currency: options.currency } }),
+        catalogPlan({
+          id: "mercadopago_pro_month",
+          providerPlanId: "provider_pro_month",
+          canonicalTierId: "pro",
+          tierRank: 2,
+          price: { amount: options.pro, currency: options.currency },
+        }),
+      ],
+    });
+    const MS_PER_DAY = 86_400_000;
+
+    return previewPricedPlanChange({
+      actor: AUTHORIZED_ACTOR,
+      membershipTarget: MEMBERSHIP_TARGET,
+      paymentProvider: PAYMENT_PROVIDER,
+      paymentIntegrationId: PAYMENT_INTEGRATION_ID,
+      target: { tierId: "pro", billingCadence: "monthly" },
+      store,
+      now: () => new Date(PERIOD_END.getTime() - options.daysLeft * MS_PER_DAY),
+    });
+  }
+
+  it.each([
+    // 15 of 30 days left: half of the current price is credited.
+    { currency: "USD", basic: 2900, pro: 9900, credit: 1450, amount: 8450 },
+    { currency: "UYU", basic: 129_000, pro: 399_000, credit: 64_500, amount: 334_500 },
+    { currency: "JPY", basic: 900, pro: 2900, credit: 450, amount: 2450 },
+    { currency: "KWD", basic: 9000, pro: 29_000, credit: 4500, amount: 24_500 },
+  ])(
+    "credits half of a $currency period without leaving integers",
+    async ({ currency, basic, pro, credit, amount }) => {
+      const preview = await previewUpgrade({ currency, basic, pro, daysLeft: 15 });
+
+      expect(preview.firstPayment).toEqual({ amount, credit, currency, fullAmount: pro });
+      expect(Number.isInteger(preview.firstPayment.credit)).toBe(true);
+    },
+  );
+
+  it("rounds the credit to the nearest minor unit, ties away from zero", async () => {
+    // 1000 * 7 / 30 = 233.33 -> 233; 1000 * 8 / 30 = 266.67 -> 267
+    const sevenDays = await previewUpgrade({
+      currency: "USD",
+      basic: 1000,
+      pro: 5000,
+      daysLeft: 7,
+    });
+    const eightDays = await previewUpgrade({
+      currency: "USD",
+      basic: 1000,
+      pro: 5000,
+      daysLeft: 8,
+    });
+
+    expect(sevenDays.firstPayment).toMatchObject({ credit: 233, amount: 4767 });
+    expect(eightDays.firstPayment).toMatchObject({ credit: 267, amount: 4733 });
+  });
+
+  it("credits the amount the provider reports, already in minor units", async () => {
+    // The Mercado Pago adapter reports billingAmount in minor units: 9.99 USD is 999.
+    const preview = await previewUpgrade({
+      currency: "USD",
+      basic: 2900,
+      pro: 9900,
+      charged: 999,
+      daysLeft: 30,
+    });
+
+    expect(preview.firstPayment).toMatchObject({ credit: 999, amount: 8901 });
+  });
+
+  it("never credits more than the first Payment it discounts", async () => {
+    const preview = await previewUpgrade({
+      currency: "USD",
+      basic: 2900,
+      pro: 9900,
+      charged: 50_000,
+      daysLeft: 30,
+    });
+
+    expect(preview.firstPayment).toMatchObject({ credit: 9900, amount: 0 });
+  });
+
+  it("refuses a catalog price that is not an integer of minor units", async () => {
+    // A catalog still on major units (9.99) would be charged 100 times too little.
+    await expect(
+      previewUpgrade({ currency: "USD", basic: 29.99, pro: 99.99, daysLeft: 15 }),
+    ).rejects.toThrow(RangeError);
+  });
+});
+
 describe("retryFailedPendingPlanChange", () => {
   const RETRIED_AT = new Date("2026-07-03T12:00:00.000Z");
 

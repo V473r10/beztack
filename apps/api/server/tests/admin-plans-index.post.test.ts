@@ -77,6 +77,16 @@ describe("POST /api/auth/admin/plans", () => {
     },
   );
 
+  it("rejects a price that is not an integer of minor units", async () => {
+    mocks.readBody.mockResolvedValue({ displayName: "Pro", price: 9.99, interval: "month" });
+    const handler = await loadHandler();
+
+    const error = await captureError(handler({}));
+
+    expect(error).toBeDefined();
+    expect(mocks.createProduct).not.toHaveBeenCalled();
+  });
+
   it("creates a yearly plan on Polar", async () => {
     mocks.readBody.mockResolvedValue({ displayName: "Pro", price: 100, interval: "year" });
     const handler = await loadHandler();
