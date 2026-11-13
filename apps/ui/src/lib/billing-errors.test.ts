@@ -6,7 +6,9 @@ import { ApiError } from "./api-client";
 import {
   getBillingErrorMessage,
   isOrganizationRequiredError,
+  isProviderRateLimitedError,
   runWithOrganization,
+  shouldRetryBillingQuery,
 } from "./billing-errors";
 import en from "./i18n/locales/en.json";
 import es from "./i18n/locales/es.json";
@@ -164,5 +166,42 @@ describe("every error code the billing API sends has a translation", () => {
     const missing = sentCodes().filter((code) => !errors[code]);
 
     expect(missing).toEqual([]);
+  });
+});
+
+describe("isProviderRateLimitedError", () => {
+  it("recognises a 429 answer, with or without the provider_rate_limited code", () => {
+    expect(isProviderRateLimitedError(apiError(429, "x", "provider_rate_limited"))).toBe(true);
+    expect(isProviderRateLimitedError(apiError(429, "Too Many Requests"))).toBe(true);
+  });
+
+  it("ignores other failures", () => {
+    expect(isProviderRateLimitedError(apiError(500, "x"))).toBe(false);
+    expect(isProviderRateLimitedError(new Error("429"))).toBe(false);
+    expect(isProviderRateLimitedError(null)).toBe(false);
+  });
+
+  it("has a translated message for the server code, in English and Spanish", () => {
+    const error = apiError(429, "busy", "provider_rate_limited");
+
+    expect(getBillingErrorMessage(t, error, FALLBACK)).toBe(
+      "The payment provider is busy right now. Try again in a few seconds.",
+    );
+    expect(getBillingErrorMessage(tEs, error, FALLBACK)).toBe(
+      "El proveedor de pagos está ocupado en este momento. Reintentá en unos segundos.",
+    );
+  });
+});
+
+describe("shouldRetryBillingQuery", () => {
+  it("never retries a 4xx answer, 429 included: retrying a rate limit makes it worse", () => {
+    expect(shouldRetryBillingQuery(0, apiError(429, "x"))).toBe(false);
+    expect(shouldRetryBillingQuery(0, apiError(403, "x"))).toBe(false);
+  });
+
+  it("retries a server or network failure twice, then gives up", () => {
+    expect(shouldRetryBillingQuery(0, apiError(500, "x"))).toBe(true);
+    expect(shouldRetryBillingQuery(1, new TypeError("Failed to fetch"))).toBe(true);
+    expect(shouldRetryBillingQuery(2, apiError(500, "x"))).toBe(false);
   });
 });

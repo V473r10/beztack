@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { ensurePaymentProvider } from "@/lib/payments";
+import { invalidateProductsCache } from "@/server/utils/products-cache";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const updateSchema = z.object({
@@ -57,6 +58,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const [updated] = await db.update(plan).set(data).where(eq(plan.id, planId)).returning();
+
+  // The public Products response is built from these plans: drop its cache.
+  invalidateProductsCache();
 
   return { plan: updated };
 });

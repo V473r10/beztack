@@ -9,6 +9,10 @@
  * When the Payment provider cannot be reached, the products come from the
  * Pricing catalog instead (`source: "catalog"`), so a provider outage does not
  * take the pricing page down. An Admin tier override needs nothing else.
+ *
+ * The response carries no per-user data, so it is cached in-process for a few
+ * seconds (`utils/products-cache`): fast navigation does not reach the
+ * provider's rate limit. Admin plan changes invalidate it.
  */
 import { defineEventHandler } from "h3";
 import { env } from "@/env";
@@ -19,6 +23,11 @@ import {
   getCatalogProducts,
 } from "@/lib/payments/catalog-mp";
 import type { Product } from "@/lib/payments/types";
+import {
+  PRODUCTS_CACHE_TTL_MS,
+  PRODUCTS_FALLBACK_TTL_MS,
+  readThroughProductsCache,
+} from "@/server/utils/products-cache";
 
 function tierOf(product: Product): string {
   const { tier, planId } = product.metadata ?? {};
@@ -52,7 +61,13 @@ async function catalogOnlyProducts(
   }
 }
 
-export default defineEventHandler(async () => {
+type ProductsBody = {
+  provider: string;
+  products: Product[];
+  source?: "catalog";
+};
+
+async function loadProducts(): Promise<{ body: ProductsBody; ttlMs: number }> {
   try {
     const provider = await ensurePaymentProvider();
     const providerProducts = await provider.listProducts();
@@ -61,8 +76,11 @@ export default defineEventHandler(async () => {
     const products = await Promise.all(providerProducts.map(enrichProductWithCatalog));
 
     return {
-      provider: provider.provider,
-      products: [...products, ...(await catalogOnlyProducts(provider.provider, products))],
+      body: {
+        provider: provider.provider,
+        products: [...products, ...(await catalogOnlyProducts(provider.provider, products))],
+      },
+      ttlMs: PRODUCTS_CACHE_TTL_MS,
     };
   } catch (error) {
     console.warn(
@@ -71,9 +89,14 @@ export default defineEventHandler(async () => {
     );
 
     return {
-      provider: env.PAYMENT_PROVIDER,
-      products: await getCatalogProducts(env.PAYMENT_PROVIDER),
-      source: "catalog" as const,
+      body: {
+        provider: env.PAYMENT_PROVIDER,
+        products: await getCatalogProducts(env.PAYMENT_PROVIDER),
+        source: "catalog",
+      },
+      ttlMs: PRODUCTS_FALLBACK_TTL_MS,
     };
   }
-});
+}
+
+export default defineEventHandler(() => readThroughProductsCache(loadProducts));

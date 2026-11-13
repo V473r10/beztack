@@ -12,10 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useMembership } from "@/contexts/membership-context";
-import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { pricingTiersQueryOptions } from "@/hooks/use-pricing-tiers";
 import { formatPrice } from "@/lib/format";
 import { type CheckoutSelection, readCheckoutSelection } from "@/lib/checkout-resume";
-import { queryKeys } from "@/lib/query-keys";
 import type { PricingTier } from "@/types/pricing";
 
 type CheckoutConfirmViewProps = {
@@ -111,10 +110,7 @@ export default function CheckoutConfirm() {
   const selection = readCheckoutSelection(location.search);
   const { upgradeToTier, isLoading } = useMembership();
 
-  const { data: tiers = [], isLoading: isLoadingTiers } = useQuery<PricingTier[]>({
-    queryKey: queryKeys.subscriptions.productTiers(),
-    queryFn: usePricingTiers,
-  });
+  const { data: tiers = [], isLoading: isLoadingTiers } = useQuery(pricingTiersQueryOptions());
 
   const tier = selection ? tiers.find((candidate) => candidate.id === selection.tierId) : undefined;
 

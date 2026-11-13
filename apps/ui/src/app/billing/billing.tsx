@@ -3,9 +3,11 @@ import { useTranslation } from "react-i18next";
 import { BillingDashboard } from "@/components/payments/billing-dashboard";
 import { PendingPlanChangeNotice } from "@/components/payments/pending-plan-change-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMembership } from "@/contexts/membership-context";
+import { isProviderRateLimitedError } from "@/lib/billing-errors";
 
 const SKELETON_ITEMS = 3;
 const SKELETON_ITEMS_COUNT = Array.from({ length: SKELETON_ITEMS }, (_, i) => i + 1);
@@ -22,14 +24,26 @@ export default function Billing() {
     error,
     upgradeToTier,
     openBillingPortal,
+    refreshMembership,
   } = useMembership();
 
-  if (error) {
+  // Loading is over and there is still nothing to show: an error state with a
+  // way out, never a skeleton that waits for data that is not coming.
+  if (error || !(isLoading || tierConfig)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{t("billing.page.loadError")}</AlertDescription>
+          <AlertDescription>
+            <p>
+              {isProviderRateLimitedError(error)
+                ? t("billing.page.rateLimited")
+                : t("billing.page.loadError")}
+            </p>
+            <Button onClick={() => refreshMembership()} size="sm" type="button" variant="outline">
+              {t("billing.page.retry")}
+            </Button>
+          </AlertDescription>
         </Alert>
       </div>
     );

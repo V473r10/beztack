@@ -6,6 +6,7 @@ import { db, plan } from "@beztack/db";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { ensurePaymentProvider } from "@/lib/payments";
+import { invalidateProductsCache } from "@/server/utils/products-cache";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const importSchema = z.object({
@@ -50,6 +51,9 @@ export default defineEventHandler(async (event) => {
       status: "active",
     })
     .returning();
+
+  // The public Products response is built from these plans: drop its cache.
+  invalidateProductsCache();
 
   return { plan: newPlan };
 });

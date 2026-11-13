@@ -312,7 +312,9 @@
     "page": {
       "title": "Facturación y suscripción",
       "description": "Gestiona tu suscripción, revisa tu uso y consulta tu historial de facturación.",
-      "loadError": "No pudimos cargar la información de facturación. Intenta recargar la página."
+      "loadError": "No pudimos cargar la información de facturación. Intenta recargar la página.",
+      "rateLimited": "Se hicieron demasiadas consultas al proveedor de pagos. Esperá unos segundos y probá de nuevo.",
+      "retry": "Reintentar"
     },
     "checkoutSuccess": {
       "invalidTier": "La información del plan no es válida. Contacta a soporte.",
@@ -404,6 +406,7 @@
     "errors": {
       "customer_email_rejected": "El proveedor de pagos rechazó tu correo electrónico. Usá otro correo.",
       "payment_provider_unavailable": "El proveedor de pagos no está disponible. Probá de nuevo en un momento.",
+      "provider_rate_limited": "El proveedor de pagos está ocupado en este momento. Reintentá en unos segundos.",
       "organization_required": "Primero creá una organización: esta acción se cobra a una organización.",
       "provider_did_not_apply": "El proveedor de pagos no aplicó el cambio de plan. No se cobró nada. Probá de nuevo en un momento.",
       "invalid_current_subscription": "La suscripción de este cambio de plan no es válida.",

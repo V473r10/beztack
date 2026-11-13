@@ -10,6 +10,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { classifyBillingCadence } from "@/server/utils/plan-change";
+import { invalidateProductsCache } from "@/server/utils/products-cache";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 /** `plan.price` is a 32-bit integer column: a larger price would be a database error (500). */
@@ -111,6 +112,9 @@ export default defineEventHandler(async (event) => {
       status: "active",
     })
     .returning();
+
+  // The public Products response is built from these plans: drop its cache.
+  invalidateProductsCache();
 
   return { plan: newPlan, syncStatus: "synced" };
 });

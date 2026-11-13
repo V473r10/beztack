@@ -39,12 +39,11 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { useMembership } from "@/contexts/membership-context";
-import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { pricingTiersQueryOptions } from "@/hooks/use-pricing-tiers";
 import { authClient } from "@/lib/auth-client";
 import { getSignUpPathForCheckout } from "@/lib/checkout-resume";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
-import { queryKeys } from "@/lib/query-keys";
 import {
   type Comparison,
   type ComparisonRow,
@@ -153,10 +152,7 @@ export default function Pricing() {
   // Plan change is an Admin tier override. Everyone else goes to checkout.
   const changesPlan = hasActiveSubscription || isAppAdmin;
 
-  const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery<PricingTier[]>({
-    queryKey: queryKeys.subscriptions.productTiers(),
-    queryFn: usePricingTiers,
-  });
+  const { data: allTiers = [], isLoading: isLoadingTiers } = useQuery(pricingTiersQueryOptions());
 
   const hasYearlyPlans = allTiers.some((tier) => tier.price.yearly > 0);
   const savingsPercent = Math.max(...allTiers.map((tier) => tier.yearlySavingsPercent ?? 0));
