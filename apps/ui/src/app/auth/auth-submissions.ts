@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
@@ -16,6 +17,7 @@ import { getPostSignInTarget, withNext } from "@/lib/auth-redirect";
 type SubmissionDeps = {
   t: TFunction;
   navigate: (to: string) => void;
+  queryClient: Pick<QueryClient, "invalidateQueries">;
 };
 
 type AuthResult = { data?: unknown; error?: unknown };
@@ -34,6 +36,15 @@ async function request(call: () => Promise<unknown>): Promise<AuthResult> {
   }
 }
 
+/**
+ * Called once a request has created the session. What the app cached before
+ * (the Active organization above all) belongs to the previous session, and
+ * better-auth's client does not refetch it after a sign-in (better-auth #9710).
+ */
+function sessionStarted({ queryClient }: SubmissionDeps): void {
+  queryClient.invalidateQueries();
+}
+
 function fail(t: TFunction, result: AuthResult, fallbackKey?: string): string {
   const message = getAuthErrorMessage(t, readAuthError(result) ?? {}, fallbackKey);
   toast.error(message);
@@ -43,14 +54,16 @@ function fail(t: TFunction, result: AuthResult, fallbackKey?: string): string {
 export async function submitSignUp(
   values: SignUpValues,
   search: string,
-  { t, navigate }: SubmissionDeps,
+  deps: SubmissionDeps,
 ): Promise<string | null> {
+  const { t, navigate } = deps;
   const result = await request(() =>
     authClient.signUp.email({ name: values.name, email: values.email, password: values.password }),
   );
   if (readAuthError(result)) {
     return fail(t, result);
   }
+  sessionStarted(deps);
   toast.success(t("notifications.account.created"));
   // Back to where sign-up started (e.g. an invitation), or home.
   navigate(getPostSignInTarget(search));
@@ -60,8 +73,9 @@ export async function submitSignUp(
 export async function submitSignIn(
   values: SignInValues,
   search: string,
-  { t, navigate }: SubmissionDeps,
+  deps: SubmissionDeps,
 ): Promise<string | null> {
+  const { t, navigate } = deps;
   const result = await request(() =>
     authClient.signIn.email({ email: values.email, password: values.password }),
   );
@@ -72,6 +86,7 @@ export async function submitSignIn(
     toast.success(t("notifications.auth.twoFactorRequired"));
     navigate(withNext("/auth/sign-in/two-factor", search));
   } else {
+    sessionStarted(deps);
     toast.success(t("notifications.auth.signInSuccess"));
     navigate(getPostSignInTarget(search));
   }
@@ -81,12 +96,14 @@ export async function submitSignIn(
 export async function submitTotp(
   code: string,
   search: string,
-  { t, navigate }: SubmissionDeps,
+  deps: SubmissionDeps,
 ): Promise<string | null> {
+  const { t, navigate } = deps;
   const result = await request(() => authClient.twoFactor.verifyTotp({ code }));
   if (readAuthError(result)) {
     return fail(t, result);
   }
+  sessionStarted(deps);
   toast.success(t("notifications.auth.signIn2FASuccess"));
   navigate(getPostSignInTarget(search));
   return null;
@@ -95,8 +112,9 @@ export async function submitTotp(
 export async function submitBackupCode(
   code: string,
   search: string,
-  { t, navigate }: SubmissionDeps,
+  deps: SubmissionDeps,
 ): Promise<string | null> {
+  const { t, navigate } = deps;
   // Try the dashed format first (as the API issues it), then without the dash.
   let result = await request(() => authClient.twoFactor.verifyBackupCode({ code }));
   if (readAuthError(result)) {
@@ -106,6 +124,7 @@ export async function submitBackupCode(
   if (readAuthError(result)) {
     return fail(t, result, "notifications.twoFactor.errors.verificationFailed");
   }
+  sessionStarted(deps);
   toast.success(t("notifications.auth.signInBackupSuccess"));
   navigate(getPostSignInTarget(search));
   return null;
