@@ -8,6 +8,26 @@ Migration `packages/db/drizzle/0009_prices_minor_units.sql` changes how Beztack 
 If your database is new, there is nothing to do: `pnpm db:migrate` creates the final shape.
 If it already has plans or Pending Plan changes, read this first. The migration rewrites money data.
 
+## 0. Wait for in-flight Mercado Pago Upgrades
+
+Do not migrate while a Mercado Pago Upgrade is waiting for its payment. An Upgrade started before the
+deploy carries the full price in major units in the payment's `external_reference` (`fullamt=4500`). If
+that payment is approved after the deploy, Beztack reads `4500` as minor units of the subscription's
+currency and sets the recurring charge to `45` instead of `4500`, and nothing warns about it.
+
+Before running the migration:
+
+1. In Mercado Pago, list the payments of your plans that are `pending` or `in_process` (an Upgrade pays the
+   prorated difference first). Wait until they are approved or rejected, or cancel them.
+2. Check that no Upgrade is mid-flight on your side: `SELECT id, status FROM pending_plan_change WHERE
+   status = 'pending' AND target_plan_snapshot ->> 'paymentProvider' = 'mercadopago'` lists scheduled
+   changes (downgrades and period switches). Those are safe, the migration converts their price.
+3. Deploy the new code and run the migration in the same maintenance window, so no old `fullamt` is
+   approved against the new code.
+
+If an old-format Upgrade does get approved afterwards, fix the subscription's recurring amount by hand in
+Mercado Pago (it is `plan.price` in minor units divided by 10^decimals).
+
 ## 1. Back up first
 
 ```bash
