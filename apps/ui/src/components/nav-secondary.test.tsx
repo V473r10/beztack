@@ -1,4 +1,4 @@
-import { IconHelp, IconSettings } from "@tabler/icons-react";
+import { IconHelp, IconSearch, IconSettings } from "@tabler/icons-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -8,7 +8,22 @@ vi.mock("@/components/ui/sidebar", () => {
     SidebarGroup: Pass,
     SidebarGroupContent: Pass,
     SidebarMenu: Pass,
-    SidebarMenuButton: Pass,
+    SidebarMenuButton: ({
+      asChild,
+      children,
+      onClick,
+    }: {
+      asChild?: boolean;
+      children?: React.ReactNode;
+      onClick?: () => void;
+    }) =>
+      asChild ? (
+        <div>{children}</div>
+      ) : (
+        <button onClick={onClick} type="button">
+          {children}
+        </button>
+      ),
     SidebarMenuItem: Pass,
   };
 });
@@ -43,5 +58,17 @@ describe("NavSecondary", () => {
     expect(html).toContain('href="https://docs.example.com"');
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
+  });
+
+  it("renders an action item as a button that does not navigate", () => {
+    const html = renderToStaticMarkup(
+      <NavSecondary
+        items={[{ title: "Search", url: "", icon: IconSearch, action: "open-command-palette" }]}
+      />,
+    );
+
+    expect(html).toContain("<button");
+    expect(html).not.toContain("<a");
+    expect(html).not.toContain("data-router");
   });
 });
