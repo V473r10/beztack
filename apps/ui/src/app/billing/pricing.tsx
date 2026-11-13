@@ -142,6 +142,7 @@ export default function Pricing() {
     changePlan,
     getPlanChangeType,
     isLoading,
+    isTierUnknown,
   } = useMembership();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -366,7 +367,7 @@ export default function Pricing() {
                 <PricingCard
                   billingPeriod={billingPeriod}
                   changeType={getChangeTypeForTier(tier.id)}
-                  currentTier={currentTier}
+                  currentTier={isTierUnknown ? undefined : currentTier}
                   hasActiveSubscription={changesPlan}
                   index={index}
                   isLoading={isLoading}

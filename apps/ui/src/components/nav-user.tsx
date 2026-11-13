@@ -1,9 +1,15 @@
-import { IconCreditCard, IconDotsVertical, IconLogout, IconRoute } from "@tabler/icons-react";
+import {
+  IconCreditCard,
+  IconDotsVertical,
+  IconLogout,
+  IconRefresh,
+  IconRoute,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { LanguageSelector } from "@/components/language-selector";
-import { MembershipBadge } from "@/components/payments/membership-badge";
+import { CurrentMembershipBadge } from "@/components/payments/current-membership-badge";
 import { useTour } from "@/components/tour";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -37,7 +43,7 @@ export function NavUser() {
   const { t } = useTranslation();
   const { isMobile } = useSidebar();
   const { startTour } = useTour();
-  const { currentTier } = useMembership();
+  const { isTierUnknown, refreshMembership } = useMembership();
 
   const navigate = useNavigate();
 
@@ -75,7 +81,7 @@ export function NavUser() {
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-muted-foreground text-xs">{user.email}</span>
                 <div className="mt-1">
-                  <MembershipBadge size="sm" tier={currentTier} />
+                  <CurrentMembershipBadge size="sm" />
                 </div>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
@@ -97,7 +103,7 @@ export function NavUser() {
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-muted-foreground text-xs">{user.email}</span>
                   <div className="mt-1">
-                    <MembershipBadge size="sm" tier={currentTier} />
+                    <CurrentMembershipBadge size="sm" />
                   </div>
                 </div>
               </div>
@@ -108,6 +114,12 @@ export function NavUser() {
                 <IconCreditCard />
                 {t("sidebar.userMenu.billing")}
               </DropdownMenuItem>
+              {isTierUnknown ? (
+                <DropdownMenuItem onClick={() => refreshMembership()}>
+                  <IconRefresh />
+                  {t("billing.membershipUnavailable.retry")}
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleStartTour}>

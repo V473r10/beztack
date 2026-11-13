@@ -90,6 +90,25 @@ function NoOrganization() {
   );
 }
 
+function PlanUnavailable({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="px-4 lg:px-6">
+      <Alert variant="destructive">
+        <TriangleAlert className="h-4 w-4" />
+        <AlertTitle>{t("billing.membershipUnavailable.title")}</AlertTitle>
+        <AlertDescription>
+          <p>{t("billing.membershipUnavailable.message")}</p>
+          <Button onClick={onRetry} size="sm" type="button" variant="outline">
+            {t("billing.membershipUnavailable.retry")}
+          </Button>
+        </AlertDescription>
+      </Alert>
+    </div>
+  );
+}
+
 function MemberRow({ member }: { member: OrganizationMember }) {
   const { t } = useTranslation();
   const name = member.user?.name || member.user?.email || member.email;
@@ -174,6 +193,10 @@ export default function Home() {
   }
   if (needsOrganization) {
     return <NoOrganization />;
+  }
+  // Not knowing the plan is not the Free plan: say so instead of showing it.
+  if (membership.isTierUnknown) {
+    return <PlanUnavailable onRetry={() => membership.refreshMembership()} />;
   }
 
   const { currentTier, tierConfig, activeSubscription } = membership;
