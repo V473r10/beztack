@@ -1,5 +1,4 @@
 import { formatMinorUnits, majorToMinor } from "@beztack/payments/money";
-import i18n from "i18next";
 import { env } from "@/env";
 
 /**
@@ -18,14 +17,25 @@ function resolveCurrency(currency: string | null | undefined): string {
   return currency || env.VITE_DEFAULT_CURRENCY;
 }
 
+let chosenLanguage: () => string | undefined = () => undefined;
+
+/**
+ * Tell the formatters where the language the user chose lives. The app's i18n
+ * instance registers itself here, so this module needs no i18n instance and
+ * stays cheap to import.
+ */
+export function setLanguageSource(source: () => string | undefined): void {
+  chosenLanguage = source;
+}
+
 /**
  * The language the user chose, as a BCP 47 tag for `Intl`. When the project
  * locale is a region of that same language (`es` and `es-UY`), the region
- * wins, so "US$ 9,00" reads the way the project's market writes it. Before
- * i18n is initialised (tests, first paint) the project locale applies.
+ * wins, so "US$ 9,00" reads the way the project's market writes it. Before a
+ * language source is registered (tests, first paint) the project locale applies.
  */
 function activeLocale(): string {
-  const language = i18n.resolvedLanguage || i18n.language;
+  const language = chosenLanguage();
   const project = projectLocale();
   if (!language) {
     return project;
