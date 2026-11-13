@@ -146,6 +146,31 @@ function mapPolarProduct(product: PolarProductResponse): Product {
   };
 }
 
+/** Product metadata keys that name the plan, and so outrank the checkout's. */
+const PRODUCT_PLAN_METADATA_KEYS = ["tier", "planId"] as const;
+
+/**
+ * A Polar Subscription keeps the metadata of the checkout that created it.
+ * After a product change (an in-place Upgrade, an activated Pending Plan
+ * change) that metadata still names the old plan, so the plan keys come from
+ * the Product the Subscription is on now. A Product without those keys leaves
+ * the checkout metadata alone.
+ */
+function mapPolarSubscriptionMetadata(sub: PolarSubscription): Record<string, unknown> | undefined {
+  const checkoutMetadata = sub.metadata as Record<string, unknown> | undefined;
+  const productMetadata = (sub.product?.metadata ?? {}) as Record<string, unknown>;
+  const planKeys: Record<string, unknown> = {};
+
+  for (const key of PRODUCT_PLAN_METADATA_KEYS) {
+    const value = productMetadata[key];
+    if (typeof value === "string" && value.length > 0) {
+      planKeys[key] = value;
+    }
+  }
+
+  return Object.keys(planKeys).length > 0 ? { ...checkoutMetadata, ...planKeys } : checkoutMetadata;
+}
+
 function mapPolarSubscription(sub: PolarSubscription): Subscription {
   return {
     id: sub.id,
@@ -157,7 +182,7 @@ function mapPolarSubscription(sub: PolarSubscription): Subscription {
     currentPeriodStart: sub.current_period_start ? new Date(sub.current_period_start) : undefined,
     currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end) : undefined,
     cancelAtPeriodEnd: sub.cancel_at_period_end ?? undefined,
-    metadata: sub.metadata as Record<string, unknown> | undefined,
+    metadata: mapPolarSubscriptionMetadata(sub),
   };
 }
 
@@ -195,7 +220,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
 
   return {
     provider: "polar",
-    capabilities: { cadenceChange: true },
+    capabilities: { cadenceChange: true, proratedUpgrade: true },
 
     async listProducts(): Promise<Product[]> {
       // Polar answers 10 products per page by default: walk every page, or the
@@ -326,6 +351,16 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
       subscriptionId: string,
       options: UpdateSubscriptionOptions,
     ): Promise<Subscription> {
+      // PATCH /v1/subscriptions/{id} with `product_id` is Polar's native plan
+      // change (https://polar.sh/docs/guides/subscription-upgrades). Its
+      // `proration_behavior` decides when money moves
+      // (https://polar.sh/docs/features/subscriptions/proration):
+      //  - `invoice`: new product now, prorated difference invoiced right away;
+      //  - `prorate`: new product now, difference carried to the next invoice;
+      //  - `next_period`: scheduled, applied at renewal (Beztack schedules its
+      //    own Pending Plan changes instead, ADR 0002).
+      // Polar prorates per second of the current period. The new product must
+      // share the Subscription's currency.
       const updated = await client.subscriptions.update(subscriptionId, {
         product_id: options.productId as string,
         proration_behavior:

@@ -54,6 +54,10 @@ describe("createPolarAdapter", () => {
     expect(createAdapter().capabilities.cadenceChange).toBe(true);
   });
 
+  it("declares that it can upgrade a Subscription in place with a prorated charge", () => {
+    expect(createAdapter().capabilities.proratedUpgrade).toBe(true);
+  });
+
   describe("products", () => {
     it("maps a recurring Polar product keeping the minor-unit amount untouched", async () => {
       client.products.get.mockResolvedValueOnce({
@@ -322,6 +326,57 @@ describe("createPolarAdapter", () => {
         proration_behavior: "prorate",
       });
       expect(updated).toMatchObject({ productId: "prod_basic", productName: "Basic" });
+    });
+
+    // https://polar.sh/docs/features/subscriptions/proration: `invoice` updates
+    // the Subscription immediately and invoices the prorated difference right
+    // away (an Upgrade charges now); `prorate` carries it to the next invoice.
+    it("charges the prorated difference now when asked to invoice", async () => {
+      client.subscriptions.update.mockResolvedValueOnce(
+        polarSubscription({ product_id: "prod_ultimate", product: { name: "Ultimate" } }),
+      );
+
+      await createAdapter().updateSubscription("sub_1", {
+        productId: "prod_ultimate",
+        prorationBehavior: "invoice",
+      });
+
+      expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
+        product_id: "prod_ultimate",
+        proration_behavior: "invoice",
+      });
+    });
+
+    it("projects the tier of the product the Subscription is on now, not of its checkout", async () => {
+      // Polar keeps the checkout metadata (tier: basic) after a product change.
+      client.subscriptions.update.mockResolvedValueOnce(
+        polarSubscription({
+          product_id: "prod_pro",
+          product: { name: "Pro", metadata: { tier: "pro", planId: "pro_month" } },
+          metadata: { tier: "basic", planId: "basic_month", userId: "user_1" },
+        }),
+      );
+
+      const updated = await createAdapter().updateSubscription("sub_1", {
+        productId: "prod_pro",
+        prorationBehavior: "invoice",
+      });
+
+      expect(updated.metadata).toMatchObject({
+        tier: "pro",
+        planId: "pro_month",
+        userId: "user_1",
+      });
+    });
+
+    it("keeps the checkout metadata when the product carries none", async () => {
+      client.subscriptions.get.mockResolvedValueOnce(
+        polarSubscription({ product: { name: "Pro", metadata: {} } }),
+      );
+
+      const subscription = await createAdapter().getSubscription("sub_1");
+
+      expect(subscription?.metadata).toEqual({ tier: "pro" });
     });
 
     it("sends no proration behavior for 'none'", async () => {
