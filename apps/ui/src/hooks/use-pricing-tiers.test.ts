@@ -1,8 +1,13 @@
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/env", () => ({ env: { VITE_API_URL: "http://api.test" } }));
 
-import { usePricingTiers } from "./use-pricing-tiers";
+import {
+  pricingTiersQueryOptions,
+  productsQueryOptions,
+  usePricingTiers,
+} from "./use-pricing-tiers";
 
 function product(tier: string, displayOrder: number, extra: Record<string, unknown> = {}) {
   return {
@@ -45,5 +50,34 @@ describe("Pricing tiers the pricing page lists", () => {
 
     expect(tiers.map((tier) => tier.id)).toEqual(["free", "basic", "pro", "ultimate"]);
     expect(tiers.map((tier) => tier.catalogOnly ?? false)).toEqual([true, false, false, false]);
+  });
+});
+
+describe("Products on one page", () => {
+  it("are requested once however many components need them as products or as tiers", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            provider: "polar",
+            products: [product("pro", 2), product("free", 0, { catalogOnly: true })],
+          }),
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new QueryClient();
+    const asProducts = new QueryObserver(client, productsQueryOptions());
+    const asTiers = new QueryObserver(client, pricingTiersQueryOptions());
+    const stops = [asProducts.subscribe(() => undefined), asTiers.subscribe(() => undefined)];
+
+    await vi.waitFor(() => expect(asTiers.getCurrentResult().data).toBeDefined());
+    for (const stop of stops) {
+      stop();
+    }
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(asProducts.getCurrentResult().data?.products).toHaveLength(2);
+    expect(asTiers.getCurrentResult().data?.map((tier) => tier.id)).toEqual(["free", "pro"]);
   });
 });

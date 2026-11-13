@@ -37,7 +37,6 @@ describe("queryKeys", () => {
     expect(isInvalidatedBy(prefix, queryKeys.subscriptions.list("org_1"))).toBe(true);
     expect(isInvalidatedBy(prefix, queryKeys.subscriptions.membership("org_1"))).toBe(true);
     expect(isInvalidatedBy(prefix, queryKeys.subscriptions.products())).toBe(true);
-    expect(isInvalidatedBy(prefix, queryKeys.subscriptions.productTiers())).toBe(true);
     expect(
       isInvalidatedBy(prefix, queryKeys.subscriptions.planChangePreview("sub_1", "pro", "monthly")),
     ).toBe(true);

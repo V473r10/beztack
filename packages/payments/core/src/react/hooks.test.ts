@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchPricingTiers } from "./hooks.js";
+import { buildPricingTiers, fetchPricingTiers } from "./hooks.js";
 
 function stubProducts(provider: string, amount: number, currency: string) {
   vi.stubGlobal(
@@ -152,5 +152,29 @@ describe("fetchPricingTiers names", () => {
     const [tier] = await fetchPricingTiers("http://api.test");
 
     expect(tier?.name).toBe("Basic Yearly");
+  });
+});
+
+describe("buildPricingTiers", () => {
+  // The UI fetches the products once and derives the tiers from that one answer.
+  it("groups a product list into tiers in catalog order, as fetchPricingTiers does", () => {
+    const product = (tier: string, interval: "month" | "year", amount: number, order: number) => ({
+      id: `prod_${tier}_${interval}`,
+      name: `${tier} - ${interval}`,
+      type: "plan" as const,
+      price: { amount, currency: "USD" },
+      interval,
+      intervalCount: 1,
+      metadata: { tier, displayOrder: order },
+    });
+
+    const tiers = buildPricingTiers([
+      product("pro", "year", 29_000, 2),
+      product("basic", "month", 900, 1),
+      product("pro", "month", 2900, 2),
+    ]);
+
+    expect(tiers.map((tier) => tier.id)).toEqual(["basic", "pro"]);
+    expect(tiers[1]?.price).toEqual({ monthly: 2900, yearly: 29_000 });
   });
 });

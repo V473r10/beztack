@@ -13,15 +13,13 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMembership } from "@/contexts/membership-context";
-import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { pricingTiersQueryOptions } from "@/hooks/use-pricing-tiers";
 import { type PlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
-import type { PricingTier } from "@/types/pricing";
 import { MembershipBadge } from "./membership-badge";
 import { PricingCard } from "./pricing-card";
-import { queryKeys } from "@/lib/query-keys";
 
 // Constants
 const MIN_TIERS_FOR_THREE_COLUMN = 3;
@@ -90,10 +88,7 @@ export function UpgradeDialog({
   const { getPlanChangeType, activeSubscription } = useMembership();
   const [hoveredTierId, setHoveredTierId] = useState<string>();
 
-  const { data: allTiersRaw = [] } = useQuery<PricingTier[]>({
-    queryKey: queryKeys.subscriptions.productTiers(),
-    queryFn: usePricingTiers,
-  });
+  const { data: allTiersRaw = [] } = useQuery(pricingTiersQueryOptions());
 
   // Fetch the server's Plan change preview when a tier is hovered/selected
   const previewTargetId = hoveredTierId ?? selectedTier;
