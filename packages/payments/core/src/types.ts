@@ -245,6 +245,13 @@ export type PaymentProviderCapabilities = {
  * Payment Provider Interface
  * All payment providers must implement this interface
  */
+/** Optional extras when creating a customer at the provider. */
+export type CreateCustomerOptions = {
+  /** Our user id, so the provider can resolve the customer by it later. */
+  externalId?: string;
+  name?: string;
+};
+
 export type PaymentProviderAdapter = {
   readonly provider: PaymentProviderName;
   readonly capabilities: PaymentProviderCapabilities;
@@ -270,7 +277,11 @@ export type PaymentProviderAdapter = {
   listSubscriptions(options: ListSubscriptionsOptions): Promise<Subscription[]>;
 
   // Customers
-  createCustomer(email: string, metadata?: Record<string, unknown>): Promise<Customer>;
+  createCustomer(
+    email: string,
+    metadata?: Record<string, unknown>,
+    options?: CreateCustomerOptions,
+  ): Promise<Customer>;
   getCustomer(customerId: string): Promise<Customer | null>;
   getCustomerByEmail(email: string): Promise<Customer | null>;
 
