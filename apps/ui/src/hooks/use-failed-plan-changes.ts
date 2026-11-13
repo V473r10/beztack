@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { adminApi, adminUrl } from "@/lib/admin-api";
 import { requestJson } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
-/** One row of `GET /api/auth/admin/plan-changes/failed`. Dates are ISO strings. */
+/** One row of `adminApi.failedPlanChanges`. Dates are ISO strings. */
 export type FailedPlanChange = {
   id: string;
   subscriptionId: string;
@@ -35,12 +36,12 @@ export function useFailedPlanChanges() {
   return useQuery({
     queryKey: queryKeys.admin.failedPlanChanges(),
     queryFn: async () =>
-      (await requestJson<FailedPlanChangesResponse>("/api/auth/admin/plan-changes/failed"))
+      (await requestJson<FailedPlanChangesResponse>(adminUrl(adminApi.failedPlanChanges)))
         .failedPlanChanges,
   });
 }
 
-/** What `POST /api/auth/admin/plan-changes/:id/retry` returns. */
+/** What `adminApi.retryPlanChange` returns. */
 export type PlanChangeRetryResult = {
   action: "activated" | "failed" | "canceled" | "skipped";
   pendingPlanChange: { id: string; reason: string | null } | null;
@@ -53,7 +54,7 @@ export function useRetryFailedPlanChange() {
   return useMutation({
     mutationFn: (pendingPlanChangeId: string) =>
       requestJson<PlanChangeRetryResult>(
-        `/api/auth/admin/plan-changes/${encodeURIComponent(pendingPlanChangeId)}/retry`,
+        adminUrl(adminApi.retryPlanChange, { id: pendingPlanChangeId }),
         { method: "POST" },
       ),
     onSettled: () =>

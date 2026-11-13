@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { adminApi, adminUrl } from "@/lib/admin-api";
 import { requestJson } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { SyncedPlanView } from "./types";
@@ -9,7 +10,7 @@ export function useSyncStatusQuery() {
     queryKey: queryKeys.admin.plansSync(),
     queryFn: async () => {
       return requestJson<{ plans: SyncedPlanView[]; provider: string }>(
-        "/api/admin/plans/sync-status",
+        adminUrl(adminApi.planSyncStatus),
       );
     },
   });
@@ -25,7 +26,7 @@ export function useSyncMutation() {
       planId: string;
       direction: "push-to-provider" | "pull-from-provider";
     }) => {
-      return requestJson(`/api/admin/plans/sync`, {
+      return requestJson(adminUrl(adminApi.planSync), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId, direction }),
@@ -53,7 +54,7 @@ export function useImportMutation() {
       canonicalTierId?: string;
       displayOrder?: number;
     }) => {
-      return requestJson(`/api/admin/plans/import`, {
+      return requestJson(adminUrl(adminApi.planImport), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -77,7 +78,7 @@ export function useCreatePlanMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
-      return requestJson(`/api/admin/plans`, {
+      return requestJson(adminUrl(adminApi.planCreate), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -97,7 +98,7 @@ export function useDeletePlanMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (planId: string) => {
-      return requestJson(`/api/admin/plans/${planId}`, {
+      return requestJson(adminUrl(adminApi.planDelete, { id: planId }), {
         method: "DELETE",
       });
     },
@@ -115,7 +116,7 @@ export function useUpdatePlanMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ planId, data }: { planId: string; data: Record<string, unknown> }) => {
-      return requestJson(`/api/admin/plans/${planId}`, {
+      return requestJson(adminUrl(adminApi.planUpdate, { id: planId }), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
