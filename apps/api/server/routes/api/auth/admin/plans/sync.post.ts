@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { ensurePaymentProvider } from "@/lib/payments";
+import { invalidateProductsCache } from "@/server/utils/products-cache";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const syncSchema = z.object({
@@ -60,6 +61,9 @@ export default defineEventHandler(async (event) => {
         .where(eq(plan.id, body.planId));
     }
 
+    // The public Products response is built from these plans: drop its cache.
+    invalidateProductsCache();
+
     return { success: true, direction: "push-to-provider" as const };
   }
 
@@ -91,6 +95,9 @@ export default defineEventHandler(async (event) => {
       intervalCount: remoteProduct.intervalCount,
     })
     .where(eq(plan.id, body.planId));
+
+  // The public Products response is built from these plans: drop its cache.
+  invalidateProductsCache();
 
   return { success: true, direction: "pull-from-provider" as const };
 });
