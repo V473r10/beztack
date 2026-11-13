@@ -1,10 +1,8 @@
-import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/env", () => ({ env: {} }));
 vi.mock("@/lib/format", () => ({ formatPrice: (amount: number) => `$${amount}` }));
-vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { getPostSignInTarget } from "@/lib/auth-redirect";
 import {
@@ -12,6 +10,7 @@ import {
   getSignUpPathForCheckout,
   readCheckoutSelection,
 } from "@/lib/checkout-resume";
+import { renderInLanguage } from "@/test/render-in-language";
 import type { PricingTier } from "@/types/pricing";
 import { CheckoutConfirmView } from "./checkout-confirm";
 
@@ -24,8 +23,12 @@ const PRO: PricingTier = {
   yearly: { id: "prod_pro_year" } as PricingTier["yearly"],
 };
 
-function render(props: Partial<Parameters<typeof CheckoutConfirmView>[0]>) {
-  return renderToStaticMarkup(
+function render(
+  props: Partial<Parameters<typeof CheckoutConfirmView>[0]>,
+  language: "en" | "es" = "en",
+) {
+  return renderInLanguage(
+    language,
     <MemoryRouter>
       <CheckoutConfirmView
         isLoadingTiers={false}
@@ -61,16 +64,21 @@ describe("Checkout resume after sign-up", () => {
     const html = render({});
 
     expect(html).toContain("Pro");
-    expect(html).toContain("$200 / billing.yearly");
-    expect(html).toContain("billing.checkoutConfirm.continue");
-    expect(html).not.toContain("billing.checkoutConfirm.unavailableTitle");
+    expect(html).toContain("$200 / year");
+    expect(html).toContain("Continue to checkout");
+    expect(html).not.toContain("This plan is not available");
+  });
+
+  it("shows the Billing cadence and the way to continue in Spanish", () => {
+    const html = render({}, "es");
+
+    expect(html).toContain("$200 / año");
+    expect(html).not.toContain("Continue to checkout");
   });
 
   it("offers another plan when the picked one cannot be bought", () => {
-    expect(render({ tier: undefined })).toContain("billing.checkoutConfirm.unavailableTitle");
-    expect(render({ tier: { ...PRO, soon: true } })).toContain(
-      "billing.checkoutConfirm.unavailableTitle",
-    );
-    expect(render({ selection: null })).not.toContain("billing.checkoutConfirm.continue");
+    expect(render({ tier: undefined })).toContain("This plan is not available");
+    expect(render({ tier: { ...PRO, soon: true } })).toContain("This plan is not available");
+    expect(render({ selection: null })).not.toContain("Continue to checkout");
   });
 });

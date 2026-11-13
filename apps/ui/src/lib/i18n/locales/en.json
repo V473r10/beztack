@@ -255,7 +255,8 @@
       "dueToday": "Due today",
       "thenFullAmount": "Then {{price}} each period.",
       "startsOn": "You keep your current plan until {{date}}, then pay {{price}}.",
-      "startsAtRenewal": "You keep your current plan until the next renewal, then pay {{price}}."
+      "startsAtRenewal": "You keep your current plan until the next renewal, then pay {{price}}.",
+      "pricePerCadence": "{{price}}/{{cadence}}"
     },
     "downgradeWarning": {
       "title": "Confirm Downgrade",
@@ -463,6 +464,10 @@
       "perMonth": "{{price}}/mo",
       "enterpriseTitle": "Need Enterprise Features?",
       "enterpriseDescription": "Custom solutions, dedicated support, and unlimited usage for large organizations."
+    },
+    "cadenceUnit": {
+      "monthly": "month",
+      "yearly": "year"
     }
   },
   "common": {

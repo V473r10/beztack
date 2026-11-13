@@ -248,14 +248,15 @@
       "confirmDowngrade": "Continuar",
       "confirmSwitch": "Cambiar Plan",
       "previewLoading": "Calculando el cambio de plan...",
-      "adminTierOverride": "Admin tier override",
+      "adminTierOverride": "Nivel asignado por un admin",
       "adminTierOverrideNoPayment": "Se aplica en el momento. No se cobra nada y las suscripciones reales no cambian.",
       "previewError": "No pudimos calcular el precio de este cambio de plan.",
       "credit": "Crédito por {{days}} días sin usar",
       "dueToday": "A pagar hoy",
       "thenFullAmount": "Después {{price}} por período.",
       "startsOn": "Mantienes tu plan actual hasta el {{date}} y después pagas {{price}}.",
-      "startsAtRenewal": "Mantienes tu plan actual hasta la próxima renovación y después pagas {{price}}."
+      "startsAtRenewal": "Mantienes tu plan actual hasta la próxima renovación y después pagas {{price}}.",
+      "pricePerCadence": "{{price}}/{{cadence}}"
     },
     "downgradeWarning": {
       "title": "Confirmar Reducción",
@@ -463,6 +464,10 @@
       "perMonth": "{{price}}/mes",
       "enterpriseTitle": "¿Necesitás funciones Enterprise?",
       "enterpriseDescription": "Soluciones a medida, soporte dedicado y uso ilimitado para organizaciones grandes."
+    },
+    "cadenceUnit": {
+      "monthly": "mes",
+      "yearly": "año"
     }
   },
   "common": {
