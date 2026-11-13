@@ -2,7 +2,7 @@
   "account": {
     "settings": {
       "profile": {
-        "description": "Gestiona tu información de perfil de cuenta.",
+        "description": "Gestioná tu información de perfil de cuenta.",
         "email": "Correo Electrónico",
         "save": "Guardar Perfil",
         "title": "Perfil",
@@ -12,20 +12,20 @@
       "title": "Configuración de Cuenta",
       "twoFactor": {
         "backupCodes": "Códigos de recuperación",
-        "backupCodesDescription": "Guarda estos códigos de recuperación en un lugar seguro. No los pierdas.",
+        "backupCodesDescription": "Guardá estos códigos de recuperación en un lugar seguro. No los perdás.",
         "completeYour2FASetup": "Completar la configuración de la autenticación de dos factores",
         "copyBackupCodes": "Copiar Códigos de recuperación",
         "copyBackupCodesError": "Error al copiar los códigos de recuperación",
         "copyBackupCodesSuccess": "Códigos de recuperación copiados al portapapeles",
-        "description": "Gestiona tu autenticación de dos factores.",
+        "description": "Gestioná tu autenticación de dos factores.",
         "enable": "Habilitar Autenticación de dos factores",
-        "enter6DigitCode": "Introduce el código de 6 dígitos",
+        "enter6DigitCode": "Introducí el código de 6 dígitos",
         "passwordDialog": {
           "cancel": "Cancelar",
           "confirm": "Confirmar",
           "confirming": "Confirmando...",
           "confirmPassword": "Confirmar Contraseña",
-          "description": "Para tu seguridad, por favor ingresa tu contraseña actual para {action} Autenticación de dos factores.",
+          "description": "Para tu seguridad, por favor ingresá tu contraseña actual para {action} Autenticación de dos factores.",
           "password": "Contraseña",
           "title": "Confirmar Contraseña",
           "totpCode": "Código TOTP"
@@ -36,17 +36,17 @@
         "verifyAuthenticatorApp": "Verificar la aplicación de autenticador",
         "verifying": "Verificando...",
         "viewBackupCodes": "Ver Códigos de recuperación",
-        "willPrompt": "Se te pedirá que configure la autenticación de dos factores usando una aplicación de autenticador (por ejemplo, Google Authenticator, Authy).",
+        "willPrompt": "Se te va a pedir que configures la autenticación de dos factores usando una aplicación de autenticador (por ejemplo, Google Authenticator, Authy).",
         "confirmSavedCodes": "He guardado estos códigos de recuperación de forma segura",
         "regenerate": {
           "title": "Códigos de Recuperación",
-          "description": "Si perdiste el acceso a tus códigos de recuperación o has usado algunos de ellos, puedes generar nuevos. Esto invalidará todos los códigos de recuperación anteriores.",
+          "description": "Si perdiste el acceso a tus códigos de recuperación o usaste algunos de ellos, podés generar nuevos. Esto invalida todos los códigos de recuperación anteriores.",
           "button": "Regenerar Códigos de Recuperación"
         },
         "regeneratedCodes": {
           "title": "Nuevos Códigos de Recuperación Generados",
-          "description": "Tus códigos de recuperación anteriores han sido invalidados. Guarda estos nuevos códigos en un lugar seguro.",
-          "warning": "¡Guarda estos nuevos códigos de recuperación ahora! Tus códigos anteriores ya no son válidos. Cada código solo puede usarse una vez.",
+          "description": "Tus códigos de recuperación anteriores han sido invalidados. Guardá estos nuevos códigos en un lugar seguro.",
+          "warning": "¡Guardá estos nuevos códigos de recuperación ahora! Tus códigos anteriores ya no son válidos. Cada código solo puede usarse una vez.",
           "copy": "Copiar Todos los Códigos",
           "download": "Descargar como Archivo",
           "done": "Listo"
@@ -86,14 +86,14 @@
     "signIn": {
       "backToSignIn": "Volver a Iniciar Sesión",
       "button": "Iniciar Sesión",
-      "description": "Ingresa tus credenciales para iniciar sesión en tu cuenta",
+      "description": "Ingresá tus credenciales para iniciar sesión en tu cuenta",
       "forgotPassword": "¿Olvidaste tu contraseña?",
-      "noAccount": "¿No tienes una cuenta?",
-      "signUp": "Regístrate",
+      "noAccount": "¿No tenés una cuenta?",
+      "signUp": "Registrate",
       "title": "Bienvenido",
       "twoFactor": {
         "title": "Autenticación de dos factores",
-        "description": "Ingresa el código de autenticación de dos factores",
+        "description": "Ingresá el código de autenticación de dos factores",
         "button": "Verificar",
         "backToSignIn": "Volver a Iniciar Sesión",
         "authenticatorApp": "App de autenticación",
@@ -115,9 +115,9 @@
     },
     "signUp": {
       "button": "Registrarse",
-      "description": "Ingresa tus datos para crear tu cuenta",
+      "description": "Ingresá tus datos para crear tu cuenta",
       "demoEmailHint": "Usá un email con un dominio real (por ejemplo vos@gmail.com). El sandbox de pagos rechaza dominios inventados como .test.",
-      "hasAccount": "¿Ya tienes una cuenta?",
+      "hasAccount": "¿Ya tenés una cuenta?",
       "signIn": "Iniciar sesión",
       "title": "Creá tu cuenta",
       "pageTitle": "Creá tu cuenta - {{appName}}"
@@ -184,8 +184,8 @@
     "switchBilling": "Cambiar facturación",
     "soon": "Próximamente",
     "compare": {
-      "title": "Compara todas las características",
-      "description": "Mira exactamente qué incluye cada plan",
+      "title": "Compará todas las características",
+      "description": "Mirá exactamente qué incluye cada plan",
       "feature": "Característica",
       "core": "Características principales",
       "usageLimits": "Límites de uso",
@@ -193,23 +193,23 @@
     },
     "faq": {
       "title": "Preguntas frecuentes",
-      "description": "Todo lo que necesitas saber sobre nuestros precios",
+      "description": "Todo lo que necesitás saber sobre nuestros precios",
       "changePlanQuestion": "¿Puedo cambiar de plan cuando quiera?",
       "changePlanAnswer": "Sí. Las mejoras se aplican enseguida, con un crédito por la parte del período actual que no usaste. Los cambios a un plan menor se aplican en tu próxima renovación.",
       "downgradeDataQuestion": "¿Qué pasa con mis datos si bajo de plan?",
-      "downgradeDataAnswer": "Tus datos están seguros. Si superas los límites de un plan menor, tendrás acceso de solo lectura a lo que exceda hasta que vuelvas a mejorar el plan o reduzcas el uso.",
+      "downgradeDataAnswer": "Tus datos están seguros. Si superás los límites de un plan menor, vas a tener acceso de solo lectura a lo que exceda hasta que vuelvas a mejorar el plan o reduzcas el uso.",
       "refundsQuestion": "¿Ofrecen reembolsos?",
       "refundsAnswer": "Ofrecemos una garantía de devolución de 30 días en los planes anuales. Las suscripciones mensuales se pueden cancelar en cualquier momento sin penalización.",
       "setupFeeQuestion": "¿Hay un costo de activación?",
-      "setupFeeAnswer": "No, no hay costos de activación ni cargos ocultos. Solo pagas el plan que elijas.",
+      "setupFeeAnswer": "No, no hay costos de activación ni cargos ocultos. Solo pagás el plan que elijas.",
       "teamsQuestion": "¿Cómo funciona la facturación para equipos?",
       "teamsAnswer": "Los planes de equipo se facturan por organización. Todos los miembros de la organización comparten los límites y las características del plan.",
       "trialQuestion": "¿Puedo probar antes de comprar?",
-      "trialAnswer": "¡Sí! Empieza con el plan gratuito para conocer lo básico y mejora el plan cuando necesites características más avanzadas."
+      "trialAnswer": "¡Sí! Empezá con el plan gratuito para conocer lo básico y mejorá el plan cuando necesites características más avanzadas."
     },
     "cta": {
       "title": "¿Listo para empezar?",
-      "description": "Únete a miles de equipos que ya usan Beztack para asegurar y escalar sus aplicaciones.",
+      "description": "Sumate a miles de equipos que ya usan Beztack para asegurar y escalar sus aplicaciones.",
       "getStartedPro": "Empezar con Pro",
       "viewDocs": "Ver documentación"
     },
@@ -240,18 +240,18 @@
   "billing": {
     "monthly": "Mensual",
     "yearly": "Anual",
-    "savePercent": "Ahorra {{percent}}%",
+    "savePercent": "Ahorrá {{percent}}%",
     "planChange": {
-      "upgradeTitle": "Mejora tu Plan",
+      "upgradeTitle": "Mejorá tu Plan",
       "downgradeTitle": "Cambiar tu Plan",
       "switchTitle": "Cambiar Período de Facturación",
-      "upgradeDescription": "Desbloquea más funciones y límites más altos con esta mejora.",
-      "downgradeDescription": "Revisa los cambios antes de cambiar a un plan inferior.",
-      "switchDescription": "Cambia tu período de facturación para este plan.",
+      "upgradeDescription": "Desbloqueá más funciones y límites más altos con esta mejora.",
+      "downgradeDescription": "Revisá los cambios antes de cambiar a un plan inferior.",
+      "switchDescription": "Cambiá tu período de facturación para este plan.",
       "currentPlan": "Plan Actual",
       "newPlan": "Nuevo Plan",
       "billingPeriod": "Período de Facturación",
-      "newFeatures": "Nuevas Funciones que Obtendrás",
+      "newFeatures": "Nuevas Funciones que Vas a Obtener",
       "confirmUpgrade": "Confirmar Mejora",
       "confirmDowngrade": "Continuar",
       "confirmSwitch": "Cambiar Plan",
@@ -263,8 +263,8 @@
       "dueToday": "A pagar hoy (aprox.)",
       "prorationEstimateNote": "Es una estimación: el proveedor de pagos prorratea por segundo, así que el cobro final puede variar levemente.",
       "thenFullAmount": "Después {{price}} por período.",
-      "startsOn": "Mantienes tu plan actual hasta el {{date}} y después pagas {{price}}.",
-      "startsAtRenewal": "Mantienes tu plan actual hasta la próxima renovación y después pagas {{price}}.",
+      "startsOn": "Mantenés tu plan actual hasta el {{date}} y después pagás {{price}}.",
+      "startsAtRenewal": "Mantenés tu plan actual hasta la próxima renovación y después pagás {{price}}.",
       "pricePerCadence": "{{price}}/{{cadence}}",
       "pendingTitle": "Cambio de plan pendiente",
       "pendingNotice": "Se activa en tu próxima renovación. Hoy no se cobra nada.",
@@ -299,25 +299,25 @@
       "cadence_changeAtRenewal": "Tu facturación pasa a {{tier}} {{cadence}} ({{price}}) en la próxima renovación.",
       "cancel": "Mantener el plan actual",
       "canceled": "Cancelaste el cambio de plan. Sigue tu plan actual.",
-      "cancelFailed": "No se pudo cancelar el cambio de plan. Inténtalo de nuevo."
+      "cancelFailed": "No se pudo cancelar el cambio de plan. Intentá de nuevo."
     },
     "checkoutConfirm": {
-      "title": "Confirma tu plan",
-      "description": "Elegiste este plan antes de crear tu cuenta. Continúa al pago para suscribirte.",
+      "title": "Confirmá tu plan",
+      "description": "Elegiste este plan antes de crear tu cuenta. Continuá al pago para suscribirte.",
       "continue": "Continuar al pago",
       "choosePlan": "Elegir otro plan",
       "unavailableTitle": "Este plan no está disponible",
-      "unavailableDescription": "El plan que elegiste ya no se ofrece o todavía no está a la venta. Elige otro en la página de precios."
+      "unavailableDescription": "El plan que elegiste ya no se ofrece o todavía no está a la venta. Elegí otro en la página de precios."
     },
     "page": {
       "title": "Facturación y suscripción",
-      "description": "Gestiona tu suscripción, revisa tu uso y consulta tu historial de facturación.",
-      "loadError": "No pudimos cargar la información de facturación. Intenta recargar la página.",
+      "description": "Gestioná tu suscripción, revisá tu uso y consultá tu historial de facturación.",
+      "loadError": "No pudimos cargar la información de facturación. Intentá recargar la página.",
       "rateLimited": "Se hicieron demasiadas consultas al proveedor de pagos. Esperá unos segundos y probá de nuevo.",
       "retry": "Reintentar"
     },
     "checkoutSuccess": {
-      "invalidTier": "La información del plan no es válida. Contacta a soporte.",
+      "invalidTier": "La información del plan no es válida. Contactá a soporte.",
       "title": "¡Pago exitoso!",
       "welcome": "Te damos la bienvenida a tu nuevo plan {{plan}}. Tu mejora ya está activa.",
       "planDetails": "Detalles del plan",
@@ -331,7 +331,7 @@
       "includedInPlan": "Qué incluye tu plan:",
       "loadingFeatures": "Cargando las características del plan...",
       "planLimits": "Límites del plan:",
-      "enjoy": "¡Disfruta todas las características de tu plan {{plan}}!",
+      "enjoy": "¡Disfrutá todas las características de tu plan {{plan}}!",
       "included": "Qué incluye:",
       "moreFeatures": "Y {{count}} características más...",
       "usageLimits": "Límites de uso:",
@@ -342,33 +342,33 @@
       "goToDashboard": "Ir al panel",
       "manageBilling": "Gestionar facturación",
       "whatsNext": "¿Y ahora qué?",
-      "nextExplore": "Explora tus nuevas características en el panel",
-      "nextTeam": "Configura tu equipo y tu organización",
-      "nextApi": "Configura el acceso a la API y las integraciones",
-      "nextSecurity": "Descubre las funciones avanzadas de seguridad",
-      "supportPrefix": "¿Tienes preguntas? Consulta nuestra",
+      "nextExplore": "Explorá tus nuevas características en el panel",
+      "nextTeam": "Configurá tu equipo y tu organización",
+      "nextApi": "Configurá el acceso a la API y las integraciones",
+      "nextSecurity": "Descubrí las funciones avanzadas de seguridad",
+      "supportPrefix": "¿Tenés preguntas? Consultá nuestra",
       "documentation": "documentación",
       "or": "o",
-      "contactSupport": "contacta a soporte"
+      "contactSupport": "contactá a soporte"
     },
     "welcome": {
       "loading": "Cargando la información de tu suscripción...",
       "errors": {
         "notFoundTitle": "Suscripción no encontrada",
-        "notFoundDescription": "No pudimos encontrar la suscripción. Verifica que el enlace sea correcto.",
+        "notFoundDescription": "No pudimos encontrar la suscripción. Verificá que el enlace sea correcto.",
         "accessDeniedTitle": "Acceso denegado",
-        "accessDeniedDescription": "No tienes permisos para ver esta suscripción. Inicia sesión con la cuenta correcta.",
+        "accessDeniedDescription": "No tenés permisos para ver esta suscripción. Iniciá sesión con la cuenta correcta.",
         "idRequiredTitle": "Enlace incompleto",
-        "idRequiredDescription": "El enlace no contiene la información necesaria. Usa el enlace completo que recibiste.",
+        "idRequiredDescription": "El enlace no contiene la información necesaria. Usá el enlace completo que recibiste.",
         "fetchTitle": "Error de conexión",
-        "fetchDescription": "No pudimos conectar con el servidor. Intenta de nuevo.",
+        "fetchDescription": "No pudimos conectar con el servidor. Intentá de nuevo.",
         "unexpectedTitle": "Error inesperado",
         "unexpectedDescription": "Ocurrió un error al cargar tu suscripción."
       },
       "retry": "Intentar de nuevo",
       "goHome": "Ir al inicio",
       "missingTitle": "Enlace incompleto",
-      "missingDescription": "Este enlace no contiene la información de tu suscripción. Si acabas de suscribirte, revisa el correo de confirmación o contacta a soporte.",
+      "missingDescription": "Este enlace no contiene la información de tu suscripción. Si acabás de suscribirte, revisá el correo de confirmación o contactá a soporte.",
       "greeting": "¡Hola, {{name}}!",
       "success": "¡Suscripción exitosa!",
       "activated": "Tu suscripción fue activada correctamente",
@@ -620,7 +620,7 @@
   },
   "notifications": {
     "account": {
-      "createError": "Error al crear la cuenta. Por favor, inténtalo de nuevo.",
+      "createError": "Error al crear la cuenta. Por favor, intentá de nuevo.",
       "createSuccess": "¡Cuenta creada con éxito!",
       "created": "¡Cuenta creada con éxito!",
       "creationFailed": "No se pudo crear la cuenta. Probá de nuevo."
@@ -641,26 +641,26 @@
       }
     },
     "twoFactor": {
-      "enableSuccess": "Escanea el código QR, guarda los códigos de recuperación y luego ingresa el código de verificación.",
+      "enableSuccess": "Escaneá el código QR, guardá los códigos de recuperación y luego ingresá el código de verificación.",
       "disableSuccess": "¡Autenticación de dos factores deshabilitada exitosamente!",
       "verifySuccess": "¡Configuración de autenticación de dos factores completada y verificada!",
-      "regenerateSuccess": "¡Nuevos códigos de recuperación generados! Guárdalos de forma segura.",
+      "regenerateSuccess": "¡Nuevos códigos de recuperación generados! Guardalos de forma segura.",
       "errors": {
         "passwordRequired": "La contraseña es requerida.",
         "totpRequired": "El código TOTP es requerido para deshabilitar 2FA.",
-        "invalidCode": "Por favor, ingresa un código de verificación de 6 dígitos.",
-        "invalidBackupFormat": "Por favor, ingresa un código de recuperación válido (XXXXX-XXXXX)",
+        "invalidCode": "Por favor, ingresá un código de verificación de 6 dígitos.",
+        "invalidBackupFormat": "Por favor, ingresá un código de recuperación válido (XXXXX-XXXXX)",
         "verificationFailed": "Verificación fallida: {{message}}",
         "enableFailed": "Error al habilitar 2FA: {{message}}",
         "disableFailed": "Error al deshabilitar 2FA: {{message}}",
         "regenerateFailed": "Error al regenerar códigos de recuperación: {{message}}",
-        "invalidPassword": "Contraseña inválida. Por favor, inténtalo de nuevo.",
-        "invalidTotpCode": "Código TOTP inválido. Por favor, inténtalo de nuevo.",
+        "invalidPassword": "Contraseña inválida. Por favor, intentá de nuevo.",
+        "invalidTotpCode": "Código TOTP inválido. Por favor, intentá de nuevo.",
         "totpNotEnabled": "La autenticación de dos factores no está habilitada.",
-        "invalidCookie": "Sesión expirada. Por favor, inicia sesión de nuevo.",
+        "invalidCookie": "Sesión expirada. Por favor, iniciá sesión de nuevo.",
         "backupCodeNotFound": "Código de recuperación inválido.",
         "backupCodeUsed": "Este código de recuperación ya ha sido usado.",
-        "unknownError": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
+        "unknownError": "Ocurrió un error inesperado. Por favor, intentá de nuevo."
       }
     }
   },
@@ -719,7 +719,7 @@
   },
   "validation": {
     "email": {
-      "invalid": "Por favor, introduce una dirección de correo electrónico válida."
+      "invalid": "Por favor, introducí una dirección de correo electrónico válida."
     },
     "name": {
       "length": "El nombre debe tener al menos 2 caracteres."
@@ -736,15 +736,15 @@
   },
   "tour": {
     "welcome": "Bienvenido al Tour",
-    "description": "Recorre un tour rápido para aprender sobre las principales características y funcionalidades de esta aplicación.",
+    "description": "Recorré un tour rápido para aprender sobre las principales características y funcionalidades de esta aplicación.",
     "skip": "Saltar",
     "start": "Iniciar Tour",
     "settingsTour": {
-      "step1": "Aquí puedes gestionar tus configuraciones de autenticación de dos factores.",
-      "step2": "Activa la autenticación de dos factores para agregar una capa adicional de seguridad a tu cuenta."
+      "step1": "Acá podés gestionar tus configuraciones de autenticación de dos factores.",
+      "step2": "Activá la autenticación de dos factores para agregar una capa adicional de seguridad a tu cuenta."
     },
     "homeTour": {
-      "step1": "En la página de configuración puedes gestionar tus configuraciones de autenticación de dos factores, información, etc.",
+      "step1": "En la página de configuración podés gestionar tus configuraciones de autenticación de dos factores, información, etc.",
       "plan": "Esta tarjeta muestra tu plan actual y cuándo se renueva.",
       "nextSteps": "Acá ves qué hacer ahora: elegir un plan, invitar a tu equipo o cambiar de plan."
     },
