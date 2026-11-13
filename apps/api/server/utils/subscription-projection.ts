@@ -99,7 +99,7 @@ export type StoredProjectionPayment = {
   userId: string | null;
   subscriptionId: string | null;
   status: string;
-  amount: string;
+  amount: number;
   currency: string;
   metadata: Record<string, unknown> | null;
 };
@@ -652,7 +652,7 @@ function buildStoredPayment(options: {
     userId: options.target?.type === "user" ? options.target.id : null,
     subscriptionId: options.subscriptionPersisted ? (options.payment.subscriptionId ?? null) : null,
     status: options.payment.status,
-    amount: String(options.payment.amount),
+    amount: options.payment.amount,
     currency: options.payment.currency,
     metadata: {
       ...options.payment.metadata,

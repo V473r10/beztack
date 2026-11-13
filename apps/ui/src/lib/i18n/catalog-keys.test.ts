@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BASE_TIERS } from "../../../../../packages/db/src/plan-catalog";
+import { BASE_TIERS } from "@beztack/db/plan-catalog";
 import en from "./locales/en.json";
 import es from "./locales/es.json";
 

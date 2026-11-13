@@ -206,7 +206,11 @@ describe("utility functions", () => {
       expect(formatPlanPrice(1234.5, "EUR", "de-DE").replace(/\u00a0/g, " ")).toBe("1.234,50 €");
     });
 
-    it("uses the decimals Intl gives for the currency", () => {
+    it("forces the ISO 4217 decimals even where the runtime's Intl data differs", () => {
+      expect(formatPlanPrice(1500, "COP", "en-US").replace(/\u00a0/g, " ")).toMatch(/1,500\.00$/);
+    });
+
+    it("uses the ISO 4217 decimals of the currency", () => {
       expect(formatPlanPrice(1500, "JPY", "en-US")).toBe("¥1,500");
       expect(formatPlanPrice(1.5, "KWD", "en-US").replace(/\u00a0/g, " ")).toBe("KWD 1.500");
       expect(formatPlanPrice(100, "USD", "en-US")).toBe("$100.00");

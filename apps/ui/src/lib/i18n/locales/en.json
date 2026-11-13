@@ -260,7 +260,8 @@
       "adminTierOverrideNoPayment": "Takes effect immediately. No payment is charged and real subscriptions are unchanged.",
       "previewError": "We couldn't price this plan change.",
       "credit": "Credit for {{days}} unused days",
-      "dueToday": "Due today",
+      "dueToday": "Due today (estimate)",
+      "prorationEstimateNote": "This is an estimate: your payment provider prorates by the second, so the final charge may differ slightly.",
       "thenFullAmount": "Then {{price}} each period.",
       "startsOn": "You keep your current plan until {{date}}, then pay {{price}}.",
       "startsAtRenewal": "You keep your current plan until the next renewal, then pay {{price}}.",
@@ -383,7 +384,12 @@
         "authorized": "Authorized",
         "pending": "Pending",
         "paused": "Paused",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "trialing": "Trial",
+        "past_due": "Payment overdue",
+        "unpaid": "Unpaid",
+        "inactive": "Inactive",
+        "canceled": "Canceled"
       },
       "frequency": {
         "monthly": "monthly",
@@ -398,9 +404,33 @@
       "customer_email_rejected": "The payment provider rejected your email address. Use a different email.",
       "payment_provider_unavailable": "The payment provider is unavailable. Try again in a moment.",
       "organization_required": "Create an organization first: this action bills an organization.",
-      "provider_did_not_apply": "The payment provider did not apply the plan change. Nothing was charged. Try again in a moment."
+      "provider_did_not_apply": "The payment provider did not apply the plan change. Nothing was charged. Try again in a moment.",
+      "invalid_current_subscription": "The subscription for this plan change is not valid.",
+      "invalid_target": "That plan is not available for a plan change.",
+      "missing_current_subscription": "You need an active subscription to change plans.",
+      "not_a_plan_change": "That plan is the one you already have.",
+      "not_retryable": "This plan change cannot be retried.",
+      "payment_integration_mismatch": "This subscription belongs to a different payment provider than the one configured.",
+      "unsupported_billing_cadence": "Only monthly and yearly billing are supported.",
+      "unsupported_cadence_change": "Switching the billing period is not supported for this plan.",
+      "unauthorized_plan_change": "You are not allowed to change this plan."
     },
     "checkoutFailed": "Failed to start checkout process",
+    "toast": {
+      "redirecting": "Redirecting to checkout...",
+      "adminOverrideApplied": "Admin tier override applied.",
+      "adminOverrideAlreadyActive": "Admin tier override already active.",
+      "adminOverrideCleared": "Admin tier override cleared.",
+      "adminOverrideAlreadyCleared": "Admin tier override already cleared.",
+      "adminOverrideClearFailed": "Failed to clear Admin tier override",
+      "planChangeReconciling": "Payment confirmed. Plan change is still reconciling.",
+      "planChangeAccepted": "Plan change accepted successfully!",
+      "planChangeFailed": "Failed to change plan",
+      "portalOpening": "Opening billing portal...",
+      "portalFailed": "Failed to open billing portal",
+      "portalOnlyPolar": "The billing portal is only available with Polar.",
+      "portalUnavailable": "The billing portal is not available."
+    },
     "dashboard": {
       "currentPlan": "Current Plan",
       "currentPlanDescription": "Manage your subscription and billing preferences",
@@ -749,6 +779,13 @@
     "goHome": "Go to home"
   },
   "settings": {
+    "profile": {
+      "updatedVerifyEmail": "Profile updated! Please check your email to verify the new address.",
+      "saved": "Profile settings saved!",
+      "saveFailed": "Failed to save profile: {{message}}",
+      "updateFailed": "Failed to update profile",
+      "emailChangeFailed": "Failed to change email"
+    },
     "theme": {
       "colorTheme": "Color Theme",
       "colorThemeDescription": "Choose your preferred color scheme and visual style",

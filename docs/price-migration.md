@@ -8,6 +8,26 @@ Migration `packages/db/drizzle/0009_prices_minor_units.sql` changes how Beztack 
 If your database is new, there is nothing to do: `pnpm db:migrate` creates the final shape.
 If it already has plans or Pending Plan changes, read this first. The migration rewrites money data.
 
+## 0. Wait for in-flight Mercado Pago Upgrades
+
+Do not migrate while a Mercado Pago Upgrade is waiting for its payment. An Upgrade started before the
+deploy carries the full price in major units in the payment's `external_reference` (`fullamt=4500`). If
+that payment is approved after the deploy, Beztack reads `4500` as minor units of the subscription's
+currency and sets the recurring charge to `45` instead of `4500`, and nothing warns about it.
+
+Before running the migration:
+
+1. In Mercado Pago, list the payments of your plans that are `pending` or `in_process` (an Upgrade pays the
+   prorated difference first). Wait until they are approved or rejected, or cancel them.
+2. Check that no Upgrade is mid-flight on your side: `SELECT id, status FROM pending_plan_change WHERE
+status = 'pending' AND target_plan_snapshot ->> 'paymentProvider' = 'mercadopago'` lists scheduled
+   changes (downgrades and period switches). Those are safe, the migration converts their price.
+3. Deploy the new code and run the migration in the same maintenance window, so no old `fullamt` is
+   approved against the new code.
+
+If an old-format Upgrade does get approved afterwards, fix the subscription's recurring amount by hand in
+Mercado Pago (it is `plan.price` in minor units divided by 10^decimals).
+
 ## 1. Back up first
 
 ```bash
@@ -34,15 +54,29 @@ pnpm db:migrate
 
 What changes:
 
-| Provider (`provider` column / `paymentProvider` in the snapshot) | Old unit                              | Conversion                                                                   |
-| ---------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------- |
-| `polar`                                                          | integer cents                         | none, already minor units                                                    |
-| `mercadopago`                                                    | decimal major units (`4500` = $ 4500) | multiplied by 10^decimals of the row's currency, rounded half away from zero |
-| anything else                                                    | unknown                               | left as it is                                                                |
+| Provider (`provider` column / `paymentProvider` in the snapshot)    | Old unit                                                                   | Conversion                                                                   |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `polar`, id like `polar_<tier>_<month\|year>` (written by the seed) | integer cents                                                              | none, already minor units                                                    |
+| `polar`, any other id (admin create, import or Plan Sync)           | decimal major units (`9.99` = US$ 9.99), because the old adapter converted | multiplied by 10^decimals of the row's currency, rounded half away from zero |
+| `mercadopago`                                                       | decimal major units (`4500` = $ 4500)                                      | multiplied by 10^decimals of the row's currency, rounded half away from zero |
+| anything else                                                       | unknown                                                                    | left as it is                                                                |
 
-The decimals per currency are the ones `currencyDecimals()` returns (`Intl`): UYU, USD, EUR 2; JPY, CLP,
-COP 0; KWD 3. The migration lists the currencies that do not have 2 decimals in its SQL, and a test
-checks that list against `Intl` for every currency.
+`payment.amount` becomes an `integer` in minor units too. Only the Mercado Pago projection writes payments, so
+Mercado Pago payments are converted like Mercado Pago plans (multiplied by 10^decimals of the payment's
+currency) and nothing else is touched.
+
+A Pending Plan change snapshot carries the id of its plan, so the same id rule decides how its price is converted.
+
+The conversion rounds first and casts to `integer` afterwards, and it never truncates silently: if a price
+that the migration did not convert (a seeded Polar price or another provider's) still has decimals, or if
+a converted price does not fit in 32 bits, the migration stops with an error and changes nothing. Fix the
+row (`UPDATE plan SET price = ...`) and run it again.
+
+The decimals per currency are the ISO 4217 minor units that `currencyDecimals()` returns: UYU, USD, EUR,
+COP 2; JPY, CLP 0; KWD 3; CLF 4. The migration carries the same table in its SQL (it cannot import the
+TypeScript one) and a test fails if the two differ. A Mercado Pago plan or Pending Plan change whose
+currency is not an ISO 4217 code in use (for example a withdrawn code such as `SLL`) stops the migration
+with an error before anything changes: fix the currency and run it again.
 
 Pending Plan changes of every status (`pending`, `failed`, `activated`, `canceled`) are converted, because
 the admin pages also list the history.
@@ -53,7 +87,8 @@ convert twice.
 ## 3. Check
 
 ```sql
--- Polar: unchanged. Mercado Pago: 100x for 2-decimal currencies.
+-- Seeded Polar rows (polar_<tier>_<month|year>): unchanged. Every other Polar row and Mercado Pago: 100x
+-- for 2-decimal currencies (9.99 -> 999, 4500 -> 450000).
 SELECT id, provider, currency, price FROM plan ORDER BY provider, display_order;
 
 -- Snapshots follow their plan.

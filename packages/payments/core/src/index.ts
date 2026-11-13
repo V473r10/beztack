@@ -13,6 +13,8 @@ export {
 } from "./factory.js";
 // Current Subscription rule
 export { isCurrentSubscription } from "./subscription.js";
+// Log redaction
+export { redactEmails } from "./redact.js";
 // Errors
 export {
   isSubscriptionUpdateNotAppliedError,

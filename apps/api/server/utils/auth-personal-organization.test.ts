@@ -1,6 +1,12 @@
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { describe, expect, it, vi } from "vitest";
-import { type AuthConfigDeps, createAuth } from "./auth-config";
+import {
+  type AuthConfigDeps,
+  createAuth,
+  PERSONAL_ORGANIZATION_NAME_TEMPLATE,
+  personalOrganizationName,
+  shouldCreatePersonalOrganization,
+} from "./auth-config";
 
 /**
  * Personal organization: sign-up gives the user an Organization they own, and
@@ -98,6 +104,16 @@ describe("Personal organization at sign-up", () => {
     expect(organization?.name).toContain("Ana");
   });
 
+  it("names it from the documented default template", async () => {
+    const { auth } = setup();
+
+    const headers = await signUp(auth, "ana@example.test", "Ana");
+
+    const [organization] = await auth.api.listOrganizations({ headers });
+    expect(organization?.name).toBe(personalOrganizationName("Ana"));
+    expect(PERSONAL_ORGANIZATION_NAME_TEMPLATE).toContain("{name}");
+  });
+
   it("gives two users with the same name different slugs", async () => {
     const { auth } = setup();
 
@@ -131,6 +147,24 @@ describe("Personal organization at sign-up", () => {
     const session = await auth.api.getSession({ headers });
     expect(session?.user.email).toBe("ana@example.test");
     expect(logged).toHaveBeenCalled();
+  });
+});
+
+describe("shouldCreatePersonalOrganization", () => {
+  it.each([
+    ["organization", true, true],
+    ["organization", false, false],
+    ["user", true, false],
+    ["user", false, false],
+  ] as const)("in %s mode with the flag %s -> %s", (subscriptionMode, onSignup, expected) => {
+    expect(shouldCreatePersonalOrganization({ subscriptionMode, onSignup })).toBe(expected);
+  });
+});
+
+describe("personalOrganizationName", () => {
+  it("uses the user's name, or a fallback when it is blank", () => {
+    expect(personalOrganizationName("  Ana ")).toBe("Ana's organization");
+    expect(personalOrganizationName("   ")).toBe("Personal's organization");
   });
 });
 

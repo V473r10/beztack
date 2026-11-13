@@ -87,6 +87,56 @@ describe("POST /api/auth/admin/plans", () => {
     expect(mocks.createProduct).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { name: "an unknown currency", body: { currency: "XYZ" } },
+    { name: "a currency that is not a 3-letter code", body: { currency: "dollars" } },
+    { name: "an empty currency", body: { currency: "" } },
+    { name: "a price above the 32-bit column", body: { price: 2_147_483_648 } },
+  ])("rejects $name before calling the provider", async ({ body }) => {
+    mocks.readBody.mockResolvedValue({
+      displayName: "Pro",
+      price: 100,
+      interval: "month",
+      ...body,
+    });
+    const handler = await loadHandler();
+
+    const error = await captureError(handler({}));
+
+    expect(error).toBeDefined();
+    expect(mocks.createProduct).not.toHaveBeenCalled();
+    expect(mocks.insertReturning).not.toHaveBeenCalled();
+  });
+
+  it("stores the currency in upper case", async () => {
+    mocks.readBody.mockResolvedValue({
+      displayName: "Pro",
+      price: 100,
+      interval: "month",
+      currency: " usd ",
+    });
+    const handler = await loadHandler();
+
+    await handler({});
+
+    expect(mocks.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({ price: { amount: 100, currency: "USD" } }),
+    );
+  });
+
+  it("accepts the largest price the column holds", async () => {
+    mocks.readBody.mockResolvedValue({
+      displayName: "Pro",
+      price: 2_147_483_647,
+      interval: "month",
+    });
+    const handler = await loadHandler();
+
+    await handler({});
+
+    expect(mocks.createProduct).toHaveBeenCalledTimes(1);
+  });
+
   it("creates a yearly plan on Polar", async () => {
     mocks.readBody.mockResolvedValue({ displayName: "Pro", price: 100, interval: "year" });
     const handler = await loadHandler();

@@ -211,7 +211,7 @@ function getStatusClasses(status: string) {
   return baseClasses;
 }
 
-function OrderHistory({ orders }: OrderHistoryProps) {
+export function OrderHistory({ orders }: OrderHistoryProps) {
   const { t } = useTranslation();
 
   if (orders.length === 0) {
@@ -247,7 +247,7 @@ function OrderHistory({ orders }: OrderHistoryProps) {
                   {order.createdAt
                     ? formatDate(order.createdAt)
                     : t("billing.dashboard.notAvailable")}{" "}
-                  {"•"} {formatPrice(order.totalAmount)}
+                  {"•"} {formatPrice(order.totalAmount, order.currency)}
                 </div>
               </div>
             </div>

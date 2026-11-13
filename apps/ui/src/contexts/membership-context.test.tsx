@@ -346,7 +346,7 @@ describe("MembershipProvider", () => {
     it("says an Upgrade is accepted and the provider settles the charge", () => {
       onPlanChangeSuccess({ direction: "upgrade", kind: "plan-change-acceptance" });
 
-      expect(mocks.toastSuccess).toHaveBeenCalledWith("Plan change accepted successfully!");
+      expect(mocks.toastSuccess).toHaveBeenCalledWith("billing.toast.planChangeAccepted");
     });
   });
 
@@ -361,8 +361,8 @@ describe("MembershipProvider", () => {
       resultKind: "admin-tier-override",
     });
 
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Admin tier override applied.");
-    expect(mocks.toastSuccess).not.toHaveBeenCalledWith("Redirecting to checkout...");
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("billing.toast.adminOverrideApplied");
+    expect(mocks.toastSuccess).not.toHaveBeenCalledWith("billing.toast.redirecting");
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
     });
@@ -376,7 +376,7 @@ describe("MembershipProvider", () => {
 
     clearMutationOptions.onSuccess({ changed: true });
 
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Admin tier override cleared.");
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("billing.toast.adminOverrideCleared");
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
     });

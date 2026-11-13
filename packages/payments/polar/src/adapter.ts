@@ -205,9 +205,15 @@ function fixedPrice(price: { amount: number; currency: string }): PolarFixedPric
       `Expected an integer amount in minor units, received ${price.amount} ${price.currency}`,
     );
   }
+  // Never raise the price silently: a Free plan (0) would become a paid product.
+  if (price.amount < MIN_PRICE_MINOR_UNITS) {
+    throw new RangeError(
+      `Polar does not accept a fixed price below ${MIN_PRICE_MINOR_UNITS} minor units, received ${price.amount} ${price.currency}. A free plan has no Polar product.`,
+    );
+  }
   return {
     amount_type: "fixed",
-    price_amount: Math.max(price.amount, MIN_PRICE_MINOR_UNITS),
+    price_amount: price.amount,
     price_currency: price.currency.toLowerCase() as PresentmentCurrency,
   };
 }

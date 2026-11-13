@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   currencyDecimals,
   formatMinorUnits,
+  ISO_4217_MINOR_UNITS,
   majorToMinor,
   minorToMajor,
   prorateMinorUnits,
@@ -20,6 +21,43 @@ describe("currencyDecimals", () => {
 
   it.each(["usd", "US", "DOLLAR", "", "ZZZ"])("rejects %j", (currency) => {
     expect(() => currencyDecimals(currency)).toThrow(/currency/i);
+  });
+
+  it.each(["XXX", "XAU", "SLL", "HRK", "toString", "__proto__"])(
+    "throws a clear error for %s, which is not an ISO 4217 currency in use",
+    (currency) => {
+      expect(() => currencyDecimals(currency)).toThrow(/currency/i);
+    },
+  );
+
+  // Runtime CLDR data gives these 0 decimals on some Node versions; ISO 4217 says 2.
+  it.each(["COP", "HUF", "IDR", "PKR", "ALL", "AFN", "IRR", "LAK", "LBP", "MMK", "SYP", "YER"])(
+    "%s has 2 decimals whatever the runtime's Intl data says",
+    (currency) => {
+      expect(currencyDecimals(currency)).toBe(2);
+    },
+  );
+
+  it.each([
+    ["ISK", 0],
+    ["UGX", 0],
+    ["KRW", 0],
+    ["XOF", 0],
+    ["BHD", 3],
+    ["TND", 3],
+    ["CLF", 4],
+    ["UYW", 4],
+  ])("%s has %i decimals", (currency, decimals) => {
+    expect(currencyDecimals(currency)).toBe(decimals);
+  });
+
+  it("has an entry for every code once and only digits 0 to 4", () => {
+    const entries = Object.entries(ISO_4217_MINOR_UNITS);
+    expect(entries).toHaveLength(165);
+    for (const [code, decimals] of entries) {
+      expect(code).toMatch(/^[A-Z]{3}$/);
+      expect([0, 2, 3, 4]).toContain(decimals);
+    }
   });
 });
 
@@ -142,6 +180,16 @@ describe("formatMinorUnits", () => {
     // ICU separates the code from the number with a no-break space.
     expect(formatMinorUnits(9000, "KWD", "en-US")).toMatch(/^KWD\s9\.000$/);
     expect(formatMinorUnits(1234, "KWD", "en-US")).toMatch(/^KWD\s1\.234$/);
+  });
+
+  it("forces the ISO 4217 decimals instead of the runtime's", () => {
+    expect(formatMinorUnits(150_000, "COP", "en-US")).toMatch(/1,500\.00$/);
+    expect(formatMinorUnits(150_000, "HUF", "en-US")).toMatch(/1,500\.00$/);
+    expect(formatMinorUnits(15_000, "CLF", "en-US")).toMatch(/1\.5000$/);
+  });
+
+  it("rejects an unknown currency", () => {
+    expect(() => formatMinorUnits(100, "ZZZ", "en-US")).toThrow(/currency/i);
   });
 
   it("formats negative amounts", () => {

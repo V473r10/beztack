@@ -40,6 +40,22 @@ describe("formatPrice", () => {
     expect(plain(formatPrice(1500, "JPY"))).toBe("1.500 ¥");
   });
 
+  it("upper-cases the currency code, so a lowercase row does not blank the page", () => {
+    expect(plain(formatPrice(900, "usd", "en-US"))).toBe("$9.00");
+    expect(plain(formatPrice(900, " Usd ", "en-US"))).toBe("$9.00");
+  });
+
+  it("shows the number with the code for an unknown currency and logs it once", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      expect(formatPrice(1234, "XYZ", "en-US")).toBe("1,234 XYZ");
+      expect(formatPrice(99, "xyz", "en-US")).toBe("99 XYZ");
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it("refuses an amount that is not whole minor units instead of showing a wrong price", () => {
     expect(() => formatPrice(9.99, "USD", "en-US")).toThrow(RangeError);
   });

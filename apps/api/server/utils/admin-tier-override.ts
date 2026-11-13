@@ -310,7 +310,7 @@ export const dbAdminTierOverrideStore: AdminTierOverrideStore = {
 
     return rows.map((row) => ({
       ...row,
-      price: Number(row.price),
+      price: row.price,
       visible: row.visible ?? false,
     }));
   },

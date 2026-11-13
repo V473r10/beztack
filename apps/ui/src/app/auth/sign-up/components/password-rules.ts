@@ -45,7 +45,3 @@ export function evaluatePasswordRules(
     met: rule.test(password),
   }));
 }
-
-export function isPasswordValid(password: string): boolean {
-  return PASSWORD_RULES.every((rule) => rule.test(password));
-}

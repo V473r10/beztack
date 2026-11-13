@@ -1,4 +1,4 @@
-import type { PaymentProviderAdapter } from "@beztack/payments";
+import { type PaymentProviderAdapter, redactEmails } from "@beztack/payments";
 import { createError } from "h3";
 
 type CheckoutUser = {
@@ -10,7 +10,6 @@ type CheckoutUser = {
 const CONFLICT = 409;
 const CLIENT_ERROR_MIN = 400;
 const CLIENT_ERROR_MAX = 499;
-const EMAIL_IN_TEXT = /[^\s@"'<>]+@[^\s@"'<>]+/g;
 
 function statusOf(error: unknown): number | undefined {
   if (error && typeof error === "object" && "statusCode" in error) {
@@ -27,6 +26,7 @@ function statusOf(error: unknown): number | undefined {
  * Pago creates its payer inside the checkout and keeps its behavior.
  *
  * - Customer found, or creation hits a CONFLICT (it already exists): reuse.
+ * The lookup and the creation share the error mapping below, so a failing lookup is never a raw 500.
  * - Provider rejects the email (4xx): 422 `customer_email_rejected`.
  * - Provider unreachable or failing (network, 5xx): 502 `payment_provider_unavailable`.
  */
@@ -38,12 +38,12 @@ export async function ensureProviderCustomer(
     return;
   }
 
-  const existing = await provider.getCustomerByEmail(user.email);
-  if (existing) {
-    return;
-  }
-
   try {
+    const existing = await provider.getCustomerByEmail(user.email);
+    if (existing) {
+      return;
+    }
+
     await provider.createCustomer(
       user.email,
       { source: "beztack-checkout", userId: user.id },
@@ -56,13 +56,10 @@ export async function ensureProviderCustomer(
     }
 
     // Provider errors echo the rejected email back; keep it out of the logs.
-    const detail = (error instanceof Error ? error.message : String(error)).replace(
-      EMAIL_IN_TEXT,
-      "[email]",
-    );
+    const detail = redactEmails(error instanceof Error ? error.message : String(error));
     // biome-ignore lint/suspicious/noConsole: provider failure visible in server logs
     console.warn(
-      `[checkout] ${provider.provider} customer creation failed for user ${user.id} (status ${status ?? "none"}): ${detail}`,
+      `[checkout] ${provider.provider} customer lookup or creation failed for user ${user.id} (status ${status ?? "none"}): ${detail}`,
     );
 
     if (status !== undefined && status >= CLIENT_ERROR_MIN && status <= CLIENT_ERROR_MAX) {

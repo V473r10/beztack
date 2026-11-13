@@ -1,3 +1,4 @@
+import { currencyDecimals } from "@beztack/payments/money";
 import { en, enUS } from "./locales/en.js";
 import { es, esUY } from "./locales/es.js";
 import {
@@ -202,7 +203,7 @@ export function formatFrequencyLocalized(
  * @param locale - Locale passed straight to Intl; pass the project's
  *   DEFAULT_LOCALE (the fallback is only the translation-bundle default)
  * @returns Formatted price string with currency symbol; decimals come from
- *   Intl for the currency
+ *   the ISO 4217 table of `@beztack/payments/money`
  *
  * @example
  * ```typescript
@@ -219,10 +220,13 @@ export function formatPriceLocalized(
   const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
 
   // Format in the caller's own locale (no remapping to a regional default);
-  // decimals come from Intl for the currency.
+  // decimals come from the ISO 4217 table, never from the runtime's CLDR data.
+  const decimals = currencyDecimals(currencyId);
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currencyId,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(numAmount);
 }
 

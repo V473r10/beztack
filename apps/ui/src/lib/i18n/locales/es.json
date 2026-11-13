@@ -260,7 +260,8 @@
       "adminTierOverrideNoPayment": "Se aplica en el momento. No se cobra nada y las suscripciones reales no cambian.",
       "previewError": "No pudimos calcular el precio de este cambio de plan.",
       "credit": "Crédito por {{days}} días sin usar",
-      "dueToday": "A pagar hoy",
+      "dueToday": "A pagar hoy (aprox.)",
+      "prorationEstimateNote": "Es una estimación: el proveedor de pagos prorratea por segundo, así que el cobro final puede variar levemente.",
       "thenFullAmount": "Después {{price}} por período.",
       "startsOn": "Mantienes tu plan actual hasta el {{date}} y después pagas {{price}}.",
       "startsAtRenewal": "Mantienes tu plan actual hasta la próxima renovación y después pagas {{price}}.",
@@ -383,7 +384,12 @@
         "authorized": "Autorizada",
         "pending": "Pendiente",
         "paused": "Pausada",
-        "cancelled": "Cancelada"
+        "cancelled": "Cancelada",
+        "trialing": "En prueba",
+        "past_due": "Pago vencido",
+        "unpaid": "Sin pagar",
+        "inactive": "Inactiva",
+        "canceled": "Cancelada"
       },
       "frequency": {
         "monthly": "mensual",
@@ -398,9 +404,33 @@
       "customer_email_rejected": "El proveedor de pagos rechazó tu correo electrónico. Usá otro correo.",
       "payment_provider_unavailable": "El proveedor de pagos no está disponible. Probá de nuevo en un momento.",
       "organization_required": "Primero creá una organización: esta acción se cobra a una organización.",
-      "provider_did_not_apply": "El proveedor de pagos no aplicó el cambio de plan. No se cobró nada. Probá de nuevo en un momento."
+      "provider_did_not_apply": "El proveedor de pagos no aplicó el cambio de plan. No se cobró nada. Probá de nuevo en un momento.",
+      "invalid_current_subscription": "La suscripción de este cambio de plan no es válida.",
+      "invalid_target": "Ese plan no está disponible para un cambio de plan.",
+      "missing_current_subscription": "Necesitás una suscripción activa para cambiar de plan.",
+      "not_a_plan_change": "Ese plan es el que ya tenés.",
+      "not_retryable": "Este cambio de plan no se puede reintentar.",
+      "payment_integration_mismatch": "Esta suscripción pertenece a un proveedor de pagos distinto del configurado.",
+      "unsupported_billing_cadence": "Solo se admite facturación mensual o anual.",
+      "unsupported_cadence_change": "Cambiar el período de facturación no está disponible para este plan.",
+      "unauthorized_plan_change": "No tenés permiso para cambiar este plan."
     },
     "checkoutFailed": "No se pudo iniciar el pago",
+    "toast": {
+      "redirecting": "Redirigiendo al pago...",
+      "adminOverrideApplied": "Se aplicó el nivel asignado por un admin.",
+      "adminOverrideAlreadyActive": "El nivel asignado por un admin ya estaba activo.",
+      "adminOverrideCleared": "Se quitó el nivel asignado por un admin.",
+      "adminOverrideAlreadyCleared": "El nivel asignado por un admin ya estaba quitado.",
+      "adminOverrideClearFailed": "No se pudo quitar el nivel asignado por un admin",
+      "planChangeReconciling": "Pago confirmado. El cambio de plan todavía se está conciliando.",
+      "planChangeAccepted": "¡Cambio de plan aceptado!",
+      "planChangeFailed": "No se pudo cambiar el plan",
+      "portalOpening": "Abriendo el portal de facturación...",
+      "portalFailed": "No se pudo abrir el portal de facturación",
+      "portalOnlyPolar": "El portal de facturación solo está disponible con Polar.",
+      "portalUnavailable": "El portal de facturación no está disponible."
+    },
     "dashboard": {
       "currentPlan": "Plan actual",
       "currentPlanDescription": "Administrá tu suscripción y tus preferencias de facturación",
@@ -749,6 +779,13 @@
     "goHome": "Ir al inicio"
   },
   "settings": {
+    "profile": {
+      "updatedVerifyEmail": "¡Perfil actualizado! Revisá tu correo para verificar la nueva dirección.",
+      "saved": "¡Se guardó la configuración del perfil!",
+      "saveFailed": "No se pudo guardar el perfil: {{message}}",
+      "updateFailed": "No se pudo actualizar el perfil",
+      "emailChangeFailed": "No se pudo cambiar el correo"
+    },
     "theme": {
       "colorTheme": "Tema de color",
       "colorThemeDescription": "Elegí tu esquema de colores y estilo visual preferido",

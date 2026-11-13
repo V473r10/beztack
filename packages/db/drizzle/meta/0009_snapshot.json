@@ -658,7 +658,7 @@
         },
         "amount": {
           "name": "amount",
-          "type": "numeric",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },

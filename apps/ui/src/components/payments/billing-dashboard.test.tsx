@@ -9,7 +9,7 @@ vi.mock("./upgrade-dialog", () => ({ UpgradeDialog: () => null }));
 import type { Subscription } from "@/contexts/membership-context";
 import { renderInLanguage } from "@/test/render-in-language";
 import type { MembershipTierConfig } from "@/types/membership";
-import { BillingDashboard } from "./billing-dashboard";
+import { BillingDashboard, OrderHistory } from "./billing-dashboard";
 import { MembershipStatus } from "./membership-badge";
 import { UsageMetrics } from "./usage-metrics";
 
@@ -73,5 +73,21 @@ describe("BillingDashboard in Spanish", () => {
     expect(html).toContain("Activa");
     expect(html).toContain("Se renueva el");
     expect(html).not.toContain("Renews");
+  });
+
+  it("formats an order in its own currency, not the project's", () => {
+    const html = renderInLanguage(
+      "en",
+      <OrderHistory
+        orders={[
+          { id: "ord_1", status: "paid", totalAmount: 450_000, currency: "UYU" },
+          { id: "ord_2", status: "paid", totalAmount: 900, currency: "JPY" },
+        ]}
+      />,
+    );
+
+    // The project default is USD: "$4,500.00" would be the wrong currency.
+    expect(html).toMatch(/UYU\s4,500\.00|\$U\s?4,500\.00/);
+    expect(html).toContain("¥900");
   });
 });

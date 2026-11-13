@@ -19,9 +19,9 @@ import {
 } from "@beztack/payments";
 
 /** Id prefix of the Subscriptions the demo seed fabricates. */
-export const DEMO_SUBSCRIPTION_PREFIX = "demo_sub_";
+const DEMO_SUBSCRIPTION_PREFIX = "demo_sub_";
 
-export function isDemoSubscriptionId(subscriptionId: string): boolean {
+function isDemoSubscriptionId(subscriptionId: string): boolean {
   return subscriptionId.startsWith(DEMO_SUBSCRIPTION_PREFIX);
 }
 

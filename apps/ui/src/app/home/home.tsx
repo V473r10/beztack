@@ -1,6 +1,7 @@
 import { hasAuthRole } from "@beztack/auth";
 import { CalendarClock, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { CreateOrganizationDialog } from "@/components/organizations/create-organization-dialog";
@@ -30,6 +31,11 @@ type Cadence = "monthly" | "yearly";
 
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/** The tier's name in the user's language; an unknown tier keeps the given fallback. */
+function tierName(t: TFunction, tierId: string, fallback?: string): string {
+  return t(`membership.tiers.${tierId}`, { defaultValue: fallback ?? capitalize(tierId) });
 }
 
 /** A plan limit of -1, or no limit at all, means the plan does not cap the number. */
@@ -207,7 +213,7 @@ export default function Home() {
           <CardHeader>
             <CardDescription>{t("home.plan.title")}</CardDescription>
             <CardTitle className="flex flex-wrap items-center gap-2 text-2xl">
-              {tierConfig?.name ?? capitalize(currentTier)}
+              {tierName(t, currentTier, tierConfig?.name)}
               <Badge variant={status === "past_due" ? "destructive" : "secondary"}>
                 {t(`home.plan.status.${status}`)}
               </Badge>
@@ -267,7 +273,7 @@ export default function Home() {
               <span>
                 {pendingPlanChange.effectiveAt
                   ? t(`billing.pendingPlanChange.${pendingPlanChange.direction}On`, {
-                      tier: capitalize(pendingPlanChange.targetPlan.tierId),
+                      tier: tierName(t, pendingPlanChange.targetPlan.tierId),
                       cadence: t(`billing.${pendingPlanChange.targetPlan.billingCadence}`),
                       price: formatPrice(
                         pendingPlanChange.targetPlan.price.amount,
@@ -276,7 +282,7 @@ export default function Home() {
                       date: formatDate(pendingPlanChange.effectiveAt, { dateStyle: "long" }),
                     })
                   : t(`billing.pendingPlanChange.${pendingPlanChange.direction}AtRenewal`, {
-                      tier: capitalize(pendingPlanChange.targetPlan.tierId),
+                      tier: tierName(t, pendingPlanChange.targetPlan.tierId),
                       cadence: t(`billing.${pendingPlanChange.targetPlan.billingCadence}`),
                       price: formatPrice(
                         pendingPlanChange.targetPlan.price.amount,

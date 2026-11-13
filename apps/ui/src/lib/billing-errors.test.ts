@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import i18next, { type TFunction } from "i18next";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { ApiError } from "./api-client";
@@ -124,5 +126,43 @@ describe("runWithOrganization", () => {
     const run = vi.fn().mockRejectedValue(failure);
 
     await expect(runWithOrganization(run, "org_1", vi.fn())).rejects.toBe(failure);
+  });
+});
+
+describe("every error code the billing API sends has a translation", () => {
+  const apiUtils = path.resolve(__dirname, "../../../api/server/utils");
+
+  function sentCodes(): string[] {
+    const planChange = readFileSync(path.join(apiUtils, "plan-change.ts"), "utf8");
+    const union = /export type PlanChangeErrorCode =([^;]+);/.exec(planChange)?.[1] ?? "";
+    const planChangeCodes = [...union.matchAll(/"([a-z_]+)"/g)].map((match) => match[1]);
+
+    const customer = readFileSync(path.join(apiUtils, "provider-customer.ts"), "utf8");
+    const customerCodes = [...customer.matchAll(/code: "([a-z_]+)"/g)].map((match) => match[1]);
+
+    const required = readFileSync(path.join(apiUtils, "organization-required.ts"), "utf8");
+    const requiredCodes = [...required.matchAll(/_CODE = "([a-z_]+)"/g)].map((match) => match[1]);
+
+    return [...new Set([...planChangeCodes, ...customerCodes, ...requiredCodes])];
+  }
+
+  it("finds the codes (guards the scanner itself)", () => {
+    const codes = sentCodes();
+
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "provider_did_not_apply",
+        "customer_email_rejected",
+        "organization_required",
+      ]),
+    );
+    expect(codes.length).toBeGreaterThanOrEqual(12);
+  });
+
+  it.each(["en", "es"] as const)("has a billing.errors entry in %s for each of them", (locale) => {
+    const errors = (locale === "en" ? en : es).billing.errors as Record<string, string>;
+    const missing = sentCodes().filter((code) => !errors[code]);
+
+    expect(missing).toEqual([]);
   });
 });
