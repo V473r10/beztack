@@ -77,6 +77,13 @@ const OLD_SNAPSHOTS = [
   ["ppc_mp_kwd_canceled", "canceled", "mercadopago", "KWD", 12.5],
 ] as const;
 
+/** Old-convention payments (only the Mercado Pago projection writes them): [id, provider, currency, amount]. */
+const OLD_PAYMENTS = [
+  ["pay_mp_uyu", "mercadopago", "UYU", "4500"],
+  ["pay_mp_usd_cents", "mercadopago", "USD", "9.99"],
+  ["pay_mp_jpy", "mercadopago", "JPY", "5000"],
+] as const;
+
 function assertThrowawayDatabase(url: string): void {
   const name = new URL(url).pathname.replace(/^\//, "");
   if (!name.endsWith("_test")) {
@@ -157,6 +164,13 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
       await db.execute(sql`
         INSERT INTO plan (id, provider, canonical_tier_id, display_name, price, currency, interval)
         VALUES (${`all_${currency}`}, 'mercadopago', 'basic', ${currency}, 1, ${currency}, 'month')
+      `);
+    }
+
+    for (const [id, provider, currency, amount] of OLD_PAYMENTS) {
+      await db.execute(sql`
+        INSERT INTO payment (id, provider, status, amount, currency)
+        VALUES (${id}, ${provider}, 'approved', ${amount}::numeric, ${currency})
       `);
     }
 
@@ -270,6 +284,22 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
       }
     }
     expect(fromSql).toEqual({ ...ISO_4217_MINOR_UNITS });
+  });
+
+  it("makes payment.amount an integer in minor units", async () => {
+    const column = (await dbModule.db.execute(sql`
+      SELECT data_type FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'payment' AND column_name = 'amount'
+    `)) as unknown as { data_type: string }[];
+    expect(column[0]?.data_type).toBe("integer");
+    const rows = (await dbModule.db.execute(
+      sql`SELECT id, amount FROM payment ORDER BY id`,
+    )) as unknown as { id: string; amount: number }[];
+    expect(Object.fromEntries(rows.map((row) => [row.id, row.amount]))).toEqual({
+      pay_mp_jpy: 5000,
+      pay_mp_usd_cents: 999,
+      pay_mp_uyu: 450_000,
+    });
   });
 
   it("converts the price inside every Pending Plan change snapshot, whatever its status", async () => {

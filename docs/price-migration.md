@@ -41,6 +41,10 @@ What changes:
 | `mercadopago`                                                    | decimal major units (`4500` = $ 4500)                                     | multiplied by 10^decimals of the row's currency, rounded half away from zero |
 | anything else                                                    | unknown                                                                   | left as it is                                                                |
 
+`payment.amount` becomes an `integer` in minor units too. Only the Mercado Pago projection writes payments, so
+Mercado Pago payments are converted like Mercado Pago plans (multiplied by 10^decimals of the payment's
+currency) and nothing else is touched.
+
 A Pending Plan change snapshot carries the id of its plan, so the same id rule decides how its price is converted.
 
 The conversion rounds first and casts to `integer` afterwards, and it never truncates silently: if a price

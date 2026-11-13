@@ -4,7 +4,6 @@ import {
   index,
   integer,
   jsonb,
-  numeric,
   pgTable,
   serial,
   text,
@@ -267,7 +266,8 @@ export const payment = pgTable(
     userId: text("user_id").references(() => user.id),
     subscriptionId: text("subscription_id").references(() => subscription.id),
     status: text("status").notNull(),
-    amount: numeric("amount").notNull(),
+    // Integer minor units of `currency` (ADR 0007).
+    amount: integer("amount").notNull(),
     currency: text("currency").notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

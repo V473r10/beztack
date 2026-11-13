@@ -15,6 +15,9 @@
 -- target_plan_snapshot (all statuses: history rows are read by the admin pages).
 -- A snapshot carries the id of its plan, so the same id rule applies to it.
 --
+-- payment.amount (written only by the Mercado Pago projection) follows: Mercado Pago payments
+-- were stored in major units and are converted like plans.
+--
 -- Rounding is half away from zero (round() on numeric), done BEFORE the integer
 -- cast. After the conversion every price must be an exact integer: a row the
 -- migration did not convert and that still has decimals stops the migration, so
@@ -85,8 +88,12 @@ BEGIN
       SELECT 1 FROM "pending_plan_change"
       WHERE "id" IN (SELECT "id" FROM change_in_major_units)
         AND upper("target_plan_snapshot" #>> '{price,currency}') NOT IN (SELECT code FROM currency_minor_units)
+    ) OR EXISTS (
+      SELECT 1 FROM "payment"
+      WHERE "provider" = 'mercadopago'
+        AND upper("currency") NOT IN (SELECT code FROM currency_minor_units)
     ) THEN
-      RAISE EXCEPTION 'Price migration stopped: a plan or Pending Plan change that needs converting uses a currency that is not an ISO 4217 code in use. Fix the currency first (docs/price-migration.md).';
+      RAISE EXCEPTION 'Price migration stopped: a plan, Pending Plan change or payment that needs converting uses a currency that is not an ISO 4217 code in use. Fix the currency first (docs/price-migration.md).';
     END IF;
 
     UPDATE "plan"
@@ -107,12 +114,24 @@ BEGIN
     WHERE c.code = upper("target_plan_snapshot" #>> '{price,currency}')
       AND "pending_plan_change"."id" IN (SELECT "id" FROM change_in_major_units);
 
-    -- The cast below must see exact integers that fit in int4.
+    UPDATE "payment"
+    SET "amount" = round("payment"."amount" * power(10::numeric, c.decimals))
+    FROM currency_minor_units c
+    WHERE c.code = upper("payment"."currency")
+      AND "payment"."provider" = 'mercadopago';
+
+    -- The casts below must see exact integers that fit in int4.
     IF EXISTS (
       SELECT 1 FROM "plan"
       WHERE "price" <> trunc("price") OR "price" > 2147483647 OR "price" < -2147483648
     ) THEN
       RAISE EXCEPTION 'Price migration stopped: a plan price is not an integer that fits in 32 bits after conversion (a provider we cannot convert has decimals, or a price is too large). Fix it first (docs/price-migration.md).';
+    END IF;
+    IF EXISTS (
+      SELECT 1 FROM "payment"
+      WHERE "amount" <> trunc("amount") OR "amount" > 2147483647 OR "amount" < -2147483648
+    ) THEN
+      RAISE EXCEPTION 'Price migration stopped: a payment amount is not an integer that fits in 32 bits after conversion. Fix it first (docs/price-migration.md).';
     END IF;
     IF EXISTS (
       SELECT 1 FROM "pending_plan_change"
@@ -123,4 +142,5 @@ BEGIN
   END IF;
 END
 $$;--> statement-breakpoint
-ALTER TABLE "plan" ALTER COLUMN "price" SET DATA TYPE integer;
+ALTER TABLE "plan" ALTER COLUMN "price" SET DATA TYPE integer;--> statement-breakpoint
+ALTER TABLE "payment" ALTER COLUMN "amount" SET DATA TYPE integer;
