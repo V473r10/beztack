@@ -176,6 +176,12 @@ export type MembershipContextValue = {
   canManageBilling: boolean;
   /** Whether the server's access answer (status) has arrived. */
   isAccessLoading: boolean;
+  /**
+   * Membership status failed (the Payment provider is unavailable) and there is
+   * no earlier answer or provider Subscription to fall back on. `currentTier`
+   * is then only a placeholder: show an error state with a retry, never "Free".
+   */
+  isTierUnknown: boolean;
   isClearingAdminTierOverride: boolean;
 };
 
@@ -521,6 +527,12 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const canChangeBillingCadence =
     membershipStatusQuery.data?.data.paymentCapabilities?.cadenceChange === true;
   const isAccessLoading = membershipStatusQuery.isLoading;
+  // A failed refresh keeps the last answer (react-query holds on to `data`), so
+  // the tier is only unknown when no answer ever arrived.
+  const isTierUnknown =
+    membershipStatusQuery.data === undefined &&
+    Boolean(membershipStatusQuery.error) &&
+    activeSubscription === null;
 
   const isLoading =
     productsQuery.isLoading ||
@@ -556,6 +568,11 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       billingPeriod: "monthly" | "yearly" = "monthly",
       organizationId?: string,
     ) => {
+      // Not knowing the plan, a checkout could charge a subscriber twice.
+      if (isTierUnknown) {
+        toast.error(t("billing.membershipUnavailable.message"));
+        return;
+      }
       await runWithOrganization(
         async (checkoutOrganizationId) => {
           if (changesPlan) {
@@ -578,7 +595,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         askForOrganization,
       );
     },
-    [changesPlan, activeOrganizationId, askForOrganization],
+    [changesPlan, isTierUnknown, activeOrganizationId, askForOrganization, t],
   );
 
   const changePlan = useCallback(
@@ -590,6 +607,10 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         prorationBehavior?: "invoice" | "prorate";
       },
     ): Promise<PlanChangeResult> => {
+      if (isTierUnknown) {
+        toast.error(t("billing.membershipUnavailable.message"));
+        return Promise.resolve({ success: false });
+      }
       if (!changesPlan) {
         throw new Error("No active subscription to change");
       }
@@ -605,7 +626,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
         askForOrganization,
       ).then((result) => result ?? { success: false });
     },
-    [changesPlan, activeOrganizationId, askForOrganization],
+    [changesPlan, isTierUnknown, activeOrganizationId, askForOrganization, t],
   );
 
   const billingPortalRef = useRef(billingPortalMutation.mutateAsync);
@@ -724,6 +745,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       organizationRole,
       canManageBilling,
       isAccessLoading,
+      isTierUnknown,
       isClearingAdminTierOverride: clearAdminTierOverrideMutation.isPending,
     }),
     [
@@ -751,6 +773,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       organizationRole,
       canManageBilling,
       isAccessLoading,
+      isTierUnknown,
       clearAdminTierOverrideMutation.isPending,
     ],
   );

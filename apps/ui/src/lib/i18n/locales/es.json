@@ -309,6 +309,12 @@
       "unavailableTitle": "Este plan no está disponible",
       "unavailableDescription": "El plan que elegiste ya no se ofrece o todavía no está a la venta. Elige otro en la página de precios."
     },
+    "membershipUnavailable": {
+      "badge": "Plan no disponible",
+      "title": "No pudimos cargar tu plan",
+      "message": "El proveedor de pagos no responde. Tu plan no cambió. Probá de nuevo en un momento.",
+      "retry": "Reintentar"
+    },
     "page": {
       "title": "Facturación y suscripción",
       "description": "Gestiona tu suscripción, revisa tu uso y consulta tu historial de facturación.",
