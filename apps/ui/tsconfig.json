@@ -18,6 +18,9 @@
     },
     {
       "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./e2e/tsconfig.json"
     }
   ],
   "compilerOptions": {

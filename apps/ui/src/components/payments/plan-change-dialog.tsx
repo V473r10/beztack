@@ -246,19 +246,32 @@ export function PlanChangePreviewSummary({
             </p>
           </>
         ) : (
-          <p className="text-muted-foreground">
-            {preview.effectiveAt
-              ? t("billing.planChange.startsOn", {
-                  defaultValue: "You keep your current plan until {{date}}, then pay {{price}}.",
-                  date: formatDate(preview.effectiveAt, { dateStyle: "long" }),
-                  price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
-                })
-              : t("billing.planChange.startsAtRenewal", {
-                  defaultValue:
-                    "You keep your current plan until the next renewal, then pay {{price}}.",
-                  price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
-                })}
-          </p>
+          <>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                {t("billing.planChange.pendingTitle", "Pending plan change")}
+              </Badge>
+              <span className="text-muted-foreground text-xs">
+                {t(
+                  "billing.planChange.pendingNotice",
+                  "It activates at your next renewal. Nothing is charged today.",
+                )}
+              </span>
+            </div>
+            <p className="text-muted-foreground">
+              {preview.effectiveAt
+                ? t("billing.planChange.startsOn", {
+                    defaultValue: "You keep your current plan until {{date}}, then pay {{price}}.",
+                    date: formatDate(preview.effectiveAt, { dateStyle: "long" }),
+                    price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
+                  })
+                : t("billing.planChange.startsAtRenewal", {
+                    defaultValue:
+                      "You keep your current plan until the next renewal, then pay {{price}}.",
+                    price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
+                  })}
+            </p>
+          </>
         )}
       </div>
     </div>

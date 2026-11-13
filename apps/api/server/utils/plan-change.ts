@@ -376,6 +376,7 @@ export type PlanChangeErrorCode =
   | "not_a_plan_change"
   | "not_retryable"
   | "payment_integration_mismatch"
+  | "provider_did_not_apply"
   | "unsupported_billing_cadence"
   | "unsupported_cadence_change"
   | "unauthorized_plan_change";
