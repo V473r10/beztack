@@ -1,5 +1,5 @@
 import { formatMinorUnits, majorToMinor } from "@beztack/payments/money";
-import i18n from "i18next";
+import i18next from "i18next";
 import { env } from "@/env";
 
 /**
@@ -18,6 +18,19 @@ function resolveCurrency(currency: string | null | undefined): string {
   return currency || env.VITE_DEFAULT_CURRENCY;
 }
 
+type LanguageSource = { resolvedLanguage?: string; language?: string };
+
+let languageSource: LanguageSource | undefined;
+
+/**
+ * Tells the formatters which i18n instance holds the user's language. The app builds its own
+ * instance (`createInstance()`), so the default i18next singleton never learns the language.
+ * Pass `undefined` to go back to the singleton.
+ */
+export function setFormatLanguageSource(source: LanguageSource | undefined): void {
+  languageSource = source;
+}
+
 /**
  * The language the user chose, as a BCP 47 tag for `Intl`. When the project
  * locale is a region of that same language (`es` and `es-UY`), the region
@@ -25,7 +38,8 @@ function resolveCurrency(currency: string | null | undefined): string {
  * i18n is initialised (tests, first paint) the project locale applies.
  */
 function activeLocale(): string {
-  const language = i18n.resolvedLanguage || i18n.language;
+  const language =
+    (languageSource ?? i18next).resolvedLanguage || (languageSource ?? i18next).language;
   const project = projectLocale();
   if (!language) {
     return project;
@@ -70,11 +84,11 @@ export function formatMercadoPagoAmount(
   );
 }
 
-/** Format a date (or ISO string) in the project locale. */
+/** Format a date (or ISO string) in the language the user chose (the project locale before one is set). */
 export function formatDate(
   date: Date | string | number,
   options?: Intl.DateTimeFormatOptions,
-  locale: string = projectLocale(),
+  locale: string = activeLocale(),
 ): string {
   return new Intl.DateTimeFormat(locale, options).format(new Date(date));
 }

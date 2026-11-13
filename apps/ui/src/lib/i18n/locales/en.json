@@ -355,199 +355,55 @@
     "cancel": "Cancel",
     "processing": "Processing..."
   },
-  "dashboard": {
-    "acquisitionNeedsAttention": "Acquisition needs attention",
-    "activeAccounts": "Active Accounts",
-    "chart": {
-      "days30": "30 days",
-      "days7": "7 days",
-      "days90": "90 days",
-      "desktop": "Desktop",
-      "last30Days": "Last 30 days",
-      "last3Months": "Last 3 months",
-      "last7Days": "Last 7 days",
-      "mobile": "Mobile",
-      "showingTotalVisitors": "Showing total visitors for the last",
-      "title": "Area Chart - Interactive",
-      "visitors": "Visitors"
-    },
-    "downThisPeriod": "Down 20% this period",
-    "engagementExceedsTargets": "Engagement exceed targets",
-    "growthRate": "Growth Rate",
-    "meetsGrowthProjections": "Meets growth projections",
-    "newCustomers": "New Customers",
-    "steadyPerformanceIncrease": "Steady performance increase",
-    "strongUserRetention": "Strong user retention",
-    "totalRevenue": "Total Revenue",
-    "trendingUp": "Trending up this month",
-    "visitorsLast6Months": "Visitors for the last 6 months"
-  },
-  "dataTable": {
-    "actions": {
-      "copyId": "Copy section ID",
-      "copySuccess": "Section ID copied to clipboard.",
-      "delete": "Delete",
-      "edit": "Edit",
-      "favorite": "Favorite",
-      "makeCopy": "Make a copy",
-      "open": "Open",
-      "openMenu": "Open menu",
-      "view": "View"
-    },
-    "chart": {
-      "desktop": "Desktop",
-      "mobile": "Mobile",
-      "months": {
-        "april": "April",
-        "february": "February",
-        "january": "January",
-        "june": "June",
-        "march": "March",
-        "may": "May"
-      }
-    },
-    "columns": "Columns",
-    "deleteConfirmation": {
-      "cancel": "Cancel",
-      "confirm": "Confirm",
-      "description": "This action cannot be undone. This will permanently delete the selected sections.",
-      "title": "Are you sure?"
-    },
-    "deleteSelected": "Delete ({{count}}})",
-    "dragReorder": "Drag to reorder",
-    "drawer": {
-      "buttons": {
-        "done": "Done",
-        "submit": "Submit"
+  "home": {
+    "plan": {
+      "title": "Current plan",
+      "status": {
+        "free": "Free",
+        "active": "Active",
+        "inactive": "Inactive",
+        "pending": "Pending",
+        "canceled": "Canceled",
+        "paused": "Paused",
+        "past_due": "Payment overdue",
+        "canceling": "Canceling",
+        "adminOverride": "Set by an admin"
       },
-      "chartDescription": "Showing total visitors for the last 6 months. This is just some random text to test the layout. It spans multiple lines and should wrap around.",
-      "description": "An overview of the section details.",
-      "labels": {
-        "header": "Header",
-        "limit": "Limit",
-        "reviewer": "Reviewer",
-        "status": "Status",
-        "target": "Target",
-        "type": "Type"
-      },
-      "mrr": "Monthly Recurring Revenue",
-      "placeholders": {
-        "selectReviewer": "Select a reviewer",
-        "selectStatus": "Select a status",
-        "selectType": "Select a type"
-      },
-      "tabs": {
-        "performance": "Performance",
-        "view": "View"
-      },
-      "title": "View Details",
-      "titleWithHeader": "View details for {{header}}"
+      "price": "{{price}} / {{cadence}}",
+      "renews": "Renews on {{date}}",
+      "endsOn": "Ends on {{date}}",
+      "freeDescription": "You are on the free plan. Pick a paid plan whenever you need more."
     },
-    "filterPlaceholder": "Filter sections...",
-    "headers": {
-      "header": "Header",
-      "limit": "Limit",
-      "reviewer": "Reviewer",
-      "sectionType": "Section Type",
-      "status": "Status",
-      "target": "Target"
+    "pendingPlanChange": {
+      "title": "Plan change scheduled",
+      "manage": "Manage in billing"
     },
-    "noResults": "No results.",
-    "pagination": {
-      "firstPage": "Go to first page",
-      "go": "Go",
-      "goToPage": "Go to page:",
-      "lastPage": "Go to last page",
-      "nextPage": "Go to next page",
-      "of": "of",
-      "page": "Page",
-      "pageInfo": "Page {{page}} of {{total}}",
-      "previousPage": "Go to previous page",
-      "rowsPerPage": "Rows per page",
-      "selectedRows": "{{count}} of {{total}} row(s) selected."
+    "seats": {
+      "title": "Seats",
+      "used_one": "{{count}} member",
+      "used_other": "{{count}} members",
+      "usedOfLimit": "{{used}} of {{limit}} seats used",
+      "usedUnlimited_one": "{{count}} member, unlimited seats",
+      "usedUnlimited_other": "{{count}} members, unlimited seats",
+      "overLimit": "You have {{used}} members but your plan includes {{limit}}. Remove members or change plan."
     },
-    "placeholders": {
-      "assignReviewer": "Assign reviewer",
-      "search": "Search..."
+    "members": {
+      "title": "Members of {{organization}}",
+      "viewAll": "View all {{count}} members"
     },
-    "reviewers": {
-      "eddie": "Eddie Lake",
-      "emily": "Emily Whalen",
-      "jamik": "Jamik Tashpulatov"
+    "nextSteps": {
+      "title": "Next steps",
+      "description": "What to do next with your account.",
+      "pay": "Choose a plan",
+      "invite": "Invite your team",
+      "changePlan": "Change plan",
+      "none": "You are all set. Nothing to do right now."
     },
-    "selectAll": "Select all",
-    "selectRow": "Select row",
-    "statuses": {
-      "done": "Done",
-      "inProgress": "In Progress",
-      "notStarted": "Not Started"
-    },
-    "tabs": {
-      "active": "Active",
-      "all": "All",
-      "archived": "Archived"
-    },
-    "toast": {
-      "error": "Error",
-      "reorder": {
-        "error": "Error!",
-        "saving": "Saving...",
-        "success": "Done!"
-      },
-      "saving": "Saving {{header}}",
-      "success": "Done"
-    },
-    "toolbar": {
-      "addSection": "Add Section",
-      "customizeColumns": "Customize Columns"
-    },
-    "trendingUpThisMonth": "Trending up this month",
-    "types": {
-      "approach": "Technical Approach",
-      "capabilities": "Capabilities",
-      "cover": "Cover Page",
-      "design": "Design",
-      "focus": "Focus Documents",
-      "narrative": "Narrative",
-      "summary": "Executive Summary",
-      "toc": "Table of Contents"
-    },
-    "views": {
-      "focusDocuments": "Focus Documents",
-      "keyPersonnel": "Key Personnel",
-      "label": "View",
-      "outline": "Outline",
-      "pastPerformance": "Past Performance",
-      "placeholder": "Select a view"
-    },
-    "capabilities": "Capabilities",
-    "coverPage": "Cover Page",
-    "design": "Design",
-    "done": "Done",
-    "eddieLake": "Eddie Lake",
-    "emilyWhalen": "Emily Whalen",
-    "executiveSummary": "Executive Summary",
-    "focusDocuments": "Focus Documents",
-    "goToFirstPage": "Go to first page",
-    "goToLastPage": "Go to last page",
-    "goToNextPage": "Go to next page",
-    "goToPreviousPage": "Go to previous page",
-    "header": "Header",
-    "inProgress": "In Progress",
-    "jamikTashpulatov": "Jamik Tashpulatov",
-    "limit": "Limit",
-    "narrative": "Narrative",
-    "notStarted": "Not Started",
-    "of": "of",
-    "reviewer": "Reviewer",
-    "rowsPerPage": "Rows per page",
-    "showingTotalVisitors": "Showing total visitors for the last 6 months",
-    "status": "Status",
-    "submit": "Submit",
-    "tableOfContents": "Table of Contents",
-    "target": "Target",
-    "technicalApproach": "Technical Approach",
-    "type": "Type"
+    "noOrganization": {
+      "title": "Create your first organization",
+      "description": "Your plan and your team live in an organization. Create one to subscribe, invite members and see your account here.",
+      "create": "Create organization"
+    }
   },
   "form": {
     "confirmPassword": {
@@ -691,7 +547,9 @@
       "step2": "Enable two factor authentication to add an extra layer of security to your account."
     },
     "homeTour": {
-      "step1": "On the settings page you can manage your account settings such as two factor authentication, info, etc."
+      "step1": "On the settings page you can manage your account settings such as two factor authentication, info, etc.",
+      "plan": "This card shows your current plan and when it renews.",
+      "nextSteps": "Here is what to do next: pick a plan, invite your team or change plan."
     }
   },
   "validation": {
