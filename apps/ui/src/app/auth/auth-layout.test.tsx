@@ -13,6 +13,10 @@ vi.mock("react-i18next", () => ({
       options?.appName ? `${key} for ${String(options.appName)}` : key,
   }),
 }));
+vi.mock("./demo-try-panel", () => ({
+  DemoTryPanel: ({ variant }: { variant: string }) => <div data-testid={`demo-panel-${variant}`} />,
+}));
+
 import AuthLayout from "./auth-layout";
 
 describe("AuthLayout", () => {
@@ -35,5 +39,12 @@ describe("AuthLayout", () => {
     const html = renderToStaticMarkup(<AuthLayout />);
 
     expect(html).not.toMatch(/<h[1-6]/);
+  });
+
+  it("renders the demo panel in the brand column and, collapsed, under the form on mobile", () => {
+    const html = renderToStaticMarkup(<AuthLayout />);
+
+    expect(html).toContain('data-testid="demo-panel-brand"');
+    expect(html).toContain('data-testid="demo-panel-compact"');
   });
 });

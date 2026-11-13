@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { LanguageToggle } from "@/components/language-toggle";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
+import { DemoTryPanel } from "./demo-try-panel";
 
 type AuthLayoutProps = {
   className?: string;
@@ -20,6 +21,7 @@ const AuthLayout = ({ className }: AuthLayoutProps) => {
           <p className="mb-4 font-bold text-4xl">{appName}</p>
           <p className="text-primary-foreground/90">{t("auth.brand.tagline")}</p>
         </div>
+        <DemoTryPanel variant="brand" />
         <div className="text-primary-foreground/80 text-sm">
           {t("common.footer", { year: new Date().getFullYear(), appName })}
         </div>
@@ -35,6 +37,9 @@ const AuthLayout = ({ className }: AuthLayoutProps) => {
             <p className="font-bold text-3xl">{appName}</p>
           </div>
           <Outlet />
+          <div className="lg:hidden">
+            <DemoTryPanel variant="compact" />
+          </div>
         </div>
       </div>
       <Toaster />

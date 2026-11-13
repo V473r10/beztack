@@ -57,6 +57,20 @@
     "brand": {
       "tagline": "Billing for your SaaS: subscriptions, plan changes with proration and organizations, ready to ship."
     },
+    "demo": {
+      "title": "How to try the demo",
+      "intro": "Create an account with a real email, pick a plan and pay with a sandbox test card. Nothing is charged for real.",
+      "cardsTitle": "Test cards ({{provider}} sandbox)",
+      "cardDetails": "Expires {{expiry}} · CVC {{cvc}}",
+      "cardholder": "name {{holder}}",
+      "anyFutureDate": "any future date",
+      "anyCvc": "any 3 digits",
+      "dataReset": "Demo data is deleted every day.",
+      "outcome": {
+        "approved": "Approved payment",
+        "declined": "Declined payment"
+      }
+    },
     "signIn": {
       "backToSignIn": "Back to Sign In",
       "button": "Sign In",

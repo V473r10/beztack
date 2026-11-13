@@ -57,6 +57,20 @@
     "brand": {
       "tagline": "Cobros para tu SaaS: suscripciones, cambios de plan con prorrateo y organizaciones, listos para usar."
     },
+    "demo": {
+      "title": "Cómo probar la demo",
+      "intro": "Creá una cuenta con un email real, elegí un plan y pagá con una tarjeta de prueba del sandbox. No se cobra nada de verdad.",
+      "cardsTitle": "Tarjetas de prueba (sandbox de {{provider}})",
+      "cardDetails": "Vence {{expiry}} · CVC {{cvc}}",
+      "cardholder": "nombre {{holder}}",
+      "anyFutureDate": "cualquier fecha futura",
+      "anyCvc": "cualquier código de 3 dígitos",
+      "dataReset": "Los datos de la demo se borran todos los días.",
+      "outcome": {
+        "approved": "Pago aprobado",
+        "declined": "Pago rechazado"
+      }
+    },
     "signIn": {
       "backToSignIn": "Volver a Iniciar Sesión",
       "button": "Iniciar Sesión",
