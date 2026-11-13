@@ -66,7 +66,14 @@
         "title": "Autenticación de dos factores",
         "description": "Ingresa el código de autenticación de dos factores",
         "button": "Verificar",
-        "backToSignIn": "Volver a Iniciar Sesión"
+        "backToSignIn": "Volver a Iniciar Sesión",
+        "authenticatorApp": "App de autenticación",
+        "backupCode": "Código de recuperación",
+        "totpDescription": "Ingresá el código de 6 dígitos de tu app de autenticación",
+        "backupCodeDescription": "Ingresá uno de tus códigos de recuperación",
+        "backupCodeWarning": "Cada código de recuperación se puede usar una sola vez",
+        "verifyCode": "Verificar código",
+        "verifyBackupCode": "Verificar código de recuperación"
       },
       "form": {
         "email": "Correo Electrónico",
@@ -522,13 +529,24 @@
   "notifications": {
     "account": {
       "createError": "Error al crear la cuenta. Por favor, inténtalo de nuevo.",
-      "createSuccess": "¡Cuenta creada con éxito!"
+      "createSuccess": "¡Cuenta creada con éxito!",
+      "created": "¡Cuenta creada con éxito!",
+      "creationFailed": "No se pudo crear la cuenta. Probá de nuevo."
     },
     "auth": {
       "signInSuccess": "¡Inicio de sesión exitoso!",
       "signIn2FASuccess": "¡Inicio de sesión exitoso con 2FA!",
       "signInBackupSuccess": "¡Inicio de sesión exitoso con código de recuperación!",
-      "twoFactorRequired": "¡Autenticación de dos factores requerida!"
+      "twoFactorRequired": "¡Autenticación de dos factores requerida!",
+      "errors": {
+        "userAlreadyExists": "Ya existe una cuenta con este email. Iniciá sesión.",
+        "invalidCredentials": "Email o contraseña incorrectos.",
+        "invalidEmail": "Ingresá un email válido.",
+        "passwordTooShort": "La contraseña es demasiado corta.",
+        "passwordTooLong": "La contraseña es demasiado larga.",
+        "emailNotVerified": "Verificá tu email antes de iniciar sesión.",
+        "serverError": "Algo salió mal de nuestro lado. Probá de nuevo en un momento."
+      }
     },
     "twoFactor": {
       "enableSuccess": "Escanea el código QR, guarda los códigos de recuperación y luego ingresa el código de verificación.",

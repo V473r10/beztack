@@ -66,7 +66,14 @@
         "title": "Two-Factor Authentication",
         "description": "Enter the code from your authenticator app.",
         "button": "Verify Code",
-        "backToSignIn": "Back to Sign In"
+        "backToSignIn": "Back to Sign In",
+        "authenticatorApp": "Authenticator App",
+        "backupCode": "Backup Code",
+        "totpDescription": "Enter the 6-digit code from your authenticator app",
+        "backupCodeDescription": "Enter one of your backup codes",
+        "backupCodeWarning": "Each backup code can only be used once",
+        "verifyCode": "Verify Code",
+        "verifyBackupCode": "Verify Backup Code"
       },
       "form": {
         "email": "Email",
@@ -518,13 +525,24 @@
   "notifications": {
     "account": {
       "createError": "Failed to create account. Please try again.",
-      "createSuccess": "Account created successfully!"
+      "createSuccess": "Account created successfully!",
+      "created": "Account created successfully!",
+      "creationFailed": "Failed to create account. Please try again."
     },
     "auth": {
       "signInSuccess": "Signed in successfully!",
       "signIn2FASuccess": "Signed in successfully with 2FA!",
       "signInBackupSuccess": "Signed in successfully with backup code!",
-      "twoFactorRequired": "Two-factor authentication required!"
+      "twoFactorRequired": "Two-factor authentication required!",
+      "errors": {
+        "userAlreadyExists": "An account with this email already exists. Sign in instead.",
+        "invalidCredentials": "Incorrect email or password.",
+        "invalidEmail": "Enter a valid email address.",
+        "passwordTooShort": "The password is too short.",
+        "passwordTooLong": "The password is too long.",
+        "emailNotVerified": "Verify your email address before signing in.",
+        "serverError": "Something went wrong on our side. Please try again in a moment."
+      }
     },
     "twoFactor": {
       "enableSuccess": "Scan QR code, save backup codes, then enter verification code below.",

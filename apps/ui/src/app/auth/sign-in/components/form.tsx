@@ -2,13 +2,12 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router";
-import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
-import { authClient } from "@/lib/auth-client";
-import { getPostSignInTarget, withNext } from "@/lib/auth-redirect";
+import { AuthFormError } from "../../auth-form-error";
+import { submitSignIn } from "../../auth-submissions";
 
 // Constants
 const MIN_PASSWORD_LENGTH = 8;
@@ -25,6 +24,7 @@ const FormSchema = z.object({
 export function SignInForm() {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,30 +37,10 @@ export function SignInForm() {
     },
     onSubmit: async ({ value }) => {
       setIsLoading(true);
-
-      await authClient.signIn.email(
-        {
-          email: value.email,
-          password: value.password,
-        },
-        {
-          onSuccess(context) {
-            if (context.data.twoFactorRedirect) {
-              toast.success(t("notifications.auth.twoFactorRequired"));
-              navigate(withNext("/auth/sign-in/two-factor", location.search));
-            } else {
-              toast.success(t("notifications.auth.signInSuccess"));
-              navigate(getPostSignInTarget(location.search));
-            }
-          },
-          onError(error) {
-            toast.error(error.error.message);
-          },
-          onResponse() {
-            setIsLoading(false);
-          },
-        },
-      );
+      setFormError(null);
+      const error = await submitSignIn(value, location.search, { t, navigate });
+      setFormError(error);
+      setIsLoading(false);
     },
   });
 
@@ -140,6 +120,8 @@ export function SignInForm() {
             </field.FormItem>
           )}
         </form.AppField>
+
+        <AuthFormError message={formError} />
 
         <Button className="w-full" disabled={isLoading} type="submit">
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
