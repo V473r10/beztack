@@ -7,7 +7,6 @@ import {
 import { describe, expect, it, vi } from "vitest";
 import {
   type DemoSubscriptionStore,
-  isDemoSubscriptionId,
   withDemoSubscriptions,
 } from "./demo-payment-provider";
 
@@ -58,14 +57,6 @@ function createStore(): DemoSubscriptionStore & {
     cancel: vi.fn(async () => ({ ...DEMO_SUBSCRIPTION, status: "canceled" as const })),
   };
 }
-
-describe("isDemoSubscriptionId", () => {
-  it("recognises only the demo_sub_ prefix", () => {
-    expect(isDemoSubscriptionId("demo_sub_pro")).toBe(true);
-    expect(isDemoSubscriptionId("sub_real_1")).toBe(false);
-    expect(isDemoSubscriptionId("my_demo_sub_pro")).toBe(false);
-  });
-});
 
 describe("withDemoSubscriptions without DEMO_MODE", () => {
   it.each([false, undefined, "true", 1])(

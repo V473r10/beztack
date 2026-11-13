@@ -8,6 +8,11 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./plan-catalog": {
+      "types": "./src/plan-catalog.ts",
+      "import": "./src/plan-catalog.ts",
+      "default": "./src/plan-catalog.ts"
+    },
     "./drizzle-config": {
       "types": "./drizzle.config.ts",
       "import": "./drizzle.config.ts"

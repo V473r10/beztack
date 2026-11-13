@@ -1,4 +1,4 @@
-import type { PaymentProviderAdapter } from "@beztack/payments";
+import { type PaymentProviderAdapter, redactEmails } from "@beztack/payments";
 import { createError } from "h3";
 
 type CheckoutUser = {
@@ -10,7 +10,6 @@ type CheckoutUser = {
 const CONFLICT = 409;
 const CLIENT_ERROR_MIN = 400;
 const CLIENT_ERROR_MAX = 499;
-const EMAIL_IN_TEXT = /[^\s@"'<>]+@[^\s@"'<>]+/g;
 
 function statusOf(error: unknown): number | undefined {
   if (error && typeof error === "object" && "statusCode" in error) {
@@ -57,10 +56,7 @@ export async function ensureProviderCustomer(
     }
 
     // Provider errors echo the rejected email back; keep it out of the logs.
-    const detail = (error instanceof Error ? error.message : String(error)).replace(
-      EMAIL_IN_TEXT,
-      "[email]",
-    );
+    const detail = redactEmails(error instanceof Error ? error.message : String(error));
     // biome-ignore lint/suspicious/noConsole: provider failure visible in server logs
     console.warn(
       `[checkout] ${provider.provider} customer lookup or creation failed for user ${user.id} (status ${status ?? "none"}): ${detail}`,

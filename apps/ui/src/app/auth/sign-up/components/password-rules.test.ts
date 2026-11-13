@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluatePasswordRules, isPasswordValid } from "./password-rules";
+import { evaluatePasswordRules } from "./password-rules";
 
 const metIds = (password: string) =>
   evaluatePasswordRules(password)
@@ -30,10 +30,12 @@ describe("evaluatePasswordRules", () => {
   });
 });
 
-describe("isPasswordValid", () => {
+describe("all rules met", () => {
+  const allMet = (password: string) => evaluatePasswordRules(password).every((rule) => rule.met);
+
   it("needs every rule", () => {
-    expect(isPasswordValid("Abcdef1!")).toBe(true);
-    expect(isPasswordValid("Abcdef1")).toBe(false);
-    expect(isPasswordValid("abcdef1!")).toBe(false);
+    expect(allMet("Abcdef1!")).toBe(true);
+    expect(allMet("Abcdef1")).toBe(false);
+    expect(allMet("abcdef1!")).toBe(false);
   });
 });

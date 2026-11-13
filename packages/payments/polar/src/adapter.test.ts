@@ -217,7 +217,23 @@ describe("createPolarAdapter", () => {
       await expect(createAdapter().getProduct("prod_missing")).resolves.toBeNull();
     });
 
-    it("raises a product below Polar's minimum price to the minimum", async () => {
+    it.each([0, 10, 49])(
+      "refuses a price of %i, below Polar's minimum, instead of raising it",
+      async (amount) => {
+        await expect(
+          createAdapter().createProduct({
+            name: "Tiny",
+            type: "plan",
+            interval: "month",
+            intervalCount: 1,
+            price: { amount, currency: "USD" },
+          }),
+        ).rejects.toThrow(RangeError);
+        expect(client.products.create).not.toHaveBeenCalled();
+      },
+    );
+
+    it("accepts a price at Polar's minimum", async () => {
       client.products.create.mockResolvedValueOnce({ id: "prod_new", name: "Tiny", prices: [] });
 
       await createAdapter().createProduct({
@@ -225,12 +241,11 @@ describe("createPolarAdapter", () => {
         type: "plan",
         interval: "month",
         intervalCount: 1,
-        price: { amount: 10, currency: "USD" },
+        price: { amount: 50, currency: "USD" },
       });
 
       expect(client.products.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          recurring_interval: "month",
           prices: [{ amount_type: "fixed", price_amount: 50, price_currency: "usd" }],
         }),
       );

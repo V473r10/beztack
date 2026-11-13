@@ -3,6 +3,7 @@
  *
  * Wraps @polar-sh/better-auth so that apps/api never imports Polar directly.
  */
+import { redactEmails } from "@beztack/payments";
 import { checkout, polar, portal, usage } from "@polar-sh/better-auth";
 import { createPolarCore } from "@polar-sh/sdk/2026-10";
 
@@ -53,7 +54,6 @@ type UserCreateAfter = (user: unknown, context: unknown) => Promise<void> | void
 type BetterAuthLoggerLike = Record<"info" | "warn", ((message: string) => void) | undefined>;
 
 const CONFLICT_STATUS = 409;
-const EMAIL_IN_TEXT = /[^\s@"'<>]+@[^\s@"'<>]+/g;
 
 function describeFailure(error: unknown): { conflict: boolean; detail: string } {
   const status =
@@ -69,7 +69,7 @@ function describeFailure(error: unknown): { conflict: boolean; detail: string } 
   return {
     conflict: status === CONFLICT_STATUS || code === "CONFLICT",
     // Provider errors echo the rejected email back; never log it in clear.
-    detail: message.replace(EMAIL_IN_TEXT, "[email]"),
+    detail: redactEmails(message),
   };
 }
 
