@@ -167,6 +167,22 @@ describe("POST /api/subscriptions/plan-change/accept", () => {
     });
   });
 
+  it("answers 409 organization_required when the user has no organization", async () => {
+    mocks.env.SUBSCRIPTION_MODE = "organization";
+    mocks.requireAuth.mockResolvedValue({
+      user: { id: "user_1", email: "billing@example.com", role: "user" },
+      session: { activeOrganizationId: null },
+    });
+    mocks.readBody.mockResolvedValue({ targetTierId: "pro", targetBillingCadence: "monthly" });
+    const handler = (await import("../routes/api/subscriptions/plan-change/accept.post"))
+      .default as (event: unknown) => Promise<unknown>;
+
+    await expect(handler({})).rejects.toMatchObject({
+      statusCode: 409,
+      data: { code: "organization_required" },
+    });
+  });
+
   it("refuses a Current Subscription with an unsupported Billing cadence with 409", async () => {
     mocks.ensurePaymentProvider.mockResolvedValue({
       createSubscription: vi.fn(),

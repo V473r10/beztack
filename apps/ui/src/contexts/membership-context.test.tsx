@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/api-client";
 import type { MembershipContextValue } from "./membership-context";
 
 const mocks = vi.hoisted(() => ({
@@ -246,6 +247,36 @@ describe("MembershipProvider", () => {
     expect(mocks.toastSuccess).toHaveBeenCalledWith("Admin tier override cleared.");
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["subscriptions"],
+    });
+  });
+
+  describe("checkout errors", () => {
+    function onError(index: number) {
+      renderMembershipProvider();
+      return (mocks.mutationOptions[index] as { onError: (error: Error) => void }).onError;
+    }
+
+    it("shows the server's reason when checkout fails", () => {
+      onError(0)(new ApiError("This plan is not available yet", { statusCode: 409 }));
+
+      expect(mocks.toastError).toHaveBeenCalledWith("This plan is not available yet");
+    });
+
+    it("keeps quiet when the user is only being asked to create an organization", () => {
+      onError(0)(
+        new ApiError("Create an organization first", {
+          statusCode: 409,
+          data: { code: "organization_required" },
+        }),
+      );
+      onError(1)(
+        new ApiError("Create an organization first", {
+          statusCode: 409,
+          data: { code: "organization_required" },
+        }),
+      );
+
+      expect(mocks.toastError).not.toHaveBeenCalled();
     });
   });
 

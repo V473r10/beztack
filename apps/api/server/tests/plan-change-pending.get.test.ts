@@ -112,6 +112,19 @@ describe("GET /api/subscriptions/plan-change/pending", () => {
     expect(mocks.findPendingPlanChangeForMembershipTarget).not.toHaveBeenCalled();
   });
 
+  it("answers 409 organization_required when the user has no organization", async () => {
+    mocks.requireAuth.mockResolvedValue({
+      user: { id: "user_owner", email: "user_owner@example.com", role: "user" },
+      session: { activeOrganizationId: null },
+    });
+
+    await expect(handler({})).rejects.toMatchObject({
+      statusCode: 409,
+      data: { code: "organization_required" },
+    });
+    expect(mocks.findPendingPlanChangeForMembershipTarget).not.toHaveBeenCalled();
+  });
+
   it("answers null when nothing is pending", async () => {
     signIn("user_owner");
     mocks.findPendingPlanChangeForMembershipTarget.mockResolvedValue(null);

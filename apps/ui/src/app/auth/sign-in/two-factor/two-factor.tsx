@@ -1,5 +1,6 @@
 import { Key, Loader2, Shield } from "lucide-react";
 import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ const TwoFactor = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [verificationMethod, setVerificationMethod] = useState<"totp" | "backup">("totp");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const location = useLocation();
 
   const totpContainerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +61,7 @@ const TwoFactor = () => {
 
     setIsLoading(true);
     setFormError(null);
-    const error = await submitTotp(totpCode, location.search, { t, navigate });
+    const error = await submitTotp(totpCode, location.search, { t, navigate, queryClient });
     setIsLoading(false);
     if (error) {
       setFormError(error);
@@ -81,7 +83,7 @@ const TwoFactor = () => {
     }
 
     setIsLoading(true);
-    const error = await submitBackupCode(backupCode, location.search, { t, navigate });
+    const error = await submitBackupCode(backupCode, location.search, { t, navigate, queryClient });
     setIsLoading(false);
     if (error) {
       setFormError(error);

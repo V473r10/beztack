@@ -152,6 +152,10 @@ _Avoid_: App admin, org owner (owner is one Organization role, not the only admi
 The organization a signed-in user is currently acting in, chosen per session. Organization-scoped actions apply to the Active organization only if the user is a member of it.
 _Avoid_: current org, selected tenant
 
+**Personal organization**:
+The organization a user receives when they sign up, which they own, so they can subscribe and invite members without creating an organization first.
+_Avoid_: default organization, workspace, private organization
+
 **Invitation**:
 An offer for a person, addressed by email, to join an organization with a given Organization role. An Invitation is pending until it is accepted, rejected, canceled or it expires; accepting it creates the membership.
 _Avoid_: invite link, join request
