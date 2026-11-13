@@ -15,7 +15,8 @@ const createSchema = z.object({
   displayName: z.string().min(1),
   description: z.string().nullable().optional(),
   canonicalTierId: z.string().default("custom"),
-  price: z.number().positive(),
+  // Integer minor units of `currency` (900 = US$ 9.00, ADR 0007).
+  price: z.number().int().positive(),
   // Omitted -> the project DEFAULT_CURRENCY (no built-in regional default).
   currency: z.string().min(1).optional(),
   interval: z.string().default("month"),
