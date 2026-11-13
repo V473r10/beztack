@@ -43,11 +43,19 @@ type SnapshotRow = {
   };
 };
 
-/** Old-convention plans: [id, provider, currency, price as stored before]. */
+/**
+ * Old-convention plans: [id, provider, currency, price as stored before].
+ * A Polar id of the seed's pattern (polar_<tier>_<month|year>) was written in cents; any other
+ * Polar id (a UUID from admin create, import or sync) was written in major units.
+ */
 const OLD_PLANS = [
   ["polar_free_month", "polar", "USD", "0"],
   ["polar_basic_month", "polar", "USD", "900"],
   ["polar_pro_year", "polar", "USD", "29000"],
+  ["00000000-0000-4000-8000-0000000000a1", "polar", "USD", "9.99"], // admin-created, dollars
+  ["00000000-0000-4000-8000-0000000000a2", "polar", "USD", "9"], // imported, whole dollars
+  ["00000000-0000-4000-8000-0000000000a3", "polar", "JPY", "5000"], // JPY has no minor unit
+  ["00000000-0000-4000-8000-0000000000a4", "polar", "USD", "1.005"], // half away from zero
   ["mp_basic_uyu", "mercadopago", "UYU", "4500"],
   ["mp_basic_jpy", "mercadopago", "JPY", "5000"],
   ["mp_basic_kwd", "mercadopago", "KWD", "12.5"],
@@ -56,10 +64,14 @@ const OLD_PLANS = [
   ["stripe_basic_usd", "stripe", "USD", "2900"],
 ] as const;
 
-/** Old-convention snapshots: [id, status, provider, currency, amount as stored before]. */
+/**
+ * Old-convention snapshots: [id, status, provider, currency, amount as stored before, plan id].
+ * The plan id defaults to `<provider>_basic_month`, the seed's own pattern.
+ */
 const OLD_SNAPSHOTS = [
   ["ppc_polar_failed", "failed", "polar", "USD", 900],
   ["ppc_polar_activated", "activated", "polar", "USD", 2900],
+  ["ppc_polar_admin_plan", "pending", "polar", "USD", 9.99, "00000000-0000-4000-8000-0000000000a1"],
   ["ppc_mp_uyu_pending", "pending", "mercadopago", "UYU", 4500],
   ["ppc_mp_jpy_failed", "failed", "mercadopago", "JPY", 5000],
   ["ppc_mp_kwd_canceled", "canceled", "mercadopago", "KWD", 12.5],
@@ -152,9 +164,11 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
       INSERT INTO subscription (id, provider, status)
       SELECT 'sub_' || n, 'polar', 'active' FROM generate_series(1, ${OLD_SNAPSHOTS.length}) AS n
     `);
-    for (const [index, [id, status, provider, currency, amount]] of OLD_SNAPSHOTS.entries()) {
+    for (const [index, snapshotRow] of OLD_SNAPSHOTS.entries()) {
+      const [id, status, provider, currency, amount] = snapshotRow;
+      const planId = snapshotRow[5] ?? `${provider}_basic_month`;
       const snapshot = {
-        id: `${provider}_basic_month`,
+        id: planId,
         paymentProvider: provider,
         providerPlanId: null,
         canonicalTierId: "basic",
@@ -204,7 +218,7 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
     expect(rows[0]?.data_type).toBe("integer");
   });
 
-  it("keeps Polar prices (already cents) and scales Mercado Pago major units by the currency decimals", async () => {
+  it("keeps seeded Polar prices (already cents), scales Polar rows written in major units and Mercado Pago by the currency decimals", async () => {
     const prices = Object.fromEntries(
       (await readPlans())
         .filter((row) => !row.id.startsWith("all_"))
@@ -214,6 +228,10 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
       polar_free_month: 0,
       polar_basic_month: 900, // US$ 9.00 stays 900 cents
       polar_pro_year: 29_000,
+      "00000000-0000-4000-8000-0000000000a1": 999, // admin-created 9.99 is US$ 9.99, not US$ 0.10
+      "00000000-0000-4000-8000-0000000000a2": 900,
+      "00000000-0000-4000-8000-0000000000a3": 5000,
+      "00000000-0000-4000-8000-0000000000a4": 101, // 100.5 rounds half away from zero
       mp_basic_uyu: 450_000, // UYU 4500.00 -> 450000 centésimos
       mp_basic_jpy: 5000, // JPY has no minor unit: unchanged
       mp_basic_kwd: 12_500, // KWD 12.500 -> 12500 fils
@@ -261,6 +279,7 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
     expect(amounts).toEqual({
       ppc_polar_failed: 900,
       ppc_polar_activated: 2900,
+      ppc_polar_admin_plan: 999,
       ppc_mp_uyu_pending: 450_000,
       ppc_mp_jpy_failed: 5000,
       ppc_mp_kwd_canceled: 12_500,
@@ -328,6 +347,14 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration refuses data it cannot conv
     return rows[0]?.data_type;
   }
 
+  /** The migration rejects and leaves the old shape and the old prices untouched. */
+  async function expectMigrationToRollBack(): Promise<void> {
+    const before = await dbModule.db.execute(sql`SELECT id, price FROM plan ORDER BY id`);
+    await expect(migrate(dbModule.db, { migrationsFolder: MIGRATIONS_FOLDER })).rejects.toThrow();
+    expect(await priceColumnType()).toBe("numeric");
+    expect(await dbModule.db.execute(sql`SELECT id, price FROM plan ORDER BY id`)).toEqual(before);
+  }
+
   beforeAll(async () => {
     const url = TEST_DATABASE_URL as string;
     assertThrowawayDatabase(url);
@@ -352,10 +379,28 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration refuses data it cannot conv
     await dbModule?.db.$client.end();
   });
 
+  it("never silently truncates: a seeded Polar price with decimals stops the migration", async () => {
+    await insertPlan("polar_basic_month", "polar", "USD", "900.5");
+    await expectMigrationToRollBack();
+  });
+
+  it("never silently truncates: a price of a provider we cannot convert, with decimals, stops the migration", async () => {
+    await insertPlan("stripe_basic_usd", "stripe", "USD", "9.99");
+    await expectMigrationToRollBack();
+  });
+
+  it("stops when a converted price does not fit in a 32-bit integer", async () => {
+    await insertPlan("00000000-0000-4000-8000-0000000000b1", "polar", "USD", "99999999.99");
+    await expectMigrationToRollBack();
+  });
+
+  it("stops on a Polar plan written in major units whose currency is unknown", async () => {
+    await insertPlan("00000000-0000-4000-8000-0000000000b2", "polar", "ZZZ", "9.99");
+    await expectMigrationToRollBack();
+  });
+
   it("stops on a Mercado Pago plan in a currency that is not an ISO 4217 code in use", async () => {
     await insertPlan("mp_withdrawn", "mercadopago", "SLL", "4500");
-    await expect(migrate(dbModule.db, { migrationsFolder: MIGRATIONS_FOLDER })).rejects.toThrow();
-    // Nothing changed: the whole migration rolled back.
-    expect(await priceColumnType()).toBe("numeric");
+    await expectMigrationToRollBack();
   });
 });

@@ -12,7 +12,7 @@ The module exports `currencyDecimals`, `minorToMajor`, `majorToMinor`, `formatMi
 
 A payment adapter is the only place that knows its provider's format, and it converts there, once, in both directions:
 
-- **Polar** already uses integer amounts in the currency's minor unit (cents for USD). The adapter passes amounts through with no conversion.
+- **Polar** already uses integer amounts in the currency's minor unit (cents for USD). The adapter passes amounts through with no conversion. Before this change the adapter converted dollars to cents, so a Polar plan row written by the admin create, import or Plan Sync holds major units (`9.99`), while a row written by the seed holds cents (`900`). Migration `0009` tells them apart by the id: `polar_<tier>_<month|year>` is the seed's pattern and stays as it is; any other Polar row is multiplied by 10^decimals (rounded half away from zero) before the cast to integer. The migration never truncates: a price that still has decimals after the conversion stops it.
 - **Mercado Pago** uses decimal major units (`9.99`). Its adapter calls `minorToMajor` when sending a price and `majorToMinor` when reading one, with an explicit rounding mode.
 - **Stripe** (no adapter yet) uses integer minor units, but its list of zero-decimal and special-case currencies does not fully match ISO 4217 (HUF, TWD, ISK and UGX are the known cases). A Stripe adapter must carry its own table of exceptions and translate at its boundary.
 
