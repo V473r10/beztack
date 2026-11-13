@@ -27,6 +27,7 @@ function statusOf(error: unknown): number | undefined {
  * Pago creates its payer inside the checkout and keeps its behavior.
  *
  * - Customer found, or creation hits a CONFLICT (it already exists): reuse.
+ * The lookup and the creation share the error mapping below, so a failing lookup is never a raw 500.
  * - Provider rejects the email (4xx): 422 `customer_email_rejected`.
  * - Provider unreachable or failing (network, 5xx): 502 `payment_provider_unavailable`.
  */
@@ -38,12 +39,12 @@ export async function ensureProviderCustomer(
     return;
   }
 
-  const existing = await provider.getCustomerByEmail(user.email);
-  if (existing) {
-    return;
-  }
-
   try {
+    const existing = await provider.getCustomerByEmail(user.email);
+    if (existing) {
+      return;
+    }
+
     await provider.createCustomer(
       user.email,
       { source: "beztack-checkout", userId: user.id },
@@ -62,7 +63,7 @@ export async function ensureProviderCustomer(
     );
     // biome-ignore lint/suspicious/noConsole: provider failure visible in server logs
     console.warn(
-      `[checkout] ${provider.provider} customer creation failed for user ${user.id} (status ${status ?? "none"}): ${detail}`,
+      `[checkout] ${provider.provider} customer lookup or creation failed for user ${user.id} (status ${status ?? "none"}): ${detail}`,
     );
 
     if (status !== undefined && status >= CLIENT_ERROR_MIN && status <= CLIENT_ERROR_MAX) {
