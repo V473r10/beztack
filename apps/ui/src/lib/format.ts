@@ -1,4 +1,4 @@
-import { formatMinorUnits, majorToMinor } from "@beztack/payments/money";
+import { currencyDecimals, formatMinorUnits, majorToMinor } from "@beztack/payments/money";
 import i18next from "i18next";
 import { env } from "@/env";
 
@@ -15,7 +15,19 @@ function projectLocale(): string {
 }
 
 function resolveCurrency(currency: string | null | undefined): string {
-  return currency || env.VITE_DEFAULT_CURRENCY;
+  return (currency || env.VITE_DEFAULT_CURRENCY).trim().toUpperCase();
+}
+
+const warnedCurrencies = new Set<string>();
+
+/** Logs a bad currency code once, so a list of rows with the same bad code does not flood the console. */
+function warnUnknownCurrencyOnce(currency: string): void {
+  if (warnedCurrencies.has(currency)) {
+    return;
+  }
+  warnedCurrencies.add(currency);
+  // biome-ignore lint/suspicious/noConsole: a price with an unknown currency is a data problem worth one line
+  console.warn(`Unknown currency code ${JSON.stringify(currency)}: showing the raw amount`);
 }
 
 type LanguageSource = { resolvedLanguage?: string; language?: string };
@@ -54,13 +66,24 @@ function activeLocale(): string {
  *
  * The language is the active i18n language unless `locale` says otherwise.
  * Currency precedence: the price's own `currency`, then the project default.
+ * The code is upper-cased first (`usd` is `USD`). A code that is not in the
+ * ISO 4217 table never throws, because a single bad row would blank the whole
+ * page: the number is shown next to the code (`900 XYZ`) and the problem is
+ * logged once.
  */
 export function formatPrice(
   amount: number,
   currency?: string | null,
   locale: string = activeLocale(),
 ): string {
-  return formatMinorUnits(amount, resolveCurrency(currency), locale);
+  const resolved = resolveCurrency(currency);
+  try {
+    currencyDecimals(resolved);
+  } catch {
+    warnUnknownCurrencyOnce(resolved);
+    return `${formatNumber(amount, undefined, locale)} ${resolved}`;
+  }
+  return formatMinorUnits(amount, resolved, locale);
 }
 
 /**
@@ -77,6 +100,12 @@ export function formatMercadoPagoAmount(
 ): string {
   const major = typeof amount === "string" ? Number.parseFloat(amount) : amount;
   const resolved = resolveCurrency(currency);
+  try {
+    currencyDecimals(resolved);
+  } catch {
+    warnUnknownCurrencyOnce(resolved);
+    return `${formatNumber(major, undefined, locale)} ${resolved}`;
+  }
   return formatPrice(
     majorToMinor(major, resolved, { rounding: "half-away-from-zero" }),
     resolved,
