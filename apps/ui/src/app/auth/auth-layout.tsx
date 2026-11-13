@@ -2,7 +2,9 @@ import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
 import { Toaster } from "sonner";
 import { LanguageSelector } from "@/components/language-selector";
+import { env } from "@/env";
 import { cn } from "@/lib/utils";
+import { DemoTryPanel } from "./demo-try-panel";
 
 type AuthLayoutProps = {
   className?: string;
@@ -10,16 +12,18 @@ type AuthLayoutProps = {
 
 const AuthLayout = ({ className }: AuthLayoutProps) => {
   const { t } = useTranslation();
+  const appName = env.VITE_APP_NAME;
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
+      {/* Brand panel. It holds no heading: each page owns its single h1. */}
       <div className="hidden w-1/2 flex-col justify-between bg-primary p-12 text-primary-foreground lg:flex">
         <div>
-          <h1 className="mb-4 font-bold text-4xl">{t("auth.signIn.title")}</h1>
-          <p className="text-primary-foreground/80">{t("common.workflowStreamline")}</p>
+          <p className="mb-4 font-bold text-4xl">{appName}</p>
+          <p className="text-primary-foreground">{t("auth.brand.tagline")}</p>
         </div>
-        <div className="text-primary-foreground/60 text-sm">
-          {t("common.footer", { year: new Date().getFullYear() })}
+        <DemoTryPanel variant="brand" />
+        <div className="text-primary-foreground text-sm">
+          {t("common.footer", { year: new Date().getFullYear(), appName })}
         </div>
       </div>
 
@@ -30,9 +34,12 @@ const AuthLayout = ({ className }: AuthLayoutProps) => {
         </div>
         <div className={cn("w-full max-w-md space-y-8", className)}>
           <div className="mb-8 text-center lg:hidden">
-            <h1 className="font-bold text-3xl">{t("common.yourLogo")}</h1>
+            <p className="font-bold text-3xl">{appName}</p>
           </div>
           <Outlet />
+          <div className="lg:hidden">
+            <DemoTryPanel variant="compact" />
+          </div>
         </div>
       </div>
       <Toaster />
