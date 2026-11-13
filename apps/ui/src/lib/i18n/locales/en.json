@@ -85,6 +85,7 @@
     "signUp": {
       "button": "Sign Up",
       "description": "Enter your details to create your account",
+      "demoEmailHint": "Use an email with a real domain (for example you@gmail.com). The payment sandbox rejects made-up domains like .test.",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in",
       "title": "Create an account"

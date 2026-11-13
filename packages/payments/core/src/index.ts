@@ -23,6 +23,7 @@ export type {
   BillingInterval,
   CheckoutResult,
   CreateCheckoutOptions,
+  CreateCustomerOptions,
   CreateProductOptions,
   CreateSubscriptionOptions,
   Customer,

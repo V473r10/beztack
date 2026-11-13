@@ -85,6 +85,7 @@
     "signUp": {
       "button": "Registrarse",
       "description": "Ingresa tus datos para crear tu cuenta",
+      "demoEmailHint": "Usá un email con un dominio real (por ejemplo vos@gmail.com). El sandbox de pagos rechaza dominios inventados como .test.",
       "hasAccount": "¿Ya tienes una cuenta?",
       "signIn": "Iniciar sesión",
       "title": "Crear una cuenta"

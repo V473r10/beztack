@@ -330,4 +330,31 @@ describe("createPolarAdapter", () => {
       expect(payload).toMatchObject({ type, provider: "polar" });
     });
   });
+
+  describe("customers", () => {
+    it("links the customer to our user id and name when creating it", async () => {
+      client.customers.create.mockResolvedValueOnce({
+        id: CUSTOMER_UUID,
+        email: "user@example.com",
+        name: "User",
+        external_id: "user_1",
+        metadata: { source: "beztack-checkout" },
+      });
+
+      const customer = await createAdapter().createCustomer(
+        "user@example.com",
+        { source: "beztack-checkout" },
+        { externalId: "user_1", name: "User" },
+      );
+
+      expect(client.customers.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "user@example.com",
+          name: "User",
+          external_id: "user_1",
+        }),
+      );
+      expect(customer).toMatchObject({ id: CUSTOMER_UUID, externalId: "user_1" });
+    });
+  });
 });

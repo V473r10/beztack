@@ -6,6 +6,7 @@ import type {
   BillingInterval,
   CheckoutResult,
   CreateCheckoutOptions,
+  CreateCustomerOptions,
   CreateProductOptions,
   CreateSubscriptionOptions,
   Customer,
@@ -427,9 +428,15 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentProviderA
       return subscriptions;
     },
 
-    async createCustomer(email: string, metadata?: Record<string, unknown>): Promise<Customer> {
+    async createCustomer(
+      email: string,
+      metadata?: Record<string, unknown>,
+      options?: CreateCustomerOptions,
+    ): Promise<Customer> {
       const customer = await client.customers.create({
         email,
+        name: options?.name,
+        external_id: options?.externalId,
         metadata: metadata as Record<string, string | number | boolean> | undefined,
       });
 
