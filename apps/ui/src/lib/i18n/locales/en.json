@@ -58,6 +58,23 @@
     }
   },
   "auth": {
+    "brand": {
+      "tagline": "Billing for your SaaS: subscriptions, plan changes with proration and organizations, ready to ship."
+    },
+    "demo": {
+      "title": "How to try the demo",
+      "intro": "Create an account with a real email, pick a plan and pay with a sandbox test card. Nothing is charged for real.",
+      "cardsTitle": "Test cards ({{provider}} sandbox)",
+      "cardDetails": "Expires {{expiry}} · CVC {{cvc}}",
+      "cardholder": "name {{holder}}",
+      "anyFutureDate": "any future date",
+      "anyCvc": "any 3 digits",
+      "dataReset": "Demo data is deleted every day.",
+      "outcome": {
+        "approved": "Approved payment",
+        "declined": "Declined payment"
+      }
+    },
     "signIn": {
       "backToSignIn": "Back to Sign In",
       "button": "Sign In",
@@ -77,14 +94,16 @@
         "backupCodeDescription": "Enter one of your backup codes",
         "backupCodeWarning": "Each backup code can only be used once",
         "verifyCode": "Verify Code",
-        "verifyBackupCode": "Verify Backup Code"
+        "verifyBackupCode": "Verify Backup Code",
+        "pageTitle": "Two-factor authentication - {{appName}}"
       },
       "form": {
         "email": "Email",
         "password": "Password",
         "button": "Sign In",
         "forgotPassword": "Forgot password?"
-      }
+      },
+      "pageTitle": "Sign in - {{appName}}"
     },
     "signUp": {
       "button": "Sign Up",
@@ -92,7 +111,8 @@
       "demoEmailHint": "Use an email with a real domain (for example you@gmail.com). The payment sandbox rejects made-up domains like .test.",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in",
-      "title": "Create an account"
+      "title": "Create an account",
+      "pageTitle": "Create an account - {{appName}}"
     }
   },
   "pricing": {
@@ -328,7 +348,7 @@
     "checkoutFailed": "Failed to start checkout process"
   },
   "common": {
-    "footer": "© {{year}} Your Company. All rights reserved.",
+    "footer": "© {{year}} {{appName}}. All rights reserved.",
     "more": "More",
     "workflowStreamline": "Streamline your workflow with our powerful platform.",
     "yourLogo": "Your Logo",
@@ -553,7 +573,10 @@
         "number": "At least one number",
         "special": "At least one special character",
         "uppercase": "At least one uppercase letter"
-      }
+      },
+      "ruleMet": "Requirement met",
+      "rulePending": "Requirement not met yet",
+      "ruleUnmet": "Requirement not met"
     }
   },
   "header": {

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { env } from "@/env";
 import {
   InputOTP,
   InputOTPGroup,
@@ -105,6 +106,7 @@ const TwoFactor = () => {
 
   return (
     <div className="flex flex-col items-center justify-center space-y-6 pt-8">
+      <title>{t("auth.signIn.twoFactor.pageTitle", { appName: env.VITE_APP_NAME })}</title>
       <div className="text-center">
         <h1 className="font-semibold text-2xl tracking-tight">
           {t("auth.signIn.twoFactor.title")}
