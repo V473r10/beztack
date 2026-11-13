@@ -43,6 +43,7 @@ describe("PasswordChecklist", () => {
 
   it("marks everything as met for a valid password", () => {
     const html = renderToStaticMarkup(
+      // ggignore: test fixture, not a credential
       <PasswordChecklist id="rules" password="Abcdef1!" showUnmet />,
     );
 

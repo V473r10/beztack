@@ -34,8 +34,8 @@ describe("all rules met", () => {
   const allMet = (password: string) => evaluatePasswordRules(password).every((rule) => rule.met);
 
   it("needs every rule", () => {
-    expect(allMet("Abcdef1!")).toBe(true);
-    expect(allMet("Abcdef1")).toBe(false);
-    expect(allMet("abcdef1!")).toBe(false);
+    expect(allMet("Abcdef1!")).toBe(true); // ggignore: test fixture, not a credential
+    expect(allMet("Abcdef1")).toBe(false); // ggignore: test fixture, not a credential
+    expect(allMet("abcdef1!")).toBe(false); // ggignore: test fixture, not a credential
   });
 });
