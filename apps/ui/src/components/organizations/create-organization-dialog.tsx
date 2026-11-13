@@ -38,7 +38,7 @@ export function CreateOrganizationDialog({
   const createOrganization = useCreateOrganization();
 
   const form = useAppForm({
-    validators: { onChange: createOrganizationSchema },
+    validators: { onChange: createOrganizationSchema(t) },
     defaultValues: {
       name: "",
       slug: "",

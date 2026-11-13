@@ -1,27 +1,32 @@
 import { toast } from "sonner";
+import { translate } from "@/lib/i18n/translate";
+import { formatDate } from "@/lib/format";
 
 export function copyBackupCodesToClipboard(codes: string[]): void {
   const codesText = codes.join("\n");
   navigator.clipboard
     .writeText(codesText)
     .then(() => {
-      toast.success("Backup codes copied to clipboard!");
+      toast.success(translate("account.settings.twoFactor.copyBackupCodesSuccess"));
     })
     .catch(() => {
-      toast.error("Failed to copy backup codes.");
+      toast.error(translate("account.settings.twoFactor.copyBackupCodesError"));
     });
 }
 
 export function downloadBackupCodes(codes: string[]): void {
   const codesText = [
-    "Two-Factor Authentication Backup Codes",
+    translate("account.settings.twoFactor.backupFile.title"),
     "==========================================",
     "",
-    "Save these backup codes in a secure location. Each code can only be used once.",
+    translate("account.settings.twoFactor.backupFile.warning"),
     "",
     ...codes,
     "",
-    `Generated on: ${new Date().toLocaleString()}`,
+    translate("account.settings.twoFactor.backupFile.generatedOn", {
+      date: formatDate(new Date(), { dateStyle: "medium", timeStyle: "short" }),
+    }),
+    ,
   ].join("\n");
 
   const blob = new Blob([codesText], { type: "text/plain" });
@@ -34,5 +39,5 @@ export function downloadBackupCodes(codes: string[]): void {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  toast.success("Backup codes downloaded!");
+  toast.success(translate("account.settings.twoFactor.backupFile.downloaded"));
 }

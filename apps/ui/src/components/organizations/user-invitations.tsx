@@ -1,7 +1,9 @@
 // import { Badge } from "@/components/ui/badge";
 
+import type { TFunction } from "i18next";
 import { Building2, Check, Clock, Crown, Mail, Shield, User, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,12 +22,8 @@ import {
   useRejectInvitation,
   useUserInvitations,
 } from "@/hooks/use-organizations";
-import {
-  type OrganizationInvitation,
-  type OrganizationRole,
-  ROLE_LABELS,
-} from "@/lib/organization-types";
-import { formatDate as formatProjectDate } from "@/lib/format";
+import { type OrganizationInvitation, roleLabel } from "@/lib/organization-types";
+import { formatDate as formatProjectDate, formatRelativeFromNow } from "@/lib/format";
 
 // Time calculation constants
 const MILLISECONDS_PER_SECOND = 1000;
@@ -48,27 +46,25 @@ const formatDate = (date: Date | string) => {
   });
 };
 
-const formatRelativeTime = (date: Date | string) => {
+const formatRelativeTime = (date: Date | string, t: TFunction) => {
   const now = new Date();
   const targetDate = new Date(date);
   const diffInHours = Math.floor((targetDate.getTime() - now.getTime()) / MILLISECONDS_PER_HOUR);
 
   if (diffInHours < 1) {
-    return "Expires soon";
-  }
-  if (diffInHours < HOURS_PER_DAY) {
-    return `Expires in ${diffInHours} hour${diffInHours === 1 ? "" : "s"}`;
+    return t("organizations.invitations.expiresSoon");
   }
 
   const diffInDays = Math.floor(diffInHours / HOURS_PER_DAY);
   if (diffInDays < DAYS_PER_WEEK) {
-    return `Expires in ${diffInDays} day${diffInDays === 1 ? "" : "s"}`;
+    return t("organizations.invitations.expiresIn", { when: formatRelativeFromNow(date) });
   }
 
-  return `Expires ${formatDate(date)}`;
+  return t("organizations.invitations.expiresOn", { date: formatDate(date) });
 };
 
 export function UserInvitations({ className }: UserInvitationsProps) {
+  const { t } = useTranslation();
   const [invitationToAccept, setInvitationToAccept] = useState<OrganizationInvitation | null>(null);
   const [invitationToReject, setInvitationToReject] = useState<OrganizationInvitation | null>(null);
 
@@ -165,9 +161,11 @@ export function UserInvitations({ className }: UserInvitationsProps) {
       <Card className={className}>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Mail className="mb-4 h-12 w-12 text-muted-foreground" />
-          <CardTitle className="mb-2 text-lg">No Pending Invitations</CardTitle>
+          <CardTitle className="mb-2 text-lg">
+            {t("organizations.invitations.userEmptyTitle")}
+          </CardTitle>
           <CardDescription className="text-center">
-            You don't have any pending organization invitations at the moment.
+            {t("organizations.invitations.userEmptyDescription")}
           </CardDescription>
         </CardContent>
       </Card>
@@ -180,9 +178,11 @@ export function UserInvitations({ className }: UserInvitationsProps) {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Mail className="h-5 w-5" />
-            <span>Organization Invitations ({pendingInvitations.length})</span>
+            <span>
+              {t("organizations.invitations.userTitle", { count: pendingInvitations.length })}
+            </span>
           </CardTitle>
-          <CardDescription>You have been invited to join these organizations.</CardDescription>
+          <CardDescription>{t("organizations.invitations.userDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -195,7 +195,10 @@ export function UserInvitations({ className }: UserInvitationsProps) {
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
                     {invitation.organization?.logo ? (
                       <img
-                        alt={invitation.organization.name || "Organization"}
+                        alt={
+                          invitation.organization.name ||
+                          t("organizations.invitations.organization")
+                        }
                         className="h-12 w-12 rounded-lg object-cover"
                         height={48}
                         src={invitation.organization.logo}
@@ -208,21 +211,20 @@ export function UserInvitations({ className }: UserInvitationsProps) {
                   <div className="space-y-2">
                     <div>
                       <h3 className="font-semibold text-lg">
-                        {invitation.organization?.name || "Organization"}
+                        {invitation.organization?.name ||
+                          t("organizations.invitations.organization")}
                       </h3>
                       <p className="text-muted-foreground text-sm">
-                        You've been invited to join as{" "}
+                        {t("organizations.invitations.invitedAs")}{" "}
                         <span className="inline-flex items-center space-x-1">
                           {getRoleIcon(invitation.role)}
-                          <span className="font-medium">
-                            {ROLE_LABELS[invitation.role as OrganizationRole] || invitation.role}
-                          </span>
+                          <span className="font-medium">{roleLabel(t, invitation.role)}</span>
                         </span>
                       </p>
                     </div>
                     <div className="flex items-center space-x-2 text-muted-foreground text-sm">
                       <Clock className="h-4 w-4" />
-                      <span>{formatRelativeTime(invitation.expiresAt)}</span>
+                      <span>{formatRelativeTime(invitation.expiresAt, t)}</span>
                     </div>
                   </div>
                 </div>
@@ -233,14 +235,14 @@ export function UserInvitations({ className }: UserInvitationsProps) {
                     variant="outline"
                   >
                     <X className="mr-2 h-4 w-4" />
-                    Decline
+                    {t("organizations.invitations.decline")}
                   </Button>
                   <Button
                     disabled={acceptInvitation.isPending || rejectInvitation.isPending}
                     onClick={() => handleAcceptInvitation(invitation)}
                   >
                     <Check className="mr-2 h-4 w-4" />
-                    Accept
+                    {t("organizations.invitations.accept")}
                   </Button>
                 </div>
               </div>
@@ -256,19 +258,21 @@ export function UserInvitations({ className }: UserInvitationsProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Accept Invitation</AlertDialogTitle>
+            <AlertDialogTitle>{t("organizations.invitations.acceptTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to join "{invitationToAccept?.organization?.name}" as{" "}
-              {ROLE_LABELS[invitationToAccept?.role as OrganizationRole]}?
+              {t("organizations.invitations.acceptConfirm", {
+                organization: invitationToAccept?.organization?.name,
+                role: roleLabel(t, invitationToAccept?.role ?? ""),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={acceptInvitation.isPending}
               onClick={confirmAcceptInvitation}
             >
-              Accept Invitation
+              {t("organizations.invitations.acceptTitle")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -281,21 +285,21 @@ export function UserInvitations({ className }: UserInvitationsProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Decline Invitation</AlertDialogTitle>
+            <AlertDialogTitle>{t("organizations.invitations.declineTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to decline the invitation to join "
-              {invitationToReject?.organization?.name}"? You can ask to be invited again later if
-              you change your mind.
+              {t("organizations.invitations.declineConfirm", {
+                organization: invitationToReject?.organization?.name,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep invitation</AlertDialogCancel>
+            <AlertDialogCancel>{t("organizations.invitations.keepInvitation")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={rejectInvitation.isPending}
               onClick={confirmRejectInvitation}
             >
-              Decline Invitation
+              {t("organizations.invitations.declineTitle")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

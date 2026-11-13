@@ -23,7 +23,7 @@ function PanelBody() {
           {DEMO_TEST_CARDS[provider].map((card) => (
             <li className="rounded-md border p-3" key={card.id}>
               <p className="font-medium">
-                {card.brand} ·{" "}
+                {card.brand} {"·"}{" "}
                 {card.outcome === "approved"
                   ? t("auth.demo.outcome.approved")
                   : t("auth.demo.outcome.declined")}

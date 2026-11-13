@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader2, LogOut, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import {
   AlertDialog,
@@ -25,6 +26,7 @@ import {
 } from "@/hooks/use-organizations";
 import {
   type Organization,
+  roleLabel,
   type UpdateOrganizationData,
   updateOrganizationSchema,
 } from "@/lib/organization-types";
@@ -42,6 +44,7 @@ export function OrganizationSettings({
   canEdit = false,
   canDelete = false,
 }: OrganizationSettingsProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
 
@@ -50,7 +53,7 @@ export function OrganizationSettings({
   const leaveOrganization = useLeaveOrganization();
 
   const form = useAppForm({
-    validators: { onChange: updateOrganizationSchema },
+    validators: { onChange: updateOrganizationSchema(t) },
     defaultValues: {
       name: organization.name,
       logo: organization.logo || "",
@@ -109,10 +112,10 @@ export function OrganizationSettings({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Organization Details</CardTitle>
-            <CardDescription>Update your organization's basic information.</CardDescription>
+            <CardTitle>{t("organizations.settings.detailsTitle")}</CardTitle>
+            <CardDescription>{t("organizations.settings.detailsDescription")}</CardDescription>
           </div>
-          <Badge variant={isOwner ? "default" : "secondary"}>{userRole}</Badge>
+          <Badge variant={isOwner ? "default" : "secondary"}>{roleLabel(t, userRole)}</Badge>
         </CardHeader>
         <CardContent>
           {isEditing ? (
@@ -121,7 +124,7 @@ export function OrganizationSettings({
                 <form.AppField name="name">
                   {(field) => (
                     <field.FormItem>
-                      <field.FormLabel>Organization Name</field.FormLabel>
+                      <field.FormLabel>{t("organizations.createDialog.name")}</field.FormLabel>
                       <field.FormControl>
                         <Input
                           disabled={updateOrganization.isPending}
@@ -138,7 +141,7 @@ export function OrganizationSettings({
                 <form.AppField name="logo">
                   {(field) => (
                     <field.FormItem>
-                      <field.FormLabel>Logo URL</field.FormLabel>
+                      <field.FormLabel>{t("organizations.settings.logoUrl")}</field.FormLabel>
                       <field.FormControl>
                         <Input
                           disabled={updateOrganization.isPending}
@@ -161,13 +164,13 @@ export function OrganizationSettings({
                     type="button"
                     variant="outline"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button disabled={updateOrganization.isPending} type="submit">
                     {updateOrganization.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    Save Changes
+                    {t("organizations.settings.save")}
                   </Button>
                 </div>
               </form>
@@ -176,18 +179,18 @@ export function OrganizationSettings({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="font-medium text-sm">Name</div>
+                  <div className="font-medium text-sm">{t("organizations.settings.name")}</div>
                   <p className="text-muted-foreground text-sm">{organization.name}</p>
                 </div>
                 <div>
-                  <div className="font-medium text-sm">Slug</div>
+                  <div className="font-medium text-sm">{t("organizations.settings.slug")}</div>
                   <p className="text-muted-foreground text-sm">@{organization.slug}</p>
                 </div>
               </div>
 
               {organization.logo && (
                 <div>
-                  <div className="font-medium text-sm">Logo</div>
+                  <div className="font-medium text-sm">{t("organizations.settings.logo")}</div>
                   <div className="mt-2">
                     <img
                       alt={organization.name}
@@ -202,7 +205,9 @@ export function OrganizationSettings({
 
               {canEdit && (
                 <div className="flex justify-end">
-                  <Button onClick={() => setIsEditing(true)}>Edit Organization</Button>
+                  <Button onClick={() => setIsEditing(true)}>
+                    {t("organizations.settings.edit")}
+                  </Button>
                 </div>
               )}
             </div>
@@ -213,39 +218,40 @@ export function OrganizationSettings({
       {/* Danger Zone */}
       <Card className="border-destructive">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
-          <CardDescription>Irreversible and destructive actions.</CardDescription>
+          <CardTitle className="text-destructive">
+            {t("organizations.settings.dangerTitle")}
+          </CardTitle>
+          <CardDescription>{t("organizations.settings.dangerDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Leave Organization */}
           {!isOwner && (
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-1">
-                <h4 className="font-medium text-sm">Leave Organization</h4>
+                <h4 className="font-medium text-sm">{t("organizations.settings.leaveTitle")}</h4>
                 <p className="text-muted-foreground text-sm">
-                  You will lose access to all organization resources.
+                  {t("organizations.settings.leaveDescription")}
                 </p>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button size="sm" variant="outline">
                     <LogOut className="mr-2 h-4 w-4" />
-                    Leave
+                    {t("organizations.settings.leaveButton")}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center space-x-2">
                       <AlertTriangle className="h-5 w-5 text-destructive" />
-                      <span>Leave Organization</span>
+                      <span>{t("organizations.settings.leaveTitle")}</span>
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to leave "{organization.name}"? You will lose access to
-                      all organization resources and will need to be invited again to rejoin.
+                      {t("organizations.settings.leaveConfirm", { name: organization.name })}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       disabled={leaveOrganization.isPending}
@@ -254,7 +260,7 @@ export function OrganizationSettings({
                       {leaveOrganization.isPending && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
-                      Leave Organization
+                      {t("organizations.settings.leaveTitle")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -266,33 +272,32 @@ export function OrganizationSettings({
           {canDelete && isOwner && (
             <div className="flex items-center justify-between rounded-lg border border-destructive bg-destructive/5 p-4">
               <div className="space-y-1">
-                <h4 className="font-medium text-destructive text-sm">Delete Organization</h4>
+                <h4 className="font-medium text-destructive text-sm">
+                  {t("organizations.settings.deleteTitle")}
+                </h4>
                 <p className="text-muted-foreground text-sm">
-                  Permanently delete this organization and all its data. This action cannot be
-                  undone.
+                  {t("organizations.settings.deleteDescription")}
                 </p>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button size="sm" variant="destructive">
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
+                    {t("organizations.settings.deleteButton")}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center space-x-2">
                       <AlertTriangle className="h-5 w-5 text-destructive" />
-                      <span>Delete Organization</span>
+                      <span>{t("organizations.settings.deleteTitle")}</span>
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the "
-                      {organization.name}" organization and remove all of its members, teams, and
-                      data.
+                      {t("organizations.settings.deleteConfirm", { name: organization.name })}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       disabled={deleteOrganization.isPending}
@@ -301,7 +306,7 @@ export function OrganizationSettings({
                       {deleteOrganization.isPending && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
-                      Delete Organization
+                      {t("organizations.settings.deleteTitle")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

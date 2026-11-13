@@ -58,7 +58,7 @@ export function TotpVerification({
       </div>
       {!hasConfirmedBackupCodes && (
         <p className="mt-2 text-red-600 text-xs dark:text-red-400">
-          ⚠️ Please save your backup codes before completing setup
+          {`⚠️ ${t("account.settings.twoFactor.saveCodesFirst")}`}
         </p>
       )}
     </div>

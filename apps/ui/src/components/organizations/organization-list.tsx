@@ -1,4 +1,5 @@
 import { Building2, Crown, Settings, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,7 @@ export function OrganizationList({
   onManageOrganization,
   showActions = true,
 }: OrganizationListProps) {
+  const { t } = useTranslation();
   const { data: organizations = [], isLoading } = useOrganizations();
   const { data: activeOrganization } = useActiveOrganization();
   const setActiveOrganization = useSetActiveOrganization();
@@ -67,9 +69,9 @@ export function OrganizationList({
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Building2 className="mb-4 h-12 w-12 text-muted-foreground" />
-          <CardTitle className="mb-2 text-lg">No Organizations Found</CardTitle>
+          <CardTitle className="mb-2 text-lg">{t("organizations.list.emptyTitle")}</CardTitle>
           <CardDescription className="mb-4 text-center">
-            You're not a member of any organizations yet. Create one or ask to be invited.
+            {t("organizations.list.emptyDescription")}
           </CardDescription>
         </CardContent>
       </Card>
@@ -104,7 +106,7 @@ export function OrganizationList({
               {activeOrganization?.id === organization.id && (
                 <Badge className="flex items-center space-x-1" variant="secondary">
                   <Crown className="h-3 w-3" />
-                  <span>Active</span>
+                  <span>{t("organizations.list.active")}</span>
                 </Badge>
               )}
             </div>
@@ -115,7 +117,7 @@ export function OrganizationList({
                 <div className="flex items-center space-x-4 text-muted-foreground text-sm">
                   <div className="flex items-center space-x-1">
                     <Users className="h-4 w-4" />
-                    <span>Members</span>
+                    <span>{t("organizations.list.members")}</span>
                   </div>
                 </div>
                 <div className="flex space-x-2">
@@ -126,7 +128,9 @@ export function OrganizationList({
                       size="sm"
                       variant="outline"
                     >
-                      {setActiveOrganization.isPending ? "Switching..." : "Switch To"}
+                      {setActiveOrganization.isPending
+                        ? t("organizations.list.switching")
+                        : t("organizations.list.switchTo")}
                     </Button>
                   )}
                   {onManageOrganization && (

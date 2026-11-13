@@ -53,7 +53,15 @@
         },
         "alreadyEnabled": "Your account is protected with two-factor authentication. Your backup codes have been safely stored and encrypted.",
         "backupCodesWarning": "Save these backup codes now! You won't be able to see them again. Each code can only be used once.",
-        "scanQrCode": "Scan this QR code with your authenticator app, then enter the verification code below."
+        "scanQrCode": "Scan this QR code with your authenticator app, then enter the verification code below.",
+        "enabledTitle": "Two-Factor Authentication Enabled",
+        "saveCodesFirst": "Please save your backup codes before completing setup",
+        "backupFile": {
+          "title": "Two-Factor Authentication Backup Codes",
+          "warning": "Save these backup codes in a secure location. Each code can only be used once.",
+          "generatedOn": "Generated on: {{date}}",
+          "downloaded": "Backup codes downloaded!"
+        }
       }
     }
   },
@@ -757,6 +765,194 @@
       "logo": "Logo URL (Optional)",
       "submit": "Create Organization",
       "cancel": "Cancel"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "roleDescriptions": {
+      "owner": "Full access to organization settings and members",
+      "admin": "Can manage members and organization settings",
+      "member": "Basic access to organization resources"
+    },
+    "validation": {
+      "nameLength": "Organization name must be at least 2 characters",
+      "slugMin": "Slug must be at least 2 characters",
+      "slugMax": "Slug must be less than 50 characters",
+      "slugFormat": "Slug can only contain lowercase letters, numbers, and hyphens",
+      "email": "Please enter a valid email address",
+      "role": "Please select a role",
+      "teamNameLength": "Team name must be at least 2 characters"
+    },
+    "errors": {
+      "fetchOrganizations": "Failed to fetch organizations",
+      "fetchMembers": "Failed to fetch organization members",
+      "fetchInvitations": "Failed to fetch organization invitations",
+      "fetchTeams": "Failed to fetch teams",
+      "fetchTeamMembers": "Failed to fetch team members",
+      "createOrganization": "Failed to create organization",
+      "updateOrganization": "Failed to update organization",
+      "deleteOrganization": "Failed to delete organization",
+      "changeActive": "Failed to change active organization",
+      "invite": "Failed to send invitation",
+      "updateRole": "Failed to update member role",
+      "removeMember": "Failed to remove member",
+      "leave": "Failed to leave organization",
+      "acceptInvitation": "Failed to accept invitation",
+      "rejectInvitation": "Failed to reject invitation",
+      "cancelInvitation": "Failed to cancel invitation",
+      "createTeam": "Failed to create team",
+      "deleteTeam": "Failed to delete team",
+      "addTeamMember": "Failed to add team member",
+      "removeTeamMember": "Failed to remove team member"
+    },
+    "toasts": {
+      "created": "Organization \"{{name}}\" created successfully",
+      "updated": "Organization updated successfully",
+      "deleted": "Organization deleted successfully",
+      "activeChanged": "Active organization changed",
+      "invited": "Invitation sent to {{email}}",
+      "roleUpdated": "Member role updated successfully",
+      "memberRemoved": "Member removed successfully",
+      "left": "Left organization successfully",
+      "invitationAccepted": "Invitation accepted successfully",
+      "invitationRejected": "Invitation rejected",
+      "invitationCancelled": "Invitation cancelled",
+      "teamCreated": "Team \"{{name}}\" created successfully",
+      "teamDeleted": "Team deleted successfully",
+      "teamMemberAdded": "Member added to team successfully",
+      "teamMemberRemoved": "Member removed from team successfully"
+    },
+    "page": {
+      "title": "Organizations",
+      "description": "Manage your organizations and team members.",
+      "tabs": {
+        "overview": "Overview",
+        "members": "Members",
+        "invitations": "Invitations",
+        "settings": "Settings"
+      },
+      "activeTitle": "Active Organization",
+      "activeDescription": "Currently working in \"{{name}}\"",
+      "memberCount_one": "{{count}} member",
+      "memberCount_other": "{{count}} members",
+      "yourRole": "Your role: <strong>{{role}}</strong>",
+      "allTitle": "All Organizations",
+      "allDescription": "Switch between organizations or manage their settings.",
+      "selectTitle": "Select an Organization",
+      "selectDescription": "Choose an organization to view its details and manage members.",
+      "emptyTitle": "Get Started with Organizations",
+      "emptyDescription": "Organizations help you collaborate with your team. Create your first organization or wait to be invited to join an existing one.",
+      "emptyCreate": "Create Your First Organization"
+    },
+    "list": {
+      "emptyTitle": "No Organizations Found",
+      "emptyDescription": "You're not a member of any organizations yet. Create one or ask to be invited.",
+      "active": "Active",
+      "members": "Members",
+      "switching": "Switching...",
+      "switchTo": "Switch To"
+    },
+    "switcher": {
+      "select": "Select organization",
+      "search": "Search organizations...",
+      "empty": "No organizations found.",
+      "heading": "Organizations",
+      "manage": "Manage Organizations"
+    },
+    "members": {
+      "title": "Members ({{count}})",
+      "description": "Manage organization members and their roles.",
+      "invite": "Invite Members",
+      "columns": {
+        "member": "Member",
+        "role": "Role",
+        "joined": "Joined",
+        "actions": "Actions"
+      },
+      "invitedUser": "Invited User",
+      "editRole": "Edit Role",
+      "makeRole": "Make {{role}}",
+      "remove": "Remove Member",
+      "removeConfirm": "Are you sure you want to remove {{member}} from this organization? They will lose access to all organization resources.",
+      "updateRoleTitle": "Update Member Role",
+      "updateRoleConfirm": "Are you sure you want to change {{member}}'s role from {{from}} to {{to}}?",
+      "updateRole": "Update Role"
+    },
+    "settings": {
+      "detailsTitle": "Organization Details",
+      "detailsDescription": "Update your organization's basic information.",
+      "logoUrl": "Logo URL",
+      "save": "Save Changes",
+      "name": "Name",
+      "slug": "Slug",
+      "logo": "Logo",
+      "edit": "Edit Organization",
+      "dangerTitle": "Danger Zone",
+      "dangerDescription": "Irreversible and destructive actions.",
+      "leaveTitle": "Leave Organization",
+      "leaveDescription": "You will lose access to all organization resources.",
+      "leaveButton": "Leave",
+      "leaveConfirm": "Are you sure you want to leave \"{{name}}\"? You will lose access to all organization resources and will need to be invited again to rejoin.",
+      "deleteTitle": "Delete Organization",
+      "deleteDescription": "Permanently delete this organization and all its data. This action cannot be undone.",
+      "deleteButton": "Delete",
+      "deleteConfirm": "This action cannot be undone. This will permanently delete the \"{{name}}\" organization and remove all of its members, teams, and data."
+    },
+    "invite": {
+      "title": "Invite Member",
+      "description": "Send an invitation to join this organization. They will receive an email with instructions.",
+      "email": "Email Address",
+      "emailHelp": "Enter the email address of the person you want to invite.",
+      "role": "Role",
+      "rolePlaceholder": "Select a role",
+      "team": "Team (Optional)",
+      "teamPlaceholder": "Select a team (optional)",
+      "teamHelp": "Optionally add the member to a specific team.",
+      "send": "Send Invitation"
+    },
+    "invitations": {
+      "lessThanHour": "Less than an hour ago",
+      "expiresSoon": "Expires soon",
+      "expiresIn": "Expires {{when}}",
+      "expiresOn": "Expires {{date}}",
+      "status": {
+        "expired": "Expired",
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "pendingTitle": "Pending Invitations ({{count}})",
+      "pendingDescription": "Manage outstanding invitations to join this organization.",
+      "emptyTitle": "No pending invitations",
+      "emptyDescription": "All invitations have been resolved or none have been sent yet.",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "sent": "Sent",
+        "expires": "Expires",
+        "actions": "Actions"
+      },
+      "cancelTitle": "Cancel Invitation",
+      "cancelConfirm": "Are you sure you want to cancel the invitation for {{email}}? They will not be able to join using this invitation link.",
+      "keep": "No, keep it",
+      "cancelAction": "Yes, cancel invitation",
+      "userEmptyTitle": "No Pending Invitations",
+      "userEmptyDescription": "You don't have any pending organization invitations at the moment.",
+      "userTitle": "Organization Invitations ({{count}})",
+      "userDescription": "You have been invited to join these organizations.",
+      "organization": "Organization",
+      "invitedAs": "You've been invited to join as",
+      "decline": "Decline",
+      "accept": "Accept",
+      "acceptTitle": "Accept Invitation",
+      "acceptConfirm": "Are you sure you want to join \"{{organization}}\" as {{role}}?",
+      "declineTitle": "Decline Invitation",
+      "declineConfirm": "Are you sure you want to decline the invitation to join \"{{organization}}\"? You can ask to be invited again later if you change your mind.",
+      "keepInvitation": "Keep invitation"
     }
   },
   "commandPalette": {

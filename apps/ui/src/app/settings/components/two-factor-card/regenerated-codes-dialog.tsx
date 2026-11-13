@@ -50,7 +50,7 @@ export function RegeneratedCodesDialog({
         </DialogHeader>
         <div className="rounded-md border bg-amber-50 p-4 dark:bg-amber-900/30">
           <h3 className="mb-2 font-semibold text-amber-700 dark:text-amber-400">
-            ⚠️ {t("account.settings.twoFactor.backupCodes")}
+            {`⚠️ ${t("account.settings.twoFactor.backupCodes")}`}
           </h3>
           <p className="mb-3 font-medium text-amber-600 text-sm dark:text-amber-500">
             {t("account.settings.twoFactor.regeneratedCodes.warning")}
@@ -67,10 +67,10 @@ export function RegeneratedCodesDialog({
           </div>
           <div className="mb-4 flex gap-2">
             <Button onClick={onCopy} size="sm" variant="outline">
-              📋 {t("account.settings.twoFactor.regeneratedCodes.copy")}
+              {`📋 ${t("account.settings.twoFactor.regeneratedCodes.copy")}`}
             </Button>
             <Button onClick={onDownload} size="sm" variant="outline">
-              💾 {t("account.settings.twoFactor.regeneratedCodes.download")}
+              {`💾 ${t("account.settings.twoFactor.regeneratedCodes.download")}`}
             </Button>
           </div>
           <div className="flex items-center space-x-2">
