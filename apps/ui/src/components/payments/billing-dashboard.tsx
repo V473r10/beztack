@@ -311,7 +311,7 @@ export function BillingDashboard({
               <div className="text-muted-foreground text-sm">No active subscription</div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button disabled={isLoading} onClick={handleManageBilling} variant="outline">
                 <CreditCard className="mr-2 h-4 w-4" />
                 Manage Billing

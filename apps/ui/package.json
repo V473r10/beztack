@@ -9,6 +9,7 @@
     "start": "vite preview",
     "test": "vp test run",
     "test:watch": "vp test",
+    "test:e2e": "playwright test",
     "lint": "vp lint",
     "fmt": "vp fmt",
     "check": "vp check",
@@ -88,6 +89,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

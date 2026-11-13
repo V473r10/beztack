@@ -102,6 +102,63 @@ jobs:
             --reporter=github-actions \
             --reporter=default
 
+  # Mobile layout audit (BZ-117): Playwright drives the built UI at 360 and 393 px
+  # with the API mocked in the browser (apps/ui/e2e/mock-api.ts), so it needs no
+  # database or payment provider. NOT BLOCKING YET: `continue-on-error` keeps a
+  # failure from failing the workflow. Remove it once the job has proven stable and
+  # add it to the required checks. Screenshots of failing pages are uploaded.
+  e2e-mobile:
+    name: Mobile layout (Playwright)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Resolve Playwright version
+        id: playwright
+        working-directory: apps/ui
+        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browser
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      # Cache miss: download Chromium and the system libraries it needs.
+      - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: apps/ui
+        run: pnpm exec playwright install --with-deps chromium
+      # Cache hit: the browser is restored, but the system libraries live outside the cache.
+      - name: Install Chromium system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: apps/ui
+        run: pnpm exec playwright install-deps chromium
+      - name: Run mobile layout audit
+        working-directory: apps/ui
+        run: |
+          start=$(date +%s)
+          status=0
+          pnpm exec playwright test || status=$?
+          echo "Playwright run: $(( $(date +%s) - start ))s (build, server start and tests)" >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-mobile-failures
+          path: |
+            apps/ui/test-results
+            apps/ui/playwright-report
+          retention-days: 7
+
   test-packages:
     name: Test packages
     runs-on: ubuntu-latest
