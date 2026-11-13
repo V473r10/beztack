@@ -763,5 +763,17 @@
       "submit": "Create Organization",
       "cancel": "Cancel"
     }
+  },
+  "commandPalette": {
+    "title": "Command palette",
+    "description": "Search for a page and jump to it.",
+    "placeholder": "Search pages...",
+    "empty": "No pages found.",
+    "groups": {
+      "main": "Pages",
+      "organization": "Organization",
+      "platform": "Platform",
+      "secondary": "More"
+    }
   }
 }

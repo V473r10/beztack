@@ -763,5 +763,17 @@
       "submit": "Crear organización",
       "cancel": "Cancelar"
     }
+  },
+  "commandPalette": {
+    "title": "Paleta de comandos",
+    "description": "Buscá una página y andá directo a ella.",
+    "placeholder": "Buscar páginas...",
+    "empty": "No se encontraron páginas.",
+    "groups": {
+      "main": "Páginas",
+      "organization": "Organización",
+      "platform": "Plataforma",
+      "secondary": "Más"
+    }
   }
 }
