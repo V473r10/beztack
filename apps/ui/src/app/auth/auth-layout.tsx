@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
+import { Toaster } from "sonner";
 import { LanguageToggle } from "@/components/language-toggle";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ const AuthLayout = ({ className }: AuthLayoutProps) => {
           <Outlet />
         </div>
       </div>
+      <Toaster />
     </div>
   );
 };

@@ -2,13 +2,12 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router";
-import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppForm } from "@/components/ui/tanstack-form";
-import { authClient } from "@/lib/auth-client";
-import { getPostSignInTarget } from "@/lib/auth-redirect";
+import { AuthFormError } from "../../auth-form-error";
+import { submitSignUp } from "../../auth-submissions";
 
 const MIN_PASSWORD_LENGTH = 8;
 const UPPERCASE_REGEX = /[A-Z]/;
@@ -47,6 +46,7 @@ const getFormSchema = (t: (key: string) => string) =>
 export function SignUpForm() {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const FormSchema = getFormSchema(t);
   const navigate = useNavigate();
@@ -62,22 +62,10 @@ export function SignUpForm() {
     },
     onSubmit: async ({ value }) => {
       setIsLoading(true);
-      try {
-        await authClient.signUp.email({
-          name: value.name,
-          email: value.email,
-          password: value.password,
-        });
-        toast.success(t("notifications.account.created"));
-        // Back to where sign-up started (e.g. an invitation), or home.
-        navigate(getPostSignInTarget(location.search));
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : t("notifications.account.creationFailed");
-        toast.error(errorMessage);
-      } finally {
-        setIsLoading(false);
-      }
+      setFormError(null);
+      const error = await submitSignUp(value, location.search, { t, navigate });
+      setFormError(error);
+      setIsLoading(false);
     },
   });
 
@@ -208,6 +196,8 @@ export function SignUpForm() {
             </field.FormItem>
           )}
         </form.AppField>
+
+        <AuthFormError message={formError} />
 
         <Button className="w-full" disabled={isLoading} type="submit">
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

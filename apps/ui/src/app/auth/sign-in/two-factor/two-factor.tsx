@@ -11,36 +11,24 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { authClient } from "@/lib/auth-client";
-import { getPostSignInTarget, withNext } from "@/lib/auth-redirect";
+import { withNext } from "@/lib/auth-redirect";
+import { AuthFormError } from "../../auth-form-error";
+import { submitBackupCode, submitTotp } from "../../auth-submissions";
 
 const BACKUP_CODE_LENGTH = 11;
 const FOCUS_DELAY_MS = 50;
 const PRIMARY_FORMAT = /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/;
 const TOTP_CODE_LENGTH = 6;
 
-type AuthError = {
-  error: {
-    message?: string;
-  };
-};
-
-const extractAuthErrorMessage = (result: unknown): string => {
-  if (typeof result === "object" && result !== null && "error" in result) {
-    return (result as AuthError).error.message || "An unknown authentication error occurred.";
-  }
-  return "An unknown authentication error occurred.";
-};
-
 const TwoFactor = () => {
   const { t } = useTranslation();
   const [totpCode, setTotpCode] = useState("");
   const [backupCode, setBackupCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [verificationMethod, setVerificationMethod] = useState<"totp" | "backup">("totp");
   const navigate = useNavigate();
   const location = useLocation();
-  const postSignInTarget = getPostSignInTarget(location.search);
 
   const totpContainerRef = useRef<HTMLDivElement>(null);
   const backupContainerRef = useRef<HTMLDivElement>(null);
@@ -65,78 +53,40 @@ const TwoFactor = () => {
     }, FOCUS_DELAY_MS);
   };
 
-  const handleTotpSubmit = (e: React.FormEvent) => {
+  const handleTotpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     setIsLoading(true);
-
-    authClient.twoFactor.verifyTotp(
-      { code: totpCode },
-      {
-        onSuccess() {
-          setIsLoading(false);
-          toast.success(t("notifications.auth.signIn2FASuccess"));
-          navigate(postSignInTarget);
-        },
-        onError(res) {
-          setIsLoading(false);
-          const errorDetail = extractAuthErrorMessage(res);
-          toast.error(errorDetail || t("notifications.twoFactor.errors.invalidTotpCode"));
-          clearAndFocusTotpInput();
-        },
-      },
-    );
+    setFormError(null);
+    const error = await submitTotp(totpCode, location.search, { t, navigate });
+    setIsLoading(false);
+    if (error) {
+      setFormError(error);
+      clearAndFocusTotpInput();
+    }
   };
 
-  const handleBackupCodeSubmit = (e: React.FormEvent) => {
+  const handleBackupCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
+    setFormError(null);
     if (backupCode.length !== BACKUP_CODE_LENGTH || !isValidBackupCode(backupCode)) {
-      toast.error(t("notifications.twoFactor.errors.invalidBackupFormat"));
+      const message = t("notifications.twoFactor.errors.invalidBackupFormat");
+      toast.error(message);
+      setFormError(message);
       clearAndFocusBackupInput();
       return;
     }
 
     setIsLoading(true);
-
-    // Try with dash format first (original format from API)
-    authClient.twoFactor.verifyBackupCode(
-      { code: backupCode },
-      {
-        onSuccess() {
-          setIsLoading(false);
-          toast.success("Signed in successfully with backup code!");
-          navigate(postSignInTarget);
-        },
-        onError() {
-          // If dash format fails, try without dash
-          const codeWithoutDash = backupCode.replace("-", "");
-
-          authClient.twoFactor.verifyBackupCode(
-            { code: codeWithoutDash },
-            {
-              onSuccess() {
-                setIsLoading(false);
-                toast.success(t("notifications.auth.signInBackupSuccess"));
-                navigate(postSignInTarget);
-              },
-              onError(res) {
-                setIsLoading(false);
-                const errorDetail = extractAuthErrorMessage(res);
-                toast.error(
-                  t("notifications.twoFactor.errors.verificationFailed", {
-                    message: errorDetail,
-                  }),
-                );
-                clearAndFocusBackupInput();
-              },
-            },
-          );
-        },
-      },
-    );
+    const error = await submitBackupCode(backupCode, location.search, { t, navigate });
+    setIsLoading(false);
+    if (error) {
+      setFormError(error);
+      clearAndFocusBackupInput();
+    }
   };
 
   const isValidBackupCode = (value: string) => {
@@ -162,7 +112,10 @@ const TwoFactor = () => {
 
       <Tabs
         className="w-full max-w-md"
-        onValueChange={(value) => setVerificationMethod(value as "totp" | "backup")}
+        onValueChange={(value) => {
+          setVerificationMethod(value as "totp" | "backup");
+          setFormError(null);
+        }}
         value={verificationMethod}
       >
         <TabsList className="grid w-full grid-cols-2">
@@ -279,6 +232,8 @@ const TwoFactor = () => {
           </form>
         </TabsContent>
       </Tabs>
+
+      <AuthFormError message={formError} />
 
       <Button
         className="h-auto p-0 text-xs"
