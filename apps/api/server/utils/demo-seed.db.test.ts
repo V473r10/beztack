@@ -368,4 +368,39 @@ describe.skipIf(!TEST_DATABASE_URL)("Demo seed on Postgres", () => {
       status: "canceled",
     });
   });
+  it("shows the Pro Subscription to the Demo Organization owner, the way /billing lists it", async () => {
+    const { db } = modules.dbModule;
+    // Discovery only lists Subscriptions whose period has not ended.
+    await modules.seedModule.seedDemoData(db, { ...OPTIONS, now: new Date() });
+
+    const [{ withDemoSubscriptions }, { createDbDemoSubscriptionStore }] = await Promise.all([
+      import("./demo-payment-provider"),
+      import("./demo-subscription-store"),
+    ]);
+    const { discoverSubscriptionsFromDb } = await import("./subscription-discovery");
+    const { createOrganizationAccess } =
+      await import("../domain/organization-access/implementation");
+    const adapter = withDemoSubscriptions(
+      {
+        provider: "polar",
+        getSubscription: vi.fn().mockRejectedValue(new Error("the real provider was asked")),
+      } as unknown as PaymentProviderAdapter,
+      { demoMode: true, store: () => createDbDemoSubscriptionStore(db) },
+    );
+
+    const listed = await discoverSubscriptionsFromDb("demo_customer", adapter);
+
+    expect(listed.map((row) => row.id)).toEqual(["demo_sub_pro"]);
+    expect(listed[0]).toMatchObject({ status: "active", metadata: { tier: "pro" } });
+    const owns = createOrganizationAccess().ownsSubscription(
+      {
+        id: "demo_customer",
+        email: "customer@demo.beztack.test",
+        activeOrganizationId: "demo_org",
+      },
+      listed[0],
+      "organization",
+    );
+    expect(owns).toBe(true);
+  });
 });

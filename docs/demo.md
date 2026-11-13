@@ -6,7 +6,7 @@ Beztack can run as a public demo where a visitor sees the billing depth without 
 
 1. **Sign up** with any email and password. Email verification is off, and no email is sent in demo mode.
 2. **Pick a plan** on the pricing page and check out in the **Mercado Pago sandbox** or the **Polar sandbox** (one provider per deployment, chosen by `PAYMENT_PROVIDER`).
-3. **Change plan** with the proration preview: upgrades charge the difference, downgrades and cadence changes become a Pending Plan change that activates at renewal.
+3. **Change plan** with the proration preview: upgrades charge the difference, downgrades and cadence changes become a Pending Plan change that activates at renewal. The proration shows for a visitor who paid in the sandbox, not for the seeded customer or the admin (see "What is fake, what is sandbox").
 4. **Open the admin pages** as the demo App admin: the Failed plan changes page lists one failed downgrade that the seed creates, with its Retry action.
 
 A banner pinned to the bottom of every page reads "Demo: sandbox payments, data resets daily".
@@ -22,6 +22,8 @@ One deployment runs one payment provider. To show both, deploy twice (for exampl
 
 Demo admin credentials: the seed creates the App admin from `DEMO_ADMIN_EMAIL` and `DEMO_ADMIN_PASSWORD`. The admin pages include user management, so publish the password only if that is acceptable on a wiped-daily database. Otherwise keep it private and show the admin pages in a recorded walkthrough.
 
+The seeded customer (`customer@demo.beztack.test`, owner of the Demo Organization) signs in with `DEMO_CUSTOMER_PASSWORD`. It exists to record the walkthrough of `/billing` and the failed plan change, so keep it private too. The seed refuses to run without it and never prints it.
+
 ## Configuration
 
 Names only. Values live in the hosting provider's secret store, never in the repo or in logs. Everything below comes from the `apps/api` env schema in `packages/env/src/api.ts`, plus `VITE_DEMO_MODE` from `packages/env/src/ui.ts`.
@@ -32,6 +34,7 @@ Names only. Values live in the hosting provider's secret store, never in the rep
 | `VITE_DEMO_MODE`                      | ui    | `true` shows the banner. Set it together with `DEMO_MODE`.                                                      |
 | `DEMO_ADMIN_EMAIL`                    | api   | Email of the seeded App admin. Must also be listed in `APP_ADMIN_EMAILS`.                                       |
 | `DEMO_ADMIN_PASSWORD`                 | api   | Password of the seeded App admin. Read only by the seed.                                                        |
+| `DEMO_CUSTOMER_PASSWORD`              | api   | Password of the seeded customer. Read only by the seed. Never committed or logged.                              |
 | `DEMO_MERCADO_PAGO_SANDBOX_CONFIRMED` | api   | Mercado Pago only: you confirm the access token is a test credential.                                           |
 | `APP_ADMIN_EMAILS`                    | api   | Must contain `DEMO_ADMIN_EMAIL`.                                                                                |
 | `DATABASE_URL`                        | api   | A database used only by the demo.                                                                               |
@@ -64,8 +67,9 @@ The check is `assertDemoSandboxPayments` in `packages/env/src/demo.ts`. Its erro
 
 - the plan catalog for the active provider (Polar: 3 paid tiers × monthly/yearly plus Free; Mercado Pago: monthly only);
 - an App admin (`DEMO_ADMIN_EMAIL`, role `sudo`, with a password hash from better-auth; the password is never stored in clear or printed);
-- a customer user (`customer@demo.beztack.test`; `.test` is reserved, so mail to it cannot reach a real inbox) and the **Demo Organization**, on Pro monthly;
-- one **failed Pending Plan change** (a downgrade to Basic that failed activation 5 times), so the Failed plan changes page has a row.
+- a customer user (`customer@demo.beztack.test`; `.test` is reserved, so mail to it cannot reach a real inbox) with a password from `DEMO_CUSTOMER_PASSWORD`, and the **Demo Organization**, on Pro monthly;
+- the organization's Pro Subscription, id `demo_sub_pro`, pointing at the Pro monthly plan row, so its amount and currency are the catalog's, in minor units (Polar: `2900` USD is US$ 29.00; Mercado Pago: the project currency);
+- one **failed Pending Plan change** (a downgrade to Basic that failed activation 5 times, effective at the renewal it failed on), so the Failed plan changes page has a row.
 
 `pnpm demo:reset` empties every table and seeds again. Both check the provider products first (see "Provider products"). It refuses to run unless `DEMO_MODE=true`. Both scripts run in `apps/api` and read `apps/api/.env`; in CI or on a server pass the same variables through the environment.
 
@@ -73,7 +77,20 @@ For Polar, the seed copies the six product ids from the env into the plan rows. 
 
 Reset schedule: once a day, matching the banner. Nothing schedules it yet. Options, in order of effort: a GitHub Actions `schedule` workflow that runs `pnpm demo:reset` with the demo `DATABASE_URL` as a repository secret, or a cron route on the API protected by `requireCronSecret`. A reset deletes local data only; customers and subscriptions created in the Polar or Mercado Pago sandbox stay there and can be cleaned from their sandbox dashboards.
 
-The retry button on the seeded failed change calls the real payment provider, which does not know the seeded subscription. In a live deploy the retry fails again and the row stays `failed` with a new reason. That still shows the page, the attempt counter and the audit fields. To make a retry succeed, the demo needs a real sandbox subscription behind the fixture (see "Open items").
+## What is fake, what is sandbox
+
+| Thing                                                                          | Real sandbox or fake                                                                                                                                                     |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Visitor sign-up, checkout, payment, webhooks, Subscriptions a visitor creates  | **Real sandbox** (Polar or Mercado Pago). No real money moves.                                                                                                           |
+| Plan change preview and proration for a visitor who paid                       | **Real sandbox**. Computed by Beztack from the visitor's real sandbox Subscription.                                                                                      |
+| The seeded Pro Subscription `demo_sub_pro` of the Demo Organization            | **Fake.** It exists only in the demo database; the provider has never heard of it.                                                                                       |
+| What `/billing` shows for the Demo Organization owner (Pro, amount, period)    | **Fake**, read from the `demo_sub_pro` row and the plan catalog.                                                                                                         |
+| Retry of the seeded failed plan change, and the cancellation of `demo_sub_pro` | **Fake.** The Beztack side is real (the Pending Plan change moves to `activated`, the Membership moves to Basic); the "provider" step is answered by the demo decorator. |
+| The admin's plan change                                                        | An Admin tier override (ADR 0004), never a provider call.                                                                                                                |
+
+The fake is a decorator over the real payment adapter (`withDemoSubscriptions` in `apps/api/server/utils/demo-payment-provider.ts`). For ids that start with `demo_sub_` it answers reading a Subscription, moving it to another product (this is how a Pending Plan change is activated, and how the amount changes), and canceling it, from the `subscription` row. Every other call, and every other id, goes to the real adapter. It cannot be switched on by accident: it is built only when `DEMO_MODE` is exactly `true`; with `DEMO_MODE` off `ensurePaymentProvider()` returns the real adapter itself and a `demo_sub_*` id is sent to the real provider like any other. A test covers both cases.
+
+The proration preview is not shown on the seeded Subscription: the seeded customer would need a real sandbox payment for that. To see the proration, sign up as a visitor, pay for a plan in the sandbox and change plan.
 
 ## Provider products
 
@@ -131,6 +148,6 @@ Add the `tier` key under the product's metadata; it is what ties a Polar product
 
 - Schedule the daily reset (workflow or cron route).
 - Rate limits and the Mercado Pago `live_mode` webhook guard.
-- A real sandbox subscription behind the seeded fixture, so Retry can succeed.
+- A real sandbox subscription behind the seeded fixture, to show proration for the seeded customer. Polar creates Subscriptions through the API only for free products, so it needs a checkout with a 100% discount; a spike first.
 - Re-run Plan sync automatically after a Mercado Pago reset.
 - A "how to try it" panel on the demo with the test cards and test buyers.
