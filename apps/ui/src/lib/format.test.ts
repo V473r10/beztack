@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "i18next";
-import { formatDate, formatMercadoPagoAmount, formatPrice, formatRelativeFromNow } from "./format";
+import {
+  formatDate,
+  formatMercadoPagoAmount,
+  formatPrice,
+  formatRelativeFromNow,
+  setFormatLanguageSource,
+} from "./format";
 
 vi.mock("@/env", () => ({
   env: {
@@ -76,10 +82,24 @@ describe("formatMercadoPagoAmount", () => {
 });
 
 describe("formatDate", () => {
-  it("formats in the project locale by default", () => {
+  it("formats in the project locale until the user has a language", () => {
+    setFormatLanguageSource({});
+
     expect(formatDate("2026-03-05T12:00:00Z", { dateStyle: "long", timeZone: "UTC" })).toBe(
       "5. März 2026",
     );
+
+    setFormatLanguageSource(undefined);
+  });
+
+  it("formats in the language the user chose", async () => {
+    await i18n.changeLanguage("es");
+
+    expect(formatDate("2026-03-05T12:00:00Z", { dateStyle: "long", timeZone: "UTC" })).toBe(
+      "5 de marzo de 2026",
+    );
+
+    await i18n.changeLanguage("en");
   });
 
   it("formats in an explicit locale", () => {

@@ -355,199 +355,55 @@
     "cancel": "Cancelar",
     "processing": "Procesando..."
   },
-  "dashboard": {
-    "acquisitionNeedsAttention": "La adquisición necesita atención",
-    "activeAccounts": "Cuentas Activas",
-    "chart": {
-      "days30": "30 días",
-      "days7": "7 días",
-      "days90": "90 días",
-      "desktop": "Escritorio",
-      "last30Days": "Últimos 30 días",
-      "last3Months": "Últimos 3 meses",
-      "last7Days": "Últimos 7 días",
-      "mobile": "Móvil",
-      "showingTotalVisitors": "Mostrando el total de visitantes de los últimos",
-      "title": "Gráfico de Área - Interactivo",
-      "visitors": "Visitantes"
-    },
-    "downThisPeriod": "Baja del 20% en este período",
-    "engagementExceedsTargets": "El compromiso supera los objetivos",
-    "growthRate": "Tasa de Crecimiento",
-    "meetsGrowthProjections": "Cumple con las proyecciones de crecimiento",
-    "newCustomers": "Nuevos Clientes",
-    "steadyPerformanceIncrease": "Aumento constante del rendimiento",
-    "strongUserRetention": "Fuerte retención de usuarios",
-    "totalRevenue": "Ingresos Totales",
-    "trendingUp": "Tendencia al alza este mes",
-    "visitorsLast6Months": "Visitantes de los últimos 6 meses"
-  },
-  "dataTable": {
-    "actions": {
-      "copyId": "Copiar ID de sección",
-      "copySuccess": "ID de sección copiado al portapapeles.",
-      "delete": "Eliminar",
-      "edit": "Editar",
-      "favorite": "Favorito",
-      "makeCopy": "Hacer una copia",
-      "open": "Abrir",
-      "openMenu": "Abrir menú",
-      "view": "Ver"
-    },
-    "chart": {
-      "desktop": "Escritorio",
-      "mobile": "Móvil",
-      "months": {
-        "april": "Abril",
-        "february": "Febrero",
-        "january": "Enero",
-        "june": "Junio",
-        "march": "Marzo",
-        "may": "Mayo"
-      }
-    },
-    "columns": "Columnas",
-    "deleteConfirmation": {
-      "cancel": "Cancelar",
-      "confirm": "Confirmar",
-      "description": "Esta acción no se puede deshacer. Esto eliminará permanentemente las secciones seleccionadas.",
-      "title": "¿Estás seguro?"
-    },
-    "deleteSelected": "Eliminar ({{count}})",
-    "done": "Hecho",
-    "dragReorder": "Arrastrar para reordenar",
-    "drawer": {
-      "buttons": {
-        "done": "Hecho",
-        "submit": "Enviar"
+  "home": {
+    "plan": {
+      "title": "Plan actual",
+      "status": {
+        "free": "Gratis",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "pending": "Pendiente",
+        "canceled": "Cancelado",
+        "paused": "Pausado",
+        "past_due": "Pago vencido",
+        "canceling": "Se cancela",
+        "adminOverride": "Definido por un admin"
       },
-      "chartDescription": "Mostrando el total de visitantes de los últimos 6 meses. Este es solo un texto aleatorio para probar el diseño. Se extiende por varias líneas y debería ajustarse.",
-      "description": "Un resumen de los detalles de la sección.",
-      "labels": {
-        "header": "Encabezado",
-        "limit": "Límite",
-        "reviewer": "Revisor",
-        "status": "Estado",
-        "target": "Objetivo",
-        "type": "Tipo"
-      },
-      "mrr": "Ingresos Mensuales Recurrentes",
-      "placeholders": {
-        "selectReviewer": "Selecciona un revisor",
-        "selectStatus": "Selecciona un estado",
-        "selectType": "Selecciona un tipo"
-      },
-      "tabs": {
-        "performance": "Rendimiento",
-        "view": "Ver"
-      },
-      "title": "Ver Detalles",
-      "titleWithHeader": "Ver detalles de {{header}}"
+      "price": "{{price}} / {{cadence}}",
+      "renews": "Se renueva el {{date}}",
+      "endsOn": "Termina el {{date}}",
+      "freeDescription": "Estás en el plan gratis. Elegí un plan pago cuando necesites más."
     },
-    "filterPlaceholder": "Filtrar secciones...",
-    "headers": {
-      "header": "Encabezado",
-      "limit": "Límite",
-      "reviewer": "Revisor",
-      "sectionType": "Tipo de Sección",
-      "status": "Estado",
-      "target": "Objetivo"
+    "pendingPlanChange": {
+      "title": "Cambio de plan programado",
+      "manage": "Gestionar en facturación"
     },
-    "inProgress": "En Progreso",
-    "noResults": "No hay resultados.",
-    "notStarted": "No Iniciado",
-    "pagination": {
-      "firstPage": "Ir a la primera página",
-      "go": "Ir",
-      "goToPage": "Ir a la página:",
-      "lastPage": "Ir a la última página",
-      "nextPage": "Ir a la página siguiente",
-      "of": "de",
-      "page": "Página",
-      "pageInfo": "Página {{page}} de {{total}}",
-      "previousPage": "Ir a la página anterior",
-      "rowsPerPage": "Filas por página",
-      "selectedRows": "{{count}} de {{total}} fila(s) seleccionada(s)."
+    "seats": {
+      "title": "Asientos",
+      "used_one": "{{count}} miembro",
+      "used_other": "{{count}} miembros",
+      "usedOfLimit": "{{used}} de {{limit}} asientos usados",
+      "usedUnlimited_one": "{{count}} miembro, asientos ilimitados",
+      "usedUnlimited_other": "{{count}} miembros, asientos ilimitados",
+      "overLimit": "Tenés {{used}} miembros pero tu plan incluye {{limit}}. Quitá miembros o cambiá de plan."
     },
-    "placeholders": {
-      "assignReviewer": "Asignar revisor",
-      "search": "Buscar..."
+    "members": {
+      "title": "Miembros de {{organization}}",
+      "viewAll": "Ver los {{count}} miembros"
     },
-    "reviewers": {
-      "eddie": "Eddie Lake",
-      "emily": "Emily Whalen",
-      "jamik": "Jamik Tashpulatov"
+    "nextSteps": {
+      "title": "Próximos pasos",
+      "description": "Qué podés hacer ahora con tu cuenta.",
+      "pay": "Elegir un plan",
+      "invite": "Invitar a tu equipo",
+      "changePlan": "Cambiar de plan",
+      "none": "Está todo listo. No hay nada por hacer ahora."
     },
-    "selectAll": "Seleccionar todo",
-    "selectRow": "Seleccionar fila",
-    "statuses": {
-      "done": "Hecho",
-      "inProgress": "En Progreso",
-      "notStarted": "No Iniciado"
-    },
-    "submit": "Enviar",
-    "tabs": {
-      "active": "Activo",
-      "all": "Todos",
-      "archived": "Archivado"
-    },
-    "toast": {
-      "error": "Error",
-      "reorder": {
-        "error": "¡Error!",
-        "saving": "Guardando...",
-        "success": "¡Hecho!"
-      },
-      "saving": "Guardando {{header}}",
-      "success": "Hecho"
-    },
-    "toolbar": {
-      "addSection": "Añadir Sección",
-      "customizeColumns": "Personalizar Columnas"
-    },
-    "trendingUpThisMonth": "Tendencia al alza este mes",
-    "types": {
-      "approach": "Enfoque Técnico",
-      "capabilities": "Capacidades",
-      "cover": "Portada",
-      "design": "Diseño",
-      "focus": "Documentos de Enfoque",
-      "narrative": "Narrativa",
-      "summary": "Resumen Ejecutivo",
-      "toc": "Tabla de Contenidos"
-    },
-    "views": {
-      "focusDocuments": "Documentos",
-      "keyPersonnel": "Personal clave",
-      "label": "Ver",
-      "outline": "Esquema",
-      "pastPerformance": "Rendimiento",
-      "placeholder": "Selecciona una vista"
-    },
-    "capabilities": "Capacidades",
-    "coverPage": "Portada",
-    "design": "Diseño",
-    "eddieLake": "Eddie Lake",
-    "emilyWhalen": "Emily Whalen",
-    "executiveSummary": "Resumen ejecutivo",
-    "focusDocuments": "Documentos clave",
-    "goToFirstPage": "Ir a la primera página",
-    "goToLastPage": "Ir a la última página",
-    "goToNextPage": "Ir a la página siguiente",
-    "goToPreviousPage": "Ir a la página anterior",
-    "header": "Encabezado",
-    "jamikTashpulatov": "Jamik Tashpulatov",
-    "limit": "Límite",
-    "narrative": "Narrativa",
-    "of": "de",
-    "reviewer": "Revisor",
-    "rowsPerPage": "Filas por página",
-    "showingTotalVisitors": "Mostrando el total de visitantes de los últimos 6 meses",
-    "status": "Estado",
-    "tableOfContents": "Tabla de contenidos",
-    "target": "Objetivo",
-    "technicalApproach": "Enfoque técnico",
-    "type": "Tipo"
+    "noOrganization": {
+      "title": "Creá tu primera organización",
+      "description": "Tu plan y tu equipo viven en una organización. Creá una para suscribirte, invitar miembros y ver tu cuenta acá.",
+      "create": "Crear organización"
+    }
   },
   "form": {
     "confirmPassword": {
@@ -708,7 +564,9 @@
       "step2": "Activa la autenticación de dos factores para agregar una capa adicional de seguridad a tu cuenta."
     },
     "homeTour": {
-      "step1": "En la página de configuración puedes gestionar tus configuraciones de autenticación de dos factores, información, etc."
+      "step1": "En la página de configuración puedes gestionar tus configuraciones de autenticación de dos factores, información, etc.",
+      "plan": "Esta tarjeta muestra tu plan actual y cuándo se renueva.",
+      "nextSteps": "Acá ves qué hacer ahora: elegir un plan, invitar a tu equipo o cambiar de plan."
     }
   },
   "invitation": {
