@@ -8,8 +8,8 @@
  * tier and cadence (`pnpm demo:check` runs only that) and abort before writing
  * when one does not.
  *
- * Needs the API env (apps/api/.env) with DEMO_MODE=true, DEMO_ADMIN_EMAIL and
- * DEMO_ADMIN_PASSWORD. Loading the env runs the sandbox-only check, so this
+ * Needs the API env (apps/api/.env) with DEMO_MODE=true, DEMO_ADMIN_EMAIL,
+ * DEMO_ADMIN_PASSWORD and DEMO_CUSTOMER_PASSWORD. Loading the env runs the sandbox-only check, so this
  * refuses to touch a database when payments are not sandbox. Secrets are never
  * printed.
  */
@@ -51,6 +51,9 @@ async function main(): Promise<void> {
   if (!(env.DEMO_ADMIN_EMAIL && env.DEMO_ADMIN_PASSWORD)) {
     fail("DEMO_ADMIN_EMAIL and DEMO_ADMIN_PASSWORD are required");
   }
+  if (!env.DEMO_CUSTOMER_PASSWORD) {
+    fail("DEMO_CUSTOMER_PASSWORD is required: the seeded customer signs in to show the proration");
+  }
   if (!parseAppAdminEmails(env.APP_ADMIN_EMAILS).includes(env.DEMO_ADMIN_EMAIL.toLowerCase())) {
     fail("DEMO_ADMIN_EMAIL must also be listed in APP_ADMIN_EMAILS, or the admin pages answer 403");
   }
@@ -69,6 +72,7 @@ async function main(): Promise<void> {
     currency: env.DEFAULT_CURRENCY,
     adminEmail: env.DEMO_ADMIN_EMAIL,
     adminPasswordHash: await hashPassword(env.DEMO_ADMIN_PASSWORD),
+    customerPasswordHash: await hashPassword(env.DEMO_CUSTOMER_PASSWORD),
     providerPlanIds: provider === "polar" ? polarProviderPlanIds() : undefined,
   });
   log(

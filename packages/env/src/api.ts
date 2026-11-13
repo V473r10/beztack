@@ -128,6 +128,8 @@ export const env = createEnv({
     // Read only by the demo seed script. The admin email must also be on APP_ADMIN_EMAILS.
     DEMO_ADMIN_EMAIL: z.string().default(""),
     DEMO_ADMIN_PASSWORD: z.string().default(""),
+    // Password of the seeded customer, read only by the demo seed script, to record the walkthrough.
+    DEMO_CUSTOMER_PASSWORD: z.string().default(""),
 
     // Node
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
