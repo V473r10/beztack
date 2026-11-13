@@ -14,11 +14,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMembership } from "@/contexts/membership-context";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
 import { type PlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
 import type { PricingTier } from "@/types/pricing";
 import { MembershipBadge } from "./membership-badge";
-import { formatCurrency, PricingCard } from "./pricing-card";
+import { PricingCard } from "./pricing-card";
 import { queryKeys } from "@/lib/query-keys";
 
 // Constants
@@ -30,12 +31,14 @@ type PlanChangeDisplay =
       unusedCredit: number;
       proratedAmount: number;
       fullAmount: number;
+      currency: string;
       daysRemaining: number;
     }
   | {
       direction: "downgrade";
       daysRemaining: number;
       newAmount: number;
+      currency: string;
     };
 
 /** Shapes the server's Plan change preview for display, without recomputing it. */
@@ -50,6 +53,7 @@ function buildPlanChangeDisplay(preview: PlanChangePreview): PlanChangeDisplay |
       direction: "downgrade",
       daysRemaining,
       newAmount: preview.firstPayment.fullAmount,
+      currency: preview.firstPayment.currency,
     };
   }
 
@@ -57,6 +61,7 @@ function buildPlanChangeDisplay(preview: PlanChangePreview): PlanChangeDisplay |
     daysRemaining,
     direction: "upgrade",
     fullAmount: preview.firstPayment.fullAmount,
+    currency: preview.firstPayment.currency,
     proratedAmount: preview.firstPayment.amount,
     unusedCredit: preview.firstPayment.credit,
   };
@@ -213,7 +218,7 @@ export function UpgradeDialog({
                       <span>
                         Credit from current plan:{" "}
                         <span className="font-medium text-green-600 dark:text-green-400">
-                          -{formatCurrency(planChangeDisplay.unusedCredit)}
+                          -{formatPrice(planChangeDisplay.unusedCredit, planChangeDisplay.currency)}
                         </span>
                       </span>
                       <ArrowRight className="h-3 w-3" />
@@ -222,13 +227,14 @@ export function UpgradeDialog({
                   </div>
                   <div className="text-right">
                     <div className="text-muted-foreground text-xs line-through">
-                      {formatCurrency(planChangeDisplay.fullAmount)}
+                      {formatPrice(planChangeDisplay.fullAmount, planChangeDisplay.currency)}
                     </div>
                     <div className="font-bold text-lg">
-                      {formatCurrency(planChangeDisplay.proratedAmount)}
+                      {formatPrice(planChangeDisplay.proratedAmount, planChangeDisplay.currency)}
                     </div>
                     <div className="text-muted-foreground text-xs">
-                      then {formatCurrency(planChangeDisplay.fullAmount)}/mo
+                      then {formatPrice(planChangeDisplay.fullAmount, planChangeDisplay.currency)}
+                      /mo
                     </div>
                   </div>
                 </div>
@@ -258,7 +264,7 @@ export function UpgradeDialog({
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-lg">
-                      {formatCurrency(planChangeDisplay.newAmount)}/mo
+                      {formatPrice(planChangeDisplay.newAmount, planChangeDisplay.currency)}/mo
                     </div>
                   </div>
                 </div>

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { CreditCard, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router";
-import { formatCurrency } from "@/components/payments/pricing-card";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { useMembership } from "@/contexts/membership-context";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { formatPrice } from "@/lib/format";
 import { type CheckoutSelection, readCheckoutSelection } from "@/lib/checkout-resume";
 import { queryKeys } from "@/lib/query-keys";
 import type { PricingTier } from "@/types/pricing";
@@ -77,7 +77,7 @@ export function CheckoutConfirmView({
         <div className="rounded-lg border bg-muted/30 p-4">
           <div className="font-semibold">{tier.name}</div>
           <div className="mt-1 text-muted-foreground text-sm">
-            {formatCurrency(price)} / {t(`billing.${selection.billingPeriod}`)}
+            {formatPrice(price, tier.currency)} / {t(`billing.${selection.billingPeriod}`)}
           </div>
         </div>
       </CardContent>

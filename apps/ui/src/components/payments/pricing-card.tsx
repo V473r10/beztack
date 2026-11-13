@@ -104,7 +104,7 @@ export function PricingCard({
 
   const savings =
     billingPeriod === "yearly" && monthlyPrice > 0
-      ? calculateYearlySavings(monthlyPrice, yearlyPrice)
+      ? calculateYearlySavings(monthlyPrice, yearlyPrice, tier.currency)
       : null;
 
   const handleSelect = () => {
@@ -224,7 +224,7 @@ export function PricingCard({
           <div className="space-y-1 pt-2">
             <div className="flex items-baseline gap-1">
               <span className="font-bold text-4xl tracking-tight">
-                {price === 0 ? "Free" : formatCurrency(price)}
+                {price === 0 ? "Free" : formatPrice(price, tier.currency)}
               </span>
               {price > 0 && (
                 <span className="font-medium text-muted-foreground text-sm">
@@ -350,7 +350,7 @@ export function PricingCard({
   );
 }
 
-const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
+const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number, currency?: string) => {
   const MONTHS_IN_YEAR = 12;
   const PERCENTAGE_MULTIPLIER = 100;
 
@@ -369,13 +369,6 @@ const calculateYearlySavings = (monthlyPrice: number, yearlyPrice: number) => {
 
   return {
     formattedPercentage: `${savingsPercentage.toFixed(1)}%`,
-    formattedAmount: formatCurrency(savingsAmount),
+    formattedAmount: formatPrice(savingsAmount, currency),
   };
 };
-
-/**
- * Format a price in the project locale. Without an explicit `currency` the
- * project default (`VITE_DEFAULT_CURRENCY`) applies.
- */
-export const formatCurrency = (amount: number, currency?: string | null): string =>
-  formatPrice(amount, currency);

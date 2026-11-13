@@ -20,10 +20,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { CustomerMeter, Order, Subscription } from "@/contexts/membership-context";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
 import { MembershipBadge, MembershipStatus } from "./membership-badge";
-import { formatCurrency } from "./pricing-card";
 import { UpgradeDialog } from "./upgrade-dialog";
 import { UsageMetrics } from "./usage-metrics";
 
@@ -225,7 +225,7 @@ function OrderHistory({ orders }: OrderHistoryProps) {
                 </div>
                 <div className="text-muted-foreground text-sm">
                   {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"} •{" "}
-                  {formatCurrency(order.totalAmount)}
+                  {formatPrice(order.totalAmount)}
                 </div>
               </div>
             </div>

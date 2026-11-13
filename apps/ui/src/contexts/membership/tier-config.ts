@@ -1,6 +1,5 @@
-import { minorToMajor } from "@beztack/payments/money";
 import type { MembershipTier, MembershipTierConfig } from "@/types/membership";
-import type { CatalogPlan, PaymentProvider, Product } from "./membership-types";
+import type { CatalogPlan, Product } from "./membership-types";
 
 const MONTHS_PER_YEAR = 12;
 
@@ -9,14 +8,6 @@ type DeepMutable<T> = {
 };
 
 type MutableTierConfig = DeepMutable<MembershipTierConfig>;
-
-/**
- * Prices arrive as integer minor units of their currency whatever the
- * provider (ADR 0007); display units come from the currency's decimals.
- */
-function toDisplayAmount(amount: number, currency: string): number {
-  return minorToMajor(amount, currency);
-}
 
 function createEmptyTierConfig(
   id: MembershipTier,
@@ -68,10 +59,11 @@ function applyCatalogPlanDetails(tierConfig: MutableTierConfig, plan: CatalogPla
 }
 
 function applyCatalogPlanBilling(tierConfig: MutableTierConfig, plan: CatalogPlan): void {
-  const displayPrice = toDisplayAmount(plan.price.amount, plan.price.currency);
+  // Prices stay integer minor units of their currency (ADR 0007); formatting is `formatPrice`'s job.
+  tierConfig.currency ??= plan.price.currency;
 
   if (isYearlyCatalogPlan(plan)) {
-    tierConfig.price.yearly = displayPrice;
+    tierConfig.price.yearly = plan.price.amount;
     tierConfig.yearly = {
       id: plan.id,
       name: plan.displayName,
@@ -83,7 +75,7 @@ function applyCatalogPlanBilling(tierConfig: MutableTierConfig, plan: CatalogPla
     return;
   }
 
-  tierConfig.price.monthly = displayPrice;
+  tierConfig.price.monthly = plan.price.amount;
   tierConfig.monthly = {
     id: plan.id,
     name: plan.displayName,
@@ -152,7 +144,8 @@ function applyProductDisplayFallback(tierConfig: MutableTierConfig, product: Pro
 
 function applyProductBillingFallback(tierConfig: MutableTierConfig, product: Product): void {
   if (product.interval === "month" && !tierConfig.monthly) {
-    tierConfig.price.monthly = toDisplayAmount(product.price.amount, product.price.currency);
+    tierConfig.price.monthly = product.price.amount;
+    tierConfig.currency ??= product.price.currency;
     tierConfig.monthly = {
       id: product.id,
       name: product.name,
@@ -164,7 +157,8 @@ function applyProductBillingFallback(tierConfig: MutableTierConfig, product: Pro
   }
 
   if (product.interval === "year" && !tierConfig.yearly) {
-    tierConfig.price.yearly = toDisplayAmount(product.price.amount, product.price.currency);
+    tierConfig.price.yearly = product.price.amount;
+    tierConfig.currency ??= product.price.currency;
     tierConfig.yearly = {
       id: product.id,
       name: product.name,
@@ -253,7 +247,6 @@ export function parseTierIdFromProduct(product: Product): MembershipTier {
 export function buildTierConfigFromPlansAndProducts(
   products: Product[],
   plans: CatalogPlan[] | undefined,
-  _provider?: PaymentProvider,
 ): MembershipTierConfig[] {
   const tiers = createInitialTierConfigs();
 

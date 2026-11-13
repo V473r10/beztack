@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatPrice } from "@/lib/format";
-import { PLAN_SYNC_PUSH_DISABLED_TITLE, PLAN_SYNC_PUSH_ENABLED } from "../constants";
 import { getPlanDisplayName } from "../helpers";
 import { useDeletePlanMutation, useImportMutation, useSyncMutation } from "../hooks";
 import type { SyncedPlanView } from "../types";
@@ -67,7 +66,7 @@ export function SyncedPlanCard({
           <SyncStatusBadge status="local-only" />
           <Button
             className="h-7 gap-1.5 text-xs"
-            disabled={!PLAN_SYNC_PUSH_ENABLED || syncMutation.isPending}
+            disabled={syncMutation.isPending}
             onClick={() =>
               syncMutation.mutate({
                 planId: view.localPlan?.id ?? "",
@@ -75,7 +74,6 @@ export function SyncedPlanCard({
               })
             }
             size="sm"
-            title={PLAN_SYNC_PUSH_ENABLED ? undefined : PLAN_SYNC_PUSH_DISABLED_TITLE}
             type="button"
             variant="outline"
           >
@@ -190,7 +188,9 @@ export function SyncedPlanCard({
                 )}
               </div>
               <div className="shrink-0 text-right">
-                <div className="font-bold text-2xl tracking-tight">${view.localPlan.price}</div>
+                <div className="font-bold text-2xl tracking-tight">
+                  {formatPrice(view.localPlan.price, view.localPlan.currency)}
+                </div>
                 <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   {view.localPlan.currency} / {view.localPlan.interval ?? "month"}
                 </div>

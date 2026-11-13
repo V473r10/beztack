@@ -27,7 +27,8 @@ export type DbPlan = {
   features: string[] | null;
   limits: Record<string, number> | null;
   permissions: string[] | null;
-  price: string;
+  /** Integer minor units of `currency` (ADR 0007): 900 is US$ 9.00. */
+  price: number;
   currency: string;
   interval: string | null;
   intervalCount: number | null;
