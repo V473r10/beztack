@@ -14,6 +14,7 @@ import { createDbPendingPlanChangeLedger } from "@/server/utils/pending-plan-cha
 import { discoverSubscriptionsFromDb } from "@/server/utils/subscription-discovery";
 import { organizationAccess } from "@/server/domain/organization-access";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
+import { organizationRequiredError } from "@/server/utils/organization-required";
 
 const planChangePendingCancellationSchema = z.object({
   organizationId: z.string().min(1).optional(),
@@ -36,10 +37,7 @@ function resolveMembershipTarget(
   if (env.SUBSCRIPTION_MODE === "organization") {
     const organizationId = body.organizationId ?? auth.session.activeOrganizationId ?? undefined;
     if (!organizationId) {
-      throw createError({
-        statusCode: 400,
-        message: "An organization Membership target is required",
-      });
+      throw organizationRequiredError();
     }
 
     return { type: "organization" as const, id: organizationId };

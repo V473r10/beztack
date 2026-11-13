@@ -315,7 +315,13 @@
         "weekly": "weekly",
         "everyDays": "every {{count}} days"
       }
-    }
+    },
+    "errors": {
+      "customer_email_rejected": "The payment provider rejected your email address. Use a different email.",
+      "payment_provider_unavailable": "The payment provider is unavailable. Try again in a moment.",
+      "organization_required": "Create an organization first: this action bills an organization."
+    },
+    "checkoutFailed": "Failed to start checkout process"
   },
   "common": {
     "footer": "© {{year}} Your Company. All rights reserved.",
@@ -664,5 +670,19 @@
     },
     "expired": "This invitation has expired.",
     "goHome": "Go to home"
+  },
+  "organizations": {
+    "createDialog": {
+      "title": "Create Organization",
+      "description": "Create a new organization to collaborate with your team.",
+      "billingDescription": "Billing is per organization. Create yours to continue.",
+      "name": "Organization Name",
+      "namePlaceholder": "Enter organization name",
+      "slug": "Organization Slug",
+      "slugHelp": "This will be used in URLs. Only lowercase letters, numbers, and hyphens allowed.",
+      "logo": "Logo URL (Optional)",
+      "submit": "Create Organization",
+      "cancel": "Cancel"
+    }
   }
 }

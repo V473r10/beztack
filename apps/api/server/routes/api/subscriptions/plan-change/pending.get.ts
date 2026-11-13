@@ -4,10 +4,11 @@
  * The Membership target's Pending Plan change, so a Billing manager sees what
  * changes at renewal and when. `null` when nothing is pending.
  */
-import { createError, defineEventHandler, getQuery } from "h3";
+import { defineEventHandler, getQuery } from "h3";
 import { env } from "@/env";
 import { requireAuth } from "@/server/utils/membership";
 import { requireOrganizationBillingManagerAccess } from "@/server/utils/organization-access";
+import { organizationRequiredError } from "@/server/utils/organization-required";
 import { findPendingPlanChangeForMembershipTarget } from "@/server/utils/pending-plan-change-ledger";
 
 export default defineEventHandler(async (event) => {
@@ -20,10 +21,7 @@ export default defineEventHandler(async (event) => {
       (typeof query.organizationId === "string" && query.organizationId) ||
       auth.session.activeOrganizationId;
     if (!organizationId) {
-      throw createError({
-        statusCode: 400,
-        message: "An organization Membership target is required",
-      });
+      throw organizationRequiredError();
     }
     await requireOrganizationBillingManagerAccess(auth, organizationId);
     membershipTarget = { type: "organization", id: organizationId };
