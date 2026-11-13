@@ -28,7 +28,8 @@ export type AuthConfigDeps = {
   plugins?: BetterAuthPlugin[];
   /**
    * Give every new user a Personal organization (they own it) at sign-up.
-   * Off by default so a caller that does not opt in creates nothing.
+   * Off by default so a caller that does not opt in creates nothing. `auth.ts`
+   * turns it on only when `SUBSCRIPTION_MODE=organization`.
    */
   personalOrganizationOnSignup?: boolean;
 };
@@ -41,6 +42,7 @@ type AuthInstanceSlice = {
     }): Promise<{ id: string } | null>;
   };
   $context: Promise<{
+    logger: { error(message: string, ...args: unknown[]): void };
     adapter: {
       findMany<T>(input: {
         model: string;
@@ -67,6 +69,38 @@ function getSessionUser(session: unknown): SessionUserLike | null {
 }
 
 const PERSONAL_ORGANIZATION_CREATE_ATTEMPTS = 3;
+
+/**
+ * Display name of a Personal organization; `{name}` is the user's name.
+ *
+ * English on purpose and free of env: the API does not know the visitor's
+ * language at sign-up, and the name is stored, so it cannot follow a later
+ * language switch. A project that serves another language changes this one
+ * constant (for example `"Organización de {name}"`).
+ */
+export const PERSONAL_ORGANIZATION_NAME_TEMPLATE = "{name}'s organization";
+
+/** Name used for `{name}` when the user has none. */
+const PERSONAL_ORGANIZATION_FALLBACK_NAME = "Personal";
+
+/**
+ * Whether sign-up creates a Personal organization: only in organization mode
+ * (users are billed directly in user mode, so an organization would be noise)
+ * and only when `PERSONAL_ORGANIZATION_ON_SIGNUP` is on.
+ */
+export function shouldCreatePersonalOrganization(options: {
+  subscriptionMode: "user" | "organization";
+  onSignup: boolean;
+}): boolean {
+  return options.subscriptionMode === "organization" && options.onSignup;
+}
+
+export function personalOrganizationName(userName: string): string {
+  return PERSONAL_ORGANIZATION_NAME_TEMPLATE.replace(
+    "{name}",
+    userName.trim() || PERSONAL_ORGANIZATION_FALLBACK_NAME,
+  );
+}
 
 /** Lowercase ASCII words joined by `-`; empty when nothing usable is left. */
 function slugify(value: string): string {
@@ -113,14 +147,14 @@ export function createAuth(deps: AuthConfigDeps) {
     if (!current) {
       return;
     }
-    const baseName = user.name.trim() || "Personal";
+    const baseName = user.name.trim() || PERSONAL_ORGANIZATION_FALLBACK_NAME;
     const baseSlug = slugify(baseName) || "personal";
     let lastError: unknown;
     for (let attempt = 0; attempt < PERSONAL_ORGANIZATION_CREATE_ATTEMPTS; attempt += 1) {
       try {
         const organization = await current.api.createOrganization({
           body: {
-            name: `${baseName}'s organization`,
+            name: personalOrganizationName(user.name),
             slug: `${baseSlug}-${randomSuffix()}`,
             userId: user.id,
           },
@@ -136,6 +170,16 @@ export function createAuth(deps: AuthConfigDeps) {
       }
     }
     throw lastError;
+  }
+
+  /** Goes through the better-auth logger, like the rest of the auth hooks. */
+  async function logPersonalOrganizationFailure(error: unknown): Promise<void> {
+    const current = instance;
+    if (!current) {
+      return;
+    }
+    const { logger } = await current.$context;
+    logger.error("Could not create the Personal organization", error);
   }
 
   async function findOldestOrganizationId(userId: string): Promise<string | null> {
@@ -211,7 +255,7 @@ export function createAuth(deps: AuthConfigDeps) {
             try {
               await createPersonalOrganization(user);
             } catch (error) {
-              console.error("Could not create the Personal organization", error);
+              await logPersonalOrganizationFailure(error);
             }
           },
         },
