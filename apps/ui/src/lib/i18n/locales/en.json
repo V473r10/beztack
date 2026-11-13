@@ -6,7 +6,8 @@
         "email": "Email",
         "save": "Save Profile",
         "title": "Profile",
-        "username": "Username"
+        "username": "Username",
+        "saving": "Saving..."
       },
       "title": "Account Settings",
       "twoFactor": {
@@ -49,7 +50,10 @@
           "copy": "Copy All Codes",
           "download": "Download as File",
           "done": "Done"
-        }
+        },
+        "alreadyEnabled": "Your account is protected with two-factor authentication. Your backup codes have been safely stored and encrypted.",
+        "backupCodesWarning": "Save these backup codes now! You won't be able to see them again. Each code can only be used once.",
+        "scanQrCode": "Scan this QR code with your authenticator app, then enter the verification code below."
       }
     }
   },
@@ -321,7 +325,9 @@
     "footer": "© {{year}} Your Company. All rights reserved.",
     "more": "More",
     "workflowStreamline": "Streamline your workflow with our powerful platform.",
-    "yourLogo": "Your Logo"
+    "yourLogo": "Your Logo",
+    "cancel": "Cancel",
+    "processing": "Processing..."
   },
   "dashboard": {
     "acquisitionNeedsAttention": "Acquisition needs attention",
@@ -491,7 +497,35 @@
       "outline": "Outline",
       "pastPerformance": "Past Performance",
       "placeholder": "Select a view"
-    }
+    },
+    "capabilities": "Capabilities",
+    "coverPage": "Cover Page",
+    "design": "Design",
+    "done": "Done",
+    "eddieLake": "Eddie Lake",
+    "emilyWhalen": "Emily Whalen",
+    "executiveSummary": "Executive Summary",
+    "focusDocuments": "Focus Documents",
+    "goToFirstPage": "Go to first page",
+    "goToLastPage": "Go to last page",
+    "goToNextPage": "Go to next page",
+    "goToPreviousPage": "Go to previous page",
+    "header": "Header",
+    "inProgress": "In Progress",
+    "jamikTashpulatov": "Jamik Tashpulatov",
+    "limit": "Limit",
+    "narrative": "Narrative",
+    "notStarted": "Not Started",
+    "of": "of",
+    "reviewer": "Reviewer",
+    "rowsPerPage": "Rows per page",
+    "showingTotalVisitors": "Showing total visitors for the last 6 months",
+    "status": "Status",
+    "submit": "Submit",
+    "tableOfContents": "Table of Contents",
+    "target": "Target",
+    "technicalApproach": "Technical Approach",
+    "type": "Type"
   },
   "form": {
     "confirmPassword": {
@@ -571,12 +605,14 @@
   },
   "sidebar": {
     "analytics": "Analytics",
-    "dashboard": "Dashboard",
     "documents": {
       "dataLibrary": "Data Library",
       "reports": "Reports",
       "title": "Documents",
-      "wordAssistant": "Word Assistant"
+      "wordAssistant": "Word Assistant",
+      "delete": "Delete",
+      "open": "Open",
+      "share": "Share"
     },
     "lifecycle": "Life Cycle",
     "name": {
@@ -591,11 +627,6 @@
       "uppercase": "Must contain at least one uppercase letter"
     },
     "projects": "Projects",
-    "secondary": {
-      "getHelp": "Get Help",
-      "search": "Search",
-      "settings": "Settings"
-    },
     "team": "Team",
     "userMenu": {
       "account": "Account",
@@ -603,6 +634,22 @@
       "language": "Language",
       "notifications": "Notifications",
       "signOut": "Sign Out"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "ai": "AI",
+      "ocr": "OCR",
+      "organizations": "Organizations",
+      "billing": "Billing",
+      "platformAdmin": "Platform Admin",
+      "userManagement": "User Management",
+      "analytics": "Analytics",
+      "planSync": "Plan Sync",
+      "failedPlanChanges": "Failed Plan Changes",
+      "pricing": "Pricing",
+      "settings": "Settings",
+      "getHelp": "Get Help",
+      "search": "Search"
     }
   },
   "tour": {
@@ -664,5 +711,14 @@
     },
     "expired": "This invitation has expired.",
     "goHome": "Go to home"
+  },
+  "settings": {
+    "theme": {
+      "colorTheme": "Color Theme",
+      "colorThemeDescription": "Choose your preferred color scheme and visual style",
+      "loading": "Loading themes...",
+      "showLess": "Show less",
+      "showMore": "Show more ({{hidden}})"
+    }
   }
 }

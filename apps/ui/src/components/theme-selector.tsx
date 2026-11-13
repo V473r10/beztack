@@ -132,11 +132,10 @@ export function ThemeSelector() {
                   variant="outline"
                 >
                   {showAll
-                    ? t("settings.theme.showLess", "Ver menos")
-                    : t(
-                        "settings.theme.showMore",
-                        `Ver más (${themes.length - THEMES_CALCULATION_OFFSET})`,
-                      )}
+                    ? t("settings.theme.showLess")
+                    : t("settings.theme.showMore", {
+                        hidden: themes.length - THEMES_CALCULATION_OFFSET,
+                      })}
                 </Button>
               </div>
             )}
