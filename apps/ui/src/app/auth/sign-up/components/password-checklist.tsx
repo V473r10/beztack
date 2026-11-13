@@ -12,7 +12,7 @@ type PasswordChecklistProps = {
 };
 
 const STATE_STYLES = {
-  met: "text-green-700 dark:text-green-400",
+  met: "text-green-800 dark:text-green-400",
   pending: "text-muted-foreground",
   unmet: "text-destructive",
 } as const;

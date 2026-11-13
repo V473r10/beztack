@@ -19,10 +19,10 @@ const AuthLayout = ({ className }: AuthLayoutProps) => {
       <div className="hidden w-1/2 flex-col justify-between bg-primary p-12 text-primary-foreground lg:flex">
         <div>
           <p className="mb-4 font-bold text-4xl">{appName}</p>
-          <p className="text-primary-foreground/90">{t("auth.brand.tagline")}</p>
+          <p className="text-primary-foreground">{t("auth.brand.tagline")}</p>
         </div>
         <DemoTryPanel variant="brand" />
-        <div className="text-primary-foreground/80 text-sm">
+        <div className="text-primary-foreground text-sm">
           {t("common.footer", { year: new Date().getFullYear(), appName })}
         </div>
       </div>

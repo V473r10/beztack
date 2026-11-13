@@ -1,7 +1,6 @@
 import { FlaskConical } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { env } from "@/env";
-import { cn } from "@/lib/utils";
 import { DEMO_TEST_CARDS, PROVIDER_LABELS } from "./demo-test-cards";
 
 type DemoTryPanelProps = {
@@ -9,10 +8,9 @@ type DemoTryPanelProps = {
   variant: "brand" | "compact";
 };
 
-function PanelBody({ variant }: DemoTryPanelProps) {
+function PanelBody() {
   const { t } = useTranslation();
   const provider = env.VITE_PAYMENT_PROVIDER;
-  const onBrand = variant === "brand";
 
   return (
     <div className="space-y-3 text-sm">
@@ -23,13 +21,7 @@ function PanelBody({ variant }: DemoTryPanelProps) {
         </p>
         <ul className="mt-2 space-y-2">
           {DEMO_TEST_CARDS[provider].map((card) => (
-            <li
-              className={cn(
-                "rounded-md border p-3",
-                onBrand ? "border-primary-foreground/30" : "border-border",
-              )}
-              key={card.id}
-            >
+            <li className="rounded-md border p-3" key={card.id}>
               <p className="font-medium">
                 {card.brand} ·{" "}
                 {card.outcome === "approved"
@@ -37,7 +29,7 @@ function PanelBody({ variant }: DemoTryPanelProps) {
                   : t("auth.demo.outcome.declined")}
               </p>
               <code className="block font-mono text-base tracking-wide">{card.number}</code>
-              <p className={onBrand ? "text-primary-foreground/90" : "text-muted-foreground"}>
+              <p className="text-muted-foreground">
                 {t("auth.demo.cardDetails", {
                   expiry: card.expiry ?? t("auth.demo.anyFutureDate"),
                   cvc: card.cvc ?? t("auth.demo.anyCvc"),
@@ -48,9 +40,7 @@ function PanelBody({ variant }: DemoTryPanelProps) {
           ))}
         </ul>
       </div>
-      <p className={onBrand ? "text-primary-foreground/90" : "text-muted-foreground"}>
-        {t("auth.demo.dataReset")}
-      </p>
+      <p className="text-muted-foreground">{t("auth.demo.dataReset")}</p>
     </div>
   );
 }
@@ -70,13 +60,13 @@ export function DemoTryPanel({ variant }: DemoTryPanelProps) {
     return (
       <section
         aria-label={t("auth.demo.title")}
-        className="rounded-lg bg-primary-foreground/10 p-5 text-primary-foreground"
+        className="rounded-lg bg-background p-5 text-foreground"
       >
         <p className="mb-3 flex items-center gap-2 font-semibold text-lg">
           <FlaskConical aria-hidden="true" className="size-5" />
           {t("auth.demo.title")}
         </p>
-        <PanelBody variant="brand" />
+        <PanelBody />
       </section>
     );
   }
@@ -88,7 +78,7 @@ export function DemoTryPanel({ variant }: DemoTryPanelProps) {
         {t("auth.demo.title")}
       </summary>
       <div className="mt-3">
-        <PanelBody variant="compact" />
+        <PanelBody />
       </div>
     </details>
   );
