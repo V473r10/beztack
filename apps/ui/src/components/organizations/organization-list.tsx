@@ -100,7 +100,7 @@ export function OrganizationList({
                 </div>
                 <div className="space-y-1">
                   <CardTitle className="text-lg">{organization.name}</CardTitle>
-                  <CardDescription>@{organization.slug}</CardDescription>
+                  <CardDescription>{`@${organization.slug}`}</CardDescription>
                 </div>
               </div>
               {activeOrganization?.id === organization.id && (

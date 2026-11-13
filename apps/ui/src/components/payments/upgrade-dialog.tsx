@@ -221,7 +221,7 @@ export function UpgradeDialog({
                       <span>
                         {t("billing.upgradeDialog.creditFromCurrent")}{" "}
                         <span className="font-medium text-green-600 dark:text-green-400">
-                          -{formatPrice(planChangeDisplay.unusedCredit, planChangeDisplay.currency)}
+                          {`-${formatPrice(planChangeDisplay.unusedCredit, planChangeDisplay.currency)}`}
                         </span>
                       </span>
                       <ArrowRight className="h-3 w-3" />

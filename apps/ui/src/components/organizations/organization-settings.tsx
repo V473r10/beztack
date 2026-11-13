@@ -184,7 +184,7 @@ export function OrganizationSettings({
                 </div>
                 <div>
                   <div className="font-medium text-sm">{t("organizations.settings.slug")}</div>
-                  <p className="text-muted-foreground text-sm">@{organization.slug}</p>
+                  <p className="text-muted-foreground text-sm">{`@${organization.slug}`}</p>
                 </div>
               </div>
 

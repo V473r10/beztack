@@ -108,7 +108,7 @@ export default function OrganizationsPage() {
                       </div>
                       <div className="space-y-2">
                         <h3 className="font-semibold text-xl">{activeOrganization.name}</h3>
-                        <p className="text-muted-foreground">@{activeOrganization.slug}</p>
+                        <p className="text-muted-foreground">{`@${activeOrganization.slug}`}</p>
                         <div className="flex items-center space-x-4 text-muted-foreground text-sm">
                           <div className="flex items-center space-x-1">
                             <Users className="h-4 w-4" />
