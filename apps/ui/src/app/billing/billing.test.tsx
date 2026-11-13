@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   pendingPlanChange: { data: null as unknown },
   cancel: { mutate: vi.fn(), isPending: false },
+  membership: {} as Record<string, unknown>,
+  refreshMembership: vi.fn(),
 }));
 
 vi.mock("@/env", () => ({ env: { VITE_SUBSCRIPTION_MODE: "organization" } }));
@@ -25,6 +27,8 @@ vi.mock("@/contexts/membership-context", () => ({
     error: null,
     upgradeToTier: vi.fn(),
     openBillingPortal: vi.fn(),
+    refreshMembership: mocks.refreshMembership,
+    ...mocks.membership,
   }),
 }));
 // The dashboard has its own concerns; this page test is about the notice.
@@ -44,6 +48,7 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
+import { ApiError } from "@/lib/api-client";
 import { PendingPlanChangeNoticeView } from "@/components/payments/pending-plan-change-notice";
 import Billing from "./billing";
 
@@ -65,6 +70,7 @@ describe("Billing page Pending Plan change", () => {
     vi.clearAllMocks();
     mocks.pendingPlanChange = { data: null };
     mocks.cancel.isPending = false;
+    mocks.membership = {};
   });
 
   it("shows the pending change, its effective date and a cancel action", () => {
@@ -106,6 +112,59 @@ describe("Billing page Pending Plan change", () => {
     expect(button?.props.disabled).toBe(true);
     button?.props.onClick();
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+});
+
+describe("Billing page when the billing data cannot load", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.pendingPlanChange = { data: null };
+    mocks.membership = {};
+  });
+
+  it("says the provider is rate-limiting and offers a retry, on a 429", () => {
+    mocks.membership = {
+      error: new ApiError("busy", { statusCode: 429, data: { code: "provider_rate_limited" } }),
+    };
+
+    const html = renderToStaticMarkup(<Billing />);
+
+    expect(html).toContain("billing.page.rateLimited");
+    expect(html).toContain("billing.page.retry");
+    expect(html).not.toContain("animate-pulse");
+  });
+
+  it("shows the generic load error with a retry on any other failure", () => {
+    mocks.membership = { error: new Error("boom") };
+
+    const html = renderToStaticMarkup(<Billing />);
+
+    expect(html).toContain("billing.page.loadError");
+    expect(html).toContain("billing.page.retry");
+  });
+
+  it("never stays on the skeleton once loading is over without a plan to show", () => {
+    mocks.membership = { isLoading: false, error: null, tierConfig: null };
+
+    const html = renderToStaticMarkup(<Billing />);
+
+    expect(html).toContain("billing.page.loadError");
+    expect(html).not.toContain("animate-pulse");
+  });
+
+  it("still shows the skeleton while loading", () => {
+    mocks.membership = { isLoading: true, tierConfig: null };
+
+    expect(renderToStaticMarkup(<Billing />)).toContain("animate-pulse");
+  });
+
+  it("loads the billing data again when the retry button is pressed", () => {
+    mocks.membership = { error: new Error("boom") };
+
+    const button = findButton(Billing());
+    button?.props.onClick();
+
+    expect(mocks.refreshMembership).toHaveBeenCalledOnce();
   });
 });
 

@@ -1,1 +1,1 @@
-export { fetchPricingTiers } from "./hooks.js";
+export { buildPricingTiers, fetchPricingTiers } from "./hooks.js";

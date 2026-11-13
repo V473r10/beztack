@@ -312,7 +312,9 @@
     "page": {
       "title": "Billing & Subscription",
       "description": "Manage your subscription, view usage, and access billing history.",
-      "loadError": "Failed to load billing information. Please try refreshing the page."
+      "loadError": "Failed to load billing information. Please try refreshing the page.",
+      "rateLimited": "Too many requests were sent to the payment provider. Wait a few seconds and try again.",
+      "retry": "Try again"
     },
     "checkoutSuccess": {
       "invalidTier": "Invalid tier information. Please contact support.",
@@ -373,6 +375,7 @@
       "planDetails": "Plan details",
       "planInfo": "Your active subscription",
       "yourPlan": "Your plan",
+      "defaultPlanName": "Subscription",
       "nextPayment": "Next payment",
       "paymentMethod": "Payment method",
       "goToDashboard": "Go to Dashboard",
@@ -403,6 +406,7 @@
     "errors": {
       "customer_email_rejected": "The payment provider rejected your email address. Use a different email.",
       "payment_provider_unavailable": "The payment provider is unavailable. Try again in a moment.",
+      "provider_rate_limited": "The payment provider is busy right now. Try again in a few seconds.",
       "organization_required": "Create an organization first: this action bills an organization.",
       "provider_did_not_apply": "The payment provider did not apply the plan change. Nothing was charged. Try again in a moment.",
       "invalid_current_subscription": "The subscription for this plan change is not valid.",

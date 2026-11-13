@@ -144,22 +144,14 @@ function applyIntervalToTier(tier: PricingTier, product: Product): PricingTier {
 }
 
 /**
- * Fetch products from the API and transform them into PricingTier objects.
- * This is a queryFn — use it with @tanstack/react-query's useQuery.
+ * Group the API's product list into PricingTier objects, in catalog order.
+ * Pure: a caller that already holds the products response (and so does not
+ * need another request) derives the tiers from it.
  */
-export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> {
-  const response = await fetch(`${apiUrl}/api/subscriptions/products`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const payload = (await response.json()) as ProductsResponse;
+export function buildPricingTiers(products: Product[]): PricingTier[] {
   const tiers = new Map<string, PricingTier>();
 
-  for (const product of payload.products) {
+  for (const product of products) {
     const tierId = getTierId(product);
     const displayOrder = getDisplayOrder(product);
     const existing = tiers.get(tierId);
@@ -182,4 +174,21 @@ export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> 
 
   // Array.prototype.sort is stable, so equal displayOrder keeps the provider order.
   return Array.from(tiers.values()).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+}
+
+/**
+ * Fetch products from the API and transform them into PricingTier objects.
+ * This is a queryFn — use it with @tanstack/react-query's useQuery.
+ */
+export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> {
+  const response = await fetch(`${apiUrl}/api/subscriptions/products`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const payload = (await response.json()) as ProductsResponse;
+  return buildPricingTiers(payload.products);
 }

@@ -36,11 +36,10 @@ import {
 import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { type AnyPlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
-import { usePricingTiers } from "@/hooks/use-pricing-tiers";
+import { pricingTiersQueryOptions } from "@/hooks/use-pricing-tiers";
 import { formatDate, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
-import { queryKeys } from "@/lib/query-keys";
 
 const MAX_FEATURES_TO_SHOW = 4;
 
@@ -312,10 +311,7 @@ export function PlanChangeDialog({
   const [confirmDowngrade, setConfirmDowngrade] = useState(false);
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
 
-  const { data: allTiers = [] } = useQuery<PricingTier[]>({
-    queryKey: queryKeys.subscriptions.productTiers(),
-    queryFn: usePricingTiers,
-  });
+  const { data: allTiers = [] } = useQuery(pricingTiersQueryOptions());
 
   const previewQuery = usePlanChangePreview({
     subscriptionId,

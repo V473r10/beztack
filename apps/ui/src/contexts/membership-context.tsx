@@ -8,12 +8,14 @@ import { toast } from "sonner";
 import { CreateOrganizationDialog } from "@/components/organizations/create-organization-dialog";
 import { env } from "@/env";
 import { useActiveOrganization } from "@/hooks/use-organizations";
+import { productsQueryOptions } from "@/hooks/use-pricing-tiers";
 import { requestJson } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
 import {
   getBillingErrorMessage,
   isOrganizationRequiredError,
   runWithOrganization,
+  shouldRetryBillingQuery,
 } from "@/lib/billing-errors";
 import { redirectToExternalUrl } from "@/lib/browser-navigation";
 import { queryKeys } from "@/lib/query-keys";
@@ -23,7 +25,6 @@ import type {
   CustomerMeter,
   Order,
   Product,
-  ProductsResponse,
   Subscription,
   SubscriptionsResponse,
 } from "./membership/membership-types";
@@ -88,10 +89,8 @@ type CheckoutResponse = {
 
 const MILLISECONDS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
-const FIVE_MINUTES = 5;
 const TWO_MINUTES = 2;
 
-const CUSTOMER_STATE_STALE_TIME = MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * FIVE_MINUTES;
 const SUBSCRIPTIONS_STALE_TIME = MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE * TWO_MINUTES;
 
 const EMPTY_PRODUCTS: Product[] = [];
@@ -264,11 +263,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
   const isOrganizationSubscriptionMode = env.VITE_SUBSCRIPTION_MODE === "organization";
   const activeOrganizationId = isOrganizationSubscriptionMode ? activeOrganization?.id : undefined;
 
-  const productsQuery = useQuery({
-    queryKey: queryKeys.subscriptions.products(),
-    queryFn: () => requestJson<ProductsResponse>("/api/subscriptions/products"),
-    staleTime: CUSTOMER_STATE_STALE_TIME,
-  });
+  const productsQuery = useQuery(productsQueryOptions());
 
   const membershipStatusQuery = useQuery({
     queryKey: queryKeys.subscriptions.membership(activeOrganizationId),
@@ -278,6 +273,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
     enabled: isSignedIn,
+    retry: shouldRetryBillingQuery,
   });
 
   // The Subscription list is billing data: only fetched for callers who pass
@@ -292,6 +288,7 @@ export function MembershipProvider({ children }: MembershipProviderProps) {
       ),
     staleTime: SUBSCRIPTIONS_STALE_TIME,
     enabled: canManageBilling,
+    retry: shouldRetryBillingQuery,
   });
 
   const checkoutMutation = useMutation({

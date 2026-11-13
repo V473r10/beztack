@@ -109,4 +109,37 @@ describe("GET /api/subscriptions (organization mode)", () => {
 
     await expect(handler({})).resolves.toMatchObject({ subscriptions: [ORG_SUBSCRIPTION] });
   });
+
+  describe("when the Payment provider rate-limits", () => {
+    function rateLimitedProvider() {
+      const rateLimited = Object.assign(new Error("Status 429 Too Many Requests"), {
+        statusCode: 429,
+      });
+      mocks.ensurePaymentProvider.mockResolvedValue({
+        provider: "polar",
+        listSubscriptions: vi.fn(() => Promise.reject(rateLimited)),
+      });
+    }
+
+    it("answers 429 with the provider_rate_limited code, not a generic failure", async () => {
+      signIn("user_owner");
+      rateLimitedProvider();
+
+      const error = await handler({}).catch((caught: unknown) => caught);
+
+      expect(error).toMatchObject({ statusCode: 429, data: { code: "provider_rate_limited" } });
+    });
+
+    it("keeps other provider failures as they were", async () => {
+      signIn("user_owner");
+      mocks.ensurePaymentProvider.mockResolvedValue({
+        provider: "polar",
+        listSubscriptions: vi.fn(() => Promise.reject(new Error("boom"))),
+      });
+
+      const error = await handler({}).catch((caught: unknown) => caught);
+
+      expect(error).toEqual(new Error("boom"));
+    });
+  });
 });

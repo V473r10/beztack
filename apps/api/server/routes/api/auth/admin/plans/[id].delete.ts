@@ -5,6 +5,7 @@ import { db, plan } from "@beztack/db";
 import { eq } from "drizzle-orm";
 import { createError, defineEventHandler } from "h3";
 import { ensurePaymentProvider } from "@/lib/payments";
+import { invalidateProductsCache } from "@/server/utils/products-cache";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 export default defineEventHandler(async (event) => {
@@ -37,6 +38,9 @@ export default defineEventHandler(async (event) => {
     .set({ status: "inactive" })
     .where(eq(plan.id, planId))
     .returning();
+
+  // The public Products response is built from these plans: drop its cache.
+  invalidateProductsCache();
 
   return { plan: updated };
 });

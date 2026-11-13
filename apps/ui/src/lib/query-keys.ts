@@ -60,7 +60,6 @@ export const subscriptionKeys = {
   membership: (organizationId?: string) =>
     [...SUBSCRIPTIONS_ROOT, "membership", organizationId] as const,
   products: () => [...SUBSCRIPTIONS_ROOT, "products"] as const,
-  productTiers: () => [...SUBSCRIPTIONS_ROOT, "products", "tiers"] as const,
   /** Scoped by the Current Subscription, which already belongs to one
    * organization, so a preview never crosses organizations. */
   planChangePreview: (subscriptionId?: string, targetTierId?: string, billingPeriod?: string) =>

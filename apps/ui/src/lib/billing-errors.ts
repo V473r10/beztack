@@ -4,6 +4,10 @@ import { ApiError } from "./api-client";
 const ORGANIZATION_REQUIRED = "organization_required";
 const GENERIC_REQUEST_FAILED = "Request failed";
 const CONFLICT = 409;
+const TOO_MANY_REQUESTS = 429;
+const CLIENT_ERROR_MIN = 400;
+const SERVER_ERROR_MIN = 500;
+const MAX_QUERY_RETRIES = 2;
 
 function readErrorCode(error: unknown): string | undefined {
   if (!(error instanceof ApiError)) {
@@ -24,6 +28,27 @@ export function isOrganizationRequiredError(error: unknown): boolean {
     error.statusCode === CONFLICT &&
     readErrorCode(error) === ORGANIZATION_REQUIRED
   );
+}
+
+/** The API answered 429: the Payment provider (or the API itself) is rate-limiting. */
+export function isProviderRateLimitedError(error: unknown): boolean {
+  return error instanceof ApiError && error.statusCode === TOO_MANY_REQUESTS;
+}
+
+/**
+ * Retry policy of the billing queries. A 4xx answer is final and a 429 is the
+ * rate limit itself, so retrying it only keeps the page loading and adds
+ * requests; a server or network failure gets two more tries.
+ */
+export function shouldRetryBillingQuery(failureCount: number, error: unknown): boolean {
+  if (
+    error instanceof ApiError &&
+    error.statusCode >= CLIENT_ERROR_MIN &&
+    error.statusCode < SERVER_ERROR_MIN
+  ) {
+    return false;
+  }
+  return failureCount < MAX_QUERY_RETRIES;
 }
 
 /**

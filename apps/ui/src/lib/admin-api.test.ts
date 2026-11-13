@@ -60,16 +60,6 @@ function endOfCall(text: string, start: number): number {
   return index;
 }
 
-/**
- * Calls the UI makes to a route the API does not have. The contract test found this one when it
- * was extended past the admin routes; it predates the live demo work. The Mercado Pago return
- * page (`subscription-welcome`) fetches a raw Mercado Pago preapproval from it, and no route
- * serves that (only `GET /api/subscriptions/:id`, a different shape, and the webhook exist). It
- * needs its own route or a move to the existing one. The list must shrink: the test below fails
- * when an entry starts to exist, so remove it then.
- */
-const KNOWN_MISSING_ROUTES = ["GET /api/payments/mercado-pago/subscriptions/:param"];
-
 type UiCall = { file: string; method: string; path: string };
 
 /**
@@ -151,7 +141,7 @@ describe("admin API contract", () => {
       ),
     ];
 
-    expect(missing).toEqual(KNOWN_MISSING_ROUTES);
+    expect(missing).toEqual([]);
   });
 
   it("keeps admin URLs out of the rest of the UI source", () => {

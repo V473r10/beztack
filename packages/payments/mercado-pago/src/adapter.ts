@@ -309,6 +309,7 @@ function mapSubscriptionResource(
         billingCurrency: sub.auto_recurring?.currency_id,
         billingInterval: mapMPInterval(sub.auto_recurring?.frequency_type ?? "months"),
         billingFrequency: sub.auto_recurring?.frequency,
+        ...(sub.payment_method_id ? { paymentMethodId: sub.payment_method_id } : {}),
         ...("init_point" in sub ? { initPoint: sub.init_point } : {}),
       },
       sub,

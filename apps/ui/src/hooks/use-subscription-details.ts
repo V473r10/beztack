@@ -4,7 +4,6 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { ApiError, requestJson } from "@/lib/api-client";
-import { formatMercadoPagoAmount } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
 
 // Time constants
@@ -16,122 +15,117 @@ const STALE_TIME_MS = STALE_TIME_MINUTES * SECONDS_PER_MINUTE * MS_PER_SECOND;
 // Retry constants
 const MAX_RETRY_COUNT = 2;
 
-// Frequency constants
-const MONTHS_PER_YEAR = 12;
-const DAYS_PER_WEEK = 7;
-
 // HTTP status codes
 const HTTP_NOT_FOUND = 404;
 const HTTP_FORBIDDEN = 403;
 
+const MONTHS_PER_YEAR = 12;
+const DAYS_PER_WEEK = 7;
+
+type ApiSubscriptionStatus =
+  | "active"
+  | "trialing"
+  | "past_due"
+  | "unpaid"
+  | "pending"
+  | "inactive"
+  | "canceled"
+  | "paused";
+
 /**
- * Raw response from Mercado Pago subscription endpoint
+ * The Subscription `GET /api/subscriptions/:id` answers, as JSON (dates are
+ * strings). The charged amount is an integer in minor units (ADR 0007) and
+ * travels in `metadata` with its currency and interval.
  */
-export type MPSubscriptionResponse = {
-  id: string;
-  status: "pending" | "authorized" | "paused" | "cancelled" | "active";
-  reason: string | null;
-  payer_email: string;
-  payer_id: string;
-  external_reference: string | null;
-  preapproval_plan_id: string | null;
-  init_point: string;
-  back_url: string | null;
-  auto_recurring: {
-    frequency: number;
-    frequency_type: "days" | "months";
-    transaction_amount: number;
-    currency_id: string;
-    start_date: string;
-    end_date: string | null;
+type ApiSubscriptionResponse = {
+  provider: string;
+  subscription: {
+    id: string;
+    status: ApiSubscriptionStatus;
+    productName?: string;
+    currentPeriodEnd?: string;
+    metadata?: {
+      billingAmount?: number;
+      billingCurrency?: string;
+      billingInterval?: "month" | "year" | "day" | "week";
+      billingFrequency?: number;
+      paymentMethodId?: string;
+    };
   };
-  summarized: {
-    quotas: number | null;
-    charged_quantity: number;
-    pending_charge_quantity: number;
-    charged_amount: number;
-    pending_charge_amount: number;
-    semaphore: string | null;
-    last_charged_date: string | null;
-    last_charged_amount: number | null;
-  };
-  next_payment_date: string | null;
-  payment_method_id: string | null;
-  payment_method_id_secondary: string | null;
-  first_invoice_offset: number | null;
-  date_created: string;
-  last_modified: string;
 };
 
 /**
- * Transformed subscription data for UI consumption
+ * Subscription data for the Mercado Pago return page
  */
 export type SubscriptionDetails = {
   id: string;
-  status: "pending" | "authorized" | "paused" | "cancelled" | "active";
+  status: ApiSubscriptionStatus;
   plan: {
-    name: string;
-    description: string | null;
+    name: string | null;
   };
+  /** `null` when the provider reported no charged amount. `amount` is in minor units. */
   price: {
     amount: number;
     currency: string;
     frequency: number;
     frequencyType: "days" | "months";
-  };
-  payer: {
-    email: string;
-    id: string;
-  };
+  } | null;
   dates: {
-    created: Date;
     nextPayment: Date | null;
-    startDate: Date;
-    endDate: Date | null;
-  };
-  billing: {
-    chargedQuantity: number;
-    chargedAmount: number;
-    pendingAmount: number;
   };
   paymentMethod: string | null;
-  externalReference: string | null;
 };
 
-/**
- * Transform raw MP response to a cleaner format
- */
-function transformSubscription(raw: MPSubscriptionResponse): SubscriptionDetails {
+function readPrice(
+  metadata: ApiSubscriptionResponse["subscription"]["metadata"],
+): SubscriptionDetails["price"] {
+  const { billingAmount, billingCurrency, billingInterval, billingFrequency } = metadata ?? {};
+  if (typeof billingAmount !== "number" || !billingCurrency) {
+    return null;
+  }
+  const count = billingFrequency ?? 1;
+  switch (billingInterval) {
+    case "day":
+      return {
+        amount: billingAmount,
+        currency: billingCurrency,
+        frequency: count,
+        frequencyType: "days",
+      };
+    case "week":
+      return {
+        amount: billingAmount,
+        currency: billingCurrency,
+        frequency: count * DAYS_PER_WEEK,
+        frequencyType: "days",
+      };
+    case "year":
+      return {
+        amount: billingAmount,
+        currency: billingCurrency,
+        frequency: count * MONTHS_PER_YEAR,
+        frequencyType: "months",
+      };
+    default:
+      return {
+        amount: billingAmount,
+        currency: billingCurrency,
+        frequency: count,
+        frequencyType: "months",
+      };
+  }
+}
+
+function transformSubscription({ subscription }: ApiSubscriptionResponse): SubscriptionDetails {
   return {
-    id: raw.id,
-    status: raw.status,
-    plan: {
-      name: raw.reason || "Suscripción",
-      description: null,
-    },
-    price: {
-      amount: raw.auto_recurring.transaction_amount,
-      currency: raw.auto_recurring.currency_id,
-      frequency: raw.auto_recurring.frequency,
-      frequencyType: raw.auto_recurring.frequency_type,
-    },
-    payer: {
-      email: raw.payer_email,
-      id: raw.payer_id,
-    },
+    id: subscription.id,
+    status: subscription.status,
+    plan: { name: subscription.productName ?? null },
+    price: readPrice(subscription.metadata),
     dates: {
-      created: new Date(raw.date_created),
-      nextPayment: raw.next_payment_date ? new Date(raw.next_payment_date) : null,
-      startDate: new Date(raw.auto_recurring.start_date),
-      endDate: raw.auto_recurring.end_date ? new Date(raw.auto_recurring.end_date) : null,
+      nextPayment: subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : null,
     },
-    billing: {
-      chargedQuantity: raw.summarized.charged_quantity,
-      chargedAmount: raw.summarized.charged_amount,
-      pendingAmount: raw.summarized.pending_charge_amount,
-    },
-    paymentMethod: raw.payment_method_id,
-    externalReference: raw.external_reference,
+    paymentMethod: subscription.metadata?.paymentMethodId ?? null,
   };
 }
 
@@ -139,10 +133,10 @@ function transformSubscription(raw: MPSubscriptionResponse): SubscriptionDetails
  * Fetch subscription details by preapproval_id
  */
 async function fetchSubscriptionDetails(preapprovalId: string): Promise<SubscriptionDetails> {
-  let data: MPSubscriptionResponse;
+  let data: ApiSubscriptionResponse;
   try {
-    data = await requestJson<MPSubscriptionResponse>(
-      `/api/payments/mercado-pago/subscriptions/${preapprovalId}`,
+    data = await requestJson<ApiSubscriptionResponse>(
+      `/api/subscriptions/${encodeURIComponent(preapprovalId)}`,
     );
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === HTTP_NOT_FOUND) {
@@ -199,11 +193,14 @@ export function useSubscriptionDetails(preapprovalId: string | null) {
 /**
  * Get a human-readable status label
  */
-export function getStatusLabel(status: SubscriptionDetails["status"]): {
+export function getStatusLabel(status: string): {
   label: string;
   variant: "success" | "warning" | "error" | "info";
 } {
-  const statusMap = {
+  const statusMap: Record<
+    string,
+    { label: string; variant: "success" | "warning" | "error" | "info" }
+  > = {
     active: { label: "Activa", variant: "success" as const },
     authorized: { label: "Autorizada", variant: "success" as const },
     pending: { label: "Pendiente", variant: "warning" as const },
@@ -233,12 +230,4 @@ export function formatFrequency(frequency: number, frequencyType: "days" | "mont
     return "semanal";
   }
   return `cada ${frequency} días`;
-}
-
-/**
- * Format an amount of the raw Mercado Pago subscription (decimal major units)
- * in the active language, with the currency's own decimals.
- */
-export function formatAmount(amount: number, currency: string): string {
-  return formatMercadoPagoAmount(amount, currency);
 }

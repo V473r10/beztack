@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { invalidateProductsCache } from "@/server/utils/products-cache";
 
 const mocks = vi.hoisted(() => ({
   ensurePaymentProvider: vi.fn(),
@@ -42,6 +43,7 @@ async function loadHandler() {
 describe("GET /api/subscriptions/products", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    invalidateProductsCache();
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     mocks.enrichProductWithCatalog.mockImplementation((product: unknown) =>
       Promise.resolve(product),
@@ -141,6 +143,53 @@ describe("GET /api/subscriptions/products", () => {
       const response = await (await loadHandler())({});
 
       expect(response).toEqual({ provider: "polar", products: [providerProduct] });
+    });
+  });
+
+  describe("provider calls", () => {
+    const PROVIDER_PRODUCT = { ...CATALOG_PRODUCT, id: "live_pro_month" };
+
+    function providerWith(listProducts: ReturnType<typeof vi.fn>) {
+      mocks.ensurePaymentProvider.mockResolvedValue({ provider: "polar", listProducts });
+    }
+
+    it("asks the provider once for repeated and concurrent requests", async () => {
+      const listProducts = vi.fn().mockResolvedValue([PROVIDER_PRODUCT]);
+      providerWith(listProducts);
+      const handler = await loadHandler();
+
+      await Promise.all([handler({}), handler({}), handler({})]);
+      await handler({});
+
+      expect(listProducts).toHaveBeenCalledTimes(1);
+    });
+
+    it("asks the provider again after an admin changes the catalog", async () => {
+      const listProducts = vi.fn().mockResolvedValue([PROVIDER_PRODUCT]);
+      providerWith(listProducts);
+      const handler = await loadHandler();
+
+      await handler({});
+      invalidateProductsCache();
+      await handler({});
+
+      expect(listProducts).toHaveBeenCalledTimes(2);
+    });
+
+    it("answers from the Pricing catalog when the provider rate-limits, without asking again right away", async () => {
+      const rateLimited = Object.assign(new Error("Status 429 Too Many Requests"), {
+        statusCode: 429,
+      });
+      const listProducts = vi.fn().mockRejectedValue(rateLimited);
+      providerWith(listProducts);
+      const handler = await loadHandler();
+
+      const first = await handler({});
+      const second = await handler({});
+
+      expect(first).toMatchObject({ products: [CATALOG_PRODUCT], source: "catalog" });
+      expect(second).toEqual(first);
+      expect(listProducts).toHaveBeenCalledTimes(1);
     });
   });
 });
