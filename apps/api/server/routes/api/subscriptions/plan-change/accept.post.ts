@@ -11,6 +11,7 @@ import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
+import { legacyAmountFromPlanPrice } from "@/server/utils/legacy-plan-price";
 import { type AuthenticatedUser, requireAuth } from "@/server/utils/membership";
 import {
   acceptPlanChange,
@@ -185,7 +186,7 @@ function createPlanChangeStore(options: {
             tierRank: row.displayOrder ?? 0,
             billingCadence,
             price: {
-              amount: Number(row.price),
+              amount: legacyAmountFromPlanPrice(row.price, row.currency, row.provider),
               currency: row.currency,
             },
           },

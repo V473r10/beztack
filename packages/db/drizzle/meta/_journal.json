@@ -64,6 +64,13 @@
       "when": 1794371021931,
       "tag": "0008_better_auth_1_7",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794531807748,
+      "tag": "0009_prices_minor_units",
+      "breakpoints": true
     }
   ]
 }

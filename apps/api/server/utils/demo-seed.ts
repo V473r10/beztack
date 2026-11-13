@@ -80,7 +80,7 @@ function planRow(provider: string, seed: SeedPlan, providerPlanId: string | unde
     features: seed.features,
     limits: seed.limits,
     permissions: seed.permissions,
-    price: String(seed.price),
+    price: seed.price,
     currency: seed.currency,
     interval: seed.interval,
     displayOrder: seed.displayOrder,
@@ -225,7 +225,8 @@ export async function seedDemoData(
         canonicalTierId: "basic",
         tierRank: basicPlan.displayOrder,
         billingCadence: "monthly",
-        price: { amount: Number(basicPlan.price), currency: basicPlan.currency },
+        // Minor units, like `plan.price` (ADR 0007): 900 USD is US$ 9.00.
+        price: { amount: basicPlan.price, currency: basicPlan.currency },
       },
       providerConfirmedPlanChangeId: basicPlan.providerPlanId ?? basicPlan.id,
       effectiveAt: periodEnd,

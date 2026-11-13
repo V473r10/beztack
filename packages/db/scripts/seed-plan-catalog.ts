@@ -53,7 +53,7 @@ async function main() {
       features: seed.features,
       limits: seed.limits,
       permissions: seed.permissions,
-      price: String(seed.price),
+      price: seed.price,
       currency: seed.currency,
       interval: seed.interval,
       displayOrder: seed.displayOrder,

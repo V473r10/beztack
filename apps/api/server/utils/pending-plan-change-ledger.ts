@@ -15,6 +15,10 @@ import {
 } from "@beztack/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import {
+  withLegacySnapshotPrice,
+  withMinorSnapshotPrice,
+} from "@/server/utils/legacy-plan-price";
 import type {
   PendingPlanChangeRecord,
   PendingPlanChangeStatus,
@@ -79,7 +83,8 @@ function mapTargetPlanSnapshot(
     throw new Error("Stored Pending Plan change target Plan has an invalid Billing cadence");
   }
 
-  return { ...snapshot, billingCadence: snapshot.billingCadence };
+  // The snapshot is stored in minor units; readers still expect the old unit (shim, BZ-119).
+  return withLegacySnapshotPrice({ ...snapshot, billingCadence: snapshot.billingCadence });
 }
 
 export function mapPendingPlanChangeRow(row: PendingPlanChangeRow): PendingPlanChangeRecord {
@@ -227,7 +232,7 @@ export function createDbPendingPlanChangeLedger(): PendingPlanChangeLedger {
             providerConfirmedPlanChangeId: input.providerConfirmedPlanChangeId,
             status: "pending",
             subscriptionId: input.subscriptionId,
-            targetPlanSnapshot: input.targetPlanSnapshot,
+            targetPlanSnapshot: withMinorSnapshotPrice(input.targetPlanSnapshot),
           })
           .returning();
 

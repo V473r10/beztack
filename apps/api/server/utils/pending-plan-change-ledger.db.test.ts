@@ -117,6 +117,18 @@ describe.skipIf(!TEST_DATABASE_URL)("Pending Plan change ledger on Postgres", ()
     });
   });
 
+  it("stores the snapshot price in minor units while readers still see the old unit (shim)", async () => {
+    const { db, pendingPlanChange } = modules.dbModule;
+    const ledger = modules.ledgerModule.createDbPendingPlanChangeLedger();
+
+    const saved = await ledger.savePendingPlanChange(change());
+
+    // TARGET_PLAN is Mercado Pago UYU 500 (old unit): 50000 centésimos in the table.
+    const [stored] = await db.select().from(pendingPlanChange);
+    expect(stored?.targetPlanSnapshot.price).toEqual({ amount: 50_000, currency: "UYU" });
+    expect(saved.targetPlanSnapshot.price).toEqual({ amount: 500, currency: "UYU" });
+  });
+
   it("replaces the pending change, keeping the old row as canceled", async () => {
     const ledger = modules.ledgerModule.createDbPendingPlanChangeLedger();
 
