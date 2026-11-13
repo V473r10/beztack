@@ -9,10 +9,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { classifyBillingCadence } from "@/server/utils/plan-change";
-import {
-  planPriceFromLegacyAmount,
-  withLegacyPlanPrice,
-} from "@/server/utils/legacy-plan-price";
+import { planPriceFromLegacyAmount, withLegacyPlanPrice } from "@/server/utils/legacy-plan-price";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const createSchema = z.object({

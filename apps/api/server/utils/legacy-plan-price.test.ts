@@ -73,7 +73,11 @@ describe("legacy plan price shim (until BZ-119)", () => {
     });
 
     it("leaves a Polar snapshot as it is in both directions", () => {
-      const polar = { ...snapshot, paymentProvider: "polar", price: { amount: 900, currency: "USD" } };
+      const polar = {
+        ...snapshot,
+        paymentProvider: "polar",
+        price: { amount: 900, currency: "USD" },
+      };
       expect(withLegacySnapshotPrice(polar)).toEqual(polar);
       expect(withMinorSnapshotPrice(polar)).toEqual(polar);
     });

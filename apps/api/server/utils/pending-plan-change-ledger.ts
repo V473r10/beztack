@@ -15,10 +15,7 @@ import {
 } from "@beztack/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import {
-  withLegacySnapshotPrice,
-  withMinorSnapshotPrice,
-} from "@/server/utils/legacy-plan-price";
+import { withLegacySnapshotPrice, withMinorSnapshotPrice } from "@/server/utils/legacy-plan-price";
 import type {
   PendingPlanChangeRecord,
   PendingPlanChangeStatus,

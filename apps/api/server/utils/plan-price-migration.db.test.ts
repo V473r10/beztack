@@ -195,7 +195,9 @@ describe.skipIf(!TEST_DATABASE_URL)("Price migration on Postgres", () => {
 
   it("keeps Polar prices (already cents) and scales Mercado Pago major units by the currency decimals", async () => {
     const prices = Object.fromEntries(
-      (await readPlans()).filter((row) => !row.id.startsWith("all_")).map((row) => [row.id, row.price]),
+      (await readPlans())
+        .filter((row) => !row.id.startsWith("all_"))
+        .map((row) => [row.id, row.price]),
     );
     expect(prices).toEqual({
       polar_free_month: 0,

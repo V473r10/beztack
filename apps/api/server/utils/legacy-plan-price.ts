@@ -40,9 +40,9 @@ export function planPriceFromLegacyAmount(
 }
 
 /** A `plan` row with `price` in the old unit. */
-export function withLegacyPlanPrice<T extends { provider: string; currency: string; price: number }>(
-  row: T,
-): T {
+export function withLegacyPlanPrice<
+  T extends { provider: string; currency: string; price: number },
+>(row: T): T {
   return { ...row, price: legacyAmountFromPlanPrice(row.price, row.currency, row.provider) };
 }
 

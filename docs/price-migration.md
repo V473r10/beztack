@@ -34,11 +34,11 @@ pnpm db:migrate
 
 What changes:
 
-| Provider (`provider` column / `paymentProvider` in the snapshot) | Old unit | Conversion |
-| --- | --- | --- |
-| `polar` | integer cents | none, already minor units |
-| `mercadopago` | decimal major units (`4500` = $ 4500) | multiplied by 10^decimals of the row's currency, rounded half away from zero |
-| anything else | unknown | left as it is |
+| Provider (`provider` column / `paymentProvider` in the snapshot) | Old unit                              | Conversion                                                                   |
+| ---------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------- |
+| `polar`                                                          | integer cents                         | none, already minor units                                                    |
+| `mercadopago`                                                    | decimal major units (`4500` = $ 4500) | multiplied by 10^decimals of the row's currency, rounded half away from zero |
+| anything else                                                    | unknown                               | left as it is                                                                |
 
 The decimals per currency are the ones `currencyDecimals()` returns (`Intl`): UYU, USD, EUR 2; JPY, CLP,
 COP 0; KWD 3. The migration lists the currencies that do not have 2 decimals in its SQL, and a test
