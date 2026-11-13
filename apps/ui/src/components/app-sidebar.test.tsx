@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  env: {} as { VITE_DOCS_URL?: string },
   membership: null as null | {
     isAppAdmin: boolean;
     organizationRole: string | null;
@@ -9,6 +10,11 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+vi.mock("@/env", () => ({
+  get env() {
+    return mocks.env;
+  },
+}));
 vi.mock("@/contexts/membership-context", () => ({
   useOptionalMembership: () => mocks.membership,
 }));
@@ -54,7 +60,7 @@ vi.mock("react-router", () => ({
   ),
 }));
 
-import { AppSidebar, getSidebarSections } from "./app-sidebar";
+import { AppSidebar, findNavItem, getSidebarSections } from "./app-sidebar";
 
 function as(access: Partial<NonNullable<typeof mocks.membership>>) {
   mocks.membership = {
@@ -71,7 +77,10 @@ function section(html: string, name: string): string[] {
 }
 
 describe("AppSidebar by role", () => {
-  beforeEach(() => as({}));
+  beforeEach(() => {
+    as({});
+    mocks.env = {};
+  });
 
   it("member: no Organization or Platform section", () => {
     as({ organizationRole: "member" });
@@ -121,5 +130,64 @@ describe("AppSidebar by role", () => {
 
     expect(sections.organization).toEqual([]);
     expect(section(renderToStaticMarkup(<AppSidebar />), "Platform")).toEqual([]);
+  });
+});
+
+describe("AppSidebar secondary links", () => {
+  const nobody = { isAppAdmin: false, organizationRole: null, canManageBilling: false };
+
+  it("never links to a dead '#' target", () => {
+    const urls = Object.values(getSidebarSections(nobody, "https://docs.example.com"))
+      .flat()
+      .map((item) => item.url);
+
+    expect(urls).not.toContain("#");
+  });
+
+  it("hides Get Help when no docs URL is configured", () => {
+    const urls = getSidebarSections(nobody).secondary.map((item) => item.url);
+
+    expect(urls).toEqual(["/pricing", "/settings"]);
+  });
+
+  it("links Get Help to the configured docs URL, outside the app", () => {
+    const help = getSidebarSections(nobody, "https://docs.example.com/help").secondary.find(
+      (item) => item.url === "https://docs.example.com/help",
+    );
+
+    expect(help).toMatchObject({ title: "sidebar.secondary.getHelp", external: true });
+  });
+
+  it("renders the configured docs URL in the sidebar", () => {
+    mocks.env = { VITE_DOCS_URL: "https://docs.example.com/help" };
+
+    expect(section(renderToStaticMarkup(<AppSidebar />), "secondary")).toContain(
+      "https://docs.example.com/help",
+    );
+  });
+
+  it("has no Search entry until the command palette exists", () => {
+    const titles = Object.values(getSidebarSections(nobody, "https://docs.example.com"))
+      .flat()
+      .map((item) => item.title);
+
+    expect(titles).not.toContain("sidebar.secondary.search");
+  });
+});
+
+describe("findNavItem", () => {
+  it("finds the sidebar entry for a page", () => {
+    expect(findNavItem("/billing")?.url).toBe("/billing");
+    expect(findNavItem("/admin/plan-changes")?.url).toBe("/admin/plan-changes");
+    expect(findNavItem("/")?.url).toBe("/");
+  });
+
+  it("matches nested pages to their section, most specific first", () => {
+    expect(findNavItem("/admin/users/123")?.url).toBe("/admin/users");
+    expect(findNavItem("/admin")?.url).toBe("/admin");
+  });
+
+  it("does not match the dashboard for unknown pages", () => {
+    expect(findNavItem("/checkout-confirm")).toBeUndefined();
   });
 });

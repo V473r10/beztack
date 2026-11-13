@@ -84,3 +84,45 @@ describe("UI env: VITE_DEMO_MODE", () => {
     await expect(loadUiEnv()).rejects.toThrow();
   });
 });
+
+describe("UI env: VITE_DOCS_URL", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("is undefined when not set", async () => {
+    stubUiEnv({});
+
+    const env = await loadUiEnv();
+
+    expect(env.VITE_DOCS_URL).toBeUndefined();
+  });
+
+  it("treats an empty value as not set", async () => {
+    stubUiEnv({ VITE_DOCS_URL: "" });
+
+    const env = await loadUiEnv();
+
+    expect(env.VITE_DOCS_URL).toBeUndefined();
+  });
+
+  it("exposes a configured docs URL", async () => {
+    stubUiEnv({ VITE_DOCS_URL: "https://docs.example.com/help" });
+
+    const env = await loadUiEnv();
+
+    expect(env.VITE_DOCS_URL).toBe("https://docs.example.com/help");
+  });
+
+  it("rejects a value that is not a URL", async () => {
+    stubUiEnv({ VITE_DOCS_URL: "not a url" });
+
+    await expect(loadUiEnv()).rejects.toThrow();
+  });
+});

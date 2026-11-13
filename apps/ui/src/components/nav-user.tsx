@@ -3,7 +3,6 @@ import {
   IconDotsVertical,
   IconLanguage,
   IconLogout,
-  IconNotification,
   IconRoute,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -33,6 +32,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useMembership } from "@/contexts/membership-context";
 import { authClient } from "@/lib/auth-client";
+import { getInitials } from "@/lib/initials";
 
 export function NavUser() {
   const { data: session } = authClient.useSession();
@@ -42,6 +42,7 @@ export function NavUser() {
     email: session?.user?.email ?? "",
     avatar: session?.user?.image ?? "",
   };
+  const initials = getInitials(user);
   const { t, i18n } = useTranslation();
   const { isMobile } = useSidebar();
   const { startTour } = useTour();
@@ -77,7 +78,7 @@ export function NavUser() {
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage alt={user.name} src={user.avatar} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -99,7 +100,7 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage alt={user.name} src={user.avatar} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -115,10 +116,6 @@ export function NavUser() {
               <DropdownMenuItem onClick={() => navigate("/billing")}>
                 <IconCreditCard />
                 {t("sidebar.userMenu.billing")}
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                {t("sidebar.userMenu.notifications")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

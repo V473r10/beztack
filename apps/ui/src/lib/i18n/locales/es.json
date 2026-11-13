@@ -447,10 +447,6 @@
       "jamik": "Jamik Tashpulatov"
     },
     "selectAll": "Seleccionar todo",
-    "selectFocusDocuments": "Seleccionar documentos de enfoque",
-    "selectKeyPersonnel": "Seleccionar personal clave",
-    "selectOutline": "Seleccionar esquema",
-    "selectPastPerformance": "Seleccionar rendimiento pasado",
     "selectRow": "Seleccionar fila",
     "statuses": {
       "done": "Hecho",
@@ -489,11 +485,11 @@
       "toc": "Tabla de Contenidos"
     },
     "views": {
-      "focusDocuments": "Documentos de Enfoque",
-      "keyPersonnel": "Personal Clave",
+      "focusDocuments": "Documentos",
+      "keyPersonnel": "Personal clave",
       "label": "Ver",
       "outline": "Esquema",
-      "pastPerformance": "Rendimiento Pasado",
+      "pastPerformance": "Rendimiento",
       "placeholder": "Selecciona una vista"
     }
   },
@@ -522,6 +518,11 @@
         "special": "Al menos un carácter especial",
         "uppercase": "Al menos una letra mayúscula"
       }
+    }
+  },
+  "header": {
+    "pageTitles": {
+      "checkoutConfirm": "Confirmar compra"
     }
   },
   "misc": {
@@ -594,7 +595,6 @@
       "account": "Cuenta",
       "billing": "Facturación",
       "language": "Idioma",
-      "notifications": "Notificaciones",
       "signOut": "Cerrar Sesión"
     }
   },

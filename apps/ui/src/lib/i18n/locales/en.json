@@ -444,10 +444,6 @@
       "jamik": "Jamik Tashpulatov"
     },
     "selectAll": "Select all",
-    "selectFocusDocuments": "Select focus documents",
-    "selectKeyPersonnel": "Select key personnel",
-    "selectOutline": "Select outline",
-    "selectPastPerformance": "Select past performance",
     "selectRow": "Select row",
     "statuses": {
       "done": "Done",
@@ -518,6 +514,11 @@
         "special": "At least one special character",
         "uppercase": "At least one uppercase letter"
       }
+    }
+  },
+  "header": {
+    "pageTitles": {
+      "checkoutConfirm": "Confirm checkout"
     }
   },
   "misc": {
@@ -601,7 +602,6 @@
       "account": "Account",
       "billing": "Billing",
       "language": "Language",
-      "notifications": "Notifications",
       "signOut": "Sign Out"
     }
   },

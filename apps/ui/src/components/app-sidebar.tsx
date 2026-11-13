@@ -10,7 +10,6 @@ import {
   IconInnerShadowTop,
   IconListDetails,
   IconScan,
-  IconSearch,
   IconSettings,
   IconShield,
   IconUserCog,
@@ -34,6 +33,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useOptionalMembership } from "@/contexts/membership-context";
+import { env } from "@/env";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 /** What a sidebar item may require of the caller; see {@link RouteAccess}. */
@@ -45,6 +45,8 @@ export type SidebarNavItem = {
   icon: Icon;
   id?: string;
   requires?: NavRequirement;
+  /** Opens outside the app (new tab) instead of through the router. */
+  external?: boolean;
 };
 
 export type SidebarAccess = RouteAccess;
@@ -88,8 +90,8 @@ const NAV_SECONDARY: SidebarNavItem[] = [
     icon: IconSettings,
     id: TOUR_STEP_IDS.SETTINGS_BUTTON,
   },
-  { title: "sidebar.secondary.getHelp", url: "#", icon: IconHelp },
-  { title: "sidebar.secondary.search", url: "#", icon: IconSearch },
+  // "Get Help" is added by getSidebarSections when VITE_DOCS_URL is set. "Search" returns
+  // with the command palette (BZ-105 ticket 18); a link that goes nowhere does not ship.
 ];
 
 function meets(requirement: NavRequirement | undefined, access: SidebarAccess): boolean {
@@ -108,14 +110,28 @@ function meets(requirement: NavRequirement | undefined, access: SidebarAccess): 
 }
 
 /** The sidebar sections and the items each caller may use. Same rules as the routes. */
-export function getSidebarSections(access: SidebarAccess) {
+export function getSidebarSections(access: SidebarAccess, docsUrl?: string) {
   const visible = (items: SidebarNavItem[]) => items.filter((item) => meets(item.requires, access));
+  const help: SidebarNavItem[] = docsUrl
+    ? [{ title: "sidebar.secondary.getHelp", url: docsUrl, icon: IconHelp, external: true }]
+    : [];
   return {
     main: visible(NAV_MAIN),
     organization: visible(NAV_ORGANIZATION),
     platform: visible(NAV_PLATFORM),
-    secondary: visible(NAV_SECONDARY),
+    secondary: [...visible(NAV_SECONDARY), ...help],
   };
+}
+
+/**
+ * The sidebar entry for a page, so the header can name the page the same way the menu does.
+ * The most specific URL wins (`/admin/users/1` is User Management, not Platform Admin).
+ */
+export function findNavItem(pathname: string): SidebarNavItem | undefined {
+  const matches = [...NAV_MAIN, ...NAV_ORGANIZATION, ...NAV_PLATFORM, ...NAV_SECONDARY].filter(
+    (item) => item.url === pathname || (item.url !== "/" && pathname.startsWith(`${item.url}/`)),
+  );
+  return matches.sort((a, b) => b.url.length - a.url.length)[0];
 }
 
 const NO_ACCESS: SidebarAccess = {
@@ -126,7 +142,7 @@ const NO_ACCESS: SidebarAccess = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const membership = useOptionalMembership();
-  const sections = getSidebarSections(membership ?? NO_ACCESS);
+  const sections = getSidebarSections(membership ?? NO_ACCESS, env.VITE_DOCS_URL);
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
