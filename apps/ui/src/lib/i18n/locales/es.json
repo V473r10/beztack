@@ -141,7 +141,7 @@
     "limits": {
       "users": "Miembros del equipo",
       "projects": "Proyectos",
-      "storage": "Almacenamiento (GB)",
+      "storage": "Almacenamiento",
       "apiCalls": "Llamadas a la API por mes",
       "organizations": "Organizaciones"
     },

@@ -141,7 +141,7 @@
     "limits": {
       "users": "Team members",
       "projects": "Projects",
-      "storage": "Storage (GB)",
+      "storage": "Storage",
       "apiCalls": "API calls per month",
       "organizations": "Organizations"
     },
