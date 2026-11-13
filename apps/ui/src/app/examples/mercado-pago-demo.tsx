@@ -33,7 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { env } from "@/env";
-import { formatPrice } from "@/lib/format";
+import { formatMercadoPagoAmount } from "@/lib/format";
 
 type PaymentResult = {
   id: number;
@@ -449,7 +449,10 @@ import {
                       Plan seleccionado:{" "}
                       <strong>
                         {selectedPlan.reason} -{" "}
-                        {formatPrice(selectedPlan.transactionAmount, selectedPlan.currencyId)}{" "}
+                        {formatMercadoPagoAmount(
+                          selectedPlan.transactionAmount,
+                          selectedPlan.currencyId,
+                        )}{" "}
                         {formatFrequency(selectedPlan.frequency, selectedPlan.frequencyType)}
                       </strong>
                     </CardDescription>

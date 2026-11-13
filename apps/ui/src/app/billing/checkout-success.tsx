@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import { MembershipBadge } from "@/components/payments/membership-badge";
-import { formatCurrency } from "@/components/payments/pricing-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useMembership } from "@/contexts/membership-context";
+import { formatPrice } from "@/lib/format";
 import type { MembershipTier } from "@/types/membership";
 
 const MAX_FEATURES_DISPLAY = 6;
@@ -119,7 +119,7 @@ export default function CheckoutSuccess() {
                   {activeSubscription?.metadata?.tier
                     ? t("billing.checkoutSuccess.activeSubscription")
                     : t("billing.checkoutSuccess.pricePerMonth", {
-                        price: formatCurrency(tierConfig?.price?.monthly || 0),
+                        price: formatPrice(tierConfig?.price?.monthly || 0, tierConfig?.currency),
                       })}
                 </div>
               </div>

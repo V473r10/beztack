@@ -1,6 +1,5 @@
 import { db, plan } from "@beztack/db";
 import { and, eq } from "drizzle-orm";
-import { legacyAmountFromPlanPrice } from "@/server/utils/legacy-plan-price";
 import type { CatalogPlan } from "./catalog";
 import type { Product } from "./types";
 
@@ -23,7 +22,7 @@ export async function getCatalogPlans(): Promise<CatalogPlan[]> {
     limits: (p.limits as Record<string, number> | null) ?? {},
     permissions: (p.permissions as string[] | null) ?? [],
     price: {
-      amount: legacyAmountFromPlanPrice(p.price, p.currency, p.provider),
+      amount: p.price,
       currency: p.currency,
     },
     frequency: p.intervalCount ?? 1,
@@ -62,7 +61,7 @@ export async function getCatalogProducts(paymentProvider: string): Promise<Produ
         description: row.description ?? undefined,
         type: "plan",
         price: {
-          amount: legacyAmountFromPlanPrice(row.price, row.currency, row.provider),
+          amount: row.price,
           currency: row.currency,
         },
         interval: row.interval,
@@ -100,7 +99,7 @@ export async function getCatalogPlanById(planId: string): Promise<CatalogPlan | 
     limits: (p.limits as Record<string, number> | null) ?? {},
     permissions: (p.permissions as string[] | null) ?? [],
     price: {
-      amount: legacyAmountFromPlanPrice(p.price, p.currency, p.provider),
+      amount: p.price,
       currency: p.currency,
     },
     frequency: p.intervalCount ?? 1,
@@ -134,7 +133,7 @@ export async function getCatalogPlanByProviderPlanId(
     limits: (p.limits as Record<string, number> | null) ?? {},
     permissions: (p.permissions as string[] | null) ?? [],
     price: {
-      amount: legacyAmountFromPlanPrice(p.price, p.currency, p.provider),
+      amount: p.price,
       currency: p.currency,
     },
     frequency: p.intervalCount ?? 1,

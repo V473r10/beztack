@@ -11,7 +11,7 @@ function priceOf(
 }
 
 describe("the seeded plan catalog stores integer minor units (ADR 0007)", () => {
-  it("Polar prices are US$ cents", () => {
+  it("Polar prices are US$ minor units", () => {
     const plans = buildSeedPlans("polar", "USD");
 
     expect(priceOf(plans, "free", "month")).toBe(0);

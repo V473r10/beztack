@@ -101,7 +101,7 @@ export const BASE_TIERS: BaseTier[] = [
 
 /**
  * Demo prices per provider:
- * - Polar: US$ cents (900 = $9.00). Polar only charges in USD.
+ * - Polar: US$ minor units (900 = $9.00). Polar only charges in USD.
  * - MercadoPago: whole units of the project DEFAULT_CURRENCY (4500 = 4500
  *   units), converted to that currency's minor units by `buildSeedPlans`.
  *   Adjust these demo amounts to your currency.
@@ -138,7 +138,7 @@ export function buildSeedPlans(provider: string, mercadoPagoCurrency: string): S
 
   for (const tier of BASE_TIERS) {
     const prices = pricing[tier.canonicalTierId] ?? { monthly: 0 };
-    // Polar amounts are already cents; Mercado Pago amounts are whole currency units.
+    // Polar amounts are already minor units; Mercado Pago amounts are whole currency units.
     const toMinor = (amount: number) =>
       isMP ? majorToMinor(amount, currency, { rounding: "half-away-from-zero" }) : amount;
 

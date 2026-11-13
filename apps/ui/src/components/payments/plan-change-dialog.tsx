@@ -36,10 +36,9 @@ import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { type AnyPlanChangePreview, usePlanChangePreview } from "@/hooks/use-plan-change-preview";
 import { usePricingTiers } from "@/hooks/use-pricing-tiers";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
-import { formatCurrency } from "./pricing-card";
 import { queryKeys } from "@/lib/query-keys";
 
 const MAX_FEATURES_TO_SHOW = 4;
@@ -185,7 +184,7 @@ export function PlanChangePreviewSummary({
           </div>
           <div className="font-semibold capitalize">{currentPlan.canonicalTierId}</div>
           <div className="mt-1 text-muted-foreground text-sm">
-            {formatCurrency(currentPlan.price.amount, currentPlan.price.currency)}/
+            {formatPrice(currentPlan.price.amount, currentPlan.price.currency)}/
             {cadenceSuffix(currentPlan.billingCadence)}
           </div>
         </div>
@@ -195,7 +194,7 @@ export function PlanChangePreviewSummary({
           </div>
           <div className="font-semibold capitalize">{targetPlan.canonicalTierId}</div>
           <div className="mt-1 text-sm">
-            {formatCurrency(targetPlan.price.amount, targetPlan.price.currency)}/
+            {formatPrice(targetPlan.price.amount, targetPlan.price.currency)}/
             {cadenceSuffix(targetPlan.billingCadence)}
           </div>
         </div>
@@ -212,7 +211,7 @@ export function PlanChangePreviewSummary({
                 })}
               </span>
               <span className="font-medium text-green-600 dark:text-green-400">
-                -{formatCurrency(firstPayment.credit, firstPayment.currency)}
+                -{formatPrice(firstPayment.credit, firstPayment.currency)}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -220,13 +219,13 @@ export function PlanChangePreviewSummary({
                 {t("billing.planChange.dueToday", "Due today")}
               </span>
               <span className="font-semibold">
-                {formatCurrency(firstPayment.amount, firstPayment.currency)}
+                {formatPrice(firstPayment.amount, firstPayment.currency)}
               </span>
             </div>
             <p className="text-muted-foreground text-xs">
               {t("billing.planChange.thenFullAmount", {
                 defaultValue: "Then {{price}} each period.",
-                price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
+                price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
               })}
             </p>
           </>
@@ -236,12 +235,12 @@ export function PlanChangePreviewSummary({
               ? t("billing.planChange.startsOn", {
                   defaultValue: "You keep your current plan until {{date}}, then pay {{price}}.",
                   date: formatDate(preview.effectiveAt, { dateStyle: "long" }),
-                  price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
+                  price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
                 })
               : t("billing.planChange.startsAtRenewal", {
                   defaultValue:
                     "You keep your current plan until the next renewal, then pay {{price}}.",
-                  price: formatCurrency(firstPayment.fullAmount, firstPayment.currency),
+                  price: formatPrice(firstPayment.fullAmount, firstPayment.currency),
                 })}
           </p>
         )}

@@ -32,21 +32,26 @@ afterEach(() => {
 });
 
 describe("fetchPricingTiers", () => {
-  // Products arrive as integer minor units whatever the provider (ADR 0007).
+  // Products arrive as integer minor units whatever the provider (ADR 0007),
+  // and the tier keeps them that way: formatting is the UI's job.
   it.each([
-    { provider: "polar", currency: "USD", amount: 900, display: 9 },
-    { provider: "mercadopago", currency: "USD", amount: 900, display: 9 },
-    { provider: "mercadopago", currency: "UYU", amount: 39_000, display: 390 },
-    { provider: "mercadopago", currency: "JPY", amount: 900, display: 900 },
-    { provider: "polar", currency: "KWD", amount: 9000, display: 9 },
+    { provider: "polar", currency: "USD", amount: 900 },
+    { provider: "mercadopago", currency: "USD", amount: 900 },
+    { provider: "mercadopago", currency: "UYU", amount: 39_000 },
+    { provider: "mercadopago", currency: "JPY", amount: 900 },
+    { provider: "polar", currency: "KWD", amount: 9000 },
   ])(
-    "shows a $currency price from $provider as $display",
-    async ({ provider, currency, amount, display }) => {
+    "keeps a $currency price from $provider as $amount minor units",
+    async ({ provider, currency, amount }) => {
       stubProducts(provider, amount, currency);
 
       const [tier] = await fetchPricingTiers("http://api.test");
 
-      expect(tier?.price.monthly).toBe(display);
+      expect(tier?.price.monthly).toBe(amount);
+      expect(tier?.monthly?.prices[0]).toMatchObject({
+        priceAmount: amount,
+        priceCurrency: currency,
+      });
     },
   );
 });

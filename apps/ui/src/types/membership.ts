@@ -23,10 +23,13 @@ export type MembershipTierConfig = {
   readonly id: string;
   readonly name: string;
   readonly description: string;
+  /** Integer minor units of `currency` (ADR 0007): 900 is US$ 9.00. */
   readonly price: {
     readonly monthly: number;
     readonly yearly: number;
   };
+  /** ISO 4217 code of `price`; unset while the tier has no priced plan. */
+  readonly currency?: string;
   readonly monthly?: PaymentProduct;
   readonly yearly?: PaymentProduct;
   readonly features: string[];
