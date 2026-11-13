@@ -392,6 +392,17 @@ describe("createMercadoPagoAdapter", () => {
       },
     );
 
+    it("reports the payment method of a subscription", async () => {
+      client.subscriptions.get.mockResolvedValueOnce({
+        ...subscriptionIn("USD", 9.99),
+        payment_method_id: "visa",
+      });
+
+      const result = await createAdapter().getSubscription("sub_1");
+
+      expect(result?.metadata).toMatchObject({ paymentMethodId: "visa" });
+    });
+
     it("reports the billing amount of a listed subscription in minor units", async () => {
       client.subscriptions.search.mockResolvedValueOnce({
         paging: { total: 1, limit: 50, offset: 0 },
