@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/plans — Create a new plan in both DB and payment provider
+ * POST /api/auth/admin/plans — Create a new plan in both DB and payment provider
  */
 import { randomUUID } from "node:crypto";
 import { db, plan } from "@beztack/db";

@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/plans/import — Import a remote provider product into the DB
+ * POST /api/auth/admin/plans/import — Import a remote provider product into the DB
  */
 import { randomUUID } from "node:crypto";
 import { db, plan } from "@beztack/db";

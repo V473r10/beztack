@@ -1,5 +1,6 @@
 import { ArrowDownToLine, ArrowUpFromLine, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PLAN_SYNC_PUSH_DISABLED_TITLE, PLAN_SYNC_PUSH_ENABLED } from "../constants";
 import { useSyncMutation } from "../hooks";
 import type { SyncDiff } from "../types";
 
@@ -35,7 +36,7 @@ export function DiffTable({ diffs, planId }: { diffs: SyncDiff[]; planId: string
       <div className="flex gap-2">
         <Button
           className="gap-1.5"
-          disabled={syncMutation.isPending}
+          disabled={!PLAN_SYNC_PUSH_ENABLED || syncMutation.isPending}
           onClick={() =>
             syncMutation.mutate({
               planId,
@@ -43,6 +44,7 @@ export function DiffTable({ diffs, planId }: { diffs: SyncDiff[]; planId: string
             })
           }
           size="sm"
+          title={PLAN_SYNC_PUSH_ENABLED ? undefined : PLAN_SYNC_PUSH_DISABLED_TITLE}
           type="button"
           variant="outline"
         >
