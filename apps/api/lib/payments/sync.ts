@@ -34,8 +34,10 @@ export type SyncedPlanView = {
 function computeDiffs(local: DbPlan, remote: Product): SyncDiff[] {
   const diffs: SyncDiff[] = [];
 
-  // displayName (local) vs name (remote)
-  if (local.displayName !== remote.name) {
+  // displayName (local) vs name (remote). A product named "<Tier> - <Period>" is the
+  // plan called "<Tier>": the pricing page names a tier from the text before " - ".
+  const remoteName = remote.name.split(" - ")[0] || remote.name;
+  if (local.displayName !== remoteName) {
     diffs.push({
       field: "displayName",
       localValue: local.displayName,
