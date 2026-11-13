@@ -116,6 +116,7 @@ export function TourProvider({
   className,
   isTourCompleted = false,
 }: TourProviderProps) {
+  const { t } = useTranslation();
   const [steps, setSteps] = useState<TourStep[]>([]);
   const [currentStep, setCurrentStep] = useState(-1);
   const [elementPosition, setElementPosition] = useState<{
@@ -284,7 +285,7 @@ export function TourProvider({
               }}
             >
               <div className="absolute top-4 right-4 text-muted-foreground text-xs">
-                {currentStep + 1} / {steps.length}
+                {`${currentStep + 1} / ${steps.length}`}
               </div>
               <AnimatePresence mode="wait">
                 <div>
@@ -311,7 +312,7 @@ export function TourProvider({
                         onClick={previousStep}
                         type="button"
                       >
-                        Previous
+                        {t("tour.previous")}
                       </button>
                     )}
                     <button
@@ -319,7 +320,7 @@ export function TourProvider({
                       onClick={nextStep}
                       type="button"
                     >
-                      {currentStep === steps.length - 1 ? "Finish" : "Next"}
+                      {currentStep === steps.length - 1 ? t("tour.finish") : t("tour.next")}
                     </button>
                   </div>
                 </div>

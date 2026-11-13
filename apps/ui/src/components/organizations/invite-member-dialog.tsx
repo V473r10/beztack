@@ -1,5 +1,6 @@
 import { Crown, Loader2, Mail, Shield, User } from "lucide-react";
 import { useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,8 +24,10 @@ import { useInviteMember, useTeams } from "@/hooks/use-organizations";
 import {
   type InviteMemberData,
   inviteMemberSchema,
-  ROLE_DESCRIPTIONS,
-  ROLE_LABELS,
+  ORGANIZATION_ROLES,
+  type OrganizationRole,
+  roleDescription,
+  roleLabel,
 } from "@/lib/organization-types";
 
 type InviteMemberDialogProps = {
@@ -38,11 +41,12 @@ export function InviteMemberDialog({
   onOpenChange,
   organizationId,
 }: InviteMemberDialogProps) {
+  const { t } = useTranslation();
   const inviteMember = useInviteMember();
   const { data: teams = [] } = useTeams(organizationId);
 
   const form = useAppForm({
-    validators: { onChange: inviteMemberSchema },
+    validators: { onChange: inviteMemberSchema(t) },
     defaultValues: {
       email: "",
       role: "member",
@@ -98,19 +102,16 @@ export function InviteMemberDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Mail className="h-5 w-5" />
-            <span>Invite Member</span>
+            <span>{t("organizations.invite.title")}</span>
           </DialogTitle>
-          <DialogDescription>
-            Send an invitation to join this organization. They will receive an email with
-            instructions.
-          </DialogDescription>
+          <DialogDescription>{t("organizations.invite.description")}</DialogDescription>
         </DialogHeader>
         <form.AppForm>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <form.AppField name="email">
               {(field) => (
                 <field.FormItem>
-                  <field.FormLabel>Email Address</field.FormLabel>
+                  <field.FormLabel>{t("organizations.invite.email")}</field.FormLabel>
                   <field.FormControl>
                     <Input
                       disabled={inviteMember.isPending}
@@ -122,7 +123,7 @@ export function InviteMemberDialog({
                     />
                   </field.FormControl>
                   <field.FormDescription>
-                    Enter the email address of the person you want to invite.
+                    {t("organizations.invite.emailHelp")}
                   </field.FormDescription>
                   <field.FormMessage />
                 </field.FormItem>
@@ -132,7 +133,7 @@ export function InviteMemberDialog({
             <form.AppField name="role">
               {(field) => (
                 <field.FormItem>
-                  <field.FormLabel>Role</field.FormLabel>
+                  <field.FormLabel>{t("organizations.invite.role")}</field.FormLabel>
                   <field.FormControl>
                     <Select
                       disabled={inviteMember.isPending}
@@ -142,19 +143,19 @@ export function InviteMemberDialog({
                       value={field.state.value}
                     >
                       <SelectTrigger className="!h-auto !min-h-[3.5rem] w-full py-3">
-                        <SelectValue placeholder="Select a role" />
+                        <SelectValue placeholder={t("organizations.invite.rolePlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                        {(Object.keys(ORGANIZATION_ROLES) as OrganizationRole[]).map((role) => (
                           <SelectItem className="py-3" key={role} value={role}>
                             <div className="flex items-start gap-3 text-left">
                               <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-muted">
                                 {getRoleIcon(role)}
                               </div>
                               <div>
-                                <p className="font-medium leading-tight">{label}</p>
+                                <p className="font-medium leading-tight">{roleLabel(t, role)}</p>
                                 <p className="text-muted-foreground text-sm leading-snug">
-                                  {ROLE_DESCRIPTIONS[role as keyof typeof ROLE_DESCRIPTIONS]}
+                                  {roleDescription(t, role)}
                                 </p>
                               </div>
                             </div>
@@ -172,7 +173,7 @@ export function InviteMemberDialog({
               <form.AppField name="teamId">
                 {(field) => (
                   <field.FormItem>
-                    <field.FormLabel>Team (Optional)</field.FormLabel>
+                    <field.FormLabel>{t("organizations.invite.team")}</field.FormLabel>
                     <field.FormControl>
                       <Select
                         disabled={inviteMember.isPending}
@@ -180,7 +181,7 @@ export function InviteMemberDialog({
                         value={field.state.value}
                       >
                         <SelectTrigger className="!h-auto w-full py-3">
-                          <SelectValue placeholder="Select a team (optional)" />
+                          <SelectValue placeholder={t("organizations.invite.teamPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
                           {teams.map((team) => (
@@ -192,7 +193,7 @@ export function InviteMemberDialog({
                       </Select>
                     </field.FormControl>
                     <field.FormDescription>
-                      Optionally add the member to a specific team.
+                      {t("organizations.invite.teamHelp")}
                     </field.FormDescription>
                     <field.FormMessage />
                   </field.FormItem>
@@ -207,11 +208,11 @@ export function InviteMemberDialog({
                 type="button"
                 variant="outline"
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button disabled={inviteMember.isPending} type="submit">
                 {inviteMember.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Send Invitation
+                {t("organizations.invite.send")}
               </Button>
             </DialogFooter>
           </form>

@@ -77,7 +77,10 @@ export function CheckoutConfirmView({
         <div className="rounded-lg border bg-muted/30 p-4">
           <div className="font-semibold">{tier.name}</div>
           <div className="mt-1 text-muted-foreground text-sm">
-            {formatPrice(price, tier.currency)} / {t(`billing.${selection.billingPeriod}`)}
+            {t("home.plan.price", {
+              price: formatPrice(price, tier.currency),
+              cadence: t(`billing.cadenceUnit.${selection.billingPeriod}`),
+            })}
           </div>
         </div>
       </CardContent>

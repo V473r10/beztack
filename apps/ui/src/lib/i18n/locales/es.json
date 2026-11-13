@@ -53,7 +53,15 @@
         },
         "alreadyEnabled": "Tu cuenta está protegida con autenticación en dos pasos. Tus códigos de respaldo se guardaron y cifraron de forma segura.",
         "backupCodesWarning": "¡Guardá estos códigos de respaldo ahora! No vas a poder verlos de nuevo. Cada código se puede usar una sola vez.",
-        "scanQrCode": "Escaneá este código QR con tu aplicación de autenticación y después ingresá el código de verificación."
+        "scanQrCode": "Escaneá este código QR con tu aplicación de autenticación y después ingresá el código de verificación.",
+        "enabledTitle": "Autenticación de dos factores activada",
+        "saveCodesFirst": "Guardá tus códigos de respaldo antes de terminar la configuración",
+        "backupFile": {
+          "title": "Códigos de respaldo de la autenticación de dos factores",
+          "warning": "Guardá estos códigos de respaldo en un lugar seguro. Cada código se puede usar una sola vez.",
+          "generatedOn": "Generado el: {{date}}",
+          "downloaded": "¡Códigos de respaldo descargados!"
+        }
       }
     }
   },
@@ -248,7 +256,7 @@
       "confirmDowngrade": "Continuar",
       "confirmSwitch": "Cambiar Plan",
       "previewLoading": "Calculando el cambio de plan...",
-      "adminTierOverride": "Admin tier override",
+      "adminTierOverride": "Nivel asignado por un admin",
       "adminTierOverrideNoPayment": "Se aplica en el momento. No se cobra nada y las suscripciones reales no cambian.",
       "previewError": "No pudimos calcular el precio de este cambio de plan.",
       "credit": "Crédito por {{days}} días sin usar",
@@ -256,6 +264,7 @@
       "thenFullAmount": "Después {{price}} por período.",
       "startsOn": "Mantienes tu plan actual hasta el {{date}} y después pagas {{price}}.",
       "startsAtRenewal": "Mantienes tu plan actual hasta la próxima renovación y después pagas {{price}}.",
+      "pricePerCadence": "{{price}}/{{cadence}}",
       "pendingTitle": "Cambio de plan pendiente",
       "pendingNotice": "Se activa en tu próxima renovación. Hoy no se cobra nada.",
       "scheduledToast": "Cambio de plan programado. Se aplica en tu próxima renovación."
@@ -391,7 +400,87 @@
       "organization_required": "Primero creá una organización: esta acción se cobra a una organización.",
       "provider_did_not_apply": "El proveedor de pagos no aplicó el cambio de plan. No se cobró nada. Probá de nuevo en un momento."
     },
-    "checkoutFailed": "No se pudo iniciar el pago"
+    "checkoutFailed": "No se pudo iniciar el pago",
+    "dashboard": {
+      "currentPlan": "Plan actual",
+      "currentPlanDescription": "Administrá tu suscripción y tus preferencias de facturación",
+      "noActiveSubscription": "Sin suscripción activa",
+      "noActiveSubscriptions": "No hay suscripciones activas",
+      "manageBilling": "Administrar facturación",
+      "manageBillingError": "Hubo un error al administrar tu facturación",
+      "changePlan": "Cambiar de plan",
+      "choosePlan": "Elegir un plan",
+      "tabs": {
+        "usage": "Uso",
+        "subscriptions": "Suscripciones",
+        "orders": "Pedidos"
+      },
+      "subscription": {
+        "title": "Suscripción",
+        "planName": "Plan {{tier}}",
+        "active": "Suscripción activa",
+        "unknown": "Suscripción desconocida",
+        "statusActive": "Activa",
+        "statusCanceledUntil": "Cancelada (activa hasta el {{date}})",
+        "statusCanceled": "Cancelada",
+        "graceNotice": "Tu suscripción está cancelada pero sigue activa hasta el {{date}}. Podés reactivarla cuando quieras antes de esa fecha.",
+        "nextBilling": "Próximo cobro",
+        "started": "Inicio",
+        "manage": "Administrar",
+        "upgrade": "Mejorar"
+      },
+      "orders": {
+        "empty": "No se encontraron pedidos",
+        "order": "Pedido",
+        "status": {
+          "completed": "Completado",
+          "pending": "Pendiente",
+          "canceled": "Cancelado",
+          "refunded": "Reembolsado",
+          "failed": "Fallido",
+          "unknown": "Desconocido"
+        }
+      },
+      "notAvailable": "N/D"
+    },
+    "usage": {
+      "title": "Métricas de uso",
+      "description": "Uso actual de tu plan {{plan}}",
+      "badgeExceeded": "Límite superado",
+      "badgeNear": "Cerca del límite",
+      "percentUsed": "{{percent}}% usado",
+      "itemExceeded": "Superaste el límite de uso",
+      "itemNear": "Te acercás al límite de uso",
+      "bannerExceeded": "Superaste los límites de uso",
+      "bannerNear": "Te acercás a los límites de uso",
+      "hintExceeded": "Mejorá tu plan para recuperar todas las funciones",
+      "hintNear": "Considerá mejorar tu plan para evitar interrupciones del servicio",
+      "upgradePlan": "Mejorar plan",
+      "enterpriseUnlimited": "El plan Enterprise incluye uso ilimitado en todas las métricas"
+    },
+    "upgradeDialog": {
+      "noChangesTitle": "No hay cambios de plan disponibles",
+      "noChangesDescription": "No hay otros planes disponibles. Contactá a nuestro equipo de ventas para soluciones enterprise a medida.",
+      "contactSales": "Contactar a ventas",
+      "title": "Cambiá tu plan",
+      "subtitle": "Elegí el plan que se ajuste a lo que necesitás",
+      "currentlyOn": "Actualmente en:",
+      "upgradePreview": "Vista previa de la mejora",
+      "creditFromCurrent": "Crédito del plan actual:",
+      "daysRemaining_one": "queda {{count}} día",
+      "daysRemaining_other": "quedan {{count}} días",
+      "thenPerMonth": "después {{price}}/mes",
+      "downgradePreview": "Vista previa del cambio a un plan inferior",
+      "benefitsKept_one": "Mantenés los beneficios actuales por {{count}} día más",
+      "benefitsKept_other": "Mantenés los beneficios actuales por {{count}} días más",
+      "perMonth": "{{price}}/mes",
+      "enterpriseTitle": "¿Necesitás funciones Enterprise?",
+      "enterpriseDescription": "Soluciones a medida, soporte dedicado y uso ilimitado para organizaciones grandes."
+    },
+    "cadenceUnit": {
+      "monthly": "mes",
+      "yearly": "año"
+    }
   },
   "common": {
     "footer": "© {{year}} {{appName}}. Todos los derechos reservados.",
@@ -559,7 +648,8 @@
       "account": "Cuenta",
       "billing": "Facturación",
       "language": "Idioma",
-      "signOut": "Cerrar Sesión"
+      "signOut": "Cerrar Sesión",
+      "signedOut": "¡Cerraste sesión!"
     },
     "nav": {
       "dashboard": "Panel",
@@ -587,6 +677,10 @@
       "number": "Debe contener al menos un número",
       "special": "Debe contener al menos un carácter especial",
       "uppercase": "Debe contener al menos una letra mayúscula"
+    },
+    "groups": {
+      "organization": "Organización",
+      "platform": "Plataforma"
     }
   },
   "validation": {
@@ -619,7 +713,10 @@
       "step1": "En la página de configuración puedes gestionar tus configuraciones de autenticación de dos factores, información, etc.",
       "plan": "Esta tarjeta muestra tu plan actual y cuándo se renueva.",
       "nextSteps": "Acá ves qué hacer ahora: elegir un plan, invitar a tu equipo o cambiar de plan."
-    }
+    },
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "finish": "Terminar"
   },
   "invitation": {
     "loading": "Cargando invitación",
@@ -672,6 +769,194 @@
       "logo": "URL del logo (opcional)",
       "submit": "Crear organización",
       "cancel": "Cancelar"
+    },
+    "roles": {
+      "owner": "Propietario",
+      "admin": "Admin",
+      "member": "Miembro"
+    },
+    "roleDescriptions": {
+      "owner": "Acceso total a la configuración y a los miembros de la organización",
+      "admin": "Puede administrar miembros y la configuración de la organización",
+      "member": "Acceso básico a los recursos de la organización"
+    },
+    "validation": {
+      "nameLength": "El nombre de la organización debe tener al menos 2 caracteres",
+      "slugMin": "El identificador debe tener al menos 2 caracteres",
+      "slugMax": "El identificador debe tener menos de 50 caracteres",
+      "slugFormat": "El identificador solo puede tener minúsculas, números y guiones",
+      "email": "Ingresá un email válido",
+      "role": "Elegí un rol",
+      "teamNameLength": "El nombre del equipo debe tener al menos 2 caracteres"
+    },
+    "errors": {
+      "fetchOrganizations": "No pudimos cargar las organizaciones",
+      "fetchMembers": "No pudimos cargar los miembros de la organización",
+      "fetchInvitations": "No pudimos cargar las invitaciones de la organización",
+      "fetchTeams": "No pudimos cargar los equipos",
+      "fetchTeamMembers": "No pudimos cargar los miembros del equipo",
+      "createOrganization": "No pudimos crear la organización",
+      "updateOrganization": "No pudimos actualizar la organización",
+      "deleteOrganization": "No pudimos eliminar la organización",
+      "changeActive": "No pudimos cambiar la organización activa",
+      "invite": "No pudimos enviar la invitación",
+      "updateRole": "No pudimos actualizar el rol del miembro",
+      "removeMember": "No pudimos quitar al miembro",
+      "leave": "No pudimos salir de la organización",
+      "acceptInvitation": "No pudimos aceptar la invitación",
+      "rejectInvitation": "No pudimos rechazar la invitación",
+      "cancelInvitation": "No pudimos cancelar la invitación",
+      "createTeam": "No pudimos crear el equipo",
+      "deleteTeam": "No pudimos eliminar el equipo",
+      "addTeamMember": "No pudimos agregar al miembro al equipo",
+      "removeTeamMember": "No pudimos quitar al miembro del equipo"
+    },
+    "toasts": {
+      "created": "Organización \"{{name}}\" creada",
+      "updated": "Organización actualizada",
+      "deleted": "Organización eliminada",
+      "activeChanged": "Cambiaste la organización activa",
+      "invited": "Invitación enviada a {{email}}",
+      "roleUpdated": "Rol del miembro actualizado",
+      "memberRemoved": "Miembro quitado",
+      "left": "Saliste de la organización",
+      "invitationAccepted": "Invitación aceptada",
+      "invitationRejected": "Invitación rechazada",
+      "invitationCancelled": "Invitación cancelada",
+      "teamCreated": "Equipo \"{{name}}\" creado",
+      "teamDeleted": "Equipo eliminado",
+      "teamMemberAdded": "Miembro agregado al equipo",
+      "teamMemberRemoved": "Miembro quitado del equipo"
+    },
+    "page": {
+      "title": "Organizaciones",
+      "description": "Administrá tus organizaciones y los miembros de tu equipo.",
+      "tabs": {
+        "overview": "Resumen",
+        "members": "Miembros",
+        "invitations": "Invitaciones",
+        "settings": "Configuración"
+      },
+      "activeTitle": "Organización activa",
+      "activeDescription": "Estás trabajando en \"{{name}}\"",
+      "memberCount_one": "{{count}} miembro",
+      "memberCount_other": "{{count}} miembros",
+      "yourRole": "Tu rol: <strong>{{role}}</strong>",
+      "allTitle": "Todas las organizaciones",
+      "allDescription": "Cambiá de organización o administrá su configuración.",
+      "selectTitle": "Elegí una organización",
+      "selectDescription": "Elegí una organización para ver sus detalles y administrar sus miembros.",
+      "emptyTitle": "Empezá con las organizaciones",
+      "emptyDescription": "Las organizaciones te ayudan a colaborar con tu equipo. Creá tu primera organización o esperá a que te inviten a una existente.",
+      "emptyCreate": "Crear tu primera organización"
+    },
+    "list": {
+      "emptyTitle": "No se encontraron organizaciones",
+      "emptyDescription": "Todavía no sos miembro de ninguna organización. Creá una o pedí que te inviten.",
+      "active": "Activa",
+      "members": "Miembros",
+      "switching": "Cambiando...",
+      "switchTo": "Cambiar a esta"
+    },
+    "switcher": {
+      "select": "Elegir organización",
+      "search": "Buscar organizaciones...",
+      "empty": "No se encontraron organizaciones.",
+      "heading": "Organizaciones",
+      "manage": "Administrar organizaciones"
+    },
+    "members": {
+      "title": "Miembros ({{count}})",
+      "description": "Administrá los miembros de la organización y sus roles.",
+      "invite": "Invitar miembros",
+      "columns": {
+        "member": "Miembro",
+        "role": "Rol",
+        "joined": "Se unió",
+        "actions": "Acciones"
+      },
+      "invitedUser": "Usuario invitado",
+      "editRole": "Editar rol",
+      "makeRole": "Hacer {{role}}",
+      "remove": "Quitar miembro",
+      "removeConfirm": "¿Seguro que querés quitar a {{member}} de esta organización? Va a perder el acceso a todos los recursos de la organización.",
+      "updateRoleTitle": "Actualizar rol del miembro",
+      "updateRoleConfirm": "¿Seguro que querés cambiar el rol de {{member}} de {{from}} a {{to}}?",
+      "updateRole": "Actualizar rol"
+    },
+    "settings": {
+      "detailsTitle": "Detalles de la organización",
+      "detailsDescription": "Actualizá la información básica de tu organización.",
+      "logoUrl": "URL del logo",
+      "save": "Guardar cambios",
+      "name": "Nombre",
+      "slug": "Identificador",
+      "logo": "Logo",
+      "edit": "Editar organización",
+      "dangerTitle": "Zona de peligro",
+      "dangerDescription": "Acciones irreversibles y destructivas.",
+      "leaveTitle": "Salir de la organización",
+      "leaveDescription": "Vas a perder el acceso a todos los recursos de la organización.",
+      "leaveButton": "Salir",
+      "leaveConfirm": "¿Seguro que querés salir de \"{{name}}\"? Vas a perder el acceso a todos los recursos de la organización y vas a necesitar una nueva invitación para volver.",
+      "deleteTitle": "Eliminar organización",
+      "deleteDescription": "Elimina de forma permanente esta organización y todos sus datos. Esta acción no se puede deshacer.",
+      "deleteButton": "Eliminar",
+      "deleteConfirm": "Esta acción no se puede deshacer. Se va a eliminar de forma permanente la organización \"{{name}}\" junto con todos sus miembros, equipos y datos."
+    },
+    "invite": {
+      "title": "Invitar miembro",
+      "description": "Enviá una invitación para unirse a esta organización. Va a recibir un email con las instrucciones.",
+      "email": "Email",
+      "emailHelp": "Ingresá el email de la persona que querés invitar.",
+      "role": "Rol",
+      "rolePlaceholder": "Elegí un rol",
+      "team": "Equipo (opcional)",
+      "teamPlaceholder": "Elegí un equipo (opcional)",
+      "teamHelp": "Si querés, sumá al miembro a un equipo en particular.",
+      "send": "Enviar invitación"
+    },
+    "invitations": {
+      "lessThanHour": "Hace menos de una hora",
+      "expiresSoon": "Vence pronto",
+      "expiresIn": "Vence {{when}}",
+      "expiresOn": "Vence el {{date}}",
+      "status": {
+        "expired": "Vencida",
+        "pending": "Pendiente",
+        "accepted": "Aceptada",
+        "rejected": "Rechazada",
+        "cancelled": "Cancelada"
+      },
+      "pendingTitle": "Invitaciones pendientes ({{count}})",
+      "pendingDescription": "Administrá las invitaciones pendientes para unirse a esta organización.",
+      "emptyTitle": "No hay invitaciones pendientes",
+      "emptyDescription": "Todas las invitaciones se resolvieron o todavía no enviaste ninguna.",
+      "columns": {
+        "email": "Email",
+        "role": "Rol",
+        "status": "Estado",
+        "sent": "Enviada",
+        "expires": "Vence",
+        "actions": "Acciones"
+      },
+      "cancelTitle": "Cancelar invitación",
+      "cancelConfirm": "¿Seguro que querés cancelar la invitación de {{email}}? No va a poder unirse con este enlace.",
+      "keep": "No, mantenerla",
+      "cancelAction": "Sí, cancelar invitación",
+      "userEmptyTitle": "No hay invitaciones pendientes",
+      "userEmptyDescription": "Por ahora no tenés invitaciones pendientes a organizaciones.",
+      "userTitle": "Invitaciones a organizaciones ({{count}})",
+      "userDescription": "Te invitaron a unirte a estas organizaciones.",
+      "organization": "Organización",
+      "invitedAs": "Te invitaron a unirte como",
+      "decline": "Rechazar",
+      "accept": "Aceptar",
+      "acceptTitle": "Aceptar invitación",
+      "acceptConfirm": "¿Seguro que querés unirte a \"{{organization}}\" como {{role}}?",
+      "declineTitle": "Rechazar invitación",
+      "declineConfirm": "¿Seguro que querés rechazar la invitación para unirte a \"{{organization}}\"? Podés pedir que te inviten de nuevo más adelante si cambiás de idea.",
+      "keepInvitation": "Mantener invitación"
     }
   },
   "commandPalette": {
@@ -684,6 +969,40 @@
       "organization": "Organización",
       "platform": "Plataforma",
       "secondary": "Más"
+    }
+  },
+  "membership": {
+    "tiers": {
+      "free": "Gratis",
+      "basic": "Básico",
+      "pro": "Pro",
+      "ultimate": "Ultimate"
+    },
+    "status": {
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "expired": "Vencida"
+    },
+    "renews": "Se renueva el {{date}}",
+    "keepsUntil": "Mantenés tu membresía hasta el {{date}}"
+  },
+  "demo": {
+    "banner": {
+      "label": "Demo:",
+      "message": "pagos de prueba, los datos se borran todos los días"
+    }
+  },
+  "adminOverride": {
+    "active": "Nivel asignado por un admin:",
+    "summary": "{{plan}} para {{target}}.",
+    "unchanged": "Las suscripciones reales no cambian.",
+    "clear": "Quitar el nivel asignado",
+    "clearShort": "Quitar",
+    "targetOrganization": "la organización {{id}}",
+    "targetUser": "tu membresía de usuario",
+    "cadence": {
+      "monthly": "mensual",
+      "yearly": "anual"
     }
   }
 }

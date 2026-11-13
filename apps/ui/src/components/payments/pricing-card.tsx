@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import type { PlanChangeType } from "@/contexts/membership-context";
 import { cn } from "@/lib/utils";
 import type { PricingTier } from "@/types/pricing";
-import { formatPrice } from "@/lib/format";
+import { formatNumber, formatPrice } from "@/lib/format";
 import { resolvePricingAction } from "./pricing-actions";
 
 export type PricingCardProps = {
@@ -321,7 +321,7 @@ export function PricingCard({
                           </span>
                         ) : (
                           <span>
-                            {value.toLocaleString()}
+                            {formatNumber(value)}
                             {key === "storage" && "GB"}
                           </span>
                         )}

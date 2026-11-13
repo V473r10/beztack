@@ -189,7 +189,7 @@ const TwoFactor = () => {
               })}
             </p>
             <p className="text-amber-600 text-xs dark:text-amber-400">
-              ⚠️{" "}
+              {"⚠️"}{" "}
               {t("auth.signIn.twoFactor.backupCodeWarning", {
                 defaultValue: "Each backup code can only be used once",
               })}
@@ -212,7 +212,7 @@ const TwoFactor = () => {
                   <InputOTPSlot index={4} />
                 </InputOTPGroup>
                 <InputOTPSeparator>
-                  <span className="text-muted-foreground">-</span>
+                  <span className="text-muted-foreground">{"-"}</span>
                 </InputOTPSeparator>
                 <InputOTPGroup className="flex w-full justify-center">
                   <InputOTPSlot index={6} />

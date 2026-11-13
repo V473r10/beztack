@@ -270,7 +270,7 @@ export default function SubscriptionWelcome() {
               <h2 className="mb-2 font-semibold text-xl">{subscription.plan.name}</h2>
               <div className="flex items-baseline justify-center gap-1">
                 <span className="font-bold text-3xl text-primary">{formattedPrice}</span>
-                <span className="text-muted-foreground">/ {formattedFrequency}</span>
+                <span className="text-muted-foreground">{`/ ${formattedFrequency}`}</span>
               </div>
             </div>
 

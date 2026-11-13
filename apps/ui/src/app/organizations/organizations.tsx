@@ -1,5 +1,6 @@
 import { Building2, Plus, Users } from "lucide-react";
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import {
   CreateOrganizationDialog,
   InviteMemberDialog,
@@ -17,8 +18,10 @@ import {
   useOrganizations,
 } from "@/hooks/use-organizations";
 import { authClient } from "@/lib/auth-client";
+import { roleLabel } from "@/lib/organization-types";
 
 export default function OrganizationsPage() {
+  const { t } = useTranslation();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -48,12 +51,12 @@ export default function OrganizationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-bold text-3xl">Organizations</h1>
-          <p className="text-muted-foreground">Manage your organizations and team members.</p>
+          <h1 className="font-bold text-3xl">{t("organizations.page.title")}</h1>
+          <p className="text-muted-foreground">{t("organizations.page.description")}</p>
         </div>
         <Button onClick={handleCreateOrganization}>
           <Plus className="mr-2 h-4 w-4" />
-          Create Organization
+          {t("organizations.createDialog.title")}
         </Button>
       </div>
 
@@ -63,10 +66,16 @@ export default function OrganizationsPage() {
             <Tabs className="space-y-6" onValueChange={setActiveTab} value={activeTab}>
               <div className="flex items-center justify-between">
                 <TabsList className="grid w-full max-w-md grid-cols-4">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="members">Members</TabsTrigger>
-                  <TabsTrigger value="invitations">Invitations</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
+                  <TabsTrigger value="overview">
+                    {t("organizations.page.tabs.overview")}
+                  </TabsTrigger>
+                  <TabsTrigger value="members">{t("organizations.page.tabs.members")}</TabsTrigger>
+                  <TabsTrigger value="invitations">
+                    {t("organizations.page.tabs.invitations")}
+                  </TabsTrigger>
+                  <TabsTrigger value="settings">
+                    {t("organizations.page.tabs.settings")}
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
@@ -76,10 +85,10 @@ export default function OrganizationsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                       <Building2 className="h-5 w-5" />
-                      <span>Active Organization</span>
+                      <span>{t("organizations.page.activeTitle")}</span>
                     </CardTitle>
                     <CardDescription>
-                      Currently working in "{activeOrganization.name}"
+                      {t("organizations.page.activeDescription", { name: activeOrganization.name })}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -99,18 +108,21 @@ export default function OrganizationsPage() {
                       </div>
                       <div className="space-y-2">
                         <h3 className="font-semibold text-xl">{activeOrganization.name}</h3>
-                        <p className="text-muted-foreground">@{activeOrganization.slug}</p>
+                        <p className="text-muted-foreground">{`@${activeOrganization.slug}`}</p>
                         <div className="flex items-center space-x-4 text-muted-foreground text-sm">
                           <div className="flex items-center space-x-1">
                             <Users className="h-4 w-4" />
                             <span>
-                              {members.length} member
-                              {members.length !== 1 ? "s" : ""}
+                              {t("organizations.page.memberCount", { count: members.length })}
                             </span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <span>
-                              Your role: <strong>{currentUserRole}</strong>
+                              <Trans
+                                components={{ strong: <strong /> }}
+                                i18nKey="organizations.page.yourRole"
+                                values={{ role: roleLabel(t, currentUserRole) }}
+                              />
                             </span>
                           </div>
                         </div>
@@ -122,10 +134,8 @@ export default function OrganizationsPage() {
                 {/* All Organizations */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>All Organizations</CardTitle>
-                    <CardDescription>
-                      Switch between organizations or manage their settings.
-                    </CardDescription>
+                    <CardTitle>{t("organizations.page.allTitle")}</CardTitle>
+                    <CardDescription>{t("organizations.page.allDescription")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <OrganizationList onManageOrganization={() => setActiveTab("settings")} />
@@ -166,10 +176,8 @@ export default function OrganizationsPage() {
             /* No active organization but has organizations */
             <Card>
               <CardHeader>
-                <CardTitle>Select an Organization</CardTitle>
-                <CardDescription>
-                  Choose an organization to view its details and manage members.
-                </CardDescription>
+                <CardTitle>{t("organizations.page.selectTitle")}</CardTitle>
+                <CardDescription>{t("organizations.page.selectDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <OrganizationList />
@@ -183,14 +191,13 @@ export default function OrganizationsPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Building2 className="mb-4 h-16 w-16 text-muted-foreground" />
-              <CardTitle className="mb-2 text-xl">Get Started with Organizations</CardTitle>
+              <CardTitle className="mb-2 text-xl">{t("organizations.page.emptyTitle")}</CardTitle>
               <CardDescription className="mb-6 max-w-md text-center">
-                Organizations help you collaborate with your team. Create your first organization or
-                wait to be invited to join an existing one.
+                {t("organizations.page.emptyDescription")}
               </CardDescription>
               <Button onClick={handleCreateOrganization}>
                 <Plus className="mr-2 h-4 w-4" />
-                Create Your First Organization
+                {t("organizations.page.emptyCreate")}
               </Button>
             </CardContent>
           </Card>

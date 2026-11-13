@@ -1,5 +1,7 @@
 import { Building2, Crown, Sparkles, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { MembershipTier } from "@/types/membership";
 
@@ -26,12 +28,7 @@ const tierColors = {
     "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
 };
 
-const tierNames = {
-  free: "Free",
-  basic: "Basic",
-  pro: "Pro",
-  ultimate: "Ultimate",
-};
+const tierKeys = ["free", "basic", "pro", "ultimate"] as const;
 
 export function MembershipBadge({
   tier,
@@ -40,10 +37,10 @@ export function MembershipBadge({
   showIcon = true,
   className,
 }: MembershipBadgeProps) {
+  const { t } = useTranslation();
   const Icon = tierIcons[tier];
-  const tierName = tierNames[tier];
 
-  if (!tierName) {
+  if (!tierKeys.includes(tier)) {
     return null;
   }
 
@@ -72,7 +69,7 @@ export function MembershipBadge({
       variant={variant}
     >
       {showIcon && Icon && <Icon className={iconSizes[size]} />}
-      {tierName}
+      {t(`membership.tiers.${tier}`)}
     </Badge>
   );
 }
@@ -85,9 +82,9 @@ export type MembershipStatusProps = {
 };
 
 export function MembershipStatus({ tier, isActive, expiresAt, className }: MembershipStatusProps) {
-  const tierName = tierNames[tier];
+  const { t } = useTranslation();
 
-  if (!tierName) {
+  if (!tierKeys.includes(tier)) {
     return null;
   }
 
@@ -106,12 +103,12 @@ export function MembershipStatus({ tier, isActive, expiresAt, className }: Membe
 
   const getStatusText = () => {
     if (!isActive) {
-      return "Inactive";
+      return t("membership.status.inactive");
     }
     if (expiresAt && expiresAt < new Date()) {
-      return "Expired";
+      return t("membership.status.expired");
     }
-    return "Active";
+    return t("membership.status.active");
   };
 
   return (
@@ -125,12 +122,12 @@ export function MembershipStatus({ tier, isActive, expiresAt, className }: Membe
       </Badge>
       {expiresAt && isActive && expiresAt > new Date() && (
         <span className="text-muted-foreground text-xs">
-          {`Renews ${expiresAt.toLocaleDateString()}`}
+          {t("membership.renews", { date: formatDate(expiresAt) })}
         </span>
       )}
       {expiresAt && !isActive && expiresAt > new Date() && (
         <span className="text-muted-foreground text-xs">
-          {`You will keep your membership until ${expiresAt.toLocaleDateString()}`}
+          {t("membership.keepsUntil", { date: formatDate(expiresAt) })}
         </span>
       )}
     </div>

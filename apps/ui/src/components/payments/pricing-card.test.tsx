@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/env", () => ({ env: {} }));
 vi.mock("@/lib/format", () => ({
+  formatNumber: (value: number) => String(value),
   formatPrice: (amount: number) => `$${amount}`,
 }));
 vi.mock("react-i18next", () => ({

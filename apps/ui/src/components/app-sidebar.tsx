@@ -18,6 +18,7 @@ import {
 } from "@tabler/icons-react";
 import { hasAuthRole } from "@beztack/auth";
 import type * as React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { NavMain } from "@/components/nav-main";
 import { type NavAction, NavSecondary } from "@/components/nav-secondary";
@@ -173,6 +174,7 @@ export const NO_ACCESS: SidebarAccess = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { t } = useTranslation();
   const membership = useOptionalMembership();
   const palette = useOptionalCommandPalette();
   const sections = getSidebarSections(membership ?? NO_ACCESS, env.VITE_DOCS_URL);
@@ -189,7 +191,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <Link to="/">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="font-semibold text-base">beztack</span>
+                <span className="font-semibold text-base">{env.VITE_APP_NAME}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -206,10 +208,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={sections.main} />
         {sections.organization.length > 0 && (
-          <NavSecondary items={sections.organization} title="Organization" />
+          <NavSecondary items={sections.organization} title={t("sidebar.groups.organization")} />
         )}
         {sections.platform.length > 0 && (
-          <NavSecondary items={sections.platform} title="Platform" />
+          <NavSecondary items={sections.platform} title={t("sidebar.groups.platform")} />
         )}
         <NavSecondary
           className="mt-auto"

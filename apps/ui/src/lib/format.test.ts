@@ -3,6 +3,7 @@ import i18n from "i18next";
 import {
   formatDate,
   formatMercadoPagoAmount,
+  formatNumber,
   formatPrice,
   formatRelativeFromNow,
   setFormatLanguageSource,
@@ -121,8 +122,22 @@ describe("formatRelativeFromNow", () => {
     vi.useRealTimers();
   });
 
-  it("formats future dates in the project locale", () => {
+  it("formats future dates in the project locale until the user has a language", () => {
+    setFormatLanguageSource({});
+
     expect(formatRelativeFromNow("2026-03-08T12:00:00Z")).toBe("in 3 Tagen");
+
+    setFormatLanguageSource(undefined);
+  });
+
+  it("formats in the language the user chose", async () => {
+    await i18n.changeLanguage("es");
+
+    expect(formatRelativeFromNow("2026-03-08T12:00:00Z")).toBe("dentro de 3 días");
+
+    await i18n.changeLanguage("en");
+
+    expect(formatRelativeFromNow("2026-03-08T12:00:00Z")).toBe("in 3 days");
   });
 
   it("formats past dates in an explicit locale", () => {
@@ -135,5 +150,22 @@ describe("formatRelativeFromNow", () => {
     expect(formatRelativeFromNow("2026-03-05T09:00:00Z", "en-US")).toBe("3 hours ago");
     expect(formatRelativeFromNow("2026-05-05T12:00:00Z", "en-US")).toBe("in 2 months");
     expect(formatRelativeFromNow("2028-03-05T12:00:00Z", "en-US")).toBe("in 2 years");
+  });
+});
+
+describe("formatNumber", () => {
+  it("groups digits in an explicit locale", () => {
+    expect(formatNumber(1_234_567, undefined, "en-US")).toBe("1,234,567");
+    expect(formatNumber(1_234_567, undefined, "es")).toBe("1.234.567");
+  });
+
+  it("formats in the language the user chose", async () => {
+    await i18n.changeLanguage("es");
+
+    expect(formatNumber(12_500)).toBe("12.500");
+
+    await i18n.changeLanguage("en");
+
+    expect(formatNumber(12_500)).toBe("12,500");
   });
 });

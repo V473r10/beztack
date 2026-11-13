@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { z } from "zod";
 
 // Constants for validation
@@ -64,46 +65,52 @@ export type TeamMember = {
   };
 };
 
-// Validation schemas
-export const createOrganizationSchema = z.object({
-  name: z.string().min(MIN_LENGTH, "Organization name must be at least 2 characters"),
-  slug: z
-    .string()
-    .min(MIN_LENGTH, "Slug must be at least 2 characters")
-    .max(MAX_SLUG_LENGTH, "Slug must be less than 50 characters")
-    .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
-  logo: z.string().url().optional().or(z.literal("")),
-});
+// Validation schemas. Messages are written in the language the user chose, so each schema is
+// built where it is used, with that component's `t`.
+export const createOrganizationSchema = (t: TFunction) =>
+  z.object({
+    name: z.string().min(MIN_LENGTH, t("organizations.validation.nameLength")),
+    slug: z
+      .string()
+      .min(MIN_LENGTH, t("organizations.validation.slugMin"))
+      .max(MAX_SLUG_LENGTH, t("organizations.validation.slugMax"))
+      .regex(/^[a-z0-9-]+$/, t("organizations.validation.slugFormat")),
+    logo: z.string().url().optional().or(z.literal("")),
+  });
 
-export const updateOrganizationSchema = z.object({
-  name: z.string().min(MIN_LENGTH, "Organization name must be at least 2 characters").optional(),
-  logo: z.string().url().optional().or(z.literal("")),
-});
+export const updateOrganizationSchema = (t: TFunction) =>
+  z.object({
+    name: z.string().min(MIN_LENGTH, t("organizations.validation.nameLength")).optional(),
+    logo: z.string().url().optional().or(z.literal("")),
+  });
 
-export const inviteMemberSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  role: z.enum(["admin", "member", "owner"], {
-    message: "Please select a role",
-  }),
-  teamId: z.string().optional(),
-});
+export const inviteMemberSchema = (t: TFunction) =>
+  z.object({
+    email: z.string().email(t("organizations.validation.email")),
+    role: z.enum(["admin", "member", "owner"], {
+      message: t("organizations.validation.role"),
+    }),
+    teamId: z.string().optional(),
+  });
 
-export const updateMemberRoleSchema = z.object({
-  role: z.enum(["admin", "member", "owner"], {
-    message: "Please select a role",
-  }),
-});
+export const updateMemberRoleSchema = (t: TFunction) =>
+  z.object({
+    role: z.enum(["admin", "member", "owner"], {
+      message: t("organizations.validation.role"),
+    }),
+  });
 
-export const createTeamSchema = z.object({
-  name: z.string().min(2, "Team name must be at least 2 characters"),
-});
+export const createTeamSchema = (t: TFunction) =>
+  z.object({
+    name: z.string().min(MIN_LENGTH, t("organizations.validation.teamNameLength")),
+  });
 
 // Form types
-export type CreateOrganizationData = z.infer<typeof createOrganizationSchema>;
-export type UpdateOrganizationData = z.infer<typeof updateOrganizationSchema>;
-export type InviteMemberData = z.infer<typeof inviteMemberSchema>;
-export type UpdateMemberRoleData = z.infer<typeof updateMemberRoleSchema>;
-export type CreateTeamData = z.infer<typeof createTeamSchema>;
+export type CreateOrganizationData = z.infer<ReturnType<typeof createOrganizationSchema>>;
+export type UpdateOrganizationData = z.infer<ReturnType<typeof updateOrganizationSchema>>;
+export type InviteMemberData = z.infer<ReturnType<typeof inviteMemberSchema>>;
+export type UpdateMemberRoleData = z.infer<ReturnType<typeof updateMemberRoleSchema>>;
+export type CreateTeamData = z.infer<ReturnType<typeof createTeamSchema>>;
 
 // Organization role types
 export const ORGANIZATION_ROLES = {
@@ -114,14 +121,12 @@ export const ORGANIZATION_ROLES = {
 
 export type OrganizationRole = keyof typeof ORGANIZATION_ROLES;
 
-export const ROLE_LABELS: Record<OrganizationRole, string> = {
-  owner: "Owner",
-  admin: "Admin",
-  member: "Member",
-};
+/** The role's name in the language the user chose; an unknown role is shown as it came. */
+export function roleLabel(t: TFunction, role: string): string {
+  return t(`organizations.roles.${role}`, { defaultValue: role });
+}
 
-export const ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
-  owner: "Full access to organization settings and members",
-  admin: "Can manage members and organization settings",
-  member: "Basic access to organization resources",
-};
+/** What the role can do, in the language the user chose. */
+export function roleDescription(t: TFunction, role: OrganizationRole): string {
+  return t(`organizations.roleDescriptions.${role}`);
+}

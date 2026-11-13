@@ -1,5 +1,6 @@
 import { Crown, Edit, MoreHorizontal, Plus, Shield, User, UserMinus } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,11 +37,7 @@ import {
   useRemoveMember,
   useUpdateMemberRole,
 } from "@/hooks/use-organizations";
-import {
-  type OrganizationMember,
-  type OrganizationRole,
-  ROLE_LABELS,
-} from "@/lib/organization-types";
+import { type OrganizationMember, roleLabel } from "@/lib/organization-types";
 import { formatDate as formatProjectDate } from "@/lib/format";
 
 // Simple date formatting utility
@@ -67,6 +64,7 @@ export function MemberList({
   onInviteMembers,
   onEditMember,
 }: MemberListProps) {
+  const { t } = useTranslation();
   const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | null>(null);
   const [memberToUpdate, setMemberToUpdate] = useState<{
     member: OrganizationMember;
@@ -207,13 +205,13 @@ export function MemberList({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Members ({members.length})</CardTitle>
-              <CardDescription>Manage organization members and their roles.</CardDescription>
+              <CardTitle>{t("organizations.members.title", { count: members.length })}</CardTitle>
+              <CardDescription>{t("organizations.members.description")}</CardDescription>
             </div>
             {canManageMembers && onInviteMembers && (
               <Button onClick={onInviteMembers}>
                 <Plus className="mr-2 h-4 w-4" />
-                Invite Members
+                {t("organizations.members.invite")}
               </Button>
             )}
           </div>
@@ -223,10 +221,12 @@ export function MemberList({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead>{t("organizations.members.columns.member")}</TableHead>
+                  <TableHead>{t("organizations.members.columns.role")}</TableHead>
+                  <TableHead>{t("organizations.members.columns.joined")}</TableHead>
+                  <TableHead className="w-[100px]">
+                    {t("organizations.members.columns.actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -241,7 +241,9 @@ export function MemberList({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{member.user?.name || "Invited User"}</div>
+                          <div className="font-medium">
+                            {member.user?.name || t("organizations.members.invitedUser")}
+                          </div>
                           <div className="text-muted-foreground text-sm">{member.email}</div>
                         </div>
                       </div>
@@ -252,7 +254,7 @@ export function MemberList({
                         variant={getRoleBadgeVariant(member.role)}
                       >
                         {getRoleIcon(member.role)}
-                        <span>{ROLE_LABELS[member.role as OrganizationRole] || member.role}</span>
+                        <span>{roleLabel(t, member.role)}</span>
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -267,12 +269,14 @@ export function MemberList({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuLabel>
+                              {t("organizations.members.columns.actions")}
+                            </DropdownMenuLabel>
                             {canEditMember(member) && (
                               <>
                                 <DropdownMenuItem onClick={() => onEditMember?.(member)}>
                                   <Edit className="mr-2 h-4 w-4" />
-                                  Edit Role
+                                  {t("organizations.members.editRole")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 {(["member", "admin", "owner"] as const).map(
@@ -283,7 +287,11 @@ export function MemberList({
                                         onClick={() => handleUpdateRole(member, role)}
                                       >
                                         {getRoleIcon(role)}
-                                        <span className="ml-2">Make {ROLE_LABELS[role]}</span>
+                                        <span className="ml-2">
+                                          {t("organizations.members.makeRole", {
+                                            role: roleLabel(t, role),
+                                          })}
+                                        </span>
                                       </DropdownMenuItem>
                                     ),
                                 )}
@@ -297,7 +305,7 @@ export function MemberList({
                                   onClick={() => handleRemoveMember(member)}
                                 >
                                   <UserMinus className="mr-2 h-4 w-4" />
-                                  Remove Member
+                                  {t("organizations.members.remove")}
                                 </DropdownMenuItem>
                               </>
                             )}
@@ -322,20 +330,21 @@ export function MemberList({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Member</AlertDialogTitle>
+            <AlertDialogTitle>{t("organizations.members.remove")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove {memberToRemove?.user?.name || memberToRemove?.email}
-              from this organization? They will lose access to all organization resources.
+              {t("organizations.members.removeConfirm", {
+                member: memberToRemove?.user?.name || memberToRemove?.email,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={removeMember.isPending}
               onClick={confirmRemoveMember}
             >
-              Remove Member
+              {t("organizations.members.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -348,18 +357,19 @@ export function MemberList({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Update Member Role</AlertDialogTitle>
+            <AlertDialogTitle>{t("organizations.members.updateRoleTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to change{" "}
-              {memberToUpdate?.member.user?.name || memberToUpdate?.member.email}
-              's role from {ROLE_LABELS[memberToUpdate?.member.role as OrganizationRole]} to{" "}
-              {ROLE_LABELS[memberToUpdate?.newRole as OrganizationRole]}?
+              {t("organizations.members.updateRoleConfirm", {
+                member: memberToUpdate?.member.user?.name || memberToUpdate?.member.email,
+                from: roleLabel(t, memberToUpdate?.member.role ?? ""),
+                to: roleLabel(t, memberToUpdate?.newRole ?? ""),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction disabled={updateMemberRole.isPending} onClick={confirmUpdateRole}>
-              Update Role
+              {t("organizations.members.updateRole")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,11 +1,13 @@
 // import { getUsagePercentage, isUsageNearLimit } from "@beztack/payments/client";
 
 import { AlertCircle, ArrowUpRight, Database, TrendingUp, Users, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { CustomerMeter } from "@/contexts/membership-context";
+import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { MembershipTierConfig } from "@/types/membership";
 
@@ -58,20 +60,13 @@ function UsageItem({
   unit = "",
   warningThreshold = 80,
 }: UsageItemProps) {
+  const { t } = useTranslation();
   const percentage =
     limit === UNLIMITED_LIMIT
       ? PERCENTAGE_MIN
       : Math.min((current / limit) * PERCENTAGE_MAX, PERCENTAGE_MAX);
   const isNearLimit = limit !== UNLIMITED_LIMIT && percentage >= warningThreshold;
   const isOverLimit = limit !== UNLIMITED_LIMIT && current > limit;
-
-  // Helper function for formatting (currently inline)
-  // const formatValue = (value: number, key: string) => {
-  //   if (value === -1) return "Unlimited";
-  //   if (key === "storage") return `${value}GB`;
-  //   if (key === "apiCalls") return value.toLocaleString();
-  //   return value.toString();
-  // };
 
   return (
     <div className="space-y-3">
@@ -82,11 +77,13 @@ function UsageItem({
         </div>
         <div className="text-right">
           <div className="font-medium text-sm">
-            {current.toLocaleString()}
-            {unit} / {limit === UNLIMITED_LIMIT ? "∞" : `${limit.toLocaleString()}${unit}`}
+            {formatNumber(current)}
+            {unit} {"/"} {limit === UNLIMITED_LIMIT ? "∞" : `${formatNumber(limit)}${unit}`}
           </div>
           {limit !== UNLIMITED_LIMIT && (
-            <div className="text-muted-foreground text-xs">{percentage.toFixed(0)}% used</div>
+            <div className="text-muted-foreground text-xs">
+              {t("billing.usage.percentUsed", { percent: percentage.toFixed(0) })}
+            </div>
           )}
         </div>
       </div>
@@ -110,7 +107,7 @@ function UsageItem({
               )}
             >
               <AlertCircle className="h-3 w-3" />
-              {isOverLimit ? "Usage limit exceeded" : "Approaching usage limit"}
+              {isOverLimit ? t("billing.usage.itemExceeded") : t("billing.usage.itemNear")}
             </div>
           )}
         </div>
@@ -120,6 +117,7 @@ function UsageItem({
 }
 
 export function UsageMetrics({ meters = [], tierConfig, onUpgrade, className }: UsageMetricsProps) {
+  const { t } = useTranslation();
   // Mock current usage data based on meters or use defaults
   const getCurrentUsage = (key: string) => {
     const meter = meters.find((m: CustomerMeter) => m.id?.includes(key));
@@ -128,7 +126,9 @@ export function UsageMetrics({ meters = [], tierConfig, onUpgrade, className }: 
 
   const usageData = Object.entries(tierConfig.limits || {}).map(([key, limit]) => ({
     key,
-    label: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1"),
+    label: t(`pricing.limits.${key}`, {
+      defaultValue: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1"),
+    }),
     current: getCurrentUsage(key),
     limit,
     icon: usageIcons[key as keyof typeof usageIcons] || Database,
@@ -149,14 +149,16 @@ export function UsageMetrics({ meters = [], tierConfig, onUpgrade, className }: 
     <Card className={cn("w-full", className)}>
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Usage Metrics</CardTitle>
+          <CardTitle className="text-lg">{t("billing.usage.title")}</CardTitle>
           {tierConfig.id !== "ultimate" && (hasNearLimitUsage || hasOverLimitUsage) && (
             <Badge className="text-xs" variant={hasOverLimitUsage ? "destructive" : "secondary"}>
-              {hasOverLimitUsage ? "Limit Exceeded" : "Near Limit"}
+              {hasOverLimitUsage ? t("billing.usage.badgeExceeded") : t("billing.usage.badgeNear")}
             </Badge>
           )}
         </div>
-        <CardDescription>Current usage for your {tierConfig.name} plan</CardDescription>
+        <CardDescription>
+          {t("billing.usage.description", { plan: tierConfig.name })}
+        </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -185,12 +187,14 @@ export function UsageMetrics({ meters = [], tierConfig, onUpgrade, className }: 
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <div className="font-medium text-sm">
-                  {hasOverLimitUsage ? "Usage limits exceeded" : "Approaching usage limits"}
+                  {hasOverLimitUsage
+                    ? t("billing.usage.bannerExceeded")
+                    : t("billing.usage.bannerNear")}
                 </div>
                 <div className="text-muted-foreground text-xs">
                   {hasOverLimitUsage
-                    ? "Upgrade your plan to restore full functionality"
-                    : "Consider upgrading to avoid service interruption"}
+                    ? t("billing.usage.hintExceeded")
+                    : t("billing.usage.hintNear")}
                 </div>
               </div>
               <Button
@@ -199,7 +203,7 @@ export function UsageMetrics({ meters = [], tierConfig, onUpgrade, className }: 
                 size="sm"
                 variant={hasOverLimitUsage ? "default" : "outline"}
               >
-                Upgrade Plan
+                {t("billing.usage.upgradePlan")}
                 <ArrowUpRight className="ml-1 h-3 w-3" />
               </Button>
             </div>
@@ -210,7 +214,7 @@ export function UsageMetrics({ meters = [], tierConfig, onUpgrade, className }: 
           <div className="rounded-lg border border-muted bg-muted/30 p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Database className="h-4 w-4" />
-              <span>Enterprise plan includes unlimited usage across all metrics</span>
+              <span>{t("billing.usage.enterpriseUnlimited")}</span>
             </div>
           </div>
         )}

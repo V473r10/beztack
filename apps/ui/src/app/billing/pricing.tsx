@@ -321,7 +321,7 @@ export default function Pricing() {
                           className="ml-2 h-5 border-green-200 bg-green-100 px-1.5 text-green-700 text-xs dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
                           variant="outline"
                         >
-                          -{savingsPercent}%
+                          {`-${savingsPercent}%`}
                         </Badge>
                       )}
                     </TabsTrigger>

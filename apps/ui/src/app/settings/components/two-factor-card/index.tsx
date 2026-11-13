@@ -110,7 +110,7 @@ export function TwoFactorCard({
                     size="sm"
                     variant="outline"
                   >
-                    🔄 {t("account.settings.twoFactor.regenerate.button")}
+                    {`🔄 ${t("account.settings.twoFactor.regenerate.button")}`}
                   </Button>
                 </div>
               </div>
