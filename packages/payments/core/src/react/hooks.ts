@@ -2,9 +2,8 @@
  * Provider-agnostic React hooks for payments
  */
 
+import { minorToMajor } from "../money.js";
 import type { PricingTier, Product, ProviderProduct } from "../types.js";
-
-const CENTS_MULTIPLIER = 100;
 
 type ProductsResponse = {
   provider: string;
@@ -101,18 +100,17 @@ function buildBaseTier(product: Product, tierId: string, displayOrder: number): 
 }
 
 /**
- * Convert a provider-native amount to display units.
- * Polar returns cents (900 → $9), MercadoPago returns whole currency (4500 → $4.500).
+ * Product amounts are integer minor units of the product's currency whatever
+ * the provider (ADR 0007), so display units come from the currency's decimals.
+ * The provider is no longer needed here; the display conversion goes away with
+ * the move of `formatPrice` to minor units.
  */
-function toDisplayAmount(amount: number, provider: string): number {
-  if (provider === "polar") {
-    return amount / CENTS_MULTIPLIER;
-  }
-  return amount;
+function toDisplayAmount(product: Product): number {
+  return minorToMajor(product.price.amount, product.price.currency);
 }
 
-function applyIntervalToTier(tier: PricingTier, product: Product, provider: string): PricingTier {
-  const displayAmount = toDisplayAmount(product.price.amount, provider);
+function applyIntervalToTier(tier: PricingTier, product: Product): PricingTier {
+  const displayAmount = toDisplayAmount(product);
 
   if (product.interval === "month") {
     return {
@@ -154,7 +152,7 @@ export async function fetchPricingTiers(apiUrl: string): Promise<PricingTier[]> 
     const displayOrder = getDisplayOrder(product);
     const existing = tiers.get(tierId);
     const baseTier = existing ?? buildBaseTier(product, tierId, displayOrder);
-    const updated = applyIntervalToTier(baseTier, product, payload.provider);
+    const updated = applyIntervalToTier(baseTier, product);
     tiers.set(tierId, updated);
   }
 

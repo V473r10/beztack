@@ -203,7 +203,9 @@ export const plan = pgTable(
     features: jsonb("features").$type<string[]>(),
     limits: jsonb("limits").$type<Record<string, number>>(),
     permissions: jsonb("permissions").$type<string[]>(),
-    price: numeric("price").notNull(),
+    /** Integer amount in the minor unit of `currency` (`900` + `USD` is US$ 9.00). See ADR 0007. */
+    price: integer("price").notNull(),
+    /** Uppercase ISO 4217 code. */
     currency: text("currency").notNull(),
     interval: text("interval"),
     intervalCount: integer("interval_count").default(1),

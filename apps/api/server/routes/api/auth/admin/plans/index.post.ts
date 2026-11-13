@@ -9,13 +9,15 @@ import { z } from "zod";
 import { env } from "@/env";
 import { ensurePaymentProvider } from "@/lib/payments";
 import { classifyBillingCadence } from "@/server/utils/plan-change";
+import { planPriceFromLegacyAmount, withLegacyPlanPrice } from "@/server/utils/legacy-plan-price";
 import { requireAdmin } from "@/server/utils/require-auth";
 
 const createSchema = z.object({
   displayName: z.string().min(1),
   description: z.string().nullable().optional(),
   canonicalTierId: z.string().default("custom"),
-  price: z.number().positive(),
+  // Integer minor units of `currency` (900 = US$ 9.00, ADR 0007).
+  price: z.number().int().positive(),
   // Omitted -> the project DEFAULT_CURRENCY (no built-in regional default).
   currency: z.string().min(1).optional(),
   interval: z.string().default("month"),
@@ -84,7 +86,7 @@ export default defineEventHandler(async (event) => {
       canonicalTierId: data.canonicalTierId,
       displayName: data.displayName,
       description: data.description ?? null,
-      price: String(data.price),
+      price: planPriceFromLegacyAmount(data.price, currency, adapter.provider),
       currency,
       interval: data.interval,
       intervalCount: data.intervalCount,
@@ -99,5 +101,5 @@ export default defineEventHandler(async (event) => {
     })
     .returning();
 
-  return { plan: newPlan, syncStatus: "synced" };
+  return { plan: newPlan ? withLegacyPlanPrice(newPlan) : newPlan, syncStatus: "synced" };
 });

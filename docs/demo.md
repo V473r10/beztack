@@ -67,13 +67,44 @@ The check is `assertDemoSandboxPayments` in `packages/env/src/demo.ts`. Its erro
 - a customer user (`customer@demo.beztack.test`; `.test` is reserved, so mail to it cannot reach a real inbox) and the **Demo Organization**, on Pro monthly;
 - one **failed Pending Plan change** (a downgrade to Basic that failed activation 5 times), so the Failed plan changes page has a row.
 
-`pnpm demo:reset` empties every table and seeds again. It refuses to run unless `DEMO_MODE=true`. Both scripts run in `apps/api` and read `apps/api/.env`; in CI or on a server pass the same variables through the environment.
+`pnpm demo:reset` empties every table and seeds again. Both check the provider products first (see "Provider products"). It refuses to run unless `DEMO_MODE=true`. Both scripts run in `apps/api` and read `apps/api/.env`; in CI or on a server pass the same variables through the environment.
 
 For Polar, the seed copies the six product ids from the env into the plan rows. For Mercado Pago the plan rows have no provider plan id after the seed. Push them to the provider from the admin **Plan sync** screen (the `push-to-provider` direction) before a visitor checks out; a reset clears the ids, so repeat it after each reset (see "Open items"). This step is not verified end to end yet, because it needs real test credentials.
 
 Reset schedule: once a day, matching the banner. Nothing schedules it yet. Options, in order of effort: a GitHub Actions `schedule` workflow that runs `pnpm demo:reset` with the demo `DATABASE_URL` as a repository secret, or a cron route on the API protected by `requireCronSecret`. A reset deletes local data only; customers and subscriptions created in the Polar or Mercado Pago sandbox stay there and can be cleaned from their sandbox dashboards.
 
 The retry button on the seeded failed change calls the real payment provider, which does not know the seeded subscription. In a live deploy the retry fails again and the row stays `failed` with a new reason. That still shows the page, the attempt counter and the audit fields. To make a retry succeed, the demo needs a real sandbox subscription behind the fixture (see "Open items").
+
+## Provider products
+
+A stale or mis-copied `POLAR_*_PRODUCT_ID` seeds without complaint and then shows up as pricing cards with no features and a 400 at checkout. So `pnpm demo:seed` and `pnpm demo:reset` first ask the active payment provider for each configured product, and stop before writing anything (and before a reset empties the tables) if one is wrong:
+
+```text
+[demo-seed] Error: The payment provider does not match the demo configuration:
+  - POLAR_PRO_YEARLY_PRODUCT_ID (0b3c...) not found in the provider (an old or mis-copied id, or another account)
+  - POLAR_BASIC_MONTHLY_PRODUCT_ID (91fd...) has tier "pro", expected "basic"
+```
+
+Every problem is listed, with the variable to fix and the id it holds. A product is wrong when it does not exist for the configured Polar organization and server, has no `metadata.tier`, has a different tier than its variable name says, or bills monthly where the variable says yearly (or the reverse).
+
+`pnpm demo:check` runs only this check. It reads from the provider, writes nothing and opens no database connection, so run it after changing a `POLAR_*_PRODUCT_ID` and before the seed. It needs `DEMO_MODE=true` like the seed. Neither command prints a token, a key or the provider's own error text.
+
+Mercado Pago has nothing to check here: its plan ids are created by Plan sync (see "Demo data and reset").
+
+### Create the products in the Polar sandbox
+
+At [sandbox.polar.sh](https://sandbox.polar.sh), in the organization named by `POLAR_ORGANIZATION_ID`, create six recurring products. Use the same amounts as the seed catalog (`packages/db/src/plan-catalog.ts`):
+
+| Product        | Billing | Price (USD) | `metadata.tier` | Env variable                        |
+| -------------- | ------- | ----------- | --------------- | ----------------------------------- |
+| Basic monthly  | Monthly | 9           | `basic`         | `POLAR_BASIC_MONTHLY_PRODUCT_ID`    |
+| Basic yearly   | Yearly  | 90          | `basic`         | `POLAR_BASIC_YEARLY_PRODUCT_ID`     |
+| Pro monthly    | Monthly | 29          | `pro`           | `POLAR_PRO_MONTHLY_PRODUCT_ID`      |
+| Pro yearly     | Yearly  | 290         | `pro`           | `POLAR_PRO_YEARLY_PRODUCT_ID`       |
+| Ultimate month | Monthly | 99          | `ultimate`      | `POLAR_ULTIMATE_MONTHLY_PRODUCT_ID` |
+| Ultimate year  | Yearly  | 990         | `ultimate`      | `POLAR_ULTIMATE_YEARLY_PRODUCT_ID`  |
+
+Add the `tier` key under the product's metadata; it is what ties a Polar product to a plan row. Copy each product's id (a UUID) into its variable in `apps/api/.env`, then run `pnpm demo:check`. Archive products you replaced: an archived product may still answer by id, and the check does not look at whether a product is archived.
 
 ## Safety limits
 

@@ -1,6 +1,9 @@
 /**
  * The default plan catalog, shared by the plan catalog seed and the demo seed.
+ *
+ * Every seeded price is an integer in the currency's minor unit (ADR 0007).
  */
+import { majorToMinor } from "@beztack/payments/money";
 
 export type BaseTier = {
   canonicalTierId: string;
@@ -97,10 +100,11 @@ export const BASE_TIERS: BaseTier[] = [
 ];
 
 /**
- * Prices per provider:
- * - Polar: in cents (900 = $9 USD)
- * - MercadoPago: in display units of the project DEFAULT_CURRENCY
- *   (4500 = 4500 units). Adjust these demo amounts to your currency.
+ * Demo prices per provider:
+ * - Polar: US$ cents (900 = $9.00). Polar only charges in USD.
+ * - MercadoPago: whole units of the project DEFAULT_CURRENCY (4500 = 4500
+ *   units), converted to that currency's minor units by `buildSeedPlans`.
+ *   Adjust these demo amounts to your currency.
  */
 const POLAR_PRICING: Record<string, { monthly: number; yearly: number }> = {
   free: { monthly: 0, yearly: 0 },
@@ -119,6 +123,7 @@ const MP_PRICING: Record<string, { monthly: number }> = {
 export type Interval = "month" | "year";
 
 export type SeedPlan = BaseTier & {
+  /** Integer amount in the minor unit of `currency`. */
   price: number;
   currency: string;
   interval: Interval;
@@ -133,8 +138,11 @@ export function buildSeedPlans(provider: string, mercadoPagoCurrency: string): S
 
   for (const tier of BASE_TIERS) {
     const prices = pricing[tier.canonicalTierId] ?? { monthly: 0 };
+    // Polar amounts are already cents; Mercado Pago amounts are whole currency units.
+    const toMinor = (amount: number) =>
+      isMP ? majorToMinor(amount, currency, { rounding: "half-away-from-zero" }) : amount;
 
-    plans.push({ ...tier, price: prices.monthly, currency, interval: "month" });
+    plans.push({ ...tier, price: toMinor(prices.monthly), currency, interval: "month" });
 
     if (!isMP && "yearly" in prices && (prices as { yearly: number }).yearly > 0) {
       plans.push({

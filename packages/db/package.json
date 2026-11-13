@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@beztack/env": "workspace:*",
+    "@beztack/payments": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "postgres": "^3.4.9"
   },

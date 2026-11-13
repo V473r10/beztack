@@ -124,3 +124,30 @@ export function formatMinorUnits(minor: number, currency: string, locale: string
     minorToMajor(minor, currency),
   );
 }
+
+/**
+ * Takes `numerator / denominator` of an integer amount of minor units, in
+ * integers only: `prorateMinorUnits(2900, 15, 30)` is `1450`.
+ *
+ * Rounding: to the nearest minor unit, ties away from zero. For a customer
+ * credit that is a difference of at most half a minor unit (US$ 0.005), and
+ * both a Plan change preview and the payment it produces use this one rule,
+ * so they never disagree. `numerator` and `denominator` are counts (days),
+ * not money.
+ */
+export function prorateMinorUnits(amount: number, numerator: number, denominator: number): number {
+  assertMinorUnits(amount);
+  if (!Number.isSafeInteger(numerator) || numerator < 0) {
+    throw new RangeError(`Expected a non-negative integer numerator, received ${numerator}`);
+  }
+  if (!Number.isSafeInteger(denominator) || denominator <= 0) {
+    throw new RangeError(`Expected a positive integer denominator, received ${denominator}`);
+  }
+  // `2 * |amount| * numerator + denominator` is the largest intermediate value.
+  const scaled = 2 * Math.abs(amount) * numerator + denominator;
+  if (!Number.isSafeInteger(scaled)) {
+    throw new RangeError(`Prorating ${amount} by ${numerator}/${denominator} overflows`);
+  }
+  const rounded = Math.floor(scaled / (2 * denominator));
+  return Math.sign(amount) * rounded + 0; // `+ 0` turns -0 into 0
+}

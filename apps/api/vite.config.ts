@@ -22,6 +22,7 @@ export default defineConfig({
       "@": resolve(import.meta.dirname, "."),
       server: resolve(import.meta.dirname, "server"),
       "@beztack/payments/subscription": resolve(packages, "payments/core/src/subscription.ts"),
+      "@beztack/payments/money": resolve(packages, "payments/core/src/money.ts"),
       "@beztack/payments": resolve(packages, "payments/core/src/index.ts"),
       "@beztack/mercadopago/server": resolve(packages, "payments/mercado-pago/src/server/index.ts"),
       "@beztack/mercadopago": resolve(packages, "payments/mercado-pago/src/index.ts"),
