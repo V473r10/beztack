@@ -4,7 +4,7 @@ import { defineEventHandler, setResponseHeader, setResponseStatus } from "h3";
 
 const HTTP_SERVICE_UNAVAILABLE = 503;
 /** A database that does not answer in this time counts as unreachable. */
-const DATABASE_TIMEOUT_MS = 3000;
+const DATABASE_TIMEOUT_MS = 5000;
 
 async function databaseAnswers(): Promise<boolean> {
   let timer: ReturnType<typeof setTimeout> | undefined;

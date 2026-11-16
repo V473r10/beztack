@@ -8,7 +8,7 @@
  * runs `select 1`, so the schema is left alone.
  */
 import { createApp, createRouter, toWebHandler } from "h3";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 
@@ -62,6 +62,30 @@ describe.skipIf(!TEST_DATABASE_URL)("GET /api/health on Postgres", () => {
     expect(text).not.toContain(new URL(TEST_DATABASE_URL as string).hostname);
   });
 
+  it("waits up to 5 seconds for a slow database, then answers 503", async () => {
+    // A cold function or a sleeping managed Postgres can take a few seconds to answer.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const executeSpy = vi
+      .spyOn(dbModule.db, "execute")
+      .mockImplementation(() => new Promise(() => {}) as never);
+    try {
+      const pending = request("GET");
+
+      // The database timeout is still armed one millisecond before 5 seconds.
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(vi.getTimerCount()).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(1);
+      const response = await pending;
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual({ status: "unavailable", database: "down" });
+    } finally {
+      executeSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  // This test ends the shared Postgres client, so it must stay the last one in this file.
   it("answers 503 with the same body shape once Postgres is unreachable", async () => {
     // Closing the client makes every later query fail, like a dropped connection.
     await dbModule.db.$client.end();
