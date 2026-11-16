@@ -42,4 +42,6 @@ cd apps/ui
 LIVE_WEB_URL=https://www.beztack.com LIVE_APP_URL=https://app.beztack.com pnpm test:live
 ```
 
+The smoke test does not check the API. For that, call `GET /api/health` on the API host, the one in `VITE_API_URL` (`https://api.beztack.com/api/health` in production), not on the app or www host: the app host answers 200 `text/html` on that path. A caller must assert a `content-type` of `application/json` and a body with `status` equal to `"ok"`, not just a 200. Details are in `docs/demo.md`.
+
 Use `E2E_CHROMIUM_PATH=/usr/bin/chromium` to reuse a system Chromium, as for the layout audit. Against production the run takes about 5 seconds. A failing check waits up to 15 seconds for its content and is retried once, so the worst case is still under a minute. On failure, a viewport screenshot lands in `test-results/live/`.

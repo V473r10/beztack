@@ -163,6 +163,8 @@ What does work without the webhook: sign-up, the Personal organization, pricing,
 
 `GET /api/health` is public and answers 200 `{"status":"ok","database":"up"}`, or 503 `{"status":"unavailable","database":"down"}` when the database does not answer. Leave it out of any platform rate-limit rule: it runs one `select 1` and the factory loop polls it.
 
+The endpoint is served by the `beztack-api` project, on the host in `VITE_API_URL` (production: `https://api.beztack.com/api/health`). It is not served by the app or www hosts: `https://app.beztack.com/api/health` answers 200 `text/html`, because the single-page app answers every path. A caller must therefore check more than the status code: assert a `content-type` of `application/json` and a body with `status` equal to `"ok"`. Only `GET` is supported: `HEAD` answers 405, so point an uptime monitor at it with `GET`. The database check waits up to 5 seconds; a failure is logged to the API's console with its cause, while the response body stays generic.
+
 ## What Facundo must provide
 
 - [ ] **Polar sandbox:** an organization at sandbox.polar.sh, an organization access token, six products (Basic, Pro, Ultimate × monthly, yearly), a webhook endpoint pointing at the demo API with its secret. Gives `POLAR_ORGANIZATION_ID`, `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, the six `POLAR_*_PRODUCT_ID`.
