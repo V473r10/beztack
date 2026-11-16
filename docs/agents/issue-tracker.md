@@ -1,41 +1,40 @@
-# Issue tracker: GitHub
+# Issue tracker: Linear
 
-Issues and PRDs for this repo live as GitHub issues in `V473r10/beztack`. Use the `gh` CLI for all operations.
+Issues and specs for this repo live in Linear, workspace `beztack`, team **BZ** (`Beztack`). Agents reach it through the Linear MCP server (`linear-beztack`).
+
+Linear syncs its issues to GitHub Issues in `V473r10/beztack`. The GitHub issues are a mirror, not the source: read and write in Linear, and never edit or close the GitHub copy (the sync overwrites it).
 
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-- **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
-- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+- **Create an issue**: `save_issue` without `id`, with `team: "Beztack"`, a `title`, a Markdown `description`, and `labels`. Check `list_issues` first for a duplicate.
+- **Read an issue**: `get_issue` with the identifier (`BZ-132`). It does not include the discussion: call `list_comments` for the comments.
+- **List issues**: `list_issues` with `team`, `state`, `label`, `parentId` or `query` filters. Follow `cursor` while `hasNextPage` is true.
+- **Comment on an issue**: `save_comment` with the issue identifier and a Markdown `body`.
+- **Apply / remove labels**: `save_issue` with `id` and `addLabels` / `removeLabels` (`labels` replaces the whole set, so avoid it for incremental changes). Available labels: `list_issue_labels` with `team: "Beztack"`.
+- **Change state**: `save_issue` with `id` and `state`. The states are `Backlog`, `Todo`, `In Progress`, `In Review`, `Done`, `Canceled` and `Duplicate`.
+- **Close**: `save_issue` with `state: "Done"` (or `Canceled` / `Duplicate`, with `duplicateOf` for the latter) and a closing comment.
 
-Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
+Triage roles are labels from `triage-labels.md`, paired with the workflow state: `needs-triage` -> `Backlog`, `ready-for-agent` / `ready-for-human` -> `Todo`, `wontfix` -> `Canceled`.
+
+## Branches and PRs
+
+Put `BZ-<n>` in the branch name (for example `bz/132`) or the PR title so the GitHub integration links the PR to the issue. Use `Fixes BZ-<n>` in the PR body when the PR closes the ticket.
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue.
+Create a Linear issue in team BZ with `save_issue`, with the triage label and the matching state.
 
 ## When a skill says "fetch the relevant ticket"
 
-Run `gh issue view <number> --comments`.
+Run `get_issue` with the identifier, then `list_comments` for the discussion. Read the parent issue when the ticket points at a spec.
 
 ## Wayfinding operations
 
-GitHub has native sub-issues and native blocking (issue dependencies). Both REST endpoints take the issue's database `id`, not its number: get it with `gh api repos/V473r10/beztack/issues/<number> --jq .id`.
+Used by `/wayfinder`. The labels `wayfinder:map`, `wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling` and `wayfinder:task` exist in team BZ.
 
-- **Map**: an issue labelled `wayfinder:map`. Find maps with `gh issue list --label wayfinder:map --state all`.
-- **Ticket**: create it with `gh issue create` plus one of `wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling`, `wayfinder:task`, then attach it to the map:
-  `gh api -X POST repos/V473r10/beztack/issues/<map>/sub_issues -F sub_issue_id=<ticket id>`
-- **Blocking**: mark `<ticket>` as blocked by `<blocker>`:
-  `gh api -X POST repos/V473r10/beztack/issues/<ticket>/dependencies/blocked_by -F issue_id=<blocker id>`
-  Read a ticket's blockers with `gh api repos/V473r10/beztack/issues/<ticket>/dependencies/blocked_by --jq '[.[] | {number, state}]'`.
-- **Claim**: `gh issue edit <ticket> --add-assignee @me`.
-- **Frontier** (open, unblocked, unclaimed children of the map):
-  ```sh
-  gh api repos/V473r10/beztack/issues/<map>/sub_issues --paginate \
-    --jq '[.[] | select(.state == "open" and (.assignees | length) == 0 and .issue_dependencies_summary.blocked_by == 0) | {number, title, labels: [.labels[].name]}]'
-  ```
-  `issue_dependencies_summary.blocked_by` counts only open blockers, so a ticket whose blockers are all closed shows `0`.
-- **Resolve**: `gh issue comment <ticket> --body "<resolution>"`, then `gh issue close <ticket>`, then edit the map body's Decisions so far with `gh issue edit <map> --body-file <file>`.
+- **Map**: an issue labelled `wayfinder:map`. Find maps with `list_issues` filtered by `label: "wayfinder:map"` (include closed states).
+- **Ticket**: create it with `save_issue`, one of the four ticket labels, and `parentId` set to the map. Sub-issues are Linear's native parent/child relation.
+- **Blocking**: mark `<ticket>` as blocked by `<blocker>` with `save_issue` on the ticket and `blockedBy: ["<blocker>"]` (the native "blocked by" relation). Remove one with `removeBlockedBy`. Read a ticket's blockers with `get_issue` and `includeRelations: true`.
+- **Claim**: `save_issue` with `assignee: "me"` and `state: "In Progress"`.
+- **Frontier**: children of the map (`list_issues` with `parentId: "<map>"`) in state `Backlog` or `Todo`, with no assignee, whose blockers are all `Done` or `Canceled`. Lowest number first.
+- **Resolve**: `save_comment` on the ticket with the resolution, set `state: "Done"`, then update the map's Decisions so far with `save_issue` on the map (`patch` for a partial edit).
