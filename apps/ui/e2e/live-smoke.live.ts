@@ -35,3 +35,20 @@ test("marketing home renders its content", async ({ page }) => {
     `${webUrl} did not render the marketing home headline (an <h1> mentioning "B2B SaaS")`,
   ).toContainText("B2B SaaS", { timeout: RENDER_TIMEOUT_MS });
 });
+
+test("app login page renders its form", async ({ page }) => {
+  const appUrl = baseUrlFrom("LIVE_APP_URL");
+  const loginUrl = new URL("/auth/sign-in", appUrl).toString();
+
+  const response = await page.goto(loginUrl);
+  expect(response?.status(), `GET ${loginUrl} did not answer 2xx`).toBeLessThan(400);
+
+  // Locale-independent: the form is found by its fields, not by translated labels.
+  const form = page.locator("form").filter({ has: page.locator('input[type="password"]') });
+  const failure = `${loginUrl} did not render the sign-in form`;
+  await expect(form.locator('input[type="email"]'), `${failure} (email field)`).toBeVisible({
+    timeout: RENDER_TIMEOUT_MS,
+  });
+  await expect(form.locator('input[type="password"]'), `${failure} (password field)`).toBeVisible();
+  await expect(form.locator('button[type="submit"]'), `${failure} (submit button)`).toBeVisible();
+});
