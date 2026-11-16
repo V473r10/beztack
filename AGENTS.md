@@ -2,11 +2,15 @@
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues for `V473r10/beztack` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues and specs live in Linear, team `BZ` (workspace `beztack`), via the Linear MCP server. Linear mirrors them to GitHub Issues, which are read-only copies. Put `BZ-<n>` in branch names and PR titles. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-The repo uses the canonical triage label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+The repo uses the canonical triage label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) as Linear labels, plus the factory loop labels `auto-merge` and `needs-human`. See `docs/agents/triage-labels.md`.
+
+### Skills
+
+Matt Pocock's engineering skills are installed under `.agents/skills/` (read by Codex), with copies in `.claude/skills/` and `.kiro/skills/`, and locked in `skills-lock.json`. They are vendored: do not edit them by hand.
 
 ### Domain docs
 
