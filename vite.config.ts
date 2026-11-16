@@ -1,6 +1,11 @@
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  fmt: {
+    // Skills installed by `npx skills` are vendored copies pinned by
+    // skills-lock.json; reformatting them would drift from the upstream files.
+    ignorePatterns: [".agents/skills/**", ".claude/skills/**", ".kiro/skills/**"],
+  },
   lint: {
     plugins: ["react", "typescript", "unicorn", "oxc"],
     rules: {
