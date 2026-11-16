@@ -18,7 +18,8 @@ export default defineConfig({
   outputDir: "./test-results/live",
   timeout: TEST_TIMEOUT_MS,
   fullyParallel: true,
-  retries: 0,
+  // One retry absorbs a network blip or CDN lag right after a deploy; a real outage fails twice.
+  retries: 1,
   workers: WORKERS,
   reporter: [["list"]],
   use: {

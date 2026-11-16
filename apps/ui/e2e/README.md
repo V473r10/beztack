@@ -42,4 +42,4 @@ cd apps/ui
 LIVE_WEB_URL=https://www.beztack.com LIVE_APP_URL=https://app.beztack.com pnpm test:live
 ```
 
-Use `E2E_CHROMIUM_PATH=/usr/bin/chromium` to reuse a system Chromium, as for the layout audit. Against production the run takes about 5 seconds. A failing check waits up to 15 seconds for its content, so the worst case is well under a minute. On failure, a viewport screenshot lands in `test-results/live/`.
+Use `E2E_CHROMIUM_PATH=/usr/bin/chromium` to reuse a system Chromium, as for the layout audit. Against production the run takes about 5 seconds. A failing check waits up to 15 seconds for its content and is retried once, so the worst case is still under a minute. On failure, a viewport screenshot lands in `test-results/live/`.
