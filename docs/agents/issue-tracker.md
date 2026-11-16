@@ -18,7 +18,7 @@ Triage roles are labels from `triage-labels.md`, paired with the workflow state:
 
 ## Branches and PRs
 
-Put `BZ-<n>` in the branch name (for example `bz/132`) or the PR title so the GitHub integration links the PR to the issue. Use `Fixes BZ-<n>` in the PR body when the PR closes the ticket.
+Name the branch with Linear's pattern, the lower-case identifier followed by a short title (for example `bz-132-short-title`), or use the `gitBranchName` that Linear gives the issue. Linear links a PR to the issue when the branch name or the PR title contains the identifier (`bz-132` or `BZ-132`). Use `Fixes BZ-<n>` in the PR body when the PR closes the ticket.
 
 ## When a skill says "publish to the issue tracker"
 
