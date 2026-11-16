@@ -32,10 +32,13 @@ describe("isDemoBlockedPath", () => {
     },
   );
 
-  it.each(["/api/emailing", "/api/auth/sign-up/email", "/api/subscriptions/checkout", "/"])(
-    "allows %s",
-    (path) => {
-      expect(isDemoBlockedPath(path)).toBe(false);
-    },
-  );
+  it.each([
+    "/api/emailing",
+    "/api/auth/sign-up/email",
+    "/api/subscriptions/checkout",
+    "/api/health",
+    "/",
+  ])("allows %s", (path) => {
+    expect(isDemoBlockedPath(path)).toBe(false);
+  });
 });

@@ -161,6 +161,8 @@ What does work without the webhook: sign-up, the Personal organization, pricing,
 | Daily reset scheduled                  | **Not built.** See "Demo data and reset".                                                                                                                                                            |
 | Provider rate limits                   | **Not handled.** Pages that list Subscriptions or products call the provider on every load. The Polar sandbox answers 429 when many sessions load pages at once; the API passes the 429 on.          |
 
+`GET /api/health` is public and answers 200 `{"status":"ok","database":"up"}`, or 503 `{"status":"unavailable","database":"down"}` when the database does not answer. Leave it out of any platform rate-limit rule: it runs one `select 1` and the factory loop polls it.
+
 ## What Facundo must provide
 
 - [ ] **Polar sandbox:** an organization at sandbox.polar.sh, an organization access token, six products (Basic, Pro, Ultimate × monthly, yearly), a webhook endpoint pointing at the demo API with its secret. Gives `POLAR_ORGANIZATION_ID`, `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, the six `POLAR_*_PRODUCT_ID`.
