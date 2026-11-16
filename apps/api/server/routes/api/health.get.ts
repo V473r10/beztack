@@ -14,7 +14,9 @@ async function databaseAnswers(): Promise<boolean> {
   try {
     await Promise.race([db.execute(sql`select 1`), timeout]);
     return true;
-  } catch {
+  } catch (error) {
+    // Message only: it names the cause (timeout, refused, auth) for the logs; the response stays generic.
+    console.error("health: database check failed", error instanceof Error ? error.message : error);
     return false;
   } finally {
     clearTimeout(timer);

@@ -85,6 +85,23 @@ describe.skipIf(!TEST_DATABASE_URL)("GET /api/health on Postgres", () => {
     }
   });
 
+  it("logs why the database check failed, without exposing it in the response", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const executeSpy = vi
+      .spyOn(dbModule.db, "execute")
+      .mockRejectedValue(new Error("connection refused"));
+    try {
+      const response = await request("GET");
+
+      expect(response.status).toBe(503);
+      expect(await response.text()).not.toContain("connection refused");
+      expect(errorSpy).toHaveBeenCalledWith("health: database check failed", "connection refused");
+    } finally {
+      executeSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
+  });
+
   // This test ends the shared Postgres client, so it must stay the last one in this file.
   it("answers 503 with the same body shape once Postgres is unreachable", async () => {
     // Closing the client makes every later query fail, like a dropped connection.
