@@ -10,7 +10,7 @@ The repo uses the canonical triage label vocabulary (`needs-triage`, `needs-info
 
 ### Skills
 
-Matt Pocock's engineering skills are installed under `.agents/skills/` (read by Codex), with copies in `.claude/skills/` and `.kiro/skills/`, and locked in `skills-lock.json`. They are vendored: do not edit them by hand.
+Agent skills are not kept in this repo. They live only in Facundo's Home repo, at `/home/v473r10/Dev/Home/skills/<name>/SKILL.md` (for example `tdd`, `code-review`, `triage`, `to-spec`, `to-tickets`). Read them from there. Do not add skill copies here.
 
 ### Domain docs
 
