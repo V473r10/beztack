@@ -666,6 +666,14 @@
         "invalidCookie": "Session expired. Please sign in again.",
         "backupCodeNotFound": "Invalid backup code.",
         "backupCodeUsed": "This backup code has already been used.",
+        "codeExpired": "This code has expired. Enter a new code.",
+        "tooManyAttempts": "Too many attempts. Request a new code and try again.",
+        "accountLocked": "Your account is temporarily locked after too many attempts. Try again later.",
+        "otpNotEnabled": "One-time codes are not enabled for your account.",
+        "otpNotConfigured": "One-time codes are currently unavailable. Try another verification method.",
+        "totpAlreadyEnabled": "Your authenticator app is already set up.",
+        "totpNotConfigured": "Authenticator app verification is currently unavailable. Try another verification method.",
+        "backupCodesNotEnabled": "Backup codes are not enabled for your account.",
         "unknownError": "An unexpected error occurred. Please try again."
       }
     }
