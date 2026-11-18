@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage, readAuthError } from "@/lib/auth-error-messages";
+import { twoFactorErrorKey } from "@/lib/two-factor-errors";
 import { getPostSignInTarget, withNext } from "@/lib/auth-redirect";
 
 /**
@@ -93,6 +94,12 @@ export async function submitSignIn(
   return null;
 }
 
+function failTwoFactor(t: TFunction, result: AuthResult): string {
+  const message = t(twoFactorErrorKey(readAuthError(result)?.code));
+  toast.error(message);
+  return message;
+}
+
 export async function submitTotp(
   code: string,
   search: string,
@@ -101,7 +108,7 @@ export async function submitTotp(
   const { t, navigate } = deps;
   const result = await request(() => authClient.twoFactor.verifyTotp({ code }));
   if (readAuthError(result)) {
-    return fail(t, result);
+    return failTwoFactor(t, result);
   }
   sessionStarted(deps);
   toast.success(t("notifications.auth.signIn2FASuccess"));
@@ -122,7 +129,7 @@ export async function submitBackupCode(
     result = await request(() => authClient.twoFactor.verifyBackupCode({ code: withoutDash }));
   }
   if (readAuthError(result)) {
-    return fail(t, result, "notifications.twoFactor.errors.verificationFailed");
+    return failTwoFactor(t, result);
   }
   sessionStarted(deps);
   toast.success(t("notifications.auth.signInBackupSuccess"));

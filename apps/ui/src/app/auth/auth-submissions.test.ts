@@ -239,3 +239,22 @@ describe("session-scoped data after authenticating", () => {
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 });
+
+describe.each([
+  ["TOTP", submitTotp, mocks.verifyTotp],
+  ["backup code", submitBackupCode, mocks.verifyBackupCode],
+] as const)("%s verification errors", (_name, submit, verify) => {
+  it.each([
+    ["INVALID_CODE", "Invalid TOTP code. Please try again."],
+    ["INVALID_BACKUP_CODE", "Invalid backup code."],
+    ["OTP_HAS_EXPIRED", "This code has expired. Enter a new code."],
+    ["TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE", "Too many attempts. Request a new code and try again."],
+    ["FUTURE_ERROR", "An unexpected error occurred. Please try again."],
+    [undefined, "An unexpected error occurred. Please try again."],
+  ])("translates %s without exposing server text", async (code, message) => {
+    verify.mockResolvedValue(failure({ code, message: "Raw server English" }));
+    expect(await submit("ABCDE-12345", "", { t, navigate, queryClient })).toBe(message);
+    expect(mocks.toast.error).toHaveBeenCalledWith(message);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+});

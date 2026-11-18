@@ -666,6 +666,14 @@
         "invalidCookie": "Sesión expirada. Por favor, iniciá sesión de nuevo.",
         "backupCodeNotFound": "Código de recuperación inválido.",
         "backupCodeUsed": "Este código de recuperación ya ha sido usado.",
+        "codeExpired": "Este código venció. Ingresá un código nuevo.",
+        "tooManyAttempts": "Demasiados intentos. Solicitá un código nuevo y probá de nuevo.",
+        "accountLocked": "Tu cuenta está bloqueada temporalmente por demasiados intentos. Probá más tarde.",
+        "otpNotEnabled": "Los códigos de un solo uso no están habilitados para tu cuenta.",
+        "otpNotConfigured": "Los códigos de un solo uso no están disponibles. Probá otro método de verificación.",
+        "totpAlreadyEnabled": "Tu app de autenticación ya está configurada.",
+        "totpNotConfigured": "La verificación con app de autenticación no está disponible. Probá otro método de verificación.",
+        "backupCodesNotEnabled": "Los códigos de recuperación no están habilitados para tu cuenta.",
         "unknownError": "Ocurrió un error inesperado. Por favor, intentá de nuevo."
       }
     }

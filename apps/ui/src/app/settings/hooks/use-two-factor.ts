@@ -9,6 +9,7 @@ import {
   isTotpCodeError,
 } from "@/lib/auth-error-messages";
 import type { SettingsAction } from "../types/settings-action";
+import { twoFactorErrorKey } from "@/lib/two-factor-errors";
 import { queryKeys } from "@/lib/query-keys";
 
 type TwoFactorEnableSuccessData = {
@@ -110,7 +111,7 @@ export function useTotpVerification(dispatch: React.Dispatch<SettingsAction>, t:
     mutationFn: async (code: string) => {
       const response = await authClient.twoFactor.verifyTotp({ code });
       if (response.error) {
-        throw new Error(response.error.message || "Invalid verification code");
+        throw Object.assign(new Error(), { code: response.error.code });
       }
       return response.data;
     },
@@ -124,12 +125,7 @@ export function useTotpVerification(dispatch: React.Dispatch<SettingsAction>, t:
       queryClient.invalidateQueries({ queryKey: queryKeys.userSession.all() });
     },
     onError: (error: AuthError) => {
-      const errorMessage = getAuthErrorMessage(
-        t,
-        error,
-        "notifications.twoFactor.errors.invalidTotpCode",
-      );
-      toast.error(errorMessage);
+      toast.error(t(twoFactorErrorKey(error.code)));
       dispatch({ type: "SET_TOTP_CODE", value: "" });
     },
     onSettled: () => {
