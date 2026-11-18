@@ -1,7 +1,14 @@
 import type { SendEmailUnifiedProps } from "@beztack/email";
 import { type BetterAuthOptions, type BetterAuthPlugin, betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
-import { admin, haveIBeenPwned, openAPI, organization, twoFactor } from "better-auth/plugins";
+import {
+  admin,
+  haveIBeenPwned,
+  multiSession,
+  openAPI,
+  organization,
+  twoFactor,
+} from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
 import {
   isAllowlistedAppAdminEmail,
@@ -216,6 +223,7 @@ export function createAuth(deps: AuthConfigDeps) {
     plugins: [
       haveIBeenPwned(),
       twoFactor({ issuer: deps.appName }),
+      multiSession({ maximumSessions: 5 }),
       // `sudo` is the App admin role. better-auth only accepts admin roles it
       // knows, so `sudo` is registered with the admin access controls. The
       // allowlist half of App admin is enforced in `hooks.before` below.

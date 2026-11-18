@@ -348,3 +348,103 @@ describe("auth OpenAPI routes", () => {
     }
   });
 });
+
+/** One browser: retain untouched cookies and apply replacements/deletions. */
+function browser(auth: TestAuth) {
+  const cookies = new Map<string, string>();
+  return async (path: string, body?: Record<string, unknown>) => {
+    const response = await auth.handler(
+      new Request(`http://localhost:3000/api/auth${path}`, {
+        method: body ? "POST" : "GET",
+        headers: {
+          cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join("; "),
+          ...(body ? { "content-type": "application/json" } : {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      }),
+    );
+    for (const entry of response.headers.getSetCookie()) {
+      const pair = entry.split(";")[0];
+      const separator = pair.indexOf("=");
+      const name = pair.slice(0, separator);
+      const value = pair.slice(separator + 1);
+      if (/;\s*max-age=0(?:;|$)/i.test(entry) || !value) {
+        cookies.delete(name);
+      } else {
+        cookies.set(name, value);
+      }
+    }
+    expect(response.status).toBe(200);
+    return response.json();
+  };
+}
+
+describe("multiple sessions in one browser", () => {
+  it("lists two logins, switches the active account and revokes only the other session", async () => {
+    const { auth } = setup();
+    await signUp(auth, "first@example.test");
+    await signUp(auth, "second@example.test");
+    const request = browser(auth);
+
+    await request("/sign-in/email", { email: "first@example.test", password: PASSWORD });
+    await request("/sign-in/email", { email: "second@example.test", password: PASSWORD });
+    const sessions = await request("/multi-session/list-device-sessions");
+    expect(sessions).toHaveLength(2);
+    expect(sessions.map((item: { user: { email: string } }) => item.user.email).sort()).toEqual([
+      "first@example.test",
+      "second@example.test",
+    ]);
+    expect((await request("/get-session")).user.email).toBe("second@example.test");
+
+    const first = sessions.find(
+      (item: { user: { email: string } }) => item.user.email === "first@example.test",
+    );
+    const second = sessions.find(
+      (item: { user: { email: string } }) => item.user.email === "second@example.test",
+    );
+    await request("/multi-session/set-active", { sessionToken: first.session.token });
+    expect((await request("/get-session")).user.email).toBe("first@example.test");
+
+    await request("/multi-session/revoke", { sessionToken: second.session.token });
+    const remaining = await request("/multi-session/list-device-sessions");
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].session.token).toBe(first.session.token);
+    expect((await request("/get-session")).user.email).toBe("first@example.test");
+  });
+});
+
+describe("device session limits and sign-out", () => {
+  it("remembers at most five accounts in the browser", async () => {
+    const { auth } = setup();
+    const request = browser(auth);
+    for (let index = 1; index <= 6; index += 1) {
+      const email = `account${index}@example.test`;
+      await signUp(auth, email);
+      await request("/sign-in/email", { email, password: PASSWORD });
+    }
+    const sessions = await request("/multi-session/list-device-sessions");
+    expect(sessions).toHaveLength(5);
+    expect(sessions.map((item: { user: { email: string } }) => item.user.email).sort()).toEqual([
+      "account1@example.test",
+      "account2@example.test",
+      "account3@example.test",
+      "account4@example.test",
+      "account5@example.test",
+    ]);
+  });
+
+  it("signs out and removes all remembered device sessions", async () => {
+    const { auth } = setup();
+    const request = browser(auth);
+    for (const email of ["first@example.test", "second@example.test"]) {
+      await signUp(auth, email);
+      await request("/sign-in/email", { email, password: PASSWORD });
+    }
+    expect(await request("/multi-session/list-device-sessions")).toHaveLength(2);
+
+    await request("/sign-out", {});
+
+    expect(await request("/get-session")).toBeNull();
+    expect(await request("/multi-session/list-device-sessions")).toEqual([]);
+  });
+});
