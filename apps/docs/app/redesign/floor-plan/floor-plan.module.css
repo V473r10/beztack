@@ -1,0 +1,620 @@
+.page {
+  --paper: #f7f9fa;
+  --grid: #e3e9ed;
+  --graphite: #1f2328;
+  --concrete: #8a939b;
+  --concrete-light: #d5dade;
+  --pencil: #e5402a;
+  --pencil-tint: rgba(229, 64, 42, 0.09);
+
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--graphite);
+  font-family: var(--font-plan-display), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+.page :focus-visible {
+  outline: 3px solid var(--pencil);
+  outline-offset: 3px;
+}
+
+.nav {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 1.4rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wordmark {
+  font-weight: 900;
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1.5rem;
+  font-family: var(--font-plan-mono), monospace;
+  font-size: 0.9rem;
+}
+
+.navLinks a {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
+}
+
+.heroHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: 3rem;
+  align-items: end;
+  margin-bottom: 2.5rem;
+}
+
+.title {
+  font-size: clamp(2.6rem, 4.9vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  font-weight: 900;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.lede {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  margin: 0;
+  color: #444b53;
+}
+
+.planWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.sheet {
+  position: relative;
+  background: #fff;
+  border: 1.5px solid var(--graphite);
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.plan {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.walls rect,
+.walls path {
+  fill: none;
+  stroke: var(--graphite);
+  stroke-width: 10;
+  stroke-linecap: square;
+}
+
+.door rect {
+  stroke: none;
+}
+
+.door path {
+  fill: none;
+  stroke: var(--graphite);
+  stroke-width: 1.5;
+}
+
+.room {
+  cursor: pointer;
+  outline: none;
+}
+
+.roomFill {
+  fill: #fff;
+  transition: fill 200ms ease;
+}
+
+.room:hover .roomFill {
+  fill: #f1f3f5;
+}
+
+.room[data-active] .roomFill {
+  fill: var(--pencil-tint);
+}
+
+.room[data-yours] .roomFill {
+  fill: url(#hatch);
+}
+
+.room:focus-visible .roomFill {
+  stroke: var(--pencil);
+  stroke-width: 4;
+  stroke-dasharray: 10 6;
+}
+
+.hatchLine {
+  stroke: var(--concrete-light);
+  stroke-width: 3;
+}
+
+.room[data-yours][data-active] .hatchLine {
+  stroke: rgba(229, 64, 42, 0.35);
+}
+
+.roomName {
+  font-family: var(--font-plan-display), sans-serif;
+  font-weight: 800;
+  font-size: 26px;
+  fill: var(--graphite);
+  pointer-events: none;
+}
+
+.room[data-active] .roomName {
+  fill: var(--pencil);
+}
+
+.roomNote {
+  font-family: var(--font-plan-mono), monospace;
+  font-size: 14px;
+  fill: var(--concrete);
+  pointer-events: none;
+}
+
+.furniture rect,
+.furniture circle {
+  fill: #fff;
+  stroke: var(--graphite);
+  stroke-width: 1.5;
+}
+
+.furniture path {
+  fill: none;
+  stroke: var(--concrete);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.furniture text {
+  font-family: var(--font-plan-mono), monospace;
+  font-size: 13px;
+  text-anchor: middle;
+  fill: var(--graphite);
+}
+
+.furniture {
+  pointer-events: none;
+}
+
+.furniture .furnitureSmall {
+  font-size: 12px;
+  fill: var(--concrete);
+}
+
+.furniture .breaker {
+  fill: #2f9e5b;
+  stroke: none;
+}
+
+.furniture .adapter {
+  fill: var(--graphite);
+  stroke: none;
+}
+
+.furniture .adapterText {
+  fill: #fff;
+  font-weight: 700;
+}
+
+.dimension path {
+  fill: none;
+  stroke: var(--pencil);
+  stroke-width: 1.2;
+}
+
+.dimension text {
+  font-family: var(--font-plan-mono), monospace;
+  font-size: 14px;
+  fill: var(--pencil);
+}
+
+.titleBlock rect,
+.titleBlock path {
+  fill: #fff;
+  stroke: var(--graphite);
+  stroke-width: 1.5;
+}
+
+.titleBlock path {
+  fill: none;
+}
+
+.titleKey {
+  font-family: var(--font-plan-mono), monospace;
+  font-size: 12px;
+  fill: var(--concrete);
+}
+
+.titleValue {
+  font-family: var(--font-plan-display), sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  fill: var(--graphite);
+}
+
+/* The room details, like the notes column next to a drawing. */
+.panel {
+  background: var(--graphite);
+  color: #fff;
+  padding: 1.75rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  animation: note 260ms ease both;
+}
+
+@keyframes note {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.panelNote {
+  font-family: var(--font-plan-mono), monospace;
+  font-size: 0.85rem;
+  color: #ff8a75;
+  margin: 0 0 0.4rem;
+}
+
+.panelName {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0 0 1rem;
+}
+
+.panelSummary {
+  line-height: 1.6;
+  margin: 0 0 1.1rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.panelList {
+  list-style: none;
+  margin: 0 0 1.2rem;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.panelList li {
+  padding-left: 1.2rem;
+  position: relative;
+}
+
+.panelList li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 0.6rem;
+  height: 2px;
+  background: var(--pencil);
+}
+
+.panelLink {
+  color: #fff;
+  font-weight: 700;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--pencil);
+  text-decoration-thickness: 2px;
+}
+
+.roomTabs {
+  display: none;
+}
+
+.roomTab {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+}
+
+.roomTab[aria-pressed="true"] {
+  background: var(--pencil);
+  border-color: var(--pencil);
+}
+
+/* ---------- Materials ---------- */
+
+.section {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 5rem 1.5rem;
+}
+
+.sectionHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: end;
+  margin-bottom: 2.5rem;
+}
+
+.h2 {
+  font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  margin: 0 0 1rem;
+}
+
+.sectionLede {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #444b53;
+  margin: 0;
+  max-width: 32rem;
+}
+
+.materials {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1.5px solid var(--graphite);
+  font-size: 1rem;
+}
+
+.materials th,
+.materials td {
+  text-align: left;
+  padding: 0.95rem 1.2rem;
+  border-bottom: 1px solid var(--concrete-light);
+}
+
+.materials thead th {
+  font-family: var(--font-plan-mono), monospace;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--concrete);
+  border-bottom: 1.5px solid var(--graphite);
+}
+
+.materials tbody th {
+  font-weight: 800;
+  width: 22%;
+}
+
+.materials tbody tr:last-child th,
+.materials tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.where {
+  font-family: var(--font-plan-mono), monospace;
+  font-size: 0.85rem;
+  color: var(--pencil);
+  white-space: nowrap;
+}
+
+/* ---------- Pending ---------- */
+
+.pending {
+  background: var(--concrete);
+  color: #fff;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.06) 0 12px,
+    transparent 12px 24px
+  );
+}
+
+.pendingInner {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 5rem 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+.pending .sectionLede {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pendingList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: var(--graphite);
+  border: 1.5px solid var(--graphite);
+}
+
+.pendingList li {
+  padding: 1rem 1.2rem 1rem 3rem;
+  border-bottom: 1px solid var(--concrete-light);
+  position: relative;
+}
+
+.pendingList li:last-child {
+  border-bottom: 0;
+}
+
+.pendingList li::before {
+  /* An empty checkbox: not done yet. */
+  content: "";
+  position: absolute;
+  left: 1.2rem;
+  top: 1.15rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 2px solid var(--pencil);
+}
+
+/* ---------- Keys ---------- */
+
+.keys {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 6rem 1.5rem;
+  text-align: center;
+}
+
+.keysTitle {
+  font-size: clamp(2.6rem, 6vw, 5rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin: 0 0 1rem;
+}
+
+.keysLede {
+  font-size: 1.15rem;
+  color: #444b53;
+  margin: 0 auto 2rem;
+  max-width: 34rem;
+  line-height: 1.55;
+}
+
+.keysCommand {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: var(--graphite);
+  color: #fff;
+  border: 0;
+  font-family: var(--font-plan-mono), monospace;
+  font-size: 1.15rem;
+  padding: 1.05rem 1.1rem 1.05rem 1.5rem;
+  cursor: pointer;
+  box-shadow: 8px 8px 0 var(--pencil);
+}
+
+.keysCopy {
+  font-size: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 0.3rem 0.65rem;
+}
+
+.keysCommand[data-copied] .keysCopy {
+  background: var(--pencil);
+  border-color: var(--pencil);
+}
+
+.keysLinks {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  font-weight: 700;
+}
+
+.keysLinks a {
+  color: var(--graphite);
+  text-underline-offset: 4px;
+  text-decoration-color: var(--pencil);
+  text-decoration-thickness: 2px;
+}
+
+.footer {
+  border-top: 1.5px solid var(--graphite);
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 1.4rem 1.5rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.footerScale {
+  font-family: var(--font-plan-mono), monospace;
+  color: var(--concrete);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1000px) {
+  .planWrap {
+    grid-template-columns: 1fr;
+  }
+
+  .roomTabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.5rem;
+    order: -1;
+    margin-bottom: 1.25rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .heroHead,
+  .sectionHead,
+  .pendingInner {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .sheet {
+    padding: 1rem 0.75rem 1rem;
+  }
+
+  .materials thead {
+    display: none;
+  }
+
+  .materials tr {
+    display: grid;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--concrete-light);
+  }
+
+  .materials th,
+  .materials td {
+    padding: 0.15rem 0;
+    border: 0;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roomFill {
+    transition: none;
+  }
+
+  .panel {
+    animation: none;
+  }
+}
