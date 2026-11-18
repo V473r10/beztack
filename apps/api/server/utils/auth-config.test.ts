@@ -1,6 +1,6 @@
 import { memoryAdapter } from "better-auth/adapters/memory";
-import { describe, expect, it, vi } from "vitest";
-import { type AuthConfigDeps, createAuth } from "./auth-config";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { type AuthConfigDeps, createAuth, shouldExposeAuthReference } from "./auth-config";
 
 /**
  * Runs the real better-auth config (`createAuth`, the same factory `auth.ts`
@@ -198,5 +198,51 @@ describe("better-auth config", () => {
 
     expect(sessionCookie).toBeDefined();
     expect(/;\s*Secure/i.test(sessionCookie ?? "")).toBe(secure);
+  });
+});
+
+describe("auth reference environment rule", () => {
+  it.each([
+    ["production", false],
+    ["development", true],
+    ["test", true],
+    ["staging", true],
+    ["", true],
+    [undefined, true],
+  ])("exposes the reference for NODE_ENV=%s: %s", (nodeEnv, expected) => {
+    expect(shouldExposeAuthReference(nodeEnv)).toBe(expected);
+  });
+});
+
+describe("auth OpenAPI routes", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it.each([
+    ["development", 200],
+    ["test", 200],
+    ["production", 404],
+  ])("serves OpenAPI only outside production (%s)", async (nodeEnv, status) => {
+    vi.stubEnv("NODE_ENV", nodeEnv);
+    const { auth } = setup();
+
+    if (status === 200) {
+      expect(auth.api).toHaveProperty("generateOpenAPISchema");
+      expect(auth.api).toHaveProperty("openAPIReference");
+    } else {
+      expect(auth.api).not.toHaveProperty("generateOpenAPISchema");
+      expect(auth.api).not.toHaveProperty("openAPIReference");
+    }
+
+    for (const path of ["/reference", "/open-api/generate-schema"]) {
+      const response = await auth.handler(new Request(`https://app.example.test/api/auth${path}`));
+      expect(response.status).toBe(status);
+      if (status === 200 && path === "/reference") {
+        expect(response.headers.get("content-type")).toContain("text/html");
+        expect(await response.text()).toContain("api-reference");
+      }
+      if (status === 200 && path === "/open-api/generate-schema") {
+        expect(await response.json()).toHaveProperty("paths./sign-in/email");
+      }
+    }
   });
 });
