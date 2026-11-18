@@ -106,6 +106,8 @@ describe("sign-up with the Polar plugin", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: Request | URL | string, init?: RequestInit) => {
+        if (String(input).startsWith("https://api.pwnedpasswords.com/range/"))
+          return new Response("ABCDE:0");
         const method = input instanceof Request ? input.method : (init?.method ?? "GET");
         return method === "POST"
           ? jsonResponse(422, REJECTED_EMAIL)
@@ -124,7 +126,9 @@ describe("sign-up with the Polar plugin", () => {
   it("succeeds when Polar is down", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => {
+      vi.fn(async (input: Request | URL | string) => {
+        if (String(input).startsWith("https://api.pwnedpasswords.com/range/"))
+          return new Response("ABCDE:0");
         throw new TypeError("fetch failed");
       }),
     );
@@ -140,18 +144,20 @@ describe("sign-up with the Polar plugin", () => {
   it("treats an existing customer linked to another user as success (CONFLICT)", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        jsonResponse(200, {
-          items: [
-            {
-              id: "5b0d9a2e-6a56-4b43-8d2e-0e4a0d1e7c11",
-              type: "individual",
-              email: EMAIL,
-              external_id: "user_from_before_the_reset",
-            },
-          ],
-          pagination: { total_count: 1, max_page: 1 },
-        }),
+      vi.fn(async (input: Request | URL | string) =>
+        String(input).startsWith("https://api.pwnedpasswords.com/range/")
+          ? new Response("ABCDE:0")
+          : jsonResponse(200, {
+              items: [
+                {
+                  id: "5b0d9a2e-6a56-4b43-8d2e-0e4a0d1e7c11",
+                  type: "individual",
+                  email: EMAIL,
+                  external_id: "user_from_before_the_reset",
+                },
+              ],
+              pagination: { total_count: 1, max_page: 1 },
+            }),
       ),
     );
     const { auth } = setup();
@@ -167,6 +173,8 @@ describe("sign-up with the Polar plugin", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: Request | URL | string, init?: RequestInit) => {
+        if (String(input).startsWith("https://api.pwnedpasswords.com/range/"))
+          return new Response("ABCDE:0");
         const method = input instanceof Request ? input.method : (init?.method ?? "GET");
         return method === "POST"
           ? jsonResponse(422, REJECTED_EMAIL)

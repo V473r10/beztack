@@ -641,6 +641,7 @@
         "invalidCredentials": "Email o contraseña incorrectos.",
         "invalidEmail": "Ingresá un email válido.",
         "passwordTooShort": "La contraseña es demasiado corta.",
+        "passwordCompromised": "Esta contraseña apareció en una filtración de datos. Elegí otra contraseña.",
         "passwordTooLong": "La contraseña es demasiado larga.",
         "emailNotVerified": "Verificá tu email antes de iniciar sesión.",
         "serverError": "Algo salió mal de nuestro lado. Probá de nuevo en un momento."

@@ -1,5 +1,5 @@
 import { memoryAdapter } from "better-auth/adapters/memory";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type AuthConfigDeps,
   createAuth,
@@ -214,3 +214,11 @@ describe("Active organization on every new session", () => {
     expect(await activeOrganizationIdOf(auth, headers)).toBeFalsy();
   });
 });
+
+beforeEach(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response("ABCDE:0", { headers: { "content-type": "text/plain" } })),
+  );
+});
+afterEach(() => vi.unstubAllGlobals());
