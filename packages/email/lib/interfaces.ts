@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 
 // Main unified email function - API should use this
 export type EmailType =
+  | "magic-link"
   | "welcome"
   | "password-reset"
   | "subscription-confirmation"
