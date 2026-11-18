@@ -10,6 +10,7 @@
     "test": "vp test run",
     "test:watch": "vp test",
     "test:e2e": "playwright test",
+    "test:live": "playwright test --config playwright.live.config.ts",
     "lint": "vp lint",
     "fmt": "vp fmt",
     "check": "vp check",

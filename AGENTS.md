@@ -2,11 +2,15 @@
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues for `V473r10/beztack` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues and specs live in Linear, team `BZ` (workspace `beztack`), via the Linear MCP server. Linear mirrors them to GitHub Issues, which are read-only copies. Put `BZ-<n>` in branch names and PR titles. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-The repo uses the canonical triage label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+The repo uses the canonical triage label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) as Linear labels, plus the factory loop labels `auto-merge` and `needs-human`. See `docs/agents/triage-labels.md`.
+
+### Skills
+
+Agent skills are not kept in this repo. They live only in Facundo's Home repo, at `/home/v473r10/Dev/Home/skills/<name>/SKILL.md` (for example `tdd`, `code-review`, `triage`, `to-spec`, `to-tickets`). Read them from there. Do not add skill copies here.
 
 ### Domain docs
 
