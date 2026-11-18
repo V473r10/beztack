@@ -1,5 +1,10 @@
 import { createPolarClientPlugin } from "@beztack/payments-polar/auth-client";
-import { adminClient, organizationClient, twoFactorClient } from "better-auth/client/plugins";
+import {
+  adminClient,
+  magicLinkClient,
+  organizationClient,
+  twoFactorClient,
+} from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { env } from "@/env";
 
@@ -11,6 +16,7 @@ export const authClient = createAuthClient({
   },
   plugins: [
     twoFactorClient(),
+    magicLinkClient(),
     adminClient(),
     organizationClient({
       teams: {

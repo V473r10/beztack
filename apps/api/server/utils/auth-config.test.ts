@@ -348,3 +348,74 @@ describe("auth OpenAPI routes", () => {
     }
   });
 });
+
+describe("magic link sign-in", () => {
+  it("emails a verification URL through the configured sender", async () => {
+    const { auth, sendEmail } = setup();
+    const response = await auth.handler(
+      new Request("https://app.example.test/api/auth/sign-in/magic-link", {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: "https://app.example.test" },
+        body: JSON.stringify({ email: "magic@example.test" }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(sendEmail).toHaveBeenCalledWith({
+      type: "magic-link",
+      to: "magic@example.test",
+      data: { loginUrl: expect.stringMatching(/\/api\/auth\/magic-link\/verify\?token=.+/) },
+    });
+  });
+});
+
+describe("magic link verification", () => {
+  afterEach(() => vi.useRealTimers());
+
+  async function requestLink(auth: TestAuth, sendEmail: ReturnType<typeof setup>["sendEmail"]) {
+    await auth.handler(
+      new Request("https://app.example.test/api/auth/sign-in/magic-link", {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: "https://app.example.test" },
+        body: JSON.stringify({ email: "magic@example.test" }),
+      }),
+    );
+    const email = sendEmail.mock.calls[0]?.[0] as unknown as { data: { loginUrl: string } };
+    return email.data.loginUrl;
+  }
+
+  it("creates a usable session and rejects reuse", async () => {
+    const { auth, sendEmail } = setup();
+    const url = await requestLink(auth, sendEmail);
+    const verified = await auth.handler(new Request(url));
+    expect(verified.status).toBe(302);
+    expect(verified.headers.get("location")).not.toContain("error=");
+    const cookie = verified.headers
+      .getSetCookie()
+      .map((entry) => entry.split(";")[0])
+      .join("; ");
+    const session = await auth.api.getSession({ headers: new Headers({ cookie }) });
+    expect(session?.user.email).toBe("magic@example.test");
+
+    const reused = await auth.handler(new Request(url));
+    expect(reused.headers.get("location")).toContain("error=INVALID_TOKEN");
+    expect(reused.headers.get("set-cookie")).toBeNull();
+  });
+
+  it.each([
+    [899, false],
+    [901, true],
+  ])("expires after 15 minutes (%s seconds)", async (seconds, expired) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const { auth, sendEmail } = setup();
+    const url = await requestLink(auth, sendEmail);
+    vi.setSystemTime(Date.now() + seconds * 1000);
+    const response = await auth.handler(new Request(url));
+    if (expired) {
+      expect(response.headers.get("location")).toContain("error=INVALID_TOKEN");
+      expect(response.headers.get("set-cookie")).toBeNull();
+    } else {
+      expect(response.headers.get("location")).not.toContain("error=");
+      expect(response.headers.get("set-cookie")).toContain("session_token");
+    }
+  });
+});

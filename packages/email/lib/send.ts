@@ -52,7 +52,10 @@ type CustomEmailData = {
   username?: string;
 };
 
+type MagicLinkEmailData = { loginUrl: string };
+
 type EmailTemplateData =
+  | MagicLinkEmailData
   | WelcomeEmailData
   | PasswordResetEmailData
   | SubscriptionConfirmationEmailData
@@ -167,6 +170,11 @@ function validateOrganizationInvitationData(
 function validateEmailData(type: EmailType, data: Record<string, unknown>): EmailTemplateData {
   // biome-ignore lint/nursery/noUnnecessaryConditions: false positive
   switch (type) {
+    case "magic-link":
+      if (!data.loginUrl) {
+        throw new Error("Magic link email requires loginUrl");
+      }
+      return { loginUrl: String(data.loginUrl) };
     case "welcome":
       return validateWelcomeData(data);
     case "password-reset":
@@ -335,6 +343,13 @@ async function getReactTemplate(type: EmailType, data: EmailTemplateData) {
 
   // biome-ignore lint/nursery/noUnnecessaryConditions: false positive
   switch (type) {
+    case "magic-link": {
+      if (!("loginUrl" in data)) {
+        throw new Error("Invalid data for magic link email template");
+      }
+      const { MagicLinkEmail } = await import("../emails/magic-link");
+      return React.createElement(MagicLinkEmail, { loginUrl: data.loginUrl });
+    }
     case "welcome": {
       if (!isWelcomeEmailData(data)) {
         throw new Error("Invalid data for welcome email template");
@@ -388,6 +403,8 @@ async function getReactTemplate(type: EmailType, data: EmailTemplateData) {
 async function getHTMLTemplate(type: EmailType, data: EmailTemplateData): Promise<string> {
   // biome-ignore lint/nursery/noUnnecessaryConditions: false positive
   switch (type) {
+    case "magic-link":
+      return renderReactToHtml(await getReactTemplate(type, data));
     case "welcome": {
       if (!isWelcomeEmailData(data)) {
         throw new Error("Invalid data for welcome email template");
@@ -439,6 +456,8 @@ async function getHTMLTemplate(type: EmailType, data: EmailTemplateData): Promis
 function getEmailSubject(type: EmailType, data: EmailTemplateData): string {
   // biome-ignore lint/nursery/noUnnecessaryConditions: false positive
   switch (type) {
+    case "magic-link":
+      return "Sign in to beztack";
     case "welcome":
       return "¡Bienvenido a beztack!";
     case "password-reset":
