@@ -1,6 +1,18 @@
 import { memoryAdapter } from "better-auth/adapters/memory";
-import { describe, expect, it, vi } from "vitest";
-import { type AuthConfigDeps, createAuth } from "./auth-config";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { type AuthConfigDeps, createAuth, shouldExposeAuthReference } from "./auth-config";
+
+describe("shouldExposeAuthReference", () => {
+  it.each([
+    ["production", false],
+    ["development", true],
+    ["test", true],
+    ["staging", true],
+    [undefined, true],
+  ])("exposes the auth reference for NODE_ENV=%s: %s", (nodeEnv, expected) => {
+    expect(shouldExposeAuthReference(nodeEnv)).toBe(expected);
+  });
+});
 
 /**
  * Runs the real better-auth config (`createAuth`, the same factory `auth.ts`
@@ -87,6 +99,41 @@ async function statusOf(promise: Promise<unknown>): Promise<number> {
 }
 
 describe("better-auth config", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it.each(["development", "test", "staging", undefined])(
+    "serves the auth schema and reference outside production (NODE_ENV=%s)",
+    async (nodeEnv) => {
+      vi.stubEnv("NODE_ENV", nodeEnv);
+      const { auth } = setup();
+
+      expect(auth.api).toHaveProperty("generateOpenAPISchema", expect.any(Function));
+      expect(auth.api).toHaveProperty("openAPIReference", expect.any(Function));
+      const schema = await auth.handler(
+        new Request("http://localhost:3000/api/auth/open-api/generate-schema"),
+      );
+      expect(schema.status).toBe(200);
+      expect(await schema.json()).toHaveProperty("paths./sign-in/email");
+      const reference = await auth.handler(new Request("http://localhost:3000/api/auth/reference"));
+      expect(reference.status).toBe(200);
+      expect(reference.headers.get("content-type")).toContain("text/html");
+    },
+  );
+
+  it("omits the auth schema and reference in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const { auth } = setup();
+
+    expect(auth.api).not.toHaveProperty("generateOpenAPISchema");
+    expect(auth.api).not.toHaveProperty("openAPIReference");
+    for (const path of ["reference", "open-api/generate-schema"]) {
+      const response = await auth.handler(new Request(`http://localhost:3000/api/auth/${path}`));
+      expect(response.status).toBe(404);
+    }
+  });
+
   it("sends the welcome email after sign-up (the hook runs)", async () => {
     const { auth, sendEmail } = setup();
 

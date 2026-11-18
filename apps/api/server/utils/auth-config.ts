@@ -1,7 +1,7 @@
 import type { SendEmailUnifiedProps } from "@beztack/email";
 import { type BetterAuthOptions, type BetterAuthPlugin, betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
-import { admin, organization, twoFactor } from "better-auth/plugins";
+import { admin, openAPI, organization, twoFactor } from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
 import {
   isAllowlistedAppAdminEmail,
@@ -122,6 +122,10 @@ function getAppBaseUrl(appUrl: string): string {
   return appUrl.replace(/\/+$/, "");
 }
 
+export function shouldExposeAuthReference(nodeEnv: string | undefined): boolean {
+  return nodeEnv !== "production";
+}
+
 export function createAuth(deps: AuthConfigDeps) {
   const appBaseUrl = getAppBaseUrl(deps.appUrl);
 
@@ -209,6 +213,7 @@ export function createAuth(deps: AuthConfigDeps) {
       appUrl: deps.appUrl,
     }),
     plugins: [
+      ...(shouldExposeAuthReference(process.env.NODE_ENV) ? [openAPI()] : []),
       twoFactor({ issuer: deps.appName }),
       // `sudo` is the App admin role. better-auth only accepts admin roles it
       // knows, so `sudo` is registered with the admin access controls. The
