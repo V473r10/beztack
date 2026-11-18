@@ -1,5 +1,5 @@
 import { memoryAdapter } from "better-auth/adapters/memory";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type AuthConfigDeps, createAuth, shouldExposeAuthReference } from "./auth-config";
 
 /**
@@ -85,6 +85,108 @@ async function statusOf(promise: Promise<unknown>): Promise<number> {
     return (error as { statusCode?: number }).statusCode ?? 500;
   }
 }
+
+beforeEach(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async () =>
+        new Response("ABCDE:0", {
+          headers: { "content-type": "text/plain" },
+        }),
+    ),
+  );
+});
+afterEach(() => vi.unstubAllGlobals());
+
+describe("compromised passwords", () => {
+  it("rejects a compromised password reset without consuming the reset token", async () => {
+    const { auth, db } = setup();
+    const { user } = await auth.api.signUpEmail({
+      body: {
+        email: "reset@example.test",
+        name: "Visitor",
+        password: PASSWORD,
+      },
+    });
+    // Arrange a valid reset link at the database boundary; email delivery is outside this test.
+    db.verification.push({
+      id: "reset-verification",
+      identifier: "reset-password:reset-token",
+      value: user.id,
+      expiresAt: new Date(Date.now() + 60_000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("1E4C9B93F3F0682250B6CF8331B7EE68FD8:42")),
+    );
+    await expect(
+      auth.api.resetPassword({
+        body: {
+          token: "reset-token",
+          newPassword: "password",
+        },
+      }),
+    ).rejects.toMatchObject({ body: { code: "PASSWORD_COMPROMISED" } });
+    await expect(
+      auth.api.resetPassword({
+        body: {
+          token: "reset-token",
+          newPassword: PASSWORD,
+        },
+      }),
+    ).resolves.toEqual({ status: true });
+  });
+
+  it("rejects a compromised password change and keeps the previous password usable", async () => {
+    const { auth } = setup();
+    await signUp(auth, "change@example.test");
+    const headers = await signIn(auth, "change@example.test");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("1E4C9B93F3F0682250B6CF8331B7EE68FD8:42")),
+    );
+
+    await expect(
+      auth.api.changePassword({
+        headers,
+        body: {
+          currentPassword: PASSWORD,
+          newPassword: "password",
+        },
+      }),
+    ).rejects.toMatchObject({ body: { code: "PASSWORD_COMPROMISED" } });
+    await expect(signIn(auth, "change@example.test")).resolves.toBeInstanceOf(Headers);
+  });
+
+  it("rejects a leaked password using only the SHA-1 prefix", async () => {
+    // SHA-1 of password: 5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8.
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          "1E4C9B93F3F0682250B6CF8331B7EE68FD8:42\r\n00000000000000000000000000000000000:0",
+          { headers: { "content-type": "text/plain" } },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { auth } = setup();
+
+    await expect(
+      auth.api.signUpEmail({
+        body: {
+          email: "leaked@example.test",
+          name: "Visitor",
+          password: "password",
+        },
+      }),
+    ).rejects.toMatchObject({ body: { code: "PASSWORD_COMPROMISED" } });
+    expect(String(vi.mocked(fetch).mock.calls[0]?.[0])).toBe(
+      "https://api.pwnedpasswords.com/range/5BAA6",
+    );
+  });
+});
 
 describe("better-auth config", () => {
   it("sends the welcome email after sign-up (the hook runs)", async () => {

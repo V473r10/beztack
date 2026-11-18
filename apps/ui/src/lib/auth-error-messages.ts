@@ -30,6 +30,7 @@ const ERROR_CODE_TO_I18N_KEY: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "notifications.auth.errors.invalidCredentials",
   INVALID_EMAIL: "notifications.auth.errors.invalidEmail",
   PASSWORD_TOO_SHORT: "notifications.auth.errors.passwordTooShort",
+  PASSWORD_COMPROMISED: "notifications.auth.errors.passwordCompromised",
   PASSWORD_TOO_LONG: "notifications.auth.errors.passwordTooLong",
   EMAIL_NOT_VERIFIED: "notifications.auth.errors.emailNotVerified",
   FAILED_TO_CREATE_USER: SERVER_ERROR_KEY,

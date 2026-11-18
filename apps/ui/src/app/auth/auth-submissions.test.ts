@@ -52,6 +52,20 @@ beforeEach(() => {
 });
 
 describe("submitSignUp", () => {
+  it.each([
+    ["en", "This password has appeared in a data breach. Choose another password."],
+    ["es", "Esta contraseña apareció en una filtración de datos. Elegí otra contraseña."],
+  ] as const)("translates compromised passwords in %s", async (language, message) => {
+    mocks.signUp.mockResolvedValue(
+      failure({ status: 400, code: "PASSWORD_COMPROMISED", message: "Raw server text" }),
+    );
+    expect(
+      await submitSignUp(SIGN_UP, "", { t: await translator(language), navigate, queryClient }),
+    ).toBe(message);
+    expect(mocks.toast.error).toHaveBeenCalledWith(message);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it("shows the server error and does not navigate when the server answers 500", async () => {
     mocks.signUp.mockResolvedValue(
       failure({ status: 500, statusText: "Internal Server Error", message: "Customer rejected" }),

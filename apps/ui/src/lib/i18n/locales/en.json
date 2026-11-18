@@ -641,6 +641,7 @@
         "invalidCredentials": "Incorrect email or password.",
         "invalidEmail": "Enter a valid email address.",
         "passwordTooShort": "The password is too short.",
+        "passwordCompromised": "This password has appeared in a data breach. Choose another password.",
         "passwordTooLong": "The password is too long.",
         "emailNotVerified": "Verify your email address before signing in.",
         "serverError": "Something went wrong on our side. Please try again in a moment."
