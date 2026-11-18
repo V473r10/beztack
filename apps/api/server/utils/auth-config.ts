@@ -1,7 +1,7 @@
 import type { SendEmailUnifiedProps } from "@beztack/email";
 import { type BetterAuthOptions, type BetterAuthPlugin, betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
-import { admin, organization, twoFactor } from "better-auth/plugins";
+import { admin, openAPI, organization, twoFactor } from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
 import {
   isAllowlistedAppAdminEmail,
@@ -120,6 +120,11 @@ function randomSuffix(): string {
 /** `https://app.example.com/` -> `https://app.example.com` (no trailing slash). */
 function getAppBaseUrl(appUrl: string): string {
   return appUrl.replace(/\/+$/, "");
+}
+
+/** Only production omits Better Auth's OpenAPI schema and reference routes. */
+export function shouldExposeAuthReference(nodeEnv: string | undefined): boolean {
+  return nodeEnv !== "production";
 }
 
 export function createAuth(deps: AuthConfigDeps) {
@@ -241,6 +246,7 @@ export function createAuth(deps: AuthConfigDeps) {
           allowRemovingAllTeams: false,
         },
       }),
+      ...(shouldExposeAuthReference(process.env.NODE_ENV) ? [openAPI()] : []),
       ...(deps.plugins ?? []),
     ],
     databaseHooks: {
