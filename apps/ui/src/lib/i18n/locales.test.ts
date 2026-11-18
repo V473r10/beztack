@@ -98,6 +98,94 @@ describe("locale files", () => {
 });
 
 /**
+ * The product is for Uruguay: es.json is written in voseo ("ingresá", "podés"), never in tuteo.
+ * Short, explicit list of tuteo forms that have no voseo spelling in common (so "estás", "ves" or
+ * third-person "se usa" are fine). Add a form here when one slips in.
+ */
+const TUTEO_FORMS = [
+  // present indicative
+  "puedes",
+  "tienes",
+  "quieres",
+  "necesitas",
+  "sabes",
+  "debes",
+  "pagas",
+  "mantienes",
+  "acabas",
+  "eres",
+  "has",
+  // imperatives
+  "ingresa",
+  "introduce",
+  "escanea",
+  "guarda",
+  "guárdalos",
+  "elige",
+  "mira",
+  "compara",
+  "regístrate",
+  "únete",
+  "intenta",
+  "inténtalo",
+  "contacta",
+  "verifica",
+  "inicia",
+  "continúa",
+  "confirma",
+  "revisa",
+  "desbloquea",
+  "ahorra",
+  "disfruta",
+  "explora",
+  "configura",
+  "descubre",
+  "consulta",
+  "recorre",
+  "empieza",
+  "gestiona",
+  "restablece",
+  "espera",
+  "haz",
+  // tuteo subjunctive
+  "pierdas",
+];
+const TUTEO_PATTERN = new RegExp(`(?<![\\p{L}])(?:${TUTEO_FORMS.join("|")})(?![\\p{L}])`, "giu");
+
+function stringValues(node: unknown, prefix = ""): Array<[string, string]> {
+  if (typeof node === "string") {
+    return [[prefix, node]];
+  }
+  if (node === null || typeof node !== "object") {
+    return [];
+  }
+  return Object.entries(node).flatMap(([key, value]) =>
+    stringValues(value, prefix ? `${prefix}.${key}` : key),
+  );
+}
+
+describe("es.json voseo", () => {
+  it("has no tuteo forms (use 'ingresá', 'podés', 'querés')", () => {
+    const offenders = stringValues(es)
+      .map(([key, value]) => [key, value.match(TUTEO_PATTERN)] as const)
+      .filter(([, matches]) => matches !== null)
+      .map(([key, matches]) => `${key}: ${matches?.join(", ")}`);
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("flags tuteo and accepts voseo (guards the check itself)", () => {
+    expect("Ingresa tus datos y puedes continuar".match(TUTEO_PATTERN)).toEqual([
+      "Ingresa",
+      "puedes",
+    ]);
+    expect("Por favor, inténtalo de nuevo".match(TUTEO_PATTERN)).toEqual(["inténtalo"]);
+    expect("Ingresá tus datos y podés continuar".match(TUTEO_PATTERN)).toBeNull();
+    expect("Estás en el plan gratis. Se usa en las URLs.".match(TUTEO_PATTERN)).toBeNull();
+  });
+});
+
+/**
  * Keys built at run time (`t(`home.plan.status.${status}`)`) are invisible to the static scan above,
  * so a missing status or tier shows its raw English code. Each family is listed here with the
  * values the code can produce; the lists that live in code are read from it.

@@ -309,6 +309,12 @@
       "unavailableTitle": "This plan is not available",
       "unavailableDescription": "The plan you picked is no longer offered or is not on sale yet. Pick another one on the pricing page."
     },
+    "membershipUnavailable": {
+      "badge": "Plan unavailable",
+      "title": "We couldn't load your plan",
+      "message": "The payment provider isn't answering. Your plan hasn't changed. Try again in a moment.",
+      "retry": "Try again"
+    },
     "page": {
       "title": "Billing & Subscription",
       "description": "Manage your subscription, view usage, and access billing history.",

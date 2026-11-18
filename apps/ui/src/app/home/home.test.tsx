@@ -112,6 +112,25 @@ describe("Home", () => {
     mocks.membership = { ...PRO_MEMBERSHIP };
   });
 
+  describe("when the plan could not be loaded", () => {
+    it("shows an error state with a retry instead of the Free plan", () => {
+      mocks.membership = {
+        ...PRO_MEMBERSHIP,
+        currentTier: "free",
+        activeSubscription: null,
+        isTierUnknown: true,
+        refreshMembership: vi.fn(),
+      };
+
+      const html = renderHome();
+
+      expect(html).toContain("billing.membershipUnavailable.title");
+      expect(html).toContain("billing.membershipUnavailable.retry");
+      expect(html).not.toContain("home.plan.status");
+      expect(html).not.toContain("membership.tiers.free");
+    });
+  });
+
   describe("with a plan", () => {
     it("shows the current plan, its status, its price and when it renews", () => {
       const html = renderHome();

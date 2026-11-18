@@ -4,6 +4,7 @@ import { ensurePaymentProvider } from "@/lib/payments";
 import { organizationAccess } from "@/server/domain/organization-access";
 import { getUserMembershipStatus, requireAuth } from "@/server/utils/membership";
 import { toOrganizationAccessActor } from "@/server/utils/organization-access";
+import { isProviderUnavailableError } from "@/server/utils/provider-unavailable";
 
 export default defineEventHandler(async (event) => {
   // Require authentication
@@ -57,7 +58,10 @@ export default defineEventHandler(async (event) => {
         paymentCapabilities: provider.capabilities,
       },
     };
-  } catch (_error) {
+  } catch (error) {
+    if (isProviderUnavailableError(error)) {
+      throw error;
+    }
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to fetch membership status",

@@ -11,6 +11,7 @@ import {
   type AdminTierOverrideRecord,
   getAdminTierOverrideForMembershipTarget,
 } from "./admin-tier-override";
+import { providerUnavailableError } from "./provider-unavailable";
 import { discoverSubscriptionsFromDb } from "./subscription-discovery";
 
 export type Benefit = {
@@ -176,7 +177,9 @@ async function canUseCachedMembership(options: {
 
     return belongsToUser(subscription, options.userId, options.userEmail);
   } catch {
-    return false;
+    // The provider cannot answer (rate limit, outage), so it cannot disprove
+    // the projected Membership either: that projection stands.
+    return true;
   }
 }
 
@@ -373,7 +376,9 @@ async function getCachedUserMembershipInfo(userId: string): Promise<MembershipIn
 /**
  * DB-first membership resolution.
  * Reads denormalized subscription data from the entity (user or org).
- * Falls back to provider API if no local data is available.
+ * Falls back to provider API if no local data is available. When the provider
+ * fails and there is no local data, throws a 503 `provider_unavailable`
+ * instead of answering the free tier.
  */
 export async function getMembershipInfo(
   userId: string,
@@ -471,14 +476,9 @@ async function getMembershipInfoFromProvider(
       organizationId,
       expiresAt: selectedSubscription.currentPeriodEnd,
     };
-  } catch {
-    return {
-      tier: "free",
-      billingCadence: null,
-      hasActiveSubscription: false,
-      benefits: [],
-      organizationId,
-    };
+  } catch (error) {
+    // Not knowing is not "free": a paying customer would lose access.
+    throw providerUnavailableError(error);
   }
 }
 

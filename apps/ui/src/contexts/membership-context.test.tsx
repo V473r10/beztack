@@ -6,6 +6,7 @@ import type { MembershipContextValue } from "./membership-context";
 const mocks = vi.hoisted(() => ({
   activeOrganization: { id: "org_1" } as { id: string } | undefined,
   invalidateQueries: vi.fn(),
+  membershipError: null as Error | null,
   membershipStatus: undefined as unknown,
   mutationOptions: [] as unknown[],
   // In the order the provider declares its mutations: checkout, Plan change,
@@ -78,6 +79,7 @@ describe("MembershipProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.activeOrganization = { id: "org_1" };
+    mocks.membershipError = null;
     mocks.membershipStatus = undefined;
     mocks.mutationOptions.length = 0;
     mocks.mutateAsyncs.length = 0;
@@ -117,7 +119,7 @@ describe("MembershipProvider", () => {
       if (queryName === "membership") {
         return {
           data: mocks.membershipStatus,
-          error: null,
+          error: mocks.membershipError,
           isLoading: false,
         };
       }
@@ -163,6 +165,58 @@ describe("MembershipProvider", () => {
 
     expect(value?.currentTier).toBe("pro");
     expect(value?.activeSubscription).toBeNull();
+  });
+
+  describe("when Membership status cannot be loaded", () => {
+    const unavailable = new ApiError("The payment provider is unavailable", {
+      statusCode: 503,
+      data: { code: "provider_unavailable" },
+    });
+    const proStatus = {
+      data: {
+        benefits: [],
+        hasActiveSubscription: true,
+        organizationId: "org_1",
+        tier: "pro",
+        userId: "user_1",
+      },
+      success: true,
+    };
+
+    it("reports the tier as unknown instead of free when there is nothing to show", () => {
+      mocks.membershipError = unavailable;
+
+      const value = renderMembershipProvider();
+
+      expect(value?.isTierUnknown).toBe(true);
+      expect(value?.error).toBe(unavailable);
+    });
+
+    it("keeps the last known tier when a refresh fails", () => {
+      mocks.membershipStatus = proStatus;
+      mocks.membershipError = unavailable;
+
+      const value = renderMembershipProvider();
+
+      expect(value?.isTierUnknown).toBe(false);
+      expect(value?.currentTier).toBe("pro");
+    });
+
+    it("does not call the tier unknown when Membership status loaded", () => {
+      mocks.membershipStatus = proStatus;
+
+      expect(renderMembershipProvider()?.isTierUnknown).toBe(false);
+    });
+
+    it("does not start a checkout for a customer whose plan is unknown", async () => {
+      mocks.membershipError = unavailable;
+      const value = renderMembershipProvider();
+
+      await value?.upgradeToTier("prod_pro_month", "monthly");
+
+      expect(mocks.mutateAsyncs.slice(-4)[0]).not.toHaveBeenCalled();
+      expect(mocks.toastError).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("Plan change or checkout", () => {
