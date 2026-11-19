@@ -342,7 +342,12 @@
 .section {
   max-width: 76rem;
   margin: 0 auto;
-  padding: 6.5rem 1.5rem;
+  padding: 5.5rem 1.5rem;
+}
+
+/* Two plain sections in a row share one gap instead of adding both paddings. */
+.section + .section {
+  padding-top: 1rem;
 }
 
 .split {
@@ -433,6 +438,7 @@
 }
 
 .tileSun {
+  justify-content: center;
   background: var(--sun);
   color: var(--navy);
   border-radius: 1.4rem 2.4rem 1.4rem 1.4rem;
@@ -662,8 +668,20 @@
   background: #fff;
   border-radius: 1rem 1rem 1rem 0.2rem;
   padding: 0.8rem 1rem;
-  font-weight: 500;
   line-height: 1.4;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.speech p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.speech small {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #3d5370;
 }
 
 .intl {
@@ -713,10 +731,6 @@
 }
 
 .adminTable table {
-  min-width: 26rem;
-}
-
-.adminTable table {
   width: 100%;
   border-collapse: collapse;
   background: rgba(255, 255, 255, 0.6);
@@ -738,6 +752,16 @@
 
 .adminTable tbody tr + tr > * {
   border-top: 1px solid rgba(11, 37, 69, 0.12);
+}
+
+.noCharge {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px var(--navy);
+  white-space: nowrap;
 }
 
 .retry {
@@ -1501,14 +1525,20 @@
 .bandInner {
   max-width: 76rem;
   margin: 0 auto;
-  padding: 1.6rem 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2rem 2.8rem;
+  padding: 1.5rem 1.5rem 1.6rem;
+  display: grid;
+  grid-template-columns: repeat(7, auto);
+  justify-content: space-between;
+  column-gap: 1.4rem;
+}
+
+.bandGroup + .bandGroup {
+  border-left: 1px solid var(--line);
+  padding-left: 1.4rem;
 }
 
 .bandLabel {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.6rem;
   font-size: 0.8rem;
   font-weight: 500;
   color: #5d7189;
@@ -1518,9 +1548,13 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.2rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.bandWide .bandTools {
+  grid-template-columns: repeat(2, auto);
+  gap: 0.55rem 1.4rem;
 }
 
 .bandTools li {
@@ -1529,6 +1563,7 @@
   gap: 0.5rem;
   font-weight: 700;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 /* ---------- Not here yet, and questions ---------- */
@@ -1636,17 +1671,16 @@
 .startInner {
   max-width: 76rem;
   margin: 0 auto;
-  padding: 7rem 1.5rem;
+  padding: 6rem 1.5rem;
   text-align: center;
 }
 
 .startTitle {
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
-  font-size: clamp(2.8rem, 6.2vw, 5.6rem);
-  line-height: 0.9;
+  font-size: clamp(2.8rem, 5.6vw, 5rem);
+  line-height: 0.92;
   margin: 0 auto 2.5rem;
-  max-width: 20ch;
   text-wrap: balance;
 }
 
@@ -1662,6 +1696,10 @@
   font-size: 1.15rem;
   border-radius: 0.6rem;
   cursor: pointer;
+}
+
+.startLine {
+  display: block;
 }
 
 .startPrompt {
@@ -1717,6 +1755,29 @@
 }
 
 /* ---------- Responsive ---------- */
+
+@media (max-width: 1100px) {
+  .bandInner {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem 1.4rem;
+  }
+
+  .bandGroup + .bandGroup {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .bandWide {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+
+  .bandWide .bandTools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 1.4rem;
+  }
+}
 
 @media (max-width: 900px) {
   .heroGrid,
@@ -1774,6 +1835,10 @@
 }
 
 @media (max-width: 560px) {
+  .bandInner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .capTable thead {
     position: absolute;
     width: 1px;

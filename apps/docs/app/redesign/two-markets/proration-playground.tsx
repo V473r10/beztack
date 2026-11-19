@@ -63,7 +63,8 @@ const LOCALES: Record<Market, Locale> = {
     rowFirst: "Primer pago",
     formula:
       "Crédito = precio actual × días restantes ÷ días del período. Primer pago = precio nuevo − crédito, con mínimo 0.",
-    providerNote: "En Mercado Pago el upgrade es una suscripción nueva que se paga en un redirect.",
+    providerNote:
+      "En Mercado Pago el upgrade es una suscripción nueva que se paga en un redirect. Pasar de mensual a anual todavía no se puede.",
     downgradeTitle: "No se cobra nada ahora",
     downgradeText: "Bajar de plan queda en el ledger y se activa al renovar. La fila no se borra.",
     ledgerStatus: "pending",

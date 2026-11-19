@@ -111,8 +111,11 @@ function StackBand() {
     <section aria-label="Stack" className={styles.band}>
       <div className={styles.bandInner}>
         {STACK_GROUPS.map((group) => (
-          <div className={styles.bandGroup} key={group.label}>
-            <h2 className={styles.bandLabel}>{group.label}</h2>
+          <div
+            className={`${styles.bandGroup} ${group.label === "App" ? styles.bandWide : ""}`}
+            key={group.label}
+          >
+            <p className={styles.bandLabel}>{group.label}</p>
             <ul className={styles.bandTools}>
               {group.tools.map((tool) => (
                 <li key={tool.name}>
@@ -172,7 +175,8 @@ const CAPABILITIES = [
   },
   {
     flag: "cadenceChange",
-    mercadoPago: "The API refuses the request instead of guessing.",
+    mercadoPago:
+      "Not yet. The API refuses the request today instead of guessing. Support is on the roadmap.",
     polar: "The existing subscription moves to the other cadence, for example monthly to yearly.",
   },
 ] as const;
@@ -258,9 +262,9 @@ const MEMBERS = [
 ] as const;
 
 const ADMIN_ROWS = [
-  { org: "Acme", change: "Pro to Team", status: "Failed", action: "Retry" },
-  { org: "Norte SRL", change: "Team to Pro", status: "Failed", action: "Retry" },
-  { org: "Lumen", change: "Free to Pro", status: "No charge", action: "Granted" },
+  { org: "Acme", change: "Pro to Team", action: "Retry", retry: true },
+  { org: "Norte SRL", change: "Team to Pro", action: "Retry", retry: true },
+  { org: "Lumen", change: "Free to Pro", action: "No charge", retry: false },
 ] as const;
 
 const SAMPLE_DATE = new Date(Date.UTC(2026, 10, 12));
@@ -297,7 +301,7 @@ function Bento() {
             <Logo src={`${SVGL}/better-auth_light.svg`} />
             <span>Better Auth</span>
           </div>
-          <h3 className={styles.tileTitle}>Sign-in with 2FA and breached-password checks</h3>
+          <h3 className={styles.tileTitle}>2FA and breached-password checks</h3>
           <p className={styles.tileText}>
             Email and password, codes from an authenticator app, and passwords from known breaches
             refused at sign-up, on password change and on reset. Checked against Have I Been Pwned.
@@ -321,7 +325,7 @@ function Bento() {
         <div className={styles.tileHead}>
           <span>Organizations</span>
         </div>
-        <h3 className={styles.tileTitle}>Teams with roles, billed per user or per organization</h3>
+        <h3 className={styles.tileTitle}>Teams and roles, billed per org or per user</h3>
         <p className={styles.tileText}>
           Invitations, roles and teams. Each new user gets an organization of their own.
         </p>
@@ -344,10 +348,11 @@ function Bento() {
         <div className={styles.tileHead}>
           <span>i18next and Intl</span>
         </div>
-        <h3 className={styles.tileTitle}>English and Spanish, written with vos</h3>
-        <p className={styles.speech} lang="es">
-          Ingresá el código de 6 dígitos de tu app de autenticación.
-        </p>
+        <h3 className={styles.tileTitle}>English and Spanish</h3>
+        <div className={styles.speech}>
+          <p lang="es">Ingresá el código de 6 dígitos de tu app de autenticación.</p>
+          <small>Spanish ships with vos today. Tú and formal usted are on the roadmap.</small>
+        </div>
         <ul className={styles.intl}>
           {INTL_ROWS.map((row) => (
             <li key={row.locale}>
@@ -356,17 +361,6 @@ function Bento() {
             </li>
           ))}
         </ul>
-        <p className={styles.tileText}>
-          A test fails if a tú slips in.{" "}
-          <a
-            className={styles.tileLinkInline}
-            href={`${links.repo}/blob/main/apps/ui/src/lib/i18n/locales.test.ts`}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Read the test
-          </a>
-        </p>
       </article>
 
       <article className={`${styles.tile} ${styles.tileSun} ${styles.span4}`}>
@@ -390,10 +384,7 @@ function Bento() {
                 <tr>
                   <th scope="col">Organization</th>
                   <th scope="col">Change</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">
-                    <span className={styles.srOnly}>Action</span>
-                  </th>
+                  <th scope="col">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -401,9 +392,10 @@ function Bento() {
                   <tr key={row.org}>
                     <th scope="row">{row.org}</th>
                     <td>{row.change}</td>
-                    <td>{row.status}</td>
                     <td>
-                      <span className={styles.retry}>{row.action}</span>
+                      <span className={row.retry ? styles.retry : styles.noCharge}>
+                        {row.action}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -502,6 +494,8 @@ llms-full.txt     all docs`}
 }
 
 const NOT_YET = [
+  "Monthly to yearly on Mercado Pago",
+  "Choose vos, tú or usted",
   "Stripe and other providers",
   "OAuth sign-in",
   "Magic links",
@@ -539,9 +533,9 @@ const FAQ = [
     question: "What happens when a plan change fails at renewal?",
     answer: (
       <>
-        A downgrade or a cadence change waits in a ledger and is applied at the next renewal. After
-        five failed tries it is marked failed and shows up in the admin area, where an admin can
-        send it back to the queue.
+        A downgrade, or a cadence change on a provider that supports it, waits in a ledger and is
+        applied at the next renewal. After five failed tries it is marked failed and shows up in the
+        admin area, where an admin can send it back to the queue.
       </>
     ),
   },
@@ -549,8 +543,17 @@ const FAQ = [
     question: "Is it available in Spanish?",
     answer: (
       <>
-        Yes. The app ships in English and Spanish, and the Spanish uses vos. A test fails if a tú
-        slips in. Amounts and dates follow the language through Intl.
+        Yes. The app ships in English and Spanish. The Spanish uses vos today, and a test fails if a
+        tú slips in. Choosing vos, tú or a formal usted is not possible yet and is on the roadmap.
+        Amounts and dates follow the language through Intl.{" "}
+        <a
+          className={styles.faqLink}
+          href={`${links.repo}/blob/main/apps/ui/src/lib/i18n/locales.test.ts`}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Read the test
+        </a>
       </>
     ),
   },
@@ -721,7 +724,8 @@ export default function TwoMarketsLanding() {
           <section aria-labelledby="start-title" className={styles.start}>
             <div className={styles.startInner}>
               <h2 className={styles.startTitle} id="start-title">
-                Start with one command. Pick the market when you need it.
+                <span className={styles.startLine}>One command.</span>{" "}
+                <span className={styles.startLine}>Pick the market later.</span>
               </h2>
               <CopyCommand
                 className={styles.startCommand}
