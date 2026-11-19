@@ -19,9 +19,9 @@ const body = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Beztack - One codebase, two ways to get paid",
+  title: "Beztack: open-source TypeScript starter for B2B SaaS with Mercado Pago and Polar",
   description:
-    "A TypeScript starter for B2B SaaS that charges in Latin America with Mercado Pago and worldwide with Polar, with sign-in, teams, two languages and tests already built.",
+    "MIT-licensed TypeScript starter for B2B SaaS. Charges in local currency with Mercado Pago or worldwide with Polar, with plan changes, teams, 2FA, English and Spanish, and 131 test files.",
 };
 
 const SVGL = "https://svgl.app/library";
@@ -225,43 +225,78 @@ const MEMBERS = [
   { initials: "FV", role: "Owner" },
   { initials: "AM", role: "Admin" },
   { initials: "LC", role: "Member" },
-  { initials: "RP", role: "Member" },
 ] as const;
 
-const FAILED_CHANGES = [
-  ["Acme", "Pro to Team"],
-  ["Norte SRL", "Team to Pro"],
+const ADMIN_ROWS = [
+  { org: "Acme", change: "Pro to Team", status: "Failed", action: "Retry" },
+  { org: "Norte SRL", change: "Team to Pro", status: "Failed", action: "Retry" },
+  { org: "Lumen", change: "Free to Pro", status: "No charge", action: "Granted" },
 ] as const;
+
+const SAMPLE_DATE = new Date(Date.UTC(2026, 10, 12));
+
+const INTL_ROWS = [
+  { locale: "es-UY", currency: "UYU", amount: 1290 },
+  { locale: "en-US", currency: "USD", amount: 29 },
+] as const;
+
+function formatSample(locale: string, currency: string, amount: number): string {
+  const money = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+  const date = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
+    SAMPLE_DATE,
+  );
+  return `${money} · ${date}`;
+}
+
+const TEST_FILES = 131;
+
+function SampleTag() {
+  return <span className={styles.sample}>Sample data</span>;
+}
 
 function Bento() {
   return (
     <div className={styles.bento}>
-      <article className={`${styles.tile} ${styles.tileNavy} ${styles.span3}`}>
-        <div className={styles.tileHead}>
-          <Logo src={`${SVGL}/better-auth_light.svg`} />
-          <span>Better Auth</span>
+      <article className={`${styles.tile} ${styles.tileAuth} ${styles.span4}`}>
+        <div className={styles.authCopy}>
+          <div className={styles.tileHead}>
+            <Logo src={`${SVGL}/better-auth_light.svg`} />
+            <span>Better Auth</span>
+          </div>
+          <h3 className={styles.tileTitle}>Sign-in with 2FA and breached-password checks</h3>
+          <p className={styles.tileText}>
+            Email and password, codes from an authenticator app, and passwords from known breaches
+            refused at sign-up, on password change and on reset. Checked against Have I Been Pwned.
+          </p>
         </div>
-        <h3 className={styles.tileTitle}>Sign-in that says no</h3>
-        <p className={styles.tileText}>
-          Email and password, codes from an authenticator app, and passwords from known breaches
-          refused at sign-up and on every reset.
-        </p>
-        <div aria-hidden="true" className={styles.otp}>
-          {["4", "8", "2", "9", "1", "3"].map((digit, index) => (
-            <span key={`${digit}-${index}`}>{digit}</span>
-          ))}
+        <div aria-hidden="true" className={styles.authDemo}>
+          <div className={styles.field}>
+            <span className={styles.fieldLabel}>New password</span>
+            <span className={styles.fieldInput}>••••••••••</span>
+            <span className={styles.fieldWarn}>This password appeared in a data breach.</span>
+          </div>
+          <div className={styles.otp}>
+            {["4", "8", "2", "9", "1", "3"].map((digit, index) => (
+              <span key={`${digit}-${index}`}>{digit}</span>
+            ))}
+          </div>
         </div>
       </article>
 
-      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span3}`}>
+      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span2}`}>
         <div className={styles.tileHead}>
           <span>Organizations</span>
         </div>
-        <h3 className={styles.tileTitle}>Teams from day one</h3>
+        <h3 className={styles.tileTitle}>Teams with roles, billed per user or per organization</h3>
         <p className={styles.tileText}>
-          Organizations with teams, invitations and roles. Bill each person or each organization.
+          Invitations, roles and teams. Each new user gets an organization of their own.
         </p>
-        <ul aria-label="Example members" className={styles.members}>
+        <code className={styles.envChip}>SUBSCRIPTION_MODE=organization</code>
+        <ul aria-label="Sample members" className={styles.members}>
           {MEMBERS.map((member) => (
             <li key={member.initials}>
               <span className={styles.avatar}>{member.initials}</span>
@@ -277,35 +312,113 @@ function Bento() {
 
       <article className={`${styles.tile} ${styles.tileCeleste} ${styles.span2}`}>
         <div className={styles.tileHead}>
-          <span>i18next</span>
+          <span>i18next and Intl</span>
         </div>
-        <p aria-hidden="true" className={styles.bigWord}>
-          en / es
-        </p>
-        <h3 className={styles.tileTitle}>Spanish written with vos</h3>
+        <h3 className={styles.tileTitle}>English and Spanish, written with vos</h3>
         <p className={styles.speech} lang="es">
           Ingresá el código de 6 dígitos de tu app de autenticación.
         </p>
-        <p className={styles.tileText}>A test fails if a tú slips in.</p>
-      </article>
-
-      <article className={`${styles.tile} ${styles.tileSun} ${styles.span2}`}>
-        <div className={styles.tileHead}>
-          <span>Admin area</span>
-        </div>
-        <h3 className={styles.tileTitle}>Run it, don't just ship it</h3>
-        <ul aria-label="Example of failed plan changes" className={styles.queue}>
-          {FAILED_CHANGES.map(([org, change]) => (
-            <li key={org}>
-              <span>
-                <strong>{org}</strong> {change}
-              </span>
-              <span className={styles.retry}>Retry</span>
+        <ul className={styles.intl}>
+          {INTL_ROWS.map((row) => (
+            <li key={row.locale}>
+              <code>{row.locale}</code>
+              <span>{formatSample(row.locale, row.currency, row.amount)}</span>
             </li>
           ))}
         </ul>
         <p className={styles.tileText}>
-          Users, analytics, failed changes to retry and tiers granted without a charge.
+          A test fails if a tú slips in.{" "}
+          <a
+            className={styles.tileLinkInline}
+            href={`${links.repo}/blob/main/apps/ui/src/lib/i18n/locales.test.ts`}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Read the test
+          </a>
+        </p>
+      </article>
+
+      <article className={`${styles.tile} ${styles.tileSun} ${styles.span4}`}>
+        <div className={styles.adminLayout}>
+          <div>
+            <div className={styles.tileHead}>
+              <span>Admin area</span>
+            </div>
+            <h3 className={styles.tileTitle}>
+              Retry failed plan changes, grant tiers without a charge
+            </h3>
+            <p className={styles.tileText}>
+              Users, analytics, the plan changes that failed after five tries, and tier overrides
+              that never touch the payment provider. The plan catalog syncs from here too.
+            </p>
+          </div>
+          <div className={styles.adminTable}>
+            <SampleTag />
+            <table aria-label="Sample admin queue">
+              <thead>
+                <tr>
+                  <th scope="col">Organization</th>
+                  <th scope="col">Change</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">
+                    <span className={styles.srOnly}>Action</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {ADMIN_ROWS.map((row) => (
+                  <tr key={row.org}>
+                    <th scope="row">{row.org}</th>
+                    <td>{row.change}</td>
+                    <td>{row.status}</td>
+                    <td>
+                      <span className={styles.retry}>{row.action}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+
+      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span2}`}>
+        <div className={styles.tileHead}>
+          <Logo src={`${SVGL}/drizzle-orm_light.svg`} />
+          <Logo src={`${SVGL}/postgresql.svg`} />
+          <span>Drizzle on PostgreSQL</span>
+        </div>
+        <h3 className={styles.tileTitle}>A typed schema with SQL migrations</h3>
+        <p className={styles.tileText}>
+          Prices are integer minor units with an ISO currency code. Plan changes are rows in a
+          ledger that nothing deletes.
+        </p>
+        <div className={styles.sqlWrap}>
+          <SampleTag />
+          <pre aria-label="Sample rows" className={styles.sql}>
+            {`pending_plan_change
+ id  change     status
+ 16  free-pro   activated
+ 17  pro-team   failed
+ 18  team-pro   pending`}
+          </pre>
+        </div>
+      </article>
+
+      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span2}`}>
+        <div className={styles.tileHead}>
+          <Logo src={`${SVGL}/resend-icon-black.svg`} />
+          <span>React Email and Resend</span>
+        </div>
+        <h3 className={styles.tileTitle}>Five email templates, ready to edit</h3>
+        <div aria-hidden="true" className={styles.mail}>
+          <span className={styles.mailSubject}>Welcome to your workspace</span>
+          <span className={styles.mailBody}>Your organization is ready. Invite your team.</span>
+          <span className={styles.mailButton}>Open the app</span>
+        </div>
+        <p className={styles.tileText}>
+          Welcome, password reset, organization invitation, subscription confirmation and a sample.
         </p>
       </article>
 
@@ -313,7 +426,7 @@ function Bento() {
         <div className={styles.tileHead}>
           <span>For coding agents</span>
         </div>
-        <h3 className={styles.tileTitle}>A repo that explains itself</h3>
+        <h3 className={styles.tileTitle}>Written so agents can read it too</h3>
         <pre aria-label="Files for agents" className={styles.tree}>
           {`AGENTS.md
 CONTEXT.md        glossary
@@ -321,43 +434,37 @@ docs/adr/
   0001 … 0007     decisions
 llms-full.txt     all docs`}
         </pre>
-        <Link className={styles.tileLink} href={links.llms}>
-          Open llms-full.txt
-        </Link>
+        <div className={styles.tileLinks}>
+          <Link className={styles.tileLink} href={links.llms}>
+            Open llms-full.txt
+          </Link>
+          <a
+            className={styles.tileLink}
+            href={`${links.repo}/tree/main/docs/adr`}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Read the ADRs
+          </a>
+        </div>
       </article>
 
-      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span3}`}>
-        <div className={styles.tileHead}>
-          <Logo src={`${SVGL}/vitest.svg`} />
-          <Logo src={`${SVGL}/playwright.svg`} />
-          <span>Vitest, Playwright</span>
-        </div>
+      <article className={`${styles.tile} ${styles.tileStrip} ${styles.span6}`}>
         <p aria-hidden="true" className={styles.bigNumber}>
-          127
+          {TEST_FILES}
         </p>
-        <h3 className={styles.tileTitle}>Test files, plus a live check</h3>
-        <p className={styles.tileText}>
-          Unit and route tests across the API, the app and the packages. A smoke test checks the
-          deployed site, and <code>/api/health</code> checks the database.
-        </p>
-      </article>
-
-      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span3}`}>
-        <div className={styles.tileHead}>
-          <Logo src={`${SVGL}/drizzle-orm_light.svg`} />
-          <Logo src={`${SVGL}/postgresql.svg`} />
-          <Logo src={`${SVGL}/resend-icon-black.svg`} />
-          <span>Drizzle, PostgreSQL, Resend</span>
+        <div className={styles.stripText}>
+          <h3 className={styles.tileTitle}>
+            {TEST_FILES} test files, and a check on the live site
+          </h3>
+          <p className={styles.tileText}>
+            Vitest covers the API, the app and the packages. Playwright runs end to end, a smoke
+            test checks the published site, and <code>/api/health</code> checks the database.
+          </p>
         </div>
-        <h3 className={styles.tileTitle}>Data and email, wired</h3>
-        <p className={styles.tileText}>
-          A Drizzle schema with SQL migrations on PostgreSQL. Five React Email templates sent with
-          Resend: welcome, password reset, invitation, subscription and a sample.
-        </p>
-        <div aria-hidden="true" className={styles.envelopes}>
-          {["Welcome", "Reset", "Invite", "Receipt", "Sample"].map((name) => (
-            <span key={name}>{name}</span>
-          ))}
+        <div className={styles.stripLogos}>
+          <Logo size={44} src={`${SVGL}/vitest.svg`} />
+          <Logo size={44} src={`${SVGL}/playwright.svg`} />
         </div>
       </article>
     </div>
@@ -487,11 +594,11 @@ export default function TwoMarketsLanding() {
         <section aria-labelledby="constants-title" className={styles.section}>
           <div className={styles.split}>
             <h2 className={styles.h2} id="constants-title">
-              Three lines change. The rest stays put.
+              Three variables pick your market. The rest stays put.
             </h2>
             <p className={styles.sectionLede}>
-              Switching providers is a change to your environment file. Everything a customer
-              touches after they pay works the same way in both markets.
+              Add the provider's keys, set three variables, and sign-in, teams, languages and the
+              admin area stay exactly as they are.
             </p>
           </div>
           <Bento />

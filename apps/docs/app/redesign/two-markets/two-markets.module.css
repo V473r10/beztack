@@ -376,8 +376,12 @@
   grid-column: span 2;
 }
 
-.span3 {
-  grid-column: span 3;
+.span4 {
+  grid-column: span 4;
+}
+
+.span6 {
+  grid-column: span 6;
 }
 
 .tile {
@@ -388,12 +392,27 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-height: 19rem;
 }
 
 .tileNavy {
   background: var(--navy);
   color: #fff;
+}
+
+.tileAuth {
+  background: var(--navy);
+  color: #fff;
+  border-radius: 2.4rem 1.4rem 1.4rem 1.4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 2rem;
+  align-items: center;
+  padding: 2.4rem 2.4rem 2.5rem;
+}
+
+.authCopy {
+  display: grid;
+  gap: 0.9rem;
 }
 
 .tileWhite {
@@ -410,6 +429,17 @@
 .tileSun {
   background: var(--sun);
   color: var(--navy);
+  border-radius: 1.4rem 2.4rem 1.4rem 1.4rem;
+}
+
+.tileStrip {
+  background: var(--celeste-soft);
+  color: var(--navy);
+  border-radius: 0.6rem 1.4rem 1.4rem 1.4rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 2.5rem;
+  align-items: center;
 }
 
 .tileHead {
@@ -438,24 +468,36 @@
 .tileTitle {
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
-  font-size: clamp(2rem, 3vw, 2.6rem);
-  line-height: 0.95;
+  font-size: clamp(1.9rem, 2.6vw, 2.4rem);
+  line-height: 0.98;
   margin: 0.25rem 0 0;
+  text-wrap: balance;
+}
+
+.tileAuth .tileTitle {
+  font-size: clamp(2.2rem, 3.4vw, 3.2rem);
 }
 
 .tileText {
   margin: 0;
   line-height: 1.55;
-  max-width: 32rem;
-  opacity: 0.86;
+  max-width: 34rem;
+  opacity: 0.88;
 }
 
 .tileText code {
   font-size: 0.9em;
 }
 
-.tileLink {
+.tileLinks {
   margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+}
+
+.tileLink,
+.tileLinkInline {
   color: inherit;
   font-weight: 700;
   text-underline-offset: 4px;
@@ -463,15 +505,73 @@
   text-decoration-thickness: 2px;
 }
 
-/* Sign-in: a six-digit code, the thing a person actually sees. */
+.tileLinkInline {
+  text-decoration-color: var(--navy);
+}
+
+.sample {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* Sign-in: a password field that refuses a leaked password, and a six-digit code. */
+.authDemo {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+  background: #fff;
+  color: var(--navy);
+  border-radius: 1rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+}
+
+.fieldLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.fieldInput {
+  font-size: 1.4rem;
+  letter-spacing: 0.15em;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 0 0 2px var(--sun);
+}
+
+.fieldWarn {
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--sun);
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.4rem;
+}
+
 .otp {
   display: flex;
   gap: 0.5rem;
-  margin-top: auto;
 }
 
 .otp span {
-  width: 3rem;
+  flex: 1 1 0;
+  max-width: 3.2rem;
   height: 3.6rem;
   display: grid;
   place-items: center;
@@ -487,7 +587,18 @@
   margin-right: 0.75rem;
 }
 
-/* Teams: a row of people. */
+/* Teams: the variable and a row of people. */
+.envChip {
+  align-self: flex-start;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--navy);
+  color: #fff;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.4rem;
+}
+
 .members {
   list-style: none;
   margin: auto 0 0;
@@ -504,8 +615,8 @@
 }
 
 .avatar {
-  width: 3.4rem;
-  height: 3.4rem;
+  width: 3.2rem;
+  height: 3.2rem;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -539,15 +650,7 @@
   opacity: 0.75;
 }
 
-/* Language. */
-.bigWord {
-  font-family: var(--font-markets-display), sans-serif;
-  font-weight: 900;
-  font-size: 4.6rem;
-  line-height: 0.85;
-  margin: 0;
-}
-
+/* Language: a sentence in vos and the same amount and date through Intl. */
 .speech {
   margin: 0.25rem 0 0;
   background: #fff;
@@ -557,33 +660,126 @@
   line-height: 1.4;
 }
 
-/* Admin: a tiny queue with retry buttons. */
-.queue {
+.intl {
   list-style: none;
-  margin: 0.5rem 0 0.25rem;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
-.queue li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.55);
-  border-radius: 0.7rem;
-  padding: 0.6rem 0.75rem;
+.intl li {
+  display: grid;
+  gap: 0.1rem;
+  background: rgba(11, 37, 69, 0.1);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.intl code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Admin: a small table with the retry action. */
+.adminLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 2rem;
+  align-items: center;
+}
+
+.adminLayout > div:first-child {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.adminTable {
+  position: relative;
+}
+
+.adminTable table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 0.8rem;
+  overflow: hidden;
+  font-size: 0.88rem;
+  text-align: left;
+}
+
+.adminTable th,
+.adminTable td {
+  padding: 0.6rem 0.75rem;
+}
+
+.adminTable thead th {
+  font-size: 0.75rem;
+  background: rgba(11, 37, 69, 0.12);
+}
+
+.adminTable tbody tr + tr > * {
+  border-top: 1px solid rgba(11, 37, 69, 0.12);
 }
 
 .retry {
+  display: inline-block;
   background: var(--navy);
   color: #fff;
   font-weight: 700;
   font-size: 0.75rem;
   padding: 0.3rem 0.65rem;
   border-radius: 999px;
+}
+
+/* Data. */
+.sqlWrap {
+  margin-top: auto;
+}
+
+.sql {
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line);
+  border-radius: 0.6rem;
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Email: one rendered message. */
+.mail {
+  display: grid;
+  gap: 0.5rem;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line);
+  border-radius: 0.8rem;
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.mailSubject {
+  font-weight: 700;
+}
+
+.mailBody {
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.mailButton {
+  justify-self: start;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.4rem;
 }
 
 /* Agents: a file tree. */
@@ -600,50 +796,25 @@
   white-space: pre;
 }
 
-/* Tests. */
+/* Tests: one wide strip. */
 .bigNumber {
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
-  font-size: 7.5rem;
+  font-size: 8rem;
   line-height: 0.8;
-  margin: 0.5rem 0 0;
-  color: var(--celeste);
-  -webkit-text-stroke: 2px var(--navy);
+  margin: 0;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Email: five envelopes. */
-.envelopes {
-  margin-top: auto;
+.stripText {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.stripLogos {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.envelopes span {
-  position: relative;
-  padding: 1.35rem 0.9rem 0.55rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  border-radius: 0.4rem;
-  background: var(--paper);
-  box-shadow: inset 0 0 0 1.5px var(--navy);
-  overflow: hidden;
-}
-
-.envelopes span::before {
-  /* The flap. */
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 1rem;
-  background:
-    linear-gradient(to bottom right, transparent 49%, var(--navy) 50%, transparent 52%),
-    linear-gradient(to bottom left, transparent 49%, var(--navy) 50%, transparent 52%);
-  background-size: 50% 100%;
-  background-position: left, right;
-  background-repeat: no-repeat;
+  gap: 1rem;
 }
 
 /* ---------- Plan change, on navy ---------- */
@@ -860,6 +1031,7 @@
 
 .codeHead {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.7rem 1.2rem;
@@ -1057,16 +1229,27 @@
   }
 
   .bento {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .span2,
-  .span3 {
+  .span4,
+  .span6 {
     grid-column: auto;
   }
 
-  .tile {
-    min-height: 0;
+  .tileAuth,
+  .adminLayout,
+  .tileStrip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tileStrip {
+    gap: 1.2rem;
+  }
+
+  .bigNumber {
+    font-size: 6rem;
   }
 
   .timeline {
@@ -1163,9 +1346,12 @@
   }
 
   .otp span {
-    width: 2.5rem;
     height: 3rem;
     font-size: 1.6rem;
+  }
+
+  .tileAuth {
+    padding: 1.75rem 1.4rem;
   }
 }
 
