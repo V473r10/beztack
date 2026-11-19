@@ -1259,10 +1259,11 @@
 .startTitle {
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
-  font-size: clamp(3.2rem, 8vw, 7rem);
-  line-height: 0.86;
+  font-size: clamp(2.8rem, 6.2vw, 5.6rem);
+  line-height: 0.9;
   margin: 0 auto 2.5rem;
-  max-width: 14ch;
+  max-width: 20ch;
+  text-wrap: balance;
 }
 
 .startCommand {
@@ -1296,6 +1297,14 @@
 .startCommand[data-copied] .startCopy {
   background: var(--sun);
   color: var(--navy);
+}
+
+.startNote {
+  margin: 1.4rem auto 0;
+  max-width: 40rem;
+  text-wrap: balance;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.76);
 }
 
 .startLinks {

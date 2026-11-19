@@ -699,13 +699,16 @@ export default function TwoMarketsLanding() {
         <section aria-labelledby="start-title" className={styles.start}>
           <div className={styles.startInner}>
             <h2 className={styles.startTitle} id="start-title">
-              Pick your market later. Start today.
+              Start with one command. Pick the market when you need it.
             </h2>
             <CopyCommand
               className={styles.startCommand}
               labelClassName={styles.startCopy}
               prefix={<span className={styles.startPrompt}>$ </span>}
             />
+            <p className={styles.startNote}>
+              The CLI asks for a project name, a default currency and a default locale.
+            </p>
             <div className={styles.startLinks}>
               <Link href={links.quickStart}>Quick start</Link>
               <a href={links.demo} rel="noopener noreferrer" target="_blank">
