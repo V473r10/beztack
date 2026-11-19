@@ -85,7 +85,7 @@ const STACK_GROUPS = [
     tools: [
       { name: "React", logo: `${SVGL}/react_light.svg` },
       { name: "Vite", logo: `${SVGL}/vite.svg` },
-      { name: "Tailwind", logo: `${SVGL}/tailwindcss.svg` },
+      { name: "Tailwind CSS", logo: `${SVGL}/tailwindcss.svg` },
       { name: "shadcn/ui", logo: `${SVGL}/shadcn-ui.svg` },
     ],
   },
@@ -109,7 +109,14 @@ const STACK_GROUPS = [
 function StackBand() {
   return (
     <section aria-label="Stack" className={styles.band}>
-      <div className={styles.bandInner}>
+      {/* On a phone the groups scroll sideways, so the region must be reachable by keyboard. */}
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region */}
+      <div
+        aria-label="Stack, scrolls sideways on small screens"
+        className={styles.bandInner}
+        role="group"
+        tabIndex={0}
+      >
         {STACK_GROUPS.map((group) => (
           <div
             className={`${styles.bandGroup} ${group.label === "App" ? styles.bandWide : ""}`}
@@ -218,8 +225,17 @@ capabilities: { cadenceChange: false, proratedUpgrade: false },
 // Polar
 capabilities: { cadenceChange: true, proratedUpgrade: true },`;
 
+// Copied from packages/db/src/schema.ts. Columns after `interval` are left out.
+const SCHEMA_SNIPPET = `export const plan = pgTable("plan", {
+  id: text("id").primaryKey(),
+  price: integer("price").notNull(),
+  currency: text("currency").notNull(),
+  interval: text("interval"),
+  // …
+});`;
+
 const TOKEN =
-  /(\/\/.*)|\b(export|type|readonly)\b|\b(true|false)\b|\b(boolean|string|Promise)\b|\b([A-Z][A-Za-z]+)\b|\b([a-z][A-Za-z]*)(?=\??:|\()/g;
+  /(\/\/.*)|\b(export|const|type|readonly)\b|\b(true|false)\b|\b(boolean|string|integer|text|Promise)\b|\b([A-Z][A-Za-z]+)\b|\b([a-z][A-Za-z]*)(?=\??:|\()/g;
 
 const TOKEN_CLASSES = [
   styles.tokComment,
@@ -288,19 +304,34 @@ const INTL_ROWS = [
   { locale: "en-US", currency: "USD", amount: 29 },
 ] as const;
 
-function formatSample(locale: string, currency: string, amount: number): string {
+function formatSample(locale: string, currency: string, amount: number) {
   const money = new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
   }).format(amount);
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
+  const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(
     SAMPLE_DATE,
   );
-  return `${money} · ${date}`;
+  return { money, date };
 }
 
 const TEST_FILES = 131;
+
+const EMAIL_TEMPLATES = [
+  "Welcome",
+  "Password reset",
+  "Organization invitation",
+  "Subscription confirmation",
+  "Sample",
+] as const;
+
+// Titles copied from docs/adr.
+const ADRS = [
+  { id: "0002", title: "Beztack owns Pending Plan change state" },
+  { id: "0004", title: "App admin tier overrides stay outside payment providers" },
+  { id: "0007", title: "Prices are integer minor units with an ISO 4217 currency code" },
+] as const;
 
 function SampleTag() {
   return <span className={styles.sample}>Sample data</span>;
@@ -365,16 +396,19 @@ function Bento() {
         <h3 className={styles.tileTitle}>English and Spanish</h3>
         <div className={styles.speech}>
           <p lang="es">Ingresá el código de 6 dígitos de tu app de autenticación.</p>
-          <small>Spanish ships with vos today. Tú and formal usted are on the roadmap.</small>
         </div>
-        <ul className={styles.intl}>
-          {INTL_ROWS.map((row) => (
-            <li key={row.locale}>
-              <code>{row.locale}</code>
-              <span>{formatSample(row.locale, row.currency, row.amount)}</span>
-            </li>
-          ))}
-        </ul>
+        <div className={styles.intl}>
+          {INTL_ROWS.map((row) => {
+            const sample = formatSample(row.locale, row.currency, row.amount);
+            return (
+              <div key={row.locale}>
+                <code>{row.locale}</code>
+                <strong>{sample.money}</strong>
+                <span>{sample.date}</span>
+              </div>
+            );
+          })}
+        </div>
       </article>
 
       <article className={`${styles.tile} ${styles.tileSun} ${styles.span4}`}>
@@ -427,19 +461,15 @@ function Bento() {
         </div>
         <h3 className={styles.tileTitle}>A typed schema with SQL migrations</h3>
         <p className={styles.tileText}>
-          Prices are integer minor units with an ISO currency code. Plan changes are rows in a
-          ledger that nothing deletes.
+          Prices are integers in the currency's minor unit, next to an ISO 4217 code.
         </p>
-        <div className={styles.sqlWrap}>
-          <SampleTag />
-          <pre aria-label="Sample rows" className={styles.sql}>
-            {`pending_plan_change
- id  change     status
- 16  free-pro   activated
- 17  pro-team   failed
- 18  team-pro   pending`}
-          </pre>
-        </div>
+        <figure className={styles.tileCode}>
+          <Code source={SCHEMA_SNIPPET} />
+          <figcaption>
+            <span>packages/db/src/schema.ts</span>
+            <span>0009_prices_minor_units.sql</span>
+          </figcaption>
+        </figure>
       </article>
 
       <article className={`${styles.tile} ${styles.tileWhite} ${styles.span2}`}>
@@ -453,9 +483,11 @@ function Bento() {
           <span className={styles.mailBody}>Your organization is ready. Invite your team.</span>
           <span className={styles.mailButton}>Open the app</span>
         </div>
-        <p className={styles.tileText}>
-          Welcome, password reset, organization invitation, subscription confirmation and a sample.
-        </p>
+        <ul aria-label="The five templates" className={styles.templates}>
+          {EMAIL_TEMPLATES.map((name) => (
+            <li key={name}>{name}</li>
+          ))}
+        </ul>
       </article>
 
       <article className={`${styles.tile} ${styles.tileNavy} ${styles.span2}`}>
@@ -466,10 +498,16 @@ function Bento() {
         <pre aria-label="Files for agents" className={styles.tree}>
           {`AGENTS.md
 CONTEXT.md        glossary
-docs/adr/
-  0001 … 0007     decisions
 llms-full.txt     all docs`}
         </pre>
+        <ul aria-label="Some of the decision records" className={styles.adrList}>
+          {ADRS.map((adr) => (
+            <li key={adr.id}>
+              <code>{adr.id}</code>
+              <span>{adr.title}</span>
+            </li>
+          ))}
+        </ul>
         <div className={styles.tileLinks}>
           <Link className={styles.tileLink} href={links.llms}>
             Open llms-full.txt
@@ -508,16 +546,22 @@ llms-full.txt     all docs`}
 }
 
 const NOT_YET = [
-  "Monthly to yearly on Mercado Pago",
-  "Choose vos, tú or usted",
-  "Stripe and other providers",
-  "OAuth sign-in",
-  "Magic links",
-  "Passkeys",
-  "API keys",
-  "Template sync",
-  "A Dockerfile",
-  "Cloudflare config",
+  {
+    group: "Billing",
+    items: ["Monthly to yearly on Mercado Pago", "Stripe and other providers"],
+  },
+  {
+    group: "Sign-in",
+    items: ["OAuth", "Magic links", "Passkeys", "API keys"],
+  },
+  {
+    group: "Language",
+    items: ["Choosing vos, tú or usted"],
+  },
+  {
+    group: "Operations",
+    items: ["Template sync", "A Dockerfile", "Cloudflare config"],
+  },
 ] as const;
 
 const FAQ = [
@@ -577,6 +621,25 @@ const FAQ = [
   },
 ] as const;
 
+// From the Quick Start in README.md.
+const FIRST_RUN = [
+  {
+    title: "Install and configure",
+    command: "pnpm install",
+    text: "Copy the three .env.example files, then set DATABASE_URL, BETTER_AUTH_SECRET and your provider's keys.",
+  },
+  {
+    title: "Create the tables",
+    command: "pnpm db:migrate",
+    text: "Applies the SQL migrations to your database.",
+  },
+  {
+    title: "Run it",
+    command: "pnpm dev",
+    text: "The UI is on 5173, the API on 3000 and the docs on 3002.",
+  },
+] as const;
+
 function NotYet() {
   return (
     <section aria-labelledby="not-yet-title" className={styles.section}>
@@ -588,11 +651,18 @@ function NotYet() {
           <p className={styles.notYetLede}>
             Beztack doesn't have these today. Better to know before you clone.
           </p>
-          <ul className={styles.notYet}>
-            {NOT_YET.map((item) => (
-              <li key={item}>{item}</li>
+          <div className={styles.notYet}>
+            {NOT_YET.map((entry) => (
+              <section className={styles.notYetGroup} key={entry.group}>
+                <h3>{entry.group}</h3>
+                <ul>
+                  {entry.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         </div>
         <div className={styles.faq}>
           <h2 className={styles.faqTitle}>Questions</h2>
@@ -755,14 +825,34 @@ export default function TwoMarketsLanding() {
                 <span className={styles.startLine}>One command.</span>{" "}
                 <span className={styles.startLine}>Pick the market later.</span>
               </h2>
-              <CopyCommand
-                className={styles.startCommand}
-                labelClassName={styles.startCopy}
-                prefix={<span className={styles.startPrompt}>$ </span>}
-              />
+              <div className={styles.startFirst}>
+                <span aria-hidden="true" className={styles.stepNumber}>
+                  1
+                </span>
+                <CopyCommand
+                  className={styles.startCommand}
+                  labelClassName={styles.startCopy}
+                  prefix={<span className={styles.startPrompt}>$ </span>}
+                />
+              </div>
               <p className={styles.startNote}>
-                The CLI asks for a project name, a default currency and a default locale.
+                The CLI asks for a project name, a default currency and a default locale. You need
+                Node.js 22, pnpm 11 and a PostgreSQL database.
               </p>
+              <ol className={styles.steps} start={2}>
+                {FIRST_RUN.map((step, index) => (
+                  <li key={step.title}>
+                    <h3>
+                      <span aria-hidden="true" className={styles.stepNumber}>
+                        {index + 2}
+                      </span>
+                      {step.title}
+                    </h3>
+                    <code>{step.command}</code>
+                    <p>{step.text}</p>
+                  </li>
+                ))}
+              </ol>
               <div className={styles.startLinks}>
                 <Link href={links.quickStart}>Quick start</Link>
                 <a href={links.demo} rel="noopener noreferrer" target="_blank">

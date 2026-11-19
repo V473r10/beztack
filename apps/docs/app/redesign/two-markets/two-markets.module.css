@@ -342,7 +342,7 @@
 .section {
   max-width: 76rem;
   margin: 0 auto;
-  padding: 5.5rem 1.5rem;
+  padding: 4.5rem 1.5rem;
 }
 
 /* Two plain sections in a row share one gap instead of adding both paddings. */
@@ -352,10 +352,10 @@
 
 .split {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.75fr);
   gap: 2.5rem;
   align-items: end;
-  margin-bottom: 3.5rem;
+  margin-bottom: 2.5rem;
 }
 
 .h2 {
@@ -399,7 +399,7 @@
   position: relative;
   overflow: hidden;
   border-radius: 1.4rem;
-  padding: 1.75rem 1.75rem 1.9rem;
+  padding: 1.5rem 1.6rem 1.6rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -418,7 +418,7 @@
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   gap: 2rem;
   align-items: center;
-  padding: 2.4rem 2.4rem 2.5rem;
+  padding: 1.9rem 2.1rem 2rem;
 }
 
 .authCopy {
@@ -452,6 +452,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 2.5rem;
   align-items: center;
+  padding-block: 1.4rem;
 }
 
 .tileHead {
@@ -678,27 +679,21 @@
   font-weight: 500;
 }
 
-.speech small {
-  font-size: 0.8rem;
-  line-height: 1.4;
-  color: #3d5370;
-}
-
+/* One comparison: the same amount and date in two locales. */
 .intl {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: grid;
-  gap: 0.4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: auto;
 }
 
-.intl li {
+.intl > div {
   display: grid;
-  gap: 0.1rem;
+  gap: 0.15rem;
+  align-content: start;
   background: rgba(11, 37, 69, 0.1);
   border-radius: 0.6rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -706,6 +701,16 @@
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+.intl strong {
+  font-family: var(--font-markets-display), sans-serif;
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.intl span {
+  font-size: 0.85rem;
 }
 
 /* Admin: a small table with the retry action. */
@@ -774,26 +779,52 @@
   border-radius: 999px;
 }
 
-/* Data. */
-.sqlWrap {
-  margin-top: auto;
+/* Data: the real columns of the plan table. */
+.tileCode {
+  margin: auto 0 0;
+  background: #07182f;
+  border-radius: 0.8rem;
+  overflow: hidden;
 }
 
-.sql {
-  margin: 0;
+.tileCode figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.5rem 1rem 0.7rem;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.8rem;
-  line-height: 1.7;
-  background: var(--paper);
-  box-shadow: inset 0 0 0 1px var(--line);
-  border-radius: 0.6rem;
-  padding: 0.8rem 1rem;
-  overflow-x: auto;
-  white-space: pre;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tileCode .codeBlock {
+  padding: 0.9rem 1rem 0.8rem;
+  font-size: 0.75rem;
 }
 
 /* Email: one rendered message. */
+.templates {
+  list-style: none;
+  margin: auto 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.templates li {
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: var(--celeste-soft);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .mail {
+  flex: 1 1 auto;
+  align-content: start;
   display: grid;
   gap: 0.5rem;
   background: var(--paper);
@@ -821,7 +852,7 @@
   border-radius: 0.4rem;
 }
 
-/* Agents: a file tree. */
+/* Agents: the files an agent reads, and some of the decisions it can read. */
 .tree {
   margin: 0.25rem 0 0;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -830,16 +861,40 @@
   color: var(--celeste-soft);
   background: var(--navy-2);
   border-radius: 0.8rem;
-  padding: 0.9rem 1rem;
+  padding: 0.7rem 1rem;
   overflow-x: auto;
   white-space: pre;
+}
+
+.adrList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.adrList li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: baseline;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.adrList code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--sun);
 }
 
 /* Tests: one wide strip. */
 .bigNumber {
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
-  font-size: 8rem;
+  font-size: 6.5rem;
   line-height: 0.8;
   margin: 0;
   color: var(--navy);
@@ -885,8 +940,8 @@
   display: grid;
   grid-template-columns: auto minmax(2.5rem, 5rem) auto minmax(2rem, 1fr) auto;
   align-items: center;
-  margin: 2.75rem 0 2.5rem;
-  padding: 1.6rem 2rem;
+  margin: 2.25rem 0 2rem;
+  padding: 1.4rem 2rem;
   border-radius: 1.4rem;
   background: rgba(255, 255, 255, 0.06);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
@@ -1358,7 +1413,7 @@
 /* Three plan-change rules, set as a plain row instead of cards. */
 .rules {
   list-style: none;
-  margin: 3rem 0 0;
+  margin: 2.5rem 0 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1392,8 +1447,8 @@
 }
 
 .capSection {
-  padding-top: 4rem;
-  padding-bottom: 3rem;
+  padding-top: 3.5rem;
+  padding-bottom: 2.5rem;
 }
 
 .capGrid {
@@ -1660,20 +1715,35 @@
 }
 
 .notYet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 2rem;
+}
+
+.notYetGroup {
+  border-top: 2px dashed var(--navy);
+  padding-top: 0.7rem;
+}
+
+.notYetGroup h3 {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-markets-display), sans-serif;
+  font-weight: 900;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.notYetGroup ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
+  display: grid;
+  gap: 0.25rem;
 }
 
-.notYet li {
-  padding: 0.5rem 0.95rem;
-  border-radius: 999px;
-  border: 2px dashed var(--navy);
-  font-weight: 700;
-  font-size: 0.95rem;
+.notYetGroup li {
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .faqTitle {
@@ -1747,16 +1817,16 @@
 .startInner {
   max-width: 76rem;
   margin: 0 auto;
-  padding: 6rem 1.5rem;
+  padding: 4rem 1.5rem 3.5rem;
   text-align: center;
 }
 
 .startTitle {
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
-  font-size: clamp(2.8rem, 5.6vw, 5rem);
+  font-size: clamp(2.6rem, 4.6vw, 4rem);
   line-height: 0.92;
-  margin: 0 auto 2.5rem;
+  margin: 0 auto 1.75rem;
   text-wrap: balance;
 }
 
@@ -1797,8 +1867,77 @@
   color: var(--navy);
 }
 
+.startFirst {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 100%;
+}
+
+.stepNumber {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background: var(--sun);
+  color: var(--navy);
+  font-family: var(--font-markets-display), sans-serif;
+  font-weight: 900;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.steps {
+  list-style: none;
+  margin: 1.75rem auto 0;
+  padding: 0;
+  max-width: 62rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  text-align: left;
+}
+
+.steps li {
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  padding-top: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.steps h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0;
+  font-family: var(--font-markets-display), sans-serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.steps code {
+  justify-self: start;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.35rem;
+  background: var(--navy-2);
+  color: var(--celeste);
+}
+
+.steps p {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.76);
+}
+
 .startNote {
-  margin: 1.4rem auto 0;
+  margin: 1.2rem auto 0;
   max-width: 40rem;
   text-wrap: balance;
   line-height: 1.55;
@@ -1809,7 +1948,7 @@
   display: flex;
   justify-content: center;
   gap: 2rem;
-  margin-top: 2.25rem;
+  margin-top: 2rem;
   font-weight: 700;
 }
 
@@ -1856,12 +1995,28 @@
 }
 
 @media (max-width: 900px) {
+  .section {
+    padding-top: 3.25rem;
+    padding-bottom: 3.25rem;
+  }
+
+  .capSection {
+    padding-top: 2.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .startInner {
+    padding-top: 3rem;
+    padding-bottom: 2.75rem;
+  }
+
   .heroGrid,
   .split,
   .faqGrid,
   .capGrid,
   .planIntro,
   .play,
+  .steps,
   .rules {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1951,8 +2106,51 @@
 }
 
 @media (max-width: 560px) {
+  /* The stack becomes one row you swipe through. */
   .bandInner {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    gap: 0;
+    padding: 1rem 0 1.1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 1.5rem;
+    scrollbar-width: thin;
+  }
+
+  .bandGroup,
+  .bandGroup + .bandGroup {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    padding: 0 1.1rem;
+    border-left: 1px solid var(--line);
+  }
+
+  .bandGroup:first-child {
+    border-left: 0;
+    padding-left: 1.5rem;
+  }
+
+  .bandGroup:last-child {
+    padding-right: 1.5rem;
+  }
+
+  .bandWide {
+    order: 0;
+  }
+
+  .bandWide .bandTools {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 0.55rem 1.1rem;
+  }
+
+  .notYet {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .startFirst {
+    flex-direction: column;
+    gap: 0.75rem;
   }
 
   .capTable thead {
