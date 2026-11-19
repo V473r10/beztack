@@ -512,7 +512,7 @@ function Bento() {
             {TEST_FILES}
           </p>
           <p className={styles.tileText}>
-            test files. Vitest covers the API, the app and the packages, Playwright runs end to end,
+            test files. Vitest covers the API, the app and the packages. Playwright runs end to end,
             a smoke test checks the published site, and <code>/api/health</code> checks the
             database.
           </p>
