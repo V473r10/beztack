@@ -874,24 +874,22 @@
 }
 
 /* A small diagram: two providers converge on one adapter, and your app calls the adapter. */
-.planHead {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-  gap: 3rem;
-  align-items: end;
-  margin-bottom: 3rem;
-}
-
 .planIntro {
   display: grid;
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 2.5rem;
+  align-items: end;
 }
 
 .diagram {
   display: grid;
-  grid-template-columns: auto 2.25rem auto 1.25rem auto;
+  grid-template-columns: auto minmax(2.5rem, 5rem) auto minmax(2rem, 1fr) auto;
   align-items: center;
-  justify-content: end;
+  margin: 2.75rem 0 2.5rem;
+  padding: 1.6rem 2rem;
+  border-radius: 1.4rem;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 .diagramProviders {
@@ -904,9 +902,9 @@
   align-items: center;
   gap: 0.6rem;
   border-radius: 999px;
-  padding: 0.35rem 1rem 0.35rem 0.4rem;
+  padding: 0.4rem 1.3rem 0.4rem 0.45rem;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   white-space: nowrap;
 }
 
@@ -928,10 +926,9 @@
 }
 
 .diagramJoin {
-  align-self: stretch;
+  align-self: center;
   width: 100%;
-  height: 100%;
-  min-height: 5rem;
+  height: 4.6rem;
   fill: none;
   stroke: var(--sun);
   stroke-width: 3;
@@ -944,11 +941,11 @@
 
 .adapter {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   font-weight: 700;
   background: var(--sun);
   color: var(--navy);
-  padding: 0.8rem 1rem;
+  padding: 1rem 1.4rem;
   border-radius: 0.6rem;
 }
 
@@ -959,8 +956,8 @@
 
 .diagramApp {
   font-weight: 700;
-  font-size: 0.95rem;
-  padding: 0.7rem 1rem;
+  font-size: 1.1rem;
+  padding: 0.9rem 1.3rem;
   white-space: nowrap;
   border-radius: 0.6rem;
   box-shadow: inset 0 0 0 2px var(--celeste);
@@ -991,7 +988,7 @@
 .playControls {
   display: grid;
   gap: 1.4rem;
-  align-content: start;
+  align-content: space-between;
 }
 
 .playHead {
@@ -1092,16 +1089,29 @@
   outline: none;
 }
 
+/* The day bar is the slider's track: 30 marks, with the native range on top of them. */
+.playSlider {
+  --thumb: 1.5rem;
+  position: relative;
+  height: 2.2rem;
+}
+
 .playDays {
-  display: grid;
-  grid-template-columns: repeat(30, minmax(0, 1fr));
-  gap: 2px;
-  height: 1.5rem;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-inline: calc(var(--thumb) / 2 - 3px);
+  pointer-events: none;
 }
 
 .playDays span {
+  width: 6px;
+  height: 1.3rem;
   border-radius: 2px;
-  background: rgba(11, 37, 69, 0.18);
+  background: rgba(11, 37, 69, 0.2);
+  transition: background-color 150ms ease;
 }
 
 .playDays span[data-left="true"] {
@@ -1109,8 +1119,10 @@
 }
 
 .playRange {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 1.6rem;
+  height: 100%;
   margin: 0;
   appearance: none;
   background: transparent;
@@ -1118,34 +1130,38 @@
 }
 
 .playRange::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(to right, var(--navy) var(--pct), rgba(11, 37, 69, 0.25) var(--pct));
+  height: 2.2rem;
+  background: transparent;
 }
 
 .playRange::-moz-range-track {
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(to right, var(--navy) var(--pct), rgba(11, 37, 69, 0.25) var(--pct));
+  height: 2.2rem;
+  background: transparent;
 }
 
 .playRange::-webkit-slider-thumb {
   appearance: none;
-  width: 1.5rem;
-  height: 1.5rem;
-  margin-top: -9px;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: 0.35rem;
   border-radius: 50%;
   background: var(--sun);
   border: 3px solid var(--navy);
 }
 
 .playRange::-moz-range-thumb {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: var(--thumb);
+  height: var(--thumb);
   box-sizing: border-box;
   border-radius: 50%;
   background: var(--sun);
   border: 3px solid var(--navy);
+}
+
+.playRange:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: 0.4rem;
 }
 
 .playDaysText {
@@ -1154,11 +1170,11 @@
 }
 
 .playFormula {
-  margin: 0;
-  max-width: 32rem;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  opacity: 0.85;
+  margin: 0.7rem 0 0;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  opacity: 0.7;
 }
 
 .playReceiptWrap {
@@ -1314,22 +1330,35 @@
   line-height: 1.5;
 }
 
+.playHeadTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .playSwitch {
   border: 0;
-  padding: 0.3rem 0;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
   background: transparent;
   color: inherit;
   font: inherit;
+  font-size: 0.85rem;
   font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  box-shadow: inset 0 0 0 2px var(--navy);
   cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.playSwitch:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* Three plan-change rules, set as a plain row instead of cards. */
 .rules {
   list-style: none;
-  margin: 3.5rem 0 0;
+  margin: 3rem 0 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1362,11 +1391,15 @@
   line-height: 1.55;
 }
 
+.capSection {
+  padding-top: 4rem;
+  padding-bottom: 3rem;
+}
+
 .capGrid {
-  margin-top: 4rem;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 3rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2.5rem;
   align-items: start;
 }
 
@@ -1376,65 +1409,78 @@
   font-size: var(--fs-sub);
   line-height: 1;
   margin: 0 0 1.2rem;
+  text-wrap: balance;
 }
 
 .capTable {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background: var(--navy-2);
+  background: #fff;
   border-radius: 1rem;
   overflow: hidden;
   text-align: left;
+  border: 1px solid var(--line);
 }
 
 .capTable th,
 .capTable td {
-  padding: 1rem 1.1rem;
+  padding: 0.9rem 1rem;
   vertical-align: top;
-  line-height: 1.5;
-  font-size: 0.95rem;
+  line-height: 1.45;
+  font-size: 0.9rem;
 }
 
 .capTable thead th {
   font-size: 0.85rem;
-  color: var(--celeste);
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--paper);
 }
 
-.capTable tbody tr + tr > * {
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+.capTable tbody tr > * {
+  border-top: 1px solid var(--line);
 }
 
 .capTable tbody th {
   font-weight: 400;
+  width: 1%;
+  white-space: nowrap;
 }
 
 .capTable code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.85rem;
   font-weight: 700;
-  color: var(--sun);
 }
 
 .capTable td strong {
-  display: block;
-  margin-bottom: 0.3rem;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.85rem;
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
 }
 
 .capTable td[data-supported="true"] strong {
-  color: var(--celeste);
+  background: var(--celeste-soft);
 }
 
 .capTable td[data-supported="false"] strong {
-  color: var(--sun);
+  background: var(--sun);
+}
+
+.capTable td span {
+  display: block;
+}
+
+.capCode {
+  display: grid;
+  gap: 0;
 }
 
 .capNote {
-  margin: 1.2rem 0 0;
+  margin: 1rem 0 0;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.78);
+  color: #3d5370;
   max-width: 40rem;
 }
 
@@ -1509,10 +1555,40 @@
 }
 
 .textLink {
-  color: var(--sun);
+  color: var(--navy);
   font-weight: 700;
   text-underline-offset: 4px;
-  white-space: nowrap;
+  text-decoration-color: var(--sun);
+  text-decoration-thickness: 2px;
+}
+
+.codeDetails {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.codeDetails summary {
+  cursor: pointer;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--celeste);
+}
+
+.codeFile {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0 1.2rem 1rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.codeFile a {
+  color: var(--celeste);
 }
 
 /* ---------- Stack band, under the hero ---------- */
@@ -1784,18 +1860,14 @@
   .split,
   .faqGrid,
   .capGrid,
-  .planHead,
+  .planIntro,
   .play,
   .rules {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .planHead {
-    gap: 2rem;
-  }
-
-  .diagram {
-    justify-content: start;
+  .planIntro {
+    gap: 1.25rem;
   }
 
   .rules {
@@ -1834,6 +1906,50 @@
   }
 }
 
+/* The adapter diagram turns vertical: providers side by side, then the adapter, then the app. */
+@media (max-width: 820px) {
+  .diagram {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 0;
+    padding: 1.4rem 1rem;
+  }
+
+  .diagramProviders {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  .diagramJoin,
+  .diagramLine {
+    display: block;
+    width: 0;
+    height: 1.6rem;
+    min-height: 0;
+    margin: 0;
+    border-left: 3px dashed var(--sun);
+    background: none;
+    stroke: none;
+  }
+
+  .diagramJoin path {
+    display: none;
+  }
+
+  .provider {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.9rem 0.3rem 0.35rem;
+  }
+
+  .adapter {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+}
+
 @media (max-width: 560px) {
   .bandInner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1859,23 +1975,27 @@
     padding-bottom: 0;
   }
 
-  .capTable tbody tr + tr > :first-child {
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  .capTable tbody tr > * {
+    border-top: 0;
   }
 
-  .capTable tbody tr + tr > td {
-    border-top: 0;
+  .capTable tbody tr + tr > :first-child {
+    border-top: 1px solid var(--line);
+  }
+
+  .capTable tbody th {
+    width: auto;
   }
 
   .capTable td::before {
     content: attr(data-provider);
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--celeste);
+    color: #5d7189;
   }
 
   .capTable td strong {
-    display: inline;
+    display: inline-block;
     margin-left: 0.4rem;
   }
 
@@ -1914,28 +2034,6 @@
 
   .playChoice span {
     padding: 0.55rem 0.6rem;
-  }
-
-  .diagram {
-    grid-template-columns: auto;
-    justify-items: start;
-    gap: 0;
-  }
-
-  .diagramJoin,
-  .diagramLine {
-    display: block;
-    width: 0;
-    height: 1.4rem;
-    min-height: 0;
-    margin-left: 1.5rem;
-    border-left: 3px dashed var(--sun);
-    background: none;
-    stroke: none;
-  }
-
-  .diagramJoin path {
-    display: none;
   }
 
   .otp span {

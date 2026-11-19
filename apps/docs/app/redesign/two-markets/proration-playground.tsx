@@ -183,7 +183,17 @@ export function ProrationPlayground() {
       <div className={styles.playControls}>
         <div className={styles.playHead}>
           <h3 className={styles.playTitle}>{locale.title}</h3>
-          <span className={styles.playSample}>{locale.example}</span>
+          <div className={styles.playHeadTools}>
+            <span className={styles.playSample}>{locale.example}</span>
+            <button
+              className={styles.playSwitch}
+              lang={LOCALES[otherMarket].lang}
+              onClick={() => setMarket(otherMarket)}
+              type="button"
+            >
+              {locale.switchTo}
+            </button>
+          </div>
         </div>
 
         <PlanChoice
@@ -205,25 +215,24 @@ export function ProrationPlayground() {
           <label className={styles.playLabel} htmlFor={`${id}-days`}>
             {locale.days}
           </label>
-          <div aria-hidden="true" className={styles.playDays}>
-            {Array.from({ length: PERIOD_DAYS }, (_, index) => (
-              <span data-left={index >= PERIOD_DAYS - days} key={index} />
-            ))}
+          <div className={styles.playSlider}>
+            <div aria-hidden="true" className={styles.playDays}>
+              {Array.from({ length: PERIOD_DAYS }, (_, index) => (
+                <span data-left={index < days} key={index} />
+              ))}
+            </div>
+            <input
+              className={styles.playRange}
+              id={`${id}-days`}
+              max={PERIOD_DAYS}
+              min={1}
+              onChange={(event) => setDays(Number(event.target.value))}
+              type="range"
+              value={days}
+            />
           </div>
-          <input
-            className={styles.playRange}
-            id={`${id}-days`}
-            max={PERIOD_DAYS}
-            min={1}
-            onChange={(event) => setDays(Number(event.target.value))}
-            style={{ "--pct": `${((days - 1) / (PERIOD_DAYS - 1)) * 100}%` } as React.CSSProperties}
-            type="range"
-            value={days}
-          />
           <span className={styles.playDaysText}>{locale.daysLeft(days)}</span>
         </div>
-
-        <p className={styles.playFormula}>{locale.formula}</p>
       </div>
 
       <div className={styles.playReceiptWrap}>
@@ -275,16 +284,8 @@ export function ProrationPlayground() {
           )}
 
           <p className={styles.playNote}>{locale.providerNote}</p>
+          <p className={styles.playFormula}>{locale.formula}</p>
         </div>
-
-        <button
-          className={styles.playSwitch}
-          lang={LOCALES[otherMarket].lang}
-          onClick={() => setMarket(otherMarket)}
-          type="button"
-        >
-          {locale.switchTo}
-        </button>
       </div>
     </div>
   );

@@ -169,15 +169,29 @@ const ADAPTER_FILE = "packages/payments/core/src/types.ts";
 const CAPABILITIES = [
   {
     flag: "proratedUpgrade",
-    mercadoPago: "An upgrade is a new subscription. The customer pays it at a redirect.",
-    polar:
-      "The existing subscription moves to the higher product now, and Polar charges the prorated difference.",
+    mercadoPago: {
+      supported: false,
+      label: "No",
+      text: "An upgrade is a new subscription, paid at a redirect.",
+    },
+    polar: {
+      supported: true,
+      label: "Yes",
+      text: "Polar charges the prorated difference on the existing subscription.",
+    },
   },
   {
     flag: "cadenceChange",
-    mercadoPago:
-      "Not yet. The API refuses the request today instead of guessing. Support is on the roadmap.",
-    polar: "The existing subscription moves to the other cadence, for example monthly to yearly.",
+    mercadoPago: {
+      supported: false,
+      label: "Not yet",
+      text: "The API refuses it today. It is on the roadmap.",
+    },
+    polar: {
+      supported: true,
+      label: "Yes",
+      text: "Moves the subscription to the other cadence, for example monthly to yearly.",
+    },
   },
 ] as const;
 
@@ -605,19 +619,18 @@ export default function TwoMarketsLanding() {
 
           <section aria-labelledby="timeline-title" className={styles.timelineSection}>
             <div className={styles.section}>
-              <div className={styles.planHead}>
-                <div className={styles.planIntro}>
-                  <h2 className={styles.h2} id="timeline-title">
-                    A plan change, start to finish.
-                  </h2>
-                  <p className={styles.sectionLede}>
-                    Proration, downgrades and failed renewals are where billing code usually breaks.
-                    All of it runs on one adapter interface, so the rules live in the API and not in
-                    the provider code.
-                  </p>
-                </div>
-                <AdapterDiagram />
+              <div className={styles.planIntro}>
+                <h2 className={styles.h2} id="timeline-title">
+                  A plan change, start to finish.
+                </h2>
+                <p className={styles.sectionLede}>
+                  Proration, downgrades and failed renewals are where billing code usually breaks.
+                  All of it runs on one adapter interface, so the rules live in the API and not in
+                  the provider code.
+                </p>
               </div>
+
+              <AdapterDiagram />
 
               <ProrationPlayground />
 
@@ -630,57 +643,52 @@ export default function TwoMarketsLanding() {
                   </li>
                 ))}
               </ul>
+            </div>
+          </section>
 
-              <div className={styles.capGrid}>
-                <div>
-                  <h3 className={styles.capTitle}>What each provider can do</h3>
-                  <table className={styles.capTable}>
-                    <thead>
-                      <tr>
-                        <th scope="col">Capability</th>
-                        <th scope="col">Mercado Pago</th>
-                        <th scope="col">Polar</th>
+          <section
+            aria-labelledby="capabilities-title"
+            className={`${styles.section} ${styles.capSection}`}
+          >
+            <div className={styles.capGrid}>
+              <div>
+                <h2 className={styles.capTitle} id="capabilities-title">
+                  The API reads flags, never the provider's name
+                </h2>
+                <table className={styles.capTable}>
+                  <thead>
+                    <tr>
+                      <th scope="col">
+                        <span className={styles.srOnly}>Capability</span>
+                      </th>
+                      <th scope="col">Mercado Pago</th>
+                      <th scope="col">Polar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {CAPABILITIES.map((row) => (
+                      <tr key={row.flag}>
+                        <th scope="row">
+                          <code>{row.flag}</code>
+                        </th>
+                        {([row.mercadoPago, row.polar] as const).map((cell, index) => (
+                          <td
+                            data-provider={index === 0 ? "Mercado Pago" : "Polar"}
+                            data-supported={cell.supported}
+                            key={index === 0 ? "mp" : "polar"}
+                          >
+                            <strong>{cell.label}</strong>
+                            <span>{cell.text}</span>
+                          </td>
+                        ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {CAPABILITIES.map((row) => (
-                        <tr key={row.flag}>
-                          <th scope="row">
-                            <code>{row.flag}</code>
-                          </th>
-                          <td data-provider="Mercado Pago" data-supported="false">
-                            <strong>false</strong>
-                            <span>{row.mercadoPago}</span>
-                          </td>
-                          <td data-provider="Polar" data-supported="true">
-                            <strong>true</strong>
-                            <span>{row.polar}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <p className={styles.capNote}>
-                    The API reads these flags, never the provider's name. When a provider can't do
-                    something, it says so instead of guessing.{" "}
-                    <Link className={styles.textLink} href={links.planChanges}>
-                      Read how plan changes work
-                    </Link>
-                  </p>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
+              <div className={styles.capCode}>
                 <figure className={styles.code}>
-                  <figcaption className={styles.codeHead}>
-                    <span>packages/payments/core/src/types.ts</span>
-                    <a
-                      href={`${links.repo}/blob/main/${ADAPTER_FILE}#L235`}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      View on GitHub
-                    </a>
-                  </figcaption>
-                  <Code source={ADAPTER_SNIPPET} />
                   <figcaption className={styles.codeHead}>
                     <span>capabilities in each adapter</span>
                     <span className={styles.codeLinks}>
@@ -701,7 +709,27 @@ export default function TwoMarketsLanding() {
                     </span>
                   </figcaption>
                   <Code source={PROVIDER_SNIPPET} />
+                  <details className={styles.codeDetails}>
+                    <summary>See the type</summary>
+                    <Code source={ADAPTER_SNIPPET} />
+                    <p className={styles.codeFile}>
+                      <span>{ADAPTER_FILE}</span>
+                      <a
+                        href={`${links.repo}/blob/main/${ADAPTER_FILE}#L235`}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        View on GitHub
+                      </a>
+                    </p>
+                  </details>
                 </figure>
+                <p className={styles.capNote}>
+                  When a provider can't do something, the API says so instead of guessing.{" "}
+                  <Link className={styles.textLink} href={links.planChanges}>
+                    Read how plan changes work
+                  </Link>
+                </p>
               </div>
             </div>
           </section>
