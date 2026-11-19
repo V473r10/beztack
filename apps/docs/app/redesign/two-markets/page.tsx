@@ -409,6 +409,9 @@ function Bento() {
             );
           })}
         </div>
+        <p className={styles.tileNote}>
+          Spanish ships with vos today. Tú and a formal usted are on the roadmap.
+        </p>
       </article>
 
       <article className={`${styles.tile} ${styles.tileSun} ${styles.span4}`}>
@@ -453,61 +456,72 @@ function Bento() {
         </div>
       </article>
 
-      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span2}`}>
+      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span3}`}>
         <div className={styles.tileHead}>
           <Logo src={`${SVGL}/drizzle-orm_light.svg`} />
           <Logo src={`${SVGL}/postgresql.svg`} />
-          <span>Drizzle on PostgreSQL</span>
-        </div>
-        <h3 className={styles.tileTitle}>A typed schema with SQL migrations</h3>
-        <p className={styles.tileText}>
-          Prices are integers in the currency's minor unit, next to an ISO 4217 code.
-        </p>
-        <figure className={styles.tileCode}>
-          <Code source={SCHEMA_SNIPPET} />
-          <figcaption>
-            <span>packages/db/src/schema.ts</span>
-            <span>0009_prices_minor_units.sql</span>
-          </figcaption>
-        </figure>
-      </article>
-
-      <article className={`${styles.tile} ${styles.tileWhite} ${styles.span2}`}>
-        <div className={styles.tileHead}>
           <Logo src={`${SVGL}/resend-icon-black.svg`} />
-          <span>React Email and Resend</span>
+          <span>Drizzle, PostgreSQL and Resend</span>
         </div>
-        <h3 className={styles.tileTitle}>Five email templates, ready to edit</h3>
-        <div aria-hidden="true" className={styles.mail}>
-          <span className={styles.mailSubject}>Welcome to your workspace</span>
-          <span className={styles.mailBody}>Your organization is ready. Invite your team.</span>
-          <span className={styles.mailButton}>Open the app</span>
+        <h3 className={styles.tileTitle}>
+          A typed schema, SQL migrations and five email templates
+        </h3>
+        <div className={styles.dataEmail}>
+          <div className={styles.dataSide}>
+            <p className={styles.tileText}>
+              Prices are integers in the currency's minor unit, next to an ISO 4217 code.
+            </p>
+            <figure className={styles.tileCode}>
+              <Code source={SCHEMA_SNIPPET} />
+              <figcaption>
+                <span>packages/db/src/schema.ts</span>
+                <span>0009_prices_minor_units.sql</span>
+              </figcaption>
+            </figure>
+          </div>
+          <div className={styles.mailSide}>
+            <p className={styles.tileText}>React Email templates, sent through Resend.</p>
+            <ul aria-label="The five templates" className={styles.templates}>
+              {EMAIL_TEMPLATES.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <ul aria-label="The five templates" className={styles.templates}>
-          {EMAIL_TEMPLATES.map((name) => (
-            <li key={name}>{name}</li>
-          ))}
-        </ul>
       </article>
 
-      <article className={`${styles.tile} ${styles.tileNavy} ${styles.span2}`}>
+      <article className={`${styles.tile} ${styles.tileNavy} ${styles.span3}`}>
         <div className={styles.tileHead}>
-          <span>For coding agents</span>
+          <Logo src={`${SVGL}/vitest.svg`} />
+          <Logo src={`${SVGL}/playwright.svg`} />
+          <span>Vitest, Playwright and coding agents</span>
         </div>
-        <h3 className={styles.tileTitle}>Written so agents can read it too</h3>
-        <pre aria-label="Files for agents" className={styles.tree}>
-          {`AGENTS.md
+        <h3 className={styles.tileTitle}>Built to be checked</h3>
+        <div className={styles.checkedTests}>
+          <p aria-hidden="true" className={styles.bigNumber}>
+            {TEST_FILES}
+          </p>
+          <p className={styles.tileText}>
+            test files. Vitest covers the API, the app and the packages, Playwright runs end to end,
+            a smoke test checks the published site, and <code>/api/health</code> checks the
+            database.
+          </p>
+        </div>
+        <div className={styles.checkedAgents}>
+          <pre aria-label="Files for agents" className={styles.tree}>
+            {`AGENTS.md
 CONTEXT.md        glossary
 llms-full.txt     all docs`}
-        </pre>
-        <ul aria-label="Some of the decision records" className={styles.adrList}>
-          {ADRS.map((adr) => (
-            <li key={adr.id}>
-              <code>{adr.id}</code>
-              <span>{adr.title}</span>
-            </li>
-          ))}
-        </ul>
+          </pre>
+          <ul aria-label="Some of the decision records" className={styles.adrList}>
+            {ADRS.map((adr) => (
+              <li key={adr.id}>
+                <code>{adr.id}</code>
+                <span>{adr.title}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
         <div className={styles.tileLinks}>
           <Link className={styles.tileLink} href={links.llms}>
             Open llms-full.txt
@@ -520,25 +534,6 @@ llms-full.txt     all docs`}
           >
             Read the ADRs
           </a>
-        </div>
-      </article>
-
-      <article className={`${styles.tile} ${styles.tileStrip} ${styles.span6}`}>
-        <p aria-hidden="true" className={styles.bigNumber}>
-          {TEST_FILES}
-        </p>
-        <div className={styles.stripText}>
-          <h3 className={styles.tileTitle}>
-            {TEST_FILES} test files, and a check on the live site
-          </h3>
-          <p className={styles.tileText}>
-            Vitest covers the API, the app and the packages. Playwright runs end to end, a smoke
-            test checks the published site, and <code>/api/health</code> checks the database.
-          </p>
-        </div>
-        <div className={styles.stripLogos}>
-          <Logo size={44} src={`${SVGL}/vitest.svg`} />
-          <Logo size={44} src={`${SVGL}/playwright.svg`} />
         </div>
       </article>
     </div>
@@ -806,7 +801,7 @@ export default function TwoMarketsLanding() {
 
           <section aria-labelledby="constants-title" className={styles.section}>
             <div className={styles.split}>
-              <h2 className={styles.h2} id="constants-title">
+              <h2 className={`${styles.h2} ${styles.h2Sm}`} id="constants-title">
                 Three variables pick your market. The rest stays put.
               </h2>
               <p className={styles.sectionLede}>
