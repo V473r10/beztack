@@ -486,7 +486,7 @@ function Bento() {
             </figure>
           </div>
           <div className={styles.mailSide}>
-            <p className={styles.tileText}>React Email templates, sent through Resend.</p>
+            <p className={styles.tileText}>React Email, sent through Resend.</p>
             <ul aria-label="The five templates" className={styles.templates}>
               {EMAIL_TEMPLATES.map((name) => (
                 <li key={name}>{name}</li>
