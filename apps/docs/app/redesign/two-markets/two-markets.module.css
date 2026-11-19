@@ -1720,20 +1720,27 @@
 
 .notYet {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem 2rem;
+  gap: 0;
 }
 
 .notYetGroup {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
   border-top: 2px dashed var(--navy);
-  padding-top: 0.7rem;
+  padding: 0.8rem 0 0.9rem;
+}
+
+.notYetGroup:last-child {
+  border-bottom: 2px dashed var(--navy);
 }
 
 .notYetGroup h3 {
-  margin: 0 0 0.4rem;
+  margin: 0;
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   line-height: 1;
 }
 
@@ -1741,13 +1748,16 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0.25rem;
 }
 
 .notYetGroup li {
+  display: inline;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.5;
+}
+
+.notYetGroup li:not(:last-child)::after {
+  content: ", ";
 }
 
 .faqTitle {
@@ -1871,13 +1881,6 @@
   color: var(--navy);
 }
 
-.startFirst {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-  max-width: 100%;
-}
-
 .stepNumber {
   flex: 0 0 auto;
   display: inline-grid;
@@ -1895,13 +1898,29 @@
 
 .steps {
   list-style: none;
-  margin: 1.75rem auto 0;
+  margin: 0 auto;
   padding: 0;
   max-width: 62rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2rem;
   text-align: left;
+}
+
+.stepFirst {
+  grid-column: 1 / -1;
+}
+
+.stepFirstBody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.75rem;
+}
+
+.stepFirstBody p {
+  flex: 1 1 18rem;
+  max-width: 30rem;
 }
 
 .steps li {
@@ -1937,14 +1956,6 @@
   margin: 0;
   line-height: 1.5;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.76);
-}
-
-.startNote {
-  margin: 1.2rem auto 0;
-  max-width: 40rem;
-  text-wrap: balance;
-  line-height: 1.55;
   color: rgba(255, 255, 255, 0.76);
 }
 
@@ -2162,13 +2173,9 @@
     gap: 0.55rem 1.1rem;
   }
 
-  .notYet {
+  .notYetGroup {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .startFirst {
-    flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.3rem;
   }
 
   .capTable thead {

@@ -322,6 +322,9 @@ function formatSample(locale: string, currency: string, amount: number) {
   return { money, date };
 }
 
+// Test files tracked in git. Count them with:
+//   git ls-files | grep -cE '\.(test|spec)\.tsx?$'
+// Recount on main before publishing, and update the metadata above as well.
 const TEST_FILES = 131;
 
 const EMAIL_TEMPLATES = [
@@ -335,6 +338,7 @@ const EMAIL_TEMPLATES = [
 // Titles copied from docs/adr.
 const ADRS = [
   { id: "0002", title: "Beztack owns Pending Plan change state" },
+  { id: "0003", title: "Payment integrations use native provider boundaries" },
   { id: "0004", title: "App admin tier overrides stay outside payment providers" },
   { id: "0007", title: "Prices are integer minor units with an ISO 4217 currency code" },
 ] as const;
@@ -561,7 +565,7 @@ const NOT_YET = [
   },
   {
     group: "Operations",
-    items: ["Template sync", "A Dockerfile", "Cloudflare config"],
+    items: ["Template sync", "Dockerfile", "Cloudflare config"],
   },
 ] as const;
 
@@ -826,21 +830,26 @@ export default function TwoMarketsLanding() {
                 <span className={styles.startLine}>One command.</span>{" "}
                 <span className={styles.startLine}>Pick the market later.</span>
               </h2>
-              <div className={styles.startFirst}>
-                <span aria-hidden="true" className={styles.stepNumber}>
-                  1
-                </span>
-                <CopyCommand
-                  className={styles.startCommand}
-                  labelClassName={styles.startCopy}
-                  prefix={<span className={styles.startPrompt}>$ </span>}
-                />
-              </div>
-              <p className={styles.startNote}>
-                The CLI asks for a project name, a default currency and a default locale. You need
-                Node.js 22, pnpm 11 and a PostgreSQL database.
-              </p>
-              <ol className={styles.steps} start={2}>
+              <ol className={styles.steps}>
+                <li className={styles.stepFirst}>
+                  <h3>
+                    <span aria-hidden="true" className={styles.stepNumber}>
+                      1
+                    </span>
+                    Create the project
+                  </h3>
+                  <div className={styles.stepFirstBody}>
+                    <CopyCommand
+                      className={styles.startCommand}
+                      labelClassName={styles.startCopy}
+                      prefix={<span className={styles.startPrompt}>$ </span>}
+                    />
+                    <p>
+                      The CLI asks for a project name, a default currency and a default locale. You
+                      need Node.js 22, pnpm 11 and a PostgreSQL database.
+                    </p>
+                  </div>
+                </li>
                 {FIRST_RUN.map((step, index) => (
                   <li key={step.title}>
                     <h3>
