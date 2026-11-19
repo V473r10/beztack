@@ -20,9 +20,11 @@
   min-height: 100vh;
 }
 
+/* Two-tone ring: the sun on the outside, navy against the element. One of the two shows on any background. */
 .page :focus-visible {
   outline: 3px solid var(--sun);
   outline-offset: 3px;
+  box-shadow: 0 0 0 3px var(--navy);
 }
 
 /* ---------- Hero: the palette flips with the market ---------- */
@@ -209,7 +211,7 @@
   min-height: 3.2rem;
   padding: 0 1.5rem;
   font-weight: 700;
-  border-radius: 0.4rem;
+  border-radius: 0.8rem;
   text-decoration: none;
 }
 
@@ -273,7 +275,7 @@
 .priceCard {
   background: var(--card);
   color: var(--card-fg);
-  border-radius: 1.1rem;
+  border-radius: 1.4rem;
   padding: 1.6rem 1.8rem 1.4rem;
 }
 
@@ -477,7 +479,7 @@
 .tileHead .logo {
   box-sizing: content-box;
   background: #fff;
-  border-radius: 0.5rem;
+  border-radius: 0.8rem;
   padding: 0.35rem;
   box-shadow: 0 0 0 1px var(--line);
 }
@@ -556,7 +558,7 @@
   gap: 0.4rem;
   background: #fff;
   color: var(--navy);
-  border-radius: 1rem;
+  border-radius: 0.8rem;
   padding: 1.1rem 1.2rem 1.2rem;
 }
 
@@ -569,7 +571,7 @@
   font-size: 1.4rem;
   letter-spacing: 0.15em;
   padding: 0.55rem 0.8rem;
-  border-radius: 0.5rem;
+  border-radius: 0.8rem;
   box-shadow: inset 0 0 0 2px var(--sun);
 }
 
@@ -592,7 +594,7 @@
   height: 3.6rem;
   display: grid;
   place-items: center;
-  border-radius: 0.6rem;
+  border-radius: 0.8rem;
   background: var(--navy-2);
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
@@ -671,7 +673,7 @@
 .speech {
   margin: 0.25rem 0 0;
   background: #fff;
-  border-radius: 1rem 1rem 1rem 0.2rem;
+  border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
   padding: 0.8rem 1rem;
   line-height: 1.4;
   display: grid;
@@ -696,7 +698,7 @@
   gap: 0.15rem;
   align-content: start;
   background: rgba(11, 37, 69, 0.1);
-  border-radius: 0.6rem;
+  border-radius: 0.8rem;
   padding: 0.6rem 0.75rem;
   font-variant-numeric: tabular-nums;
 }
@@ -1010,7 +1012,7 @@
   background: var(--sun);
   color: var(--navy);
   padding: 1rem 1.4rem;
-  border-radius: 0.6rem;
+  border-radius: 0.8rem;
 }
 
 .diagramLine {
@@ -1023,7 +1025,7 @@
   font-size: 1.1rem;
   padding: 0.9rem 1.3rem;
   white-space: nowrap;
-  border-radius: 0.6rem;
+  border-radius: 0.8rem;
   box-shadow: inset 0 0 0 2px var(--celeste);
   color: var(--celeste);
 }
@@ -1047,6 +1049,7 @@
 
 .play :focus-visible {
   outline-color: var(--navy);
+  box-shadow: none;
 }
 
 .playControls {
@@ -1126,7 +1129,7 @@
   display: grid;
   gap: 0.1rem;
   padding: 0.65rem 0.8rem;
-  border-radius: 0.7rem;
+  border-radius: 0.8rem;
   background: rgba(255, 255, 255, 0.6);
   transition:
     background-color 200ms ease,
@@ -1372,7 +1375,7 @@
   margin: 0;
   padding: 0.7rem 0.9rem;
   background: var(--paper);
-  border-radius: 0.5rem;
+  border-radius: 0.8rem;
   font-size: 0.8rem;
   white-space: pre-wrap;
 }
@@ -1473,7 +1476,7 @@
   border-collapse: separate;
   border-spacing: 0;
   background: #fff;
-  border-radius: 1rem;
+  border-radius: 1.4rem;
   overflow: hidden;
   text-align: left;
   border: 1px solid var(--line);
@@ -1543,7 +1546,7 @@
 .code {
   margin: 0;
   background: #07182f;
-  border-radius: 1rem;
+  border-radius: 1.4rem;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
@@ -1841,7 +1844,7 @@
   padding: 1.05rem 1.1rem 1.05rem 1.5rem;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 1.15rem;
-  border-radius: 0.6rem;
+  border-radius: 0.8rem;
   cursor: pointer;
 }
 
@@ -1925,7 +1928,7 @@
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.9rem;
   padding: 0.25rem 0.6rem;
-  border-radius: 0.35rem;
+  border-radius: 0.4rem;
   background: var(--navy-2);
   color: var(--celeste);
 }
@@ -1968,6 +1971,17 @@
   gap: 1rem;
   padding: 1.5rem max(1.5rem, calc((100% - 73rem) / 2));
   font-size: 0.9rem;
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+
+.footerLinks a {
+  color: #fff;
+  text-underline-offset: 4px;
 }
 
 /* ---------- Responsive ---------- */
@@ -2218,11 +2232,11 @@
   .switch {
     display: flex;
     flex-direction: column;
-    border-radius: 1.2rem;
+    border-radius: 1.4rem;
   }
 
   .switchOption {
-    border-radius: 1rem;
+    border-radius: 0.8rem;
   }
 
   .startCommand {

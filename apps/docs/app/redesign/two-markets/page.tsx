@@ -24,6 +24,12 @@ export const metadata: Metadata = {
   title: "Beztack: open-source TypeScript starter for B2B SaaS with Mercado Pago and Polar",
   description:
     "MIT-licensed TypeScript starter for B2B SaaS. Charges in local currency with Mercado Pago or worldwide with Polar, with plan changes, teams, 2FA, English and Spanish, and 131 test files.",
+  openGraph: {
+    type: "website",
+    title: "Beztack: open-source TypeScript starter for B2B SaaS with Mercado Pago and Polar",
+    description:
+      "MIT-licensed TypeScript starter for B2B SaaS. Charges in local currency with Mercado Pago or worldwide with Polar, with plan changes, teams, 2FA, English and Spanish, and 131 test files.",
+  },
 };
 
 const SVGL = "https://svgl.app/library";
@@ -863,10 +869,14 @@ export default function TwoMarketsLanding() {
       </MarketProvider>
 
       <footer className={styles.footer}>
-        <span>Beztack is MIT licensed.</span>
-        <a href={links.repo} rel="noopener noreferrer" target="_blank">
-          GitHub
-        </a>
+        <span>MIT licensed</span>
+        <nav aria-label="Footer" className={styles.footerLinks}>
+          <Link href={links.docs}>Docs</Link>
+          <Link href={links.quickStart}>Quick start</Link>
+          <a href={links.repo} rel="noopener noreferrer" target="_blank">
+            GitHub
+          </a>
+        </nav>
       </footer>
     </div>
   );
