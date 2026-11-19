@@ -64,24 +64,72 @@ const TIMELINE = [
   },
 ] as const;
 
-const STACK = [
-  { name: "Vite", logo: `${SVGL}/vite.svg` },
-  { name: "React 19", logo: `${SVGL}/react_light.svg` },
-  { name: "Tailwind 4", logo: `${SVGL}/tailwindcss.svg` },
-  { name: "shadcn/ui", logo: `${SVGL}/shadcn-ui.svg` },
-  { name: "Nitro", logo: "https://nitro.build/icon.svg" },
-  { name: "Better Auth", logo: `${SVGL}/better-auth_light.svg` },
-  { name: "Drizzle", logo: `${SVGL}/drizzle-orm_light.svg` },
-  { name: "PostgreSQL", logo: `${SVGL}/postgresql.svg` },
-  { name: "Zod", logo: `${SVGL}/zod.svg` },
-  { name: "nuqs", logo: `${SVGL}/nuqs.svg` },
-  { name: "Resend", logo: `${SVGL}/resend-icon-black.svg` },
-  { name: "TypeScript", logo: `${SVGL}/typescript.svg` },
-  { name: "Next.js", logo: `${SVGL}/nextjs_icon_dark.svg` },
-  { name: "pnpm", logo: `${SVGL}/pnpm.svg` },
-  { name: "Vitest", logo: `${SVGL}/vitest.svg` },
-  { name: "Playwright", logo: `${SVGL}/playwright.svg` },
+const STACK_GROUPS = [
+  {
+    label: "Billing",
+    tools: [
+      { name: "Mercado Pago", logo: `${SVGL}/mercado-pago.svg` },
+      { name: "Polar", logo: `${SVGL}/polar-sh_light.svg` },
+    ],
+  },
+  {
+    label: "Auth",
+    tools: [{ name: "Better Auth", logo: `${SVGL}/better-auth_light.svg` }],
+  },
+  {
+    label: "Data",
+    tools: [
+      { name: "Drizzle", logo: `${SVGL}/drizzle-orm_light.svg` },
+      { name: "PostgreSQL", logo: `${SVGL}/postgresql.svg` },
+    ],
+  },
+  {
+    label: "App",
+    tools: [
+      { name: "React", logo: `${SVGL}/react_light.svg` },
+      { name: "Vite", logo: `${SVGL}/vite.svg` },
+      { name: "Tailwind", logo: `${SVGL}/tailwindcss.svg` },
+      { name: "shadcn/ui", logo: `${SVGL}/shadcn-ui.svg` },
+    ],
+  },
+  {
+    label: "API",
+    tools: [{ name: "Nitro", logo: "https://nitro.build/icon.svg" }],
+  },
+  {
+    label: "Quality",
+    tools: [
+      { name: "Vitest", logo: `${SVGL}/vitest.svg` },
+      { name: "Playwright", logo: `${SVGL}/playwright.svg` },
+    ],
+  },
+  {
+    label: "Email",
+    tools: [{ name: "Resend", logo: `${SVGL}/resend-icon-black.svg` }],
+  },
 ] as const;
+
+function StackBand() {
+  return (
+    <section aria-label="Stack" className={styles.band}>
+      <div className={styles.bandInner}>
+        {STACK_GROUPS.map((group) => (
+          <div className={styles.bandGroup} key={group.label}>
+            <h2 className={styles.bandLabel}>{group.label}</h2>
+            <ul className={styles.bandTools}>
+              {group.tools.map((tool) => (
+                <li key={tool.name}>
+                  <Logo size={22} src={tool.logo} />
+                  <span>{tool.name}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 const MEMBERS = [
   { initials: "FV", role: "Owner" },
@@ -232,6 +280,8 @@ export default function TwoMarketsLanding() {
       <MarketHero />
 
       <main>
+        <StackBand />
+
         <section aria-labelledby="constants-title" className={styles.section}>
           <div className={styles.split}>
             <h2 className={styles.h2} id="constants-title">
@@ -293,26 +343,6 @@ export default function TwoMarketsLanding() {
               </Link>
             </div>
           </div>
-        </section>
-
-        <section aria-labelledby="stack-title" className={styles.section}>
-          <div className={styles.split}>
-            <h2 className={styles.h2} id="stack-title">
-              Built on tools you already know.
-            </h2>
-            <p className={styles.sectionLede}>
-              Three apps and nine packages in one Nx monorepo with pnpm. Nothing exotic to learn
-              before your first commit.
-            </p>
-          </div>
-          <ul className={styles.stack}>
-            {STACK.map((tool) => (
-              <li className={styles.stackItem} key={tool.name}>
-                <Logo size={40} src={tool.logo} />
-                <span>{tool.name}</span>
-              </li>
-            ))}
-          </ul>
         </section>
 
         <section aria-labelledby="start-title" className={styles.start}>

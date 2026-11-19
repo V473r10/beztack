@@ -799,43 +799,44 @@
   white-space: nowrap;
 }
 
-/* ---------- Stack wall ---------- */
+/* ---------- Stack band, under the hero ---------- */
 
-.stack {
+.band {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.bandInner {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 1.6rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem 2.8rem;
+}
+
+.bandLabel {
+  margin: 0 0 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #5d7189;
+}
+
+.bandTools {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
-  background: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
 }
 
-.stackItem {
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 0.75rem;
-  padding: 1.6rem 0.5rem;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+.bandTools li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 700;
-  font-size: 0.9rem;
-  text-align: center;
-  transition: background-color 200ms ease;
-}
-
-.stackItem .logo {
-  transition: transform 200ms ease;
-}
-
-.stackItem:hover {
-  background: var(--celeste-soft);
-}
-
-.stackItem:hover .logo {
-  transform: translateY(-3px);
+  font-size: 0.95rem;
 }
 
 /* ---------- Start ---------- */
@@ -949,10 +950,6 @@
     display: none;
   }
 
-  .stack {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
   .joint {
     display: none;
   }
@@ -1010,10 +1007,5 @@
 
   .heroGrid {
     animation: none;
-  }
-
-  .stackItem,
-  .stackItem .logo {
-    transition: none;
   }
 }
