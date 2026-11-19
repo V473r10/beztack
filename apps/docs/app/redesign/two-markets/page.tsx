@@ -4,6 +4,8 @@ import Link from "next/link";
 import { CopyCommand } from "../_shared/copy-command";
 import { links } from "../_shared/links";
 import { MarketHero } from "./market-hero";
+import { MarketProvider } from "./market-context";
+import { ProrationPlayground } from "./proration-playground";
 import styles from "./two-markets.module.css";
 
 const display = Big_Shoulders({
@@ -41,12 +43,7 @@ function Logo({ src, size = 28 }: { src: string; size?: number }) {
   );
 }
 
-const TIMELINE = [
-  {
-    when: "Before anything changes",
-    title: "Preview",
-    text: "The API returns the days left, the credit for them, the new price and the first payment.",
-  },
+const RULES = [
   {
     when: "After the first payment",
     title: "Upgrade",
@@ -128,6 +125,39 @@ function StackBand() {
         ))}
       </div>
     </section>
+  );
+}
+
+function AdapterDiagram() {
+  return (
+    <div
+      className={styles.diagram}
+      role="img"
+      aria-label="Mercado Pago and Polar both plug into PaymentProviderAdapter, which your app calls"
+    >
+      <div className={styles.diagramProviders}>
+        <span className={`${styles.provider} ${styles.providerMp}`}>
+          <Logo size={26} src={`${SVGL}/mercado-pago.svg`} />
+          Mercado Pago
+        </span>
+        <span className={`${styles.provider} ${styles.providerPolar}`}>
+          <Logo size={22} src={`${SVGL}/polar-sh_light.svg`} />
+          Polar
+        </span>
+      </div>
+      <svg
+        aria-hidden="true"
+        className={styles.diagramJoin}
+        preserveAspectRatio="none"
+        viewBox="0 0 40 100"
+      >
+        <path d="M0 25 C 24 25, 16 50, 40 50" />
+        <path d="M0 75 C 24 75, 16 50, 40 50" />
+      </svg>
+      <span className={styles.adapter}>PaymentProviderAdapter</span>
+      <span aria-hidden="true" className={styles.diagramLine} />
+      <span className={styles.diagramApp}>Your app</span>
+    </div>
   );
 }
 
@@ -564,163 +594,156 @@ function NotYet() {
 export default function TwoMarketsLanding() {
   return (
     <div className={`${styles.page} ${display.variable} ${body.variable}`}>
-      <MarketHero />
+      <MarketProvider>
+        <MarketHero />
 
-      <main>
-        <StackBand />
+        <main>
+          <StackBand />
 
-        <section aria-labelledby="timeline-title" className={styles.timelineSection}>
-          <div className={styles.section}>
-            <div className={styles.providers} aria-hidden="true">
-              <span className={`${styles.provider} ${styles.providerMp}`}>
-                <Logo size={44} src={`${SVGL}/mercado-pago.svg`} />
-                Mercado Pago
-              </span>
-              <span className={`${styles.provider} ${styles.providerPolar}`}>
-                <Logo size={40} src={`${SVGL}/polar-sh_light.svg`} />
-                Polar
-              </span>
-              <span className={styles.joint} />
-              <span className={styles.adapter}>PaymentProviderAdapter</span>
-            </div>
-
-            <div className={styles.split}>
-              <h2 className={styles.h2} id="timeline-title">
-                A plan change, start to finish.
-              </h2>
-              <p className={styles.sectionLede}>
-                Proration, downgrades and failed renewals are where billing code usually breaks.
-                Here is how each one behaves. It all runs on one adapter interface, so the rules
-                live in the API and not in the provider code.
-              </p>
-            </div>
-
-            <ol className={styles.timeline}>
-              {TIMELINE.map((step, index) => (
-                <li className={styles.step} key={step.title}>
-                  <span className={styles.stepNumber}>{index + 1}</span>
-                  <span className={styles.stepWhen}>{step.when}</span>
-                  <h3 className={styles.stepTitle}>{step.title}</h3>
-                  <p className={styles.stepText}>{step.text}</p>
-                </li>
-              ))}
-            </ol>
-
-            <div className={styles.capGrid}>
-              <div>
-                <h3 className={styles.capTitle}>What each provider can do</h3>
-                <table className={styles.capTable}>
-                  <thead>
-                    <tr>
-                      <th scope="col">Capability</th>
-                      <th scope="col">Mercado Pago</th>
-                      <th scope="col">Polar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {CAPABILITIES.map((row) => (
-                      <tr key={row.flag}>
-                        <th scope="row">
-                          <code>{row.flag}</code>
-                        </th>
-                        <td data-provider="Mercado Pago" data-supported="false">
-                          <strong>false</strong>
-                          <span>{row.mercadoPago}</span>
-                        </td>
-                        <td data-provider="Polar" data-supported="true">
-                          <strong>true</strong>
-                          <span>{row.polar}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <p className={styles.capNote}>
-                  The API reads these flags, never the provider's name. When a provider can't do
-                  something, it says so instead of guessing.{" "}
-                  <Link className={styles.textLink} href={links.planChanges}>
-                    Read how plan changes work
-                  </Link>
-                </p>
+          <section aria-labelledby="timeline-title" className={styles.timelineSection}>
+            <div className={styles.section}>
+              <div className={styles.planHead}>
+                <div className={styles.planIntro}>
+                  <h2 className={styles.h2} id="timeline-title">
+                    A plan change, start to finish.
+                  </h2>
+                  <p className={styles.sectionLede}>
+                    Proration, downgrades and failed renewals are where billing code usually breaks.
+                    All of it runs on one adapter interface, so the rules live in the API and not in
+                    the provider code.
+                  </p>
+                </div>
+                <AdapterDiagram />
               </div>
 
-              <figure className={styles.code}>
-                <figcaption className={styles.codeHead}>
-                  <span>packages/payments/core/src/types.ts</span>
-                  <a
-                    href={`${links.repo}/blob/main/${ADAPTER_FILE}#L235`}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    View on GitHub
-                  </a>
-                </figcaption>
-                <Code source={ADAPTER_SNIPPET} />
-                <figcaption className={styles.codeHead}>
-                  <span>capabilities in each adapter</span>
-                  <span className={styles.codeLinks}>
+              <ProrationPlayground />
+
+              <ul className={styles.rules}>
+                {RULES.map((rule) => (
+                  <li className={styles.rule} key={rule.title}>
+                    <span className={styles.ruleWhen}>{rule.when}</span>
+                    <h3 className={styles.ruleTitle}>{rule.title}</h3>
+                    <p className={styles.ruleText}>{rule.text}</p>
+                  </li>
+                ))}
+              </ul>
+
+              <div className={styles.capGrid}>
+                <div>
+                  <h3 className={styles.capTitle}>What each provider can do</h3>
+                  <table className={styles.capTable}>
+                    <thead>
+                      <tr>
+                        <th scope="col">Capability</th>
+                        <th scope="col">Mercado Pago</th>
+                        <th scope="col">Polar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {CAPABILITIES.map((row) => (
+                        <tr key={row.flag}>
+                          <th scope="row">
+                            <code>{row.flag}</code>
+                          </th>
+                          <td data-provider="Mercado Pago" data-supported="false">
+                            <strong>false</strong>
+                            <span>{row.mercadoPago}</span>
+                          </td>
+                          <td data-provider="Polar" data-supported="true">
+                            <strong>true</strong>
+                            <span>{row.polar}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className={styles.capNote}>
+                    The API reads these flags, never the provider's name. When a provider can't do
+                    something, it says so instead of guessing.{" "}
+                    <Link className={styles.textLink} href={links.planChanges}>
+                      Read how plan changes work
+                    </Link>
+                  </p>
+                </div>
+
+                <figure className={styles.code}>
+                  <figcaption className={styles.codeHead}>
+                    <span>packages/payments/core/src/types.ts</span>
                     <a
-                      href={`${links.repo}/blob/main/packages/payments/mercado-pago/src/adapter.ts#L477`}
+                      href={`${links.repo}/blob/main/${ADAPTER_FILE}#L235`}
                       rel="noopener noreferrer"
                       target="_blank"
                     >
-                      Mercado Pago
+                      View on GitHub
                     </a>
-                    <a
-                      href={`${links.repo}/blob/main/packages/payments/polar/src/adapter.ts#L229`}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      Polar
-                    </a>
-                  </span>
-                </figcaption>
-                <Code source={PROVIDER_SNIPPET} />
-              </figure>
+                  </figcaption>
+                  <Code source={ADAPTER_SNIPPET} />
+                  <figcaption className={styles.codeHead}>
+                    <span>capabilities in each adapter</span>
+                    <span className={styles.codeLinks}>
+                      <a
+                        href={`${links.repo}/blob/main/packages/payments/mercado-pago/src/adapter.ts#L477`}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        Mercado Pago
+                      </a>
+                      <a
+                        href={`${links.repo}/blob/main/packages/payments/polar/src/adapter.ts#L229`}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        Polar
+                      </a>
+                    </span>
+                  </figcaption>
+                  <Code source={PROVIDER_SNIPPET} />
+                </figure>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section aria-labelledby="constants-title" className={styles.section}>
-          <div className={styles.split}>
-            <h2 className={styles.h2} id="constants-title">
-              Three variables pick your market. The rest stays put.
-            </h2>
-            <p className={styles.sectionLede}>
-              Add the provider's keys, set three variables, and sign-in, teams, languages and the
-              admin area stay exactly as they are.
-            </p>
-          </div>
-          <Bento />
-        </section>
-
-        <NotYet />
-
-        <section aria-labelledby="start-title" className={styles.start}>
-          <div className={styles.startInner}>
-            <h2 className={styles.startTitle} id="start-title">
-              Start with one command. Pick the market when you need it.
-            </h2>
-            <CopyCommand
-              className={styles.startCommand}
-              labelClassName={styles.startCopy}
-              prefix={<span className={styles.startPrompt}>$ </span>}
-            />
-            <p className={styles.startNote}>
-              The CLI asks for a project name, a default currency and a default locale.
-            </p>
-            <div className={styles.startLinks}>
-              <Link href={links.quickStart}>Quick start</Link>
-              <a href={links.demo} rel="noopener noreferrer" target="_blank">
-                Live demo
-              </a>
-              <a href={links.repo} rel="noopener noreferrer" target="_blank">
-                GitHub
-              </a>
+          <section aria-labelledby="constants-title" className={styles.section}>
+            <div className={styles.split}>
+              <h2 className={styles.h2} id="constants-title">
+                Three variables pick your market. The rest stays put.
+              </h2>
+              <p className={styles.sectionLede}>
+                Add the provider's keys, set three variables, and sign-in, teams, languages and the
+                admin area stay exactly as they are.
+              </p>
             </div>
-          </div>
-        </section>
-      </main>
+            <Bento />
+          </section>
+
+          <NotYet />
+
+          <section aria-labelledby="start-title" className={styles.start}>
+            <div className={styles.startInner}>
+              <h2 className={styles.startTitle} id="start-title">
+                Start with one command. Pick the market when you need it.
+              </h2>
+              <CopyCommand
+                className={styles.startCommand}
+                labelClassName={styles.startCopy}
+                prefix={<span className={styles.startPrompt}>$ </span>}
+              />
+              <p className={styles.startNote}>
+                The CLI asks for a project name, a default currency and a default locale.
+              </p>
+              <div className={styles.startLinks}>
+                <Link href={links.quickStart}>Quick start</Link>
+                <a href={links.demo} rel="noopener noreferrer" target="_blank">
+                  Live demo
+                </a>
+                <a href={links.repo} rel="noopener noreferrer" target="_blank">
+                  GitHub
+                </a>
+              </div>
+            </div>
+          </section>
+        </main>
+      </MarketProvider>
 
       <footer className={styles.footer}>
         <span>Beztack is MIT licensed.</span>

@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { CopyCommand } from "../_shared/copy-command";
 import { links } from "../_shared/links";
+import { type Market, useMarket } from "./market-context";
 import styles from "./two-markets.module.css";
-
-type Market = "latam" | "world";
 
 type MarketCopy = {
   lang: string;
@@ -83,7 +81,7 @@ function formatPrice({ amount, currency, locale }: MarketCopy["price"]): string 
 
 /** The hero: one switch flips the language, the price format and the payment provider. */
 export function MarketHero() {
-  const [market, setMarket] = useState<Market>("latam");
+  const { market, setMarket } = useMarket();
   const copy = COPY[market];
 
   return (
