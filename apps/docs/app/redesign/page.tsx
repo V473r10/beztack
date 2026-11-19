@@ -17,7 +17,14 @@ const VARIANTS = [
   {
     href: "/redesign/two-markets",
     name: "Two markets",
-    idea: "Un switch cambia idioma, formato de precio y proveedor: Mercado Pago en pesos o Polar en dólares.",
+    idea: "Un switch cambia idioma, formato de precio y proveedor. v2: tarjetas con logos y la línea de tiempo en azul.",
+    language: "Español e inglés",
+    look: "Celeste, sol y azul marino",
+  },
+  {
+    href: "/redesign/two-markets-v1",
+    name: "Two markets (v1)",
+    idea: "Histórico: la primera versión, con la lista de texto y la línea de tiempo blanca.",
     language: "Español e inglés",
     look: "Celeste, sol y azul marino",
   },
