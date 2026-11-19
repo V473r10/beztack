@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CopyCommand } from "../_shared/copy-command";
 import { links } from "../_shared/links";
 import styles from "./two-markets.module.css";
 
@@ -16,8 +17,11 @@ type MarketCopy = {
   cadence: string;
   provider: string;
   priceNote: string;
-  primary: string;
+  priceNoteCode: string;
+  copy: string;
+  copied: string;
   secondary: string;
+  license: string;
   env: Array<[string, string]>;
   price: { amount: number; currency: string; locale: string };
 };
@@ -26,14 +30,17 @@ const COPY: Record<Market, MarketCopy> = {
   latam: {
     lang: "es",
     toggle: "Vendo en Latinoamérica",
-    title: "Cobrá en pesos.",
-    lede: "Suscripciones con Mercado Pago, en la moneda de tu cliente. Subir y bajar de plan, el prorrateo y los reintentos ya están resueltos.",
+    title: "Un starter de SaaS que cobra en pesos.",
+    lede: "Para SaaS B2B, en TypeScript. Mercado Pago cobra en la moneda que elijas: subís de plan con vista previa del prorrateo, bajás al renovar y, tras cinco intentos fallidos, un admin reintenta el cambio.",
     plan: "Plan Pro",
     cadence: "por mes",
     provider: "Mercado Pago",
-    priceNote: "Precio de ejemplo, con el formato de es-UY.",
-    primary: "Leé la guía de inicio",
+    priceNote: "Ejemplo. El formato sale de",
+    priceNoteCode: "DEFAULT_LOCALE",
+    copy: "Copiar",
+    copied: "Copiado",
     secondary: "Probá la demo",
+    license: "MIT. Gratis.",
     env: [
       ["PAYMENT_PROVIDER", "mercadopago"],
       ["DEFAULT_CURRENCY", "UYU"],
@@ -44,14 +51,17 @@ const COPY: Record<Market, MarketCopy> = {
   world: {
     lang: "en",
     toggle: "I sell worldwide",
-    title: "Get paid in dollars.",
-    lede: "Polar sells for you as merchant of record and takes care of sales tax. The same plan changes, the same proration preview, the same retries.",
+    title: "A SaaS starter that gets paid in dollars.",
+    lede: "For B2B SaaS, in TypeScript. Polar is the merchant of record and handles sales tax. The same plan-change rules and proration preview run on both providers; where one can't do something, the API says so.",
     plan: "Pro plan",
     cadence: "per month",
     provider: "Polar",
-    priceNote: "Example price, formatted for en-US.",
-    primary: "Read the quick start",
+    priceNote: "Example. The format comes from",
+    priceNoteCode: "DEFAULT_LOCALE",
+    copy: "Copy",
+    copied: "Copied",
     secondary: "Try the live demo",
+    license: "MIT. Free.",
     env: [
       ["PAYMENT_PROVIDER", "polar"],
       ["DEFAULT_CURRENCY", "USD"],
@@ -84,6 +94,10 @@ export function MarketHero() {
         </Link>
         <div className={styles.navLinks}>
           <Link href={links.docs}>Docs</Link>
+          <Link href={links.quickStart}>Quick start</Link>
+          <a href={links.demo} rel="noopener noreferrer" target="_blank">
+            Demo
+          </a>
           <a href={links.repo} rel="noopener noreferrer" target="_blank">
             GitHub
           </a>
@@ -112,9 +126,13 @@ export function MarketHero() {
             <h1 className={styles.title}>{copy.title}</h1>
             <p className={styles.lede}>{copy.lede}</p>
             <div className={styles.actions}>
-              <Link className={styles.btnPrimary} href={links.quickStart}>
-                {copy.primary}
-              </Link>
+              <CopyCommand
+                className={styles.btnCopy}
+                copiedLabel={copy.copied}
+                label={copy.copy}
+                labelClassName={styles.btnCopyLabel}
+                prefix={<span className={styles.btnCopyPrompt}>$ </span>}
+              />
               <a
                 className={styles.btnLine}
                 href={links.demo}
@@ -124,6 +142,7 @@ export function MarketHero() {
                 {copy.secondary}
               </a>
             </div>
+            <p className={styles.license}>{copy.license}</p>
           </div>
 
           <div className={styles.priceSide}>
@@ -134,7 +153,9 @@ export function MarketHero() {
               </div>
               <p className={styles.price}>{formatPrice(copy.price)}</p>
               <p className={styles.cadence}>{copy.cadence}</p>
-              <p className={styles.priceNote}>{copy.priceNote}</p>
+              <p className={styles.priceNote}>
+                {copy.priceNote} <code>{copy.priceNoteCode}</code>.
+              </p>
             </div>
             <pre aria-label="apps/api/.env" className={styles.env}>
               <span className={styles.envFile}>apps/api/.env</span>

@@ -98,7 +98,9 @@
 
 .navLinks {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem 1.5rem;
   font-weight: 500;
 }
 
@@ -113,8 +115,8 @@
 }
 
 .heroBody {
-  padding-top: 2.5rem;
-  padding-bottom: 5.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 4.5rem;
 }
 
 .switch {
@@ -122,7 +124,7 @@
   padding: 0.3rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--fg) 12%, transparent);
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .switchOption {
@@ -167,10 +169,10 @@
 .title {
   font-family: var(--font-markets-display), sans-serif;
   font-weight: 900;
-  font-size: clamp(4.5rem, 12vw, 11rem);
-  line-height: 0.86;
+  font-size: clamp(3.4rem, 6.6vw, 6.3rem);
+  line-height: 0.88;
   letter-spacing: -0.01em;
-  margin: 0 0 2.6rem;
+  margin: 0 0 2rem;
   text-wrap: balance;
 }
 
@@ -189,6 +191,7 @@
 }
 
 .btnPrimary,
+.btnCopy,
 .btnLine {
   display: inline-flex;
   align-items: center;
@@ -199,9 +202,45 @@
   text-decoration: none;
 }
 
-.btnPrimary {
+.btnPrimary,
+.btnCopy {
   background: var(--fg);
   color: var(--bg);
+}
+
+.btnCopy {
+  border: 0;
+  gap: 1rem;
+  padding-right: 0.55rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btnCopyPrompt {
+  opacity: 0.55;
+}
+
+.btnCopyLabel {
+  font-family: var(--font-markets-body), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+}
+
+.btnCopy[data-copied] .btnCopyLabel {
+  background: var(--sun);
+  color: var(--navy);
+}
+
+.license {
+  margin: 1.1rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 .btnLine {
@@ -210,6 +249,7 @@
 }
 
 .btnPrimary:hover,
+.btnCopy:hover,
 .btnLine:hover {
   filter: brightness(1.12);
 }
@@ -260,6 +300,10 @@
   margin: 1.2rem 0 0;
   font-size: 0.8rem;
   opacity: 0.7;
+}
+
+.priceNote code {
+  font-size: 0.95em;
 }
 
 .env {
@@ -922,6 +966,16 @@
 }
 
 @media (max-width: 560px) {
+  .nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .navLinks {
+    justify-content: flex-start;
+  }
+
   .switch {
     display: flex;
     flex-direction: column;
