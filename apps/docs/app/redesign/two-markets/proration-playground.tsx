@@ -1,5 +1,7 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
+import { AnimateNumber } from "motion-plus/react";
 import { useId, useState } from "react";
 import { type Market, useMarket } from "./market-context";
 import styles from "./two-markets.module.css";
@@ -129,6 +131,41 @@ function money(locale: Locale, minor: number): string {
   }).format(minor / 100);
 }
 
+/** An amount that rolls to its new value. AnimateNumber formats it with Intl, like money(). */
+function Amount({
+  locale,
+  minor,
+  negative = false,
+}: {
+  locale: Locale;
+  minor: number;
+  negative?: boolean;
+}) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <>
+      <span className={styles.srOnly}>{`${negative ? "\u2212" : ""}${money(locale, minor)}`}</span>
+      <AnimateNumber
+        aria-hidden="true"
+        format={{ style: "currency", currency: locale.currency }}
+        locales={locale.intl}
+        prefix={negative ? "\u2212" : undefined}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : {
+                layout: { type: "spring", visualDuration: 0.45, bounce: 0.15 },
+                y: { type: "spring", visualDuration: 0.45, bounce: 0.25 },
+                opacity: { duration: 0.2, ease: "linear" },
+              }
+        }
+      >
+        {minor / 100}
+      </AnimateNumber>
+    </>
+  );
+}
+
 function PlanChoice({
   name,
   legend,
@@ -250,20 +287,26 @@ export function ProrationPlayground() {
             <dl className={styles.playRows}>
               <div>
                 <dt>{locale.rowDays}</dt>
-                <dd>{days}</dd>
+                <dd>
+                  <AnimateNumber transition={{ duration: 0.25 }}>{days}</AnimateNumber>
+                </dd>
               </div>
               <div>
                 <dt>{locale.rowCredit}</dt>
-                <dd>{`\u2212${money(locale, preview.credit)}`}</dd>
+                <dd>
+                  <Amount locale={locale} minor={preview.credit} negative />
+                </dd>
               </div>
               <div>
                 <dt>{locale.rowNew}</dt>
-                <dd>{money(locale, preview.newPrice)}</dd>
+                <dd>
+                  <Amount locale={locale} minor={preview.newPrice} />
+                </dd>
               </div>
               <div className={styles.playTotal}>
                 <dt>{locale.rowFirst}</dt>
                 <dd aria-atomic="true" aria-live="polite">
-                  <span key={preview.firstPayment}>{money(locale, preview.firstPayment)}</span>
+                  <Amount locale={locale} minor={preview.firstPayment} />
                 </dd>
               </div>
             </dl>
