@@ -471,6 +471,96 @@ llms-full.txt     all docs`}
   );
 }
 
+const NOT_YET = [
+  "Stripe and other providers",
+  "OAuth sign-in",
+  "Magic links",
+  "Passkeys",
+  "API keys",
+  "Template sync",
+  "A Dockerfile",
+  "Cloudflare config",
+] as const;
+
+const FAQ = [
+  {
+    question: "Can I add another payment provider?",
+    answer: (
+      <>
+        Yes. Implement <code>PaymentProviderAdapter</code> for it and declare what it can do in{" "}
+        <code>capabilities</code>. The API reads those flags, so it knows what to refuse. Start from{" "}
+        <Link className={styles.faqLink} href={links.payments}>
+          Payments Core
+        </Link>
+        .
+      </>
+    ),
+  },
+  {
+    question: "Do I bill people or organizations?",
+    answer: (
+      <>
+        Either one. <code>SUBSCRIPTION_MODE</code> is <code>user</code> or <code>organization</code>
+        , and <code>organization</code> is the default.
+      </>
+    ),
+  },
+  {
+    question: "What happens when a plan change fails at renewal?",
+    answer: (
+      <>
+        A downgrade or a cadence change waits in a ledger and is applied at the next renewal. After
+        five failed tries it is marked failed and shows up in the admin area, where an admin can
+        send it back to the queue.
+      </>
+    ),
+  },
+  {
+    question: "Is it available in Spanish?",
+    answer: (
+      <>
+        Yes. The app ships in English and Spanish, and the Spanish uses vos. A test fails if a tú
+        slips in. Amounts and dates follow the language through Intl.
+      </>
+    ),
+  },
+  {
+    question: "How much does it cost?",
+    answer: <>Nothing. Beztack is MIT licensed. Mercado Pago and Polar charge their own fees.</>,
+  },
+] as const;
+
+function NotYet() {
+  return (
+    <section aria-labelledby="not-yet-title" className={styles.section}>
+      <div className={styles.faqGrid}>
+        <div>
+          <h2 className={styles.h2} id="not-yet-title">
+            Not here yet.
+          </h2>
+          <p className={styles.notYetLede}>
+            Beztack doesn't have these today. Better to know before you clone.
+          </p>
+          <ul className={styles.notYet}>
+            {NOT_YET.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+        <div className={styles.faq}>
+          <h2 className={styles.faqTitle}>Questions</h2>
+          {FAQ.map((item) => (
+            <details className={styles.faqItem} key={item.question}>
+              <summary>{item.question}</summary>
+              <p>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function TwoMarketsLanding() {
   return (
     <div className={`${styles.page} ${display.variable} ${body.variable}`}>
@@ -604,6 +694,8 @@ export default function TwoMarketsLanding() {
           <Bento />
         </section>
 
+        <NotYet />
+
         <section aria-labelledby="start-title" className={styles.start}>
           <div className={styles.startInner}>
             <h2 className={styles.startTitle} id="start-title">
@@ -629,7 +721,9 @@ export default function TwoMarketsLanding() {
 
       <footer className={styles.footer}>
         <span>Beztack is MIT licensed.</span>
-        <span>Not built yet: Stripe, OAuth, magic links, passkeys, template sync.</span>
+        <a href={links.repo} rel="noopener noreferrer" target="_blank">
+          GitHub
+        </a>
       </footer>
     </div>
   );

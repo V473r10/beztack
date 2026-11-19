@@ -697,8 +697,17 @@
   gap: 0.75rem;
 }
 
+.adminLayout > * {
+  min-width: 0;
+}
+
 .adminTable {
   position: relative;
+  overflow-x: auto;
+}
+
+.adminTable table {
+  min-width: 26rem;
 }
 
 .adminTable table {
@@ -1138,6 +1147,101 @@
   font-size: 0.95rem;
 }
 
+/* ---------- Not here yet, and questions ---------- */
+
+.faqGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 4rem;
+  align-items: start;
+}
+
+.notYetLede {
+  margin: 1.5rem 0 1.5rem;
+  font-size: 1.1rem;
+  line-height: 1.55;
+  color: #3d5370;
+  max-width: 26rem;
+}
+
+.notYet {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.notYet li {
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  border: 2px dashed var(--navy);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.faqTitle {
+  font-family: var(--font-markets-display), sans-serif;
+  font-weight: 900;
+  font-size: 2.4rem;
+  line-height: 1;
+  margin: 0 0 1rem;
+}
+
+.faqItem {
+  border-top: 2px solid var(--navy);
+}
+
+.faqItem:last-child {
+  border-bottom: 2px solid var(--navy);
+}
+
+.faqItem summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.faqItem summary::after {
+  content: "+";
+  font-family: var(--font-markets-display), sans-serif;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.faqItem[open] summary::after {
+  content: "\2212";
+}
+
+.faqItem p {
+  margin: 0 0 1.2rem;
+  line-height: 1.6;
+  max-width: 38rem;
+  color: #2b4565;
+}
+
+.faqItem code {
+  font-size: 0.9em;
+  font-weight: 700;
+}
+
+.faqLink {
+  color: var(--navy);
+  font-weight: 700;
+  text-underline-offset: 4px;
+}
+
 /* ---------- Start ---------- */
 
 .start {
@@ -1224,6 +1328,7 @@
 @media (max-width: 900px) {
   .heroGrid,
   .split,
+  .faqGrid,
   .capGrid {
     grid-template-columns: minmax(0, 1fr);
   }
