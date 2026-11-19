@@ -158,6 +158,10 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
   gap: 3.5rem;
   align-items: end;
+}
+
+/* Only the words swap in. The price rolls on its own (AnimateNumber), so it must stay mounted. */
+.heroSwap {
   animation: swap 520ms cubic-bezier(0.3, 0.8, 0.3, 1) both;
 }
 
@@ -1252,7 +1256,15 @@
     linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth) + 1px) no-repeat,
     conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom /
       calc(var(--tooth) * 2) var(--tooth) repeat-x;
-  animation: print 600ms cubic-bezier(0.3, 0.8, 0.3, 1) both;
+}
+
+/* Hidden until the ticket first scrolls into view, then it prints once. */
+.playReceiptWaiting {
+  clip-path: inset(0 0 100% 0);
+}
+
+.playReceiptPrint {
+  animation: print 700ms cubic-bezier(0.3, 0.8, 0.3, 1) both;
 }
 
 @keyframes print {
@@ -1334,22 +1346,6 @@
   font-weight: 900;
   font-size: clamp(2.6rem, 4vw, 3.4rem);
   line-height: 0.9;
-}
-
-.playTotal dd span {
-  display: inline-block;
-  animation: tick 320ms cubic-bezier(0.3, 0.8, 0.3, 1) both;
-}
-
-@keyframes tick {
-  from {
-    opacity: 0;
-    transform: translateY(-0.4em);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 .playLedger {
@@ -2251,9 +2247,8 @@
     transition: none;
   }
 
-  .heroGrid,
-  .playReceipt,
-  .playTotal dd span {
+  .heroSwap,
+  .playReceiptPrint {
     animation: none;
   }
 

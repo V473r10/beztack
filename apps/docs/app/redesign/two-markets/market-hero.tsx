@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CopyCommand } from "../_shared/copy-command";
 import { links } from "../_shared/links";
+import { Amount } from "./amount";
 import { type Market, useMarket } from "./market-context";
 import styles from "./two-markets.module.css";
 
@@ -71,17 +72,9 @@ const COPY: Record<Market, MarketCopy> = {
 
 const MARKETS: Market[] = ["latam", "world"];
 
-function formatPrice({ amount, currency, locale }: MarketCopy["price"]): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 /** The hero: one switch flips the language, the price format and the payment provider. */
 export function MarketHero() {
-  const { market, setMarket } = useMarket();
+  const { market, setMarket, switched } = useMarket();
   const copy = COPY[market];
 
   return (
@@ -119,8 +112,8 @@ export function MarketHero() {
           ))}
         </div>
 
-        <div className={styles.heroGrid} key={market} lang={copy.lang}>
-          <div className={styles.heroCopy}>
+        <div className={styles.heroGrid} lang={copy.lang}>
+          <div className={`${styles.heroCopy} ${switched ? styles.heroSwap : ""}`} key={market}>
             <h1 className={styles.title}>{copy.title}</h1>
             <p className={styles.lede}>{copy.lede}</p>
             <div className={styles.actions}>
@@ -149,7 +142,14 @@ export function MarketHero() {
                 <span>{copy.plan}</span>
                 <span className={styles.providerChip}>{copy.provider}</span>
               </div>
-              <p className={styles.price}>{formatPrice(copy.price)}</p>
+              <div className={styles.price}>
+                <Amount
+                  currency={copy.price.currency}
+                  fractionDigits={0}
+                  locale={copy.price.locale}
+                  value={copy.price.amount}
+                />
+              </div>
               <p className={styles.cadence}>{copy.cadence}</p>
               <p className={styles.priceNote}>
                 {copy.priceNote} <code>{copy.priceNoteCode}</code>.
